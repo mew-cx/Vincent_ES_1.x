@@ -28,10 +28,25 @@
 #include <windows.h>
 
 
-class Context;
-class Config;
-class Surface;
+#ifdef __cplusplus
 
+namespace EGL {
+	class Context;
+	class Config;
+	class Surface;
+}
+
+typedef EGL::Config *	EGLConfig;
+typedef EGL::Surface *	EGLSurface;
+typedef EGL::Context  *	EGLContext;
+
+#else
+
+typedef void *			EGLConfig;
+typedef void *			EGLSurface;
+typedef void *			EGLContext;
+
+#endif
 
 typedef DWORD	int32_t;
 typedef HDC		NativeDisplayType;
@@ -45,9 +60,6 @@ typedef HBITMAP NativePixmapType;
 typedef int				EGLBoolean;
 typedef int32_t			EGLint;
 typedef void *			EGLDisplay;
-typedef Config *		EGLConfig;
-typedef Surface *		EGLSurface;
-typedef Context  *		EGLContext;
 
 /*
 ** EGL and native handle values
