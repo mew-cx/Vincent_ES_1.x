@@ -213,7 +213,8 @@ void Context :: Clear(GLbitfield mask) {
 
 	if (mask & GL_DEPTH_BUFFER_BIT) {
 		// actually need to transform depth to correct value
-		m_DrawSurface->ClearDepthBuffer(EGL_MAP_0_1(m_DepthClearValue));
+		EGL_Fixed clearValue = EGL_Mul(EGL_MAP_0_1(m_DepthClearValue),m_DepthRangeFactor)  + m_DepthRangeBase;
+		m_DrawSurface->ClearDepthBuffer(clearValue);
 	}
 
 	if (mask & GL_STENCIL_BUFFER_BIT) {

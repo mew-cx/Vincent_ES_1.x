@@ -115,7 +115,7 @@ namespace EGL {
 		}
 
 		inline U32 ConvertToRGBA() const {
-			return r << 24 | b << 16 | g << 8 | a;
+			return r << 24 | g << 16 | b << 8 | a;
 		}
 
 		inline U16 ConvertTo5551() const {

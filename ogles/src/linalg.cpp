@@ -213,7 +213,7 @@ Matrix4x4 Matrix4x4 :: CreateOrtho(EGL_Fixed l, EGL_Fixed r,
 	matrix.Element(1, 1) = 2 * inv_height;
 	matrix.Element(1, 3) = -EGL_Mul(t + b, inv_height);
 
-	matrix.Element(2, 2) = 2 * inv_depth;
+	matrix.Element(2, 2) = -2 * inv_depth;
 	matrix.Element(2, 3) = EGL_Mul(-f - n, inv_depth);
 
 	matrix.m_identity = false;

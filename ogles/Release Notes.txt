@@ -8,6 +8,9 @@ the bug database on sourceforge.
 Version 0.71
 ------------
 
+944269 - clear depth is not transformed 
+944267 - glOrtho matrix incorrect 
+944265 - Color to RGBA conversion swaps channels 
 943505 - glReadPixels incomplete
 942837 - Texture modulation does not work
 935473 - Add support for (Strong)ARM 
