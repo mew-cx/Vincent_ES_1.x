@@ -291,6 +291,8 @@ namespace EGL {
 		}
 
 		void UpdateInverseModelViewMatrix(void);
+		void UpdateVertexTransformation(void);
+		void RebuildMatrices(void);
 
 		void RecordError(GLenum error);
 		void Toggle(GLenum cap, bool value);
@@ -363,6 +365,7 @@ private:
 
 		MatrixStack *		m_CurrentMatrixStack;
 		Matrix4x4			m_InverseModelViewMatrix;
+		Matrix4x4			m_VertexTransformation;
 
 		// ----------------------------------------------------------------------
 		// Viewport configuration

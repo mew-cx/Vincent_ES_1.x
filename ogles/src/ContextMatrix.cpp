@@ -68,45 +68,49 @@ void Context :: MatrixMode(GLenum mode) {
 	}
 }
 
+void Context :: RebuildMatrices(void) {
+	if (m_CurrentMatrixStack == &m_ModelViewMatrixStack) {
+		UpdateInverseModelViewMatrix();
+		UpdateVertexTransformation();
+	} else if (m_CurrentMatrixStack == &m_ProjectionMatrixStack) {
+		UpdateVertexTransformation();
+	}
+}
+
+void Context :: UpdateInverseModelViewMatrix(void) {
+	m_InverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().Inverse();
+}
+
+void Context :: UpdateVertexTransformation(void) {
+	m_VertexTransformation = m_ProjectionMatrixStack.CurrentMatrix() * m_ModelViewMatrixStack.CurrentMatrix();
+}
+
 void Context :: LoadIdentity(void) { 
 	CurrentMatrixStack()->LoadIdentity();
 
-	if (m_CurrentMatrixStack == &m_ModelViewMatrixStack) {
-		UpdateInverseModelViewMatrix();
-	}
+	RebuildMatrices();
 }
 
 void Context :: LoadMatrixx(const GLfixed *m) { 
 	CurrentMatrixStack()->LoadMatrix(m);
 
-	if (m_CurrentMatrixStack == &m_ModelViewMatrixStack) {
-		UpdateInverseModelViewMatrix();
-	}
+	RebuildMatrices();
 }
 
 void Context :: MultMatrixx(const GLfixed *m) { 
 	CurrentMatrixStack()->MultMatrix(m);
 
-	if (m_CurrentMatrixStack == &m_ModelViewMatrixStack) {
-		UpdateInverseModelViewMatrix();
-	}
+	RebuildMatrices();
 }
 
 void Context :: PopMatrix(void) { 
 	RecordError(CurrentMatrixStack()->PopMatrix());
 
-	if (m_CurrentMatrixStack == &m_ModelViewMatrixStack) {
-		UpdateInverseModelViewMatrix();
-	}
+	RebuildMatrices();
 }
 
 void Context :: PushMatrix(void) { 
 	RecordError(CurrentMatrixStack()->PushMatrix());
-}
-
-
-void Context :: UpdateInverseModelViewMatrix(void) {
-	m_InverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().Inverse();
 }
 
 // --------------------------------------------------------------------------
@@ -115,21 +119,26 @@ void Context :: UpdateInverseModelViewMatrix(void) {
 
 void Context :: Rotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z) { 
 	CurrentMatrixStack()->MultMatrix(Matrix4x4::CreateRotate(angle, x, y, z));
+	RebuildMatrices();
 }
 
 void Context :: Scalex(GLfixed x, GLfixed y, GLfixed z) { 
 	CurrentMatrixStack()->MultMatrix(Matrix4x4::CreateScale(x, y, z));
+	RebuildMatrices();
 }
 
 void Context :: Translatex(GLfixed x, GLfixed y, GLfixed z) { 
 	CurrentMatrixStack()->MultMatrix(Matrix4x4::CreateTranslate(x, y, z));
+	RebuildMatrices();
 }
 
 void Context :: Frustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar) { 
 	CurrentMatrixStack()->MultMatrix(Matrix4x4::CreateFrustrum(left, right, bottom, top, zNear, zFar));
+	RebuildMatrices();
 }
 
 void Context :: Orthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar) { 
 	CurrentMatrixStack()->MultMatrix(Matrix4x4::CreateOrtho(left, right, bottom, top, zNear, zFar));
+	RebuildMatrices();
 }
 

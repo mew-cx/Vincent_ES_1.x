@@ -108,6 +108,7 @@ Matrix4x4 Matrix4x4 :: Inverse() const {
 	result.Element(2, 1) = -ScaledDet2X2(matrix, 2, 1, inverseDet);
 	result.Element(2, 2) =  ScaledDet2X2(matrix, 2, 2, inverseDet);
 
+	result.m_identity = false;
 	return result;
 }
 
@@ -119,6 +120,7 @@ Matrix4x4 Matrix4x4 :: CreateScale(EGL_Fixed x, EGL_Fixed y, EGL_Fixed z) {
 	result.Element(1, 1) = y;
 	result.Element(2, 2) = z;
 
+	result.m_identity = false;
 	return result;
 }
 
@@ -152,6 +154,7 @@ Matrix4x4 Matrix4x4 :: CreateRotate(EGL_Fixed angle, EGL_Fixed x,
 	matrix.Element(2, 1) = EGL_Mul(EGL_Mul(one_minus_cosine, r_y), r_z) + EGL_Mul(r_x, sine);
 	matrix.Element(2, 2) = cosine + EGL_Mul(EGL_Mul(one_minus_cosine, r_z), r_z);
 
+	matrix.m_identity = false;
 	return matrix;
 }
 
@@ -163,6 +166,7 @@ Matrix4x4 Matrix4x4 :: CreateTranslate(EGL_Fixed x, EGL_Fixed y, EGL_Fixed z) {
 	result.Element(1, 3) = y;
 	result.Element(2, 3) = z;
 
+	result.m_identity = false;
 	return result;
 }
 
@@ -189,6 +193,7 @@ Matrix4x4 Matrix4x4 :: CreateFrustrum(EGL_Fixed l, EGL_Fixed r,
 	matrix.Element(3, 2) = -EGL_ONE;
 	matrix.Element(3, 3) = 0;	
 
+	matrix.m_identity = false;
 	return matrix;
 }
 
@@ -211,5 +216,6 @@ Matrix4x4 Matrix4x4 :: CreateOrtho(EGL_Fixed l, EGL_Fixed r,
 	matrix.Element(2, 2) = 2 * inv_depth;
 	matrix.Element(2, 3) = EGL_Mul(-f - n, inv_depth);
 
+	matrix.m_identity = false;
 	return matrix;
 }
