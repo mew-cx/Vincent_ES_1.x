@@ -56,36 +56,94 @@ namespace EGL {
 			type = GL_FIXED;
 			effectivePointer = 0;
 			boundBuffer = 0;
+			fetchFunction = 0;
 		};
 
-		GLfixed GetValue(int row, int column) {
+		typedef void (VertexArray::*FetchValueFunction)(int row, GLfixed * buffer);
+
+		void FetchByteValues(int row, GLfixed * buffer) {
 			GLsizei rowOffset = row * stride;
 			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+			size_t count = size;
 
+			const GLbyte * byteBase = reinterpret_cast<const GLbyte *>(base);
+
+			do {
+				*buffer++ = EGL_FixedFromInt(*byteBase++);
+			} while (--count);
+		}
+
+		void FetchShortValues(int row, GLfixed * buffer) {
+			GLsizei rowOffset = row * stride;
+			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+			size_t count = size;
+
+			const GLshort * shortBase = reinterpret_cast<const GLshort *>(base);
+
+			do {
+				*buffer++ = EGL_FixedFromInt(*shortBase++);
+			} while (--count);
+		}
+
+		void FetchFixedValues(int row, GLfixed * buffer) {
+			GLsizei rowOffset = row * stride;
+			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+			size_t count = size;
+
+			const GLfixed * fixedBase = reinterpret_cast<const GLfixed *>(base);
+
+			do {
+				*buffer++ = *fixedBase++;
+			} while (--count);
+		}
+
+		void FetchFloatValues(int row, GLfixed * buffer) {
+			GLsizei rowOffset = row * stride;
+			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+			size_t count = size;
+
+			const GLfloat * floatBase = reinterpret_cast<const GLfloat *>(base);
+
+			do {
+				*buffer++ = EGL_FixedFromFloat(*floatBase++);
+			} while (--count);
+		}
+
+		void PrepareFetchValues() {
 			switch (type) {
 			case GL_BYTE:
-				return EGL_FixedFromInt(*(reinterpret_cast<const char *>(base) + column));
+				fetchFunction = FetchByteValues;
+				break;
 
 			case GL_SHORT:
-				return EGL_FixedFromInt(*(reinterpret_cast<const short *>(base) + column));
+				fetchFunction = FetchShortValues;
+				break;
 
 			case GL_FIXED:
-				return *(reinterpret_cast<const I32 *>(base) + column);
+				fetchFunction = FetchFixedValues;
+				break;
 
 			case GL_FLOAT:
-				return EGL_FixedFromFloat(*(reinterpret_cast<const float *>(base) + column));
+				fetchFunction = FetchFloatValues;
+				break;
 
 			default:
-				return 0;
+				fetchFunction = 0;
+				break;
 			}
 		}
 
-		GLint			size;
-		GLenum			type;
-		GLsizei			stride;
-		const GLvoid *	pointer;
-		size_t			boundBuffer;
-		const void *	effectivePointer;
+		inline void FetchValues(int row, GLfixed * buffer) {
+			(this->*fetchFunction)(row, buffer);
+		}
+
+		GLint				size;
+		GLenum				type;
+		GLsizei				stride;
+		const GLvoid *		pointer;
+		size_t				boundBuffer;
+		const void *		effectivePointer;
+		FetchValueFunction	fetchFunction;
 	};
 
 	template <class ELEMENT>

@@ -27,6 +27,7 @@ This version addresses the following issues:
 1015029 - Linear fog efficiency
 1008788	- Auto mipmap generation
 1008786 - Buffer Objects
+1012401 - Optimize SelectArrayElement
 
 
 Version 0.81
