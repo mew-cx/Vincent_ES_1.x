@@ -649,12 +649,12 @@ void Context :: PrepareRendering() {
 
 inline void Context :: CurrentTextureValuesToRasterPos(RasterPos * rasterPos) {
 	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		if (m_TextureMatrixStack.CurrentMatrix().IsIdentity()) {
+		if (m_TextureMatrixStack[unit].CurrentMatrix().IsIdentity()) {
 			rasterPos->m_TextureCoords[unit].tu = m_CurrentTextureCoords[unit].tu;
 			rasterPos->m_TextureCoords[unit].tv = m_CurrentTextureCoords[unit].tv;
 		} else {
 			Vec3D inCoords(m_CurrentTextureCoords[unit].tu, m_CurrentTextureCoords[unit].tv, 0);
-			Vec4D outCoords = m_TextureMatrixStack.CurrentMatrix() * inCoords;
+			Vec4D outCoords = m_TextureMatrixStack[unit].CurrentMatrix() * inCoords;
 			rasterPos->m_TextureCoords[unit].tu = outCoords.x();
 			rasterPos->m_TextureCoords[unit].tv = outCoords.y();
 		}

@@ -403,7 +403,7 @@ private:
 
 		MatrixStack			m_ModelViewMatrixStack;
 		MatrixStack			m_ProjectionMatrixStack;
-		MatrixStack			m_TextureMatrixStack;
+		MatrixStack			m_TextureMatrixStack[EGL_NUM_TEXTURE_UNITS];
 		Matrix4x4			m_MatrixPalette[MATRIX_PALETTE_SIZE];
 		Matrix4x4			m_MatrixPaletteInverse[MATRIX_PALETTE_SIZE];
 
