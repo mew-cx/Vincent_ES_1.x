@@ -195,7 +195,8 @@ namespace EGL {
 // and have the adjusted clipping range for tu and tv be stored in the rasterizer.
 
 void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * currentBlock,
-			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo) {
+			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
+			int weight) {
 
 	cg_block_t * block = currentBlock;
 
@@ -331,7 +332,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					LDI		(regNewU1, EGL_FixedFromInt(1));
 					BRA		(label2);
 
-					block = cg_block_create(procedure);
+					block = cg_block_create(procedure, weight);
 					label1->block = block;
 
 					LDI		(regConstantZero, EGL_FixedFromInt(0));
@@ -339,7 +340,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					BGE		(regCompareZero, label2);
 					LDI		(regNewU2, EGL_FixedFromInt(0));
 
-					block = cg_block_create(procedure);
+					block = cg_block_create(procedure, weight);
 					label2->block = block;
 
 					cg_virtual_reg_list_t * regList = 
@@ -382,7 +383,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					LDI		(regNewV1, EGL_FixedFromInt(1));
 					BRA		(label2);
 
-					block = cg_block_create(procedure);
+					block = cg_block_create(procedure, weight);
 					label1->block = block;
 
 					LDI		(regConstantZero, EGL_FixedFromInt(0));
@@ -390,7 +391,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					BGE		(regCompareZero, label2);
 					LDI		(regNewV2, EGL_FixedFromInt(0));
 
-					block = cg_block_create(procedure);
+					block = cg_block_create(procedure, weight);
 					label2->block = block;
 
 					PHI		(regV0, cg_create_virtual_reg_list(procedure->module->heap, fragmentInfo.regV, regNewV1, regNewV2, NULL));
@@ -1005,7 +1006,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							BLE		(regNeedsClampingR, noClampingR);
 							LDI		(regClampedR, 0x1f);
 
-							block = cg_block_create(procedure);
+							block = cg_block_create(procedure, weight);
 							noClampingR->block = block;
 
 							PHI		(regColorR, cg_create_virtual_reg_list(procedure->module->heap, regClampedR, regSumR, NULL));
@@ -1031,7 +1032,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							BLE		(regNeedsClampingG, noClampingG);
 							LDI		(regClampedG, 0x3f);
 
-							block = cg_block_create(procedure);
+							block = cg_block_create(procedure, weight);
 							noClampingG->block = block;
 
 							PHI		(regColorG, cg_create_virtual_reg_list(procedure->module->heap, regClampedG, regSumG, NULL));
@@ -1057,7 +1058,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							BLE		(regNeedsClampingB, noClampingB);
 							LDI		(regClampedB, 0x1f);
 
-							block = cg_block_create(procedure);
+							block = cg_block_create(procedure, weight);
 							noClampingB->block = block;
 
 							PHI		(regColorB, cg_create_virtual_reg_list(procedure->module->heap, regClampedB, regSumB, NULL));
@@ -1428,7 +1429,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							BLE		(regNeedsClampingR, noClampingR);
 							LDI		(regClampedR, 0x1f);
 
-							block = cg_block_create(procedure);
+							block = cg_block_create(procedure, weight);
 							noClampingR->block = block;
 
 							PHI		(regColorR, cg_create_virtual_reg_list(procedure->module->heap, regClampedR, regSumR, NULL));
@@ -1454,7 +1455,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							BLE		(regNeedsClampingG, noClampingG);
 							LDI		(regClampedG, 0x3f);
 
-							block = cg_block_create(procedure);
+							block = cg_block_create(procedure, weight);
 							noClampingG->block = block;
 
 							PHI		(regColorG, cg_create_virtual_reg_list(procedure->module->heap, regClampedG, regSumG, NULL));
@@ -1480,7 +1481,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							BLE		(regNeedsClampingB, noClampingB);
 							LDI		(regClampedB, 0x1f);
 
-							block = cg_block_create(procedure);
+							block = cg_block_create(procedure, weight);
 							noClampingB->block = block;
 
 							PHI		(regColorB, cg_create_virtual_reg_list(procedure->module->heap, regClampedB, regSumB, NULL));
@@ -1856,7 +1857,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		cg_block_ref_t * labelStencilZTestPassed = cg_block_ref_create(procedure);
 
 		// stencil test passed
-		block = cg_block_create(procedure);
+		block = cg_block_create(procedure, weight);
 		labelStencilPassed->block = block;
 
 		//if (!depthTest) {
@@ -1956,7 +1957,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			}
 		//} else {
 		// stencil nad z-test passed
-		block = cg_block_create(procedure);
+		block = cg_block_create(procedure, weight);
 		labelStencilZTestPassed->block = block;
 
 			{
@@ -2031,7 +2032,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			}
 
 		// stencil test bypassed
-		block = cg_block_create(procedure);
+		block = cg_block_create(procedure, weight);
 		labelStencilBypassed->block = block;
 	}
 
@@ -2319,7 +2320,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	procedure->num_args = 3;	// the previous three declarations make up the arguments
 
-	cg_block_t * block = cg_block_create(procedure);
+	cg_block_t * block = cg_block_create(procedure, 1);
 
 	// Create instructions to calculate addresses of individual fields of
 	// edge buffer input arguments
@@ -2559,7 +2560,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	BEQ		(regCompare0, endLoop0);
 
 	cg_block_ref_t * beginLoop0 = cg_block_ref_create(procedure);
-	block = cg_block_create(procedure);
+	block = cg_block_create(procedure, 2);
 	beginLoop0->block = block;
 
 	// Here we define all the loop registers and phi mappings
@@ -2652,7 +2653,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	cg_block_ref_t * endLoop1 = cg_block_ref_create(procedure);
 	cg_block_ref_t * postFragmentLoop1 = cg_block_ref_create(procedure);
 
-	block = cg_block_create(procedure);
+	block = cg_block_create(procedure, 8);
 	beginLoop1->block = block;
 
 		//do {
@@ -2711,9 +2712,9 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	info.regStencilBuffer = regStencilBuffer;
 	info.regSurfaceWidth = regSurfaceWidth;
 
-	GenerateFragment(procedure, block, postFragmentLoop1, info); 
+	GenerateFragment(procedure, block, postFragmentLoop1, info, 8); 
 
-	block = cg_block_create(procedure);
+	block = cg_block_create(procedure, 8);
 	postFragmentLoop1->block = block;
 
 			//baseColor += colorIncrement;
@@ -2747,7 +2748,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	BNE		(regLoop0Condition, beginLoop0);
 
 	//if (x != xEnd) {
-	block = cg_block_create(procedure);
+	block = cg_block_create(procedure, 1);
 	endLoop0->block = block;
 
 	cg_block_ref_t * beginLoop2 = cg_block_ref_create(procedure);
@@ -2804,7 +2805,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FMUL	(regLoop2ScaledDiffV, regBlock4DiffV, regBlock4InvSpan);
 
 		//for (; x < xEnd; ++x) {
-	block = cg_block_create(procedure);
+	block = cg_block_create(procedure, 4);
 	beginLoop2->block = block;
 
 	// phi for x, z, tu, tv, fog, r, g, b, a
@@ -2862,9 +2863,9 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	info2.regStencilBuffer = regStencilBuffer;
 	info2.regSurfaceWidth = regSurfaceWidth;
 
-	GenerateFragment(procedure, block, postFragmentLoop2, info2); 
+	GenerateFragment(procedure, block, postFragmentLoop2, info2, 4); 
 
-	block = cg_block_create(procedure);
+	block = cg_block_create(procedure, 4);
 	postFragmentLoop2->block = block;
 
 			//baseColor += colorIncrement;
@@ -2893,7 +2894,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		//}
 
 	//}
-	block = cg_block_create(procedure);
+	block = cg_block_create(procedure, 1);
 	endLoop2->block = block;
 
 	RET();

@@ -1101,7 +1101,7 @@ cg_proc_t * cg_proc_create(cg_module_t * module)
 	return proc;
 }
 
-cg_block_t * cg_block_create(cg_proc_t * proc)
+cg_block_t * cg_block_create(cg_proc_t * proc, int weight)
 {
 	cg_block_t * block = cg_heap_allocate(proc->module->heap, sizeof (cg_block_t));
 
@@ -1116,6 +1116,7 @@ cg_block_t * cg_block_create(cg_proc_t * proc)
 	}
 
 	block->proc = proc;
+	block->weight = weight;
 
 	return block;
 }
@@ -1810,7 +1811,7 @@ void dump_register_info(cg_virtual_reg_t * reg, FILE * out)
 {
 	cg_virtual_reg_list_t * list;
 
-	fprintf(out, "\tr%d => ", reg->reg_no);
+	fprintf(out, "\tr%d [U: $%d, D: $%d] => ", reg->reg_no, reg->use_cost, reg->def_cost);
 
 	for (list = reg->interferences; list; list = list->next)
 	{
@@ -2001,7 +2002,7 @@ static void block_interferences(cg_block_t * block)
 
 	for (inst = block->insts.head; inst != NULL; inst = inst->base.next)
 	{
-		cg_virtual_reg_t * buffer[64];
+		cg_virtual_reg_t * buffer[64], * representative;
 		cg_virtual_reg_t **iter, ** end = cg_inst_def(inst, buffer, buffer + 64);
 		
 		for (iter = buffer; iter != end; ++iter)
@@ -2024,6 +2025,14 @@ static void block_interferences(cg_block_t * block)
 
 				CG_BITSET_SET(live, (*iter)->reg_no);
 			}
+
+			representative = *iter;
+
+			if (representative->representative != NULL && representative->representative != representative)
+				representative = representative->representative;
+
+			if (CG_BITSET_TEST(block->live_out, representative->reg_no))
+				representative->def_cost += block->weight;
 		}
 
 		end = cg_inst_use(inst, buffer, buffer + 64);
@@ -2034,6 +2043,14 @@ static void block_interferences(cg_block_t * block)
 
 			if (uses[(*iter)->reg_no] == 0 && !CG_BITSET_TEST(block->live_out, (*iter)->reg_no)) 
 				CG_BITSET_CLEAR(live, (*iter)->reg_no);
+
+			representative = *iter;
+
+			if (representative->representative != NULL && representative->representative != representative)
+				representative = representative->representative;
+
+			/* TO DO: this estimate can be refined in a variety of ways */
+			representative->use_cost += block->weight;
 		}
 	}
 }

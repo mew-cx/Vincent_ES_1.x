@@ -305,6 +305,7 @@ struct cg_block_t
 	struct cg_bitset_t *	live_out;		/* set of regs live on leaving  */
 	cg_block_list_t *		pred;			/* list of predecessor blocks	*/
 	cg_block_list_t *		succ;			/* list of successor blocks		*/
+	int						weight;			/* weighting factor for block	*/
 };
 
 
@@ -343,6 +344,8 @@ struct cg_virtual_reg_t
 	cg_inst_t *					def;				/* defining instruction			*/
 	cg_inst_list_t *			use;				/* use set						*/
 	cg_reg_type_t				type;				/* type of this register		*/
+	short						use_cost;			/* repeated usage cost			*/
+	short						def_cost;			/* definition cost				*/
 	int							is_global : 1;		/* is this a global register?   */
 	int							is_arg : 1;			/* is passed in as argument val.*/
 };
@@ -399,7 +402,7 @@ cg_module_t * cg_module_create(cg_heap_t * heap);
 
 cg_proc_t * cg_proc_create(cg_module_t * module);
 
-cg_block_t * cg_block_create(cg_proc_t * proc);
+cg_block_t * cg_block_create(cg_proc_t * proc, int weight);
 
 cg_virtual_reg_t * cg_virtual_reg_create(cg_proc_t * proc, cg_reg_type_t type);
 
