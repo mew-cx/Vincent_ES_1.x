@@ -1144,13 +1144,11 @@ static void emit_binary_minmax(cg_codegen_t * gen, cg_inst_binary_t * inst, int 
 {
 	ARMCond condition;
 	ARMCond neg_condition;
+	int shift;
 
 	assert(!update_flags);
-	assert(inst->base.kind == cg_inst_binary);
 
-	ARM_CMP_REG_REG(gen->cseg, 
-					inst->source->physical_reg->regno,
-					inst->operand.source->physical_reg->regno);
+	emit_binary_regular(gen, inst, ARMOP_CMP, 1);
 
 	switch (inst->base.opcode) {
 	case cg_op_min:
@@ -1168,16 +1166,70 @@ static void emit_binary_minmax(cg_codegen_t * gen, cg_inst_binary_t * inst, int 
 		break;
 	}
 
-	ARM_MOV_REG_REG_COND(gen->cseg,
-						 inst->dest_value->physical_reg->regno,
-						 inst->source->physical_reg->regno,
-						 condition);
-					
-	ARM_MOV_REG_REG_COND(gen->cseg,
+	if (inst->dest_value->physical_reg->regno != inst->source->physical_reg->regno) {
+		ARM_MOV_REG_REG_COND(gen->cseg,
+							 inst->dest_value->physical_reg->regno,
+							 inst->source->physical_reg->regno,
+							 condition);
+	}
+	
+	/*ARM_MOV_REG_REG_COND(gen->cseg,
 						 inst->dest_value->physical_reg->regno,
 						 inst->operand.source->physical_reg->regno,
-						 neg_condition);
+						 neg_condition);*/
 					
+	switch (inst->base.kind)
+	{
+		case cg_inst_binary:
+			ARM_DPIOP_REG_REG_COND(gen->cseg, 
+								   ARMOP_MOV, 
+								   inst->dest_value->physical_reg->regno, 
+								   0, 
+								   inst->operand.source->physical_reg->regno, 
+								   neg_condition);
+
+			break;
+			
+		case cg_inst_arm_binary_immed:
+			shift = calc_arm_mov_const_shift(inst->operand.immed);
+			assert((shift & 0x80000001) != 1 && shift >= 0);
+
+			ARM_DPIOP_REG_IMM8ROT_COND(gen->cseg, 
+									   ARMOP_MOV, 
+									   inst->dest_value->physical_reg->regno, 
+									   0, 
+									   inst->operand.immed >> ((32 - shift) & 31), shift,
+									   neg_condition);
+
+			break;
+			
+		case cg_inst_arm_binary_shift_reg:
+			ARM_DPIOP_REG_REGSHIFT_COND(gen->cseg, 
+										ARMOP_MOV, 
+										inst->dest_value->physical_reg->regno, 
+									    0, 
+										inst->operand.shift_reg.source->physical_reg->regno, 
+										arm_shift_type(inst->operand.shift_reg.op),
+										inst->operand.shift_reg.shift->physical_reg->regno, 
+										neg_condition);
+
+			break;
+			
+		case cg_inst_arm_binary_shift_immed:
+			ARM_DPIOP_REG_IMMSHIFT_COND(gen->cseg, 
+										ARMOP_MOV, 
+										inst->dest_value->physical_reg->regno, 
+										0, 
+										inst->operand.shift_immed.source->physical_reg->regno, 
+										arm_shift_type(inst->operand.shift_immed.op),
+										inst->operand.shift_immed.shift, 
+										neg_condition);
+
+			break;
+			
+		default:
+			assert(0);
+	}
 }
 
 
