@@ -980,7 +980,7 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 	if (EGL_Round(p_from.m_WindowCoords.x) == EGL_Round(p_to.m_WindowCoords.x) &&
 		EGL_Round(p_from.m_WindowCoords.y) == EGL_Round(p_to.m_WindowCoords.y)) {
 		// both ends of line on same pixel
-		RasterPoint(p_from);
+		RasterPoint(p_from, EGL_ONE);
 		return;
 	}
 
@@ -1183,6 +1183,68 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 			tuOverZ += deltaU;
 			tvOverZ += deltaV;
 			fogDensity += deltaFog;
+		}
+	}
+}
+
+namespace {
+	inline int Log2(int value) {
+		if (value <= 1) {
+			return 0;
+		}
+
+		int result = 0;
+
+		while (value > 1) {
+			result++;
+			value >>= 1;
+		}
+
+		return result;
+	}
+}
+
+void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
+
+	EGL_Fixed halfSize = size / 2;
+
+	I32 xmin = EGL_IntFromFixed(point.m_WindowCoords.x - halfSize + EGL_HALF);
+	I32 xmax = xmin + ((size - EGL_HALF) >> EGL_PRECISION);
+	I32 ymin = EGL_IntFromFixed(point.m_WindowCoords.y - halfSize + EGL_HALF);
+	I32 ymax = ymin + ((size - EGL_HALF) >> EGL_PRECISION);
+
+	EGL_Fixed depth = point.m_WindowCoords.depth;
+	FractionalColor baseColor = point.m_Color;
+	EGL_Fixed fogDensity = point.m_FogDensity;
+
+
+	if (!m_State->m_Point.SpriteEnabled && !m_State->m_Point.CoordReplaceEnabled) {
+		EGL_Fixed tu = point.m_TextureCoords.tu;
+		EGL_Fixed tv = point.m_TextureCoords.tv;
+
+		for (I32 y = ymin; y <= ymax; y++) {
+			for (I32 x = xmin; x <= xmax; x++) {
+				Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
+			}
+		}
+	} else {
+		EGL_Fixed delta = EGL_Inverse(size);
+
+		if (m_UseMipmap) {
+			EGL_Fixed maxDu = delta >> (16 - m_Texture->GetTexture(0)->GetLogWidth());
+			EGL_Fixed maxDv = delta >> (16 - m_Texture->GetTexture(0)->GetLogHeight());
+
+			EGL_Fixed rho = maxDu + maxDv;
+
+			// we start with nearest/minification only selection; will add LINEAR later
+
+			m_RasterInfo.MipmapLevel = EGL_Min(Log2(rho), m_RasterInfo.MaxMipmapLevel);
+		}
+
+		for (I32 y = ymin, tv = delta / 2; y <= ymax; y++, tv += delta) {
+			for (I32 x = xmin, tu = delta / 2; x <= xmax; x++, tu += delta) {
+				Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
+			}
 		}
 	}
 }

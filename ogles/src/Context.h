@@ -67,6 +67,8 @@ namespace EGL {
 		// Default viewport configuration
 		// ----------------------------------------------------------------------
 		enum {
+			NUM_CLIP_PLANES = 6,
+
 			VIEWPORT_X = 0,
 			VIEWPORT_Y = 0,
 			VIEWPORT_WIDTH = 240,
@@ -98,13 +100,17 @@ namespace EGL {
 
 		void ActiveTexture(GLenum texture);
 		void AlphaFuncx(GLenum func, GLclampx ref);
+		void BindBuffer(GLenum target, GLuint buffer);
 		void BindTexture(GLenum target, GLuint texture);
 		void BlendFunc(GLenum sfactor, GLenum dfactor);
+		void BufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage);
+		void BufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid *data);
 		void Clear(GLbitfield mask);
 		void ClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
 		void ClearDepthx(GLclampx depth);
 		void ClearStencil(GLint s);
 		void ClientActiveTexture(GLenum texture);
+		void ClipPlanex(GLenum plane, const GLfixed *equation);
 		void Color4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
 		void ColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
 		void ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
@@ -113,6 +119,7 @@ namespace EGL {
 		void CopyTexImage2D(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
 		void CopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
 		void CullFace(GLenum mode);
+		void DeleteBuffers(GLsizei n, const GLuint *buffers);
 		void DeleteTextures(GLsizei n, const GLuint *textures);
 		void DepthFunc(GLenum func);
 		void DepthMask(GLboolean flag);
@@ -129,11 +136,26 @@ namespace EGL {
 		void Fogxv(GLenum pname, const GLfixed *params);
 		void FrontFace(GLenum mode);
 		void Frustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
+		void GetBooleanv(GLenum pname, GLboolean *params);
+		void GetBufferParameteriv(GLenum target, GLenum pname, GLint *params);
+		void GetClipPlanex(GLenum pname, GLfixed eqn[4]);
+		void GenBuffers(GLsizei n, GLuint *buffers);
 		void GenTextures(GLsizei n, GLuint *textures);
 		GLenum GetError(void);
+		void GetFixedv(GLenum pname, GLfixed *params);
 		void GetIntegerv(GLenum pname, GLint *params);
+		void GetLightxv(GLenum light, GLenum pname, GLfixed *params);
+		void GetMaterialxv(GLenum face, GLenum pname, GLfixed *params);
+		void GetPointerv(GLenum pname, void **params);
+		void GetTexEnviv(GLenum env, GLenum pname, GLint *params);
+		void GetTexEnvxv(GLenum env, GLenum pname, GLfixed *params);
+		void GetTexParameteriv(GLenum target, GLenum pname, GLint *params);
+		void GetTexParameterxv(GLenum target, GLenum pname, GLfixed *params);
 		const GLubyte * GetString(GLenum name);
 		void Hint(GLenum target, GLenum mode);
+		GLboolean IsBuffer(GLuint buffer);
+		GLboolean IsEnabled(GLenum cap);
+		GLboolean IsTexture(GLuint texture);
 		void LightModelx(GLenum pname, GLfixed param);
 		void LightModelxv(GLenum pname, const GLfixed *params);
 		void Lightx(GLenum light, GLenum pname, GLfixed param);
@@ -151,6 +173,8 @@ namespace EGL {
 		void NormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer);
 		void Orthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
 		void PixelStorei(GLenum pname, GLint param);
+		void PointParameterx(GLenum pname, GLfixed param);
+		void PointParameterxv(GLenum pname, const GLfixed *params);
 		void PointSizex(GLfixed size);
 		void PolygonOffsetx(GLfixed factor, GLfixed units);
 		void PopMatrix(void);
@@ -168,7 +192,6 @@ namespace EGL {
 		void TexEnvx(GLenum target, GLenum pname, GLfixed param);
 		void TexEnvxv(GLenum target, GLenum pname, const GLfixed *params);
 		void TexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
-		void TexParameterf(GLenum target, GLenum pname, GLfloat param);
 		void TexParameterx(GLenum target, GLenum pname, GLfixed param);
 		void TexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
 		void Translatex(GLfixed x, GLfixed y, GLfixed z);
@@ -182,11 +205,20 @@ namespace EGL {
 		void AlphaFunc(GLenum func, GLclampf ref);
 		void ClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 		void ClearDepthf(GLclampf depth);
+		void ClipPlanef(GLenum plane, const GLfloat *equation);
 		void Color4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 		void DepthRangef(GLclampf zNear, GLclampf zFar);
+		void DrawTexf(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height);
+		void DrawTexfv(GLfloat *coords);
 		void Fogf(GLenum pname, GLfloat param);
 		void Fogfv(GLenum pname, const GLfloat *params);
 		void Frustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
+		void GetClipPlanef(GLenum pname, GLfloat eqn[4]);
+		void GetFloatv(GLenum pname, GLfloat *params);
+		void GetLightfv(GLenum light, GLenum pname, GLfloat *params);
+		void GetMaterialfv(GLenum face, GLenum pname, GLfloat *params);
+		void GetTexEnvfv(GLenum env, GLenum pname, GLfloat *params);
+		void GetTexParameterfv(GLenum target, GLenum pname, GLfloat *params);
 		void LightModelf(GLenum pname, GLfloat param);
 		void LightModelfv(GLenum pname, const GLfloat *params);
 		void Lightf(GLenum light, GLenum pname, GLfloat param);
@@ -200,6 +232,8 @@ namespace EGL {
 		void MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
 		void Normal3f(GLfloat nx, GLfloat ny, GLfloat nz);
 		void Orthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
+		void PointParameterf(GLenum pname, GLfloat param);
+		void PointParameterfv(GLenum pname, const GLfloat *params);
 		void PointSize(GLfloat size);
 		void PolygonOffset(GLfloat factor, GLfloat units);
 		void Rotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
@@ -207,18 +241,15 @@ namespace EGL {
 		void Scalef(GLfloat x, GLfloat y, GLfloat z);
 		void TexEnvf(GLenum target, GLenum pname, GLfloat param);
 		void TexEnvfv(GLenum target, GLenum pname, const GLfloat *params);
+		void TexParameterf(GLenum target, GLenum pname, GLfloat param);
 		void Translatef(GLfloat x, GLfloat y, GLfloat z);
 
 		// ----------------------------------------------------------------------
 		// Extensions
 		// ----------------------------------------------------------------------
 
-		void DrawMesh(GLsizei count, GLenum type, GLsizei stride,
-					  GLsizei offsetVertex, GLsizei strideVertex,
-					  GLsizei offsetNormal, GLsizei strideNormal,
-					  GLsizei offsetTexture, GLsizei strideTexture,
-					  GLsizei offsetColor, GLsizei strideColor, 
-					  const GLvoid *pointer);
+		/* OES_point_size_array */
+		void PointSizePointer(GLenum type, GLsizei stride, const GLvoid *pointer);
 
 		// ----------------------------------------------------------------------
 		// Context Management Functions
@@ -271,7 +302,6 @@ namespace EGL {
 		}
 
 		void UpdateInverseModelViewMatrix(void);
-		void UpdateVertexTransformation(void);
 		void RebuildMatrices(void);
 
 		// SGIS_generate_mipmap extension
@@ -321,17 +351,15 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 
 private:
-		void SelectArrayElement(int vertexIndex, int normalIndex, int textureIndex, int colorIndex);
-
-		void SelectArrayElement(int index) {
-			SelectArrayElement(index, index, index, index);
-		}
+		void SelectArrayElement(int index);
+		EGL_Fixed SelectPointSizeArrayElement(int index);
 
 		void CurrentValuesToRasterPos(RasterPos * rasterPos);
 
 		typedef void (Context::*GeometryFunction)(RasterPos * rasterPos);
 
-		void SetGeometryFunction();
+		void PrepareRendering();
+		void PrepareArray(VertexArray & array, bool enabled, bool isColor = false);
 
 		void CurrentValuesToRasterPosNoLight(RasterPos * rasterPos);
 		void CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos);
@@ -345,7 +373,7 @@ private:
 		// ----------------------------------------------------------------------
 		// Perform clipping, depth division & actual call into rasterizer
 		// ----------------------------------------------------------------------
-		void RenderPoint(RasterPos& point);
+		void RenderPoint(RasterPos& point, EGL_Fixed size);
 		void RenderLine(RasterPos& from, RasterPos& to);
 		void RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c);
 		bool IsCulled(RasterPos& a, RasterPos& b, RasterPos& c);
@@ -354,6 +382,8 @@ private:
 		EGL_Fixed FogDensity(EGL_Fixed eyeDistance) const;
 
 		void InitFogTable();
+
+		size_t * CurrentBufferForTarget(GLenum target);
 
 	private:
 		GLenum				m_LastError;
@@ -368,7 +398,7 @@ private:
 
 		MatrixStack *		m_CurrentMatrixStack;
 		Matrix4x4			m_InverseModelViewMatrix;
-		Matrix4x4			m_VertexTransformation;
+		Matrix4x4			m_FullInverseModelViewMatrix;
 
 		// ----------------------------------------------------------------------
 		// Viewport configuration
@@ -392,11 +422,13 @@ private:
 		bool				m_NormalArrayEnabled;
 		bool				m_ColorArrayEnabled;
 		bool				m_TexCoordArrayEnabled;
+		bool				m_PointSizeArrayEnabled;
 
 		VertexArray			m_VertexArray;
 		VertexArray			m_NormalArray;
 		VertexArray			m_ColorArray;
 		VertexArray			m_TexCoordArray;
+		VertexArray			m_PointSizeArray;
 
 
 		// ----------------------------------------------------------------------
@@ -420,6 +452,8 @@ private:
 		// Rendering State
 		// ----------------------------------------------------------------------
 
+		Vec4D				m_ClipPlanes[NUM_CLIP_PLANES];
+		U32					m_ClipPlaneEnabled;
 		Light				m_Lights[EGL_NUMBER_LIGHTS];
 		Material			m_FrontMaterial;
 		FractionalColor		m_LightModelAmbient;
@@ -435,6 +469,12 @@ private:
 		U8					m_FogGradientShift;
 
 		EGL_Fixed			m_DepthRangeBase, m_DepthRangeFactor;
+
+		EGL_Fixed			m_PointSize;
+		EGL_Fixed			m_PointSizeMin, m_PointSizeMax;
+		EGL_Fixed			m_PointFadeThresholdSize;
+		EGL_Fixed			m_PointDistanceAttenuation[3];
+		bool				m_PointSizeAttenuate;
 
 		bool				m_LightingEnabled;		// is lightning enabled?
 		bool				m_TwoSidedLightning;	// do we have two-sided lightning
@@ -464,6 +504,14 @@ private:
 		// ----------------------------------------------------------------------
 
 		TextureArray		m_Textures;
+
+		// ----------------------------------------------------------------------
+		// vertex buffer related state
+		// ----------------------------------------------------------------------
+
+		BufferArray			m_Buffers;
+		size_t				m_CurrentArrayBuffer;
+		size_t				m_CurrentElementArrayBuffer;
 
 		// ----------------------------------------------------------------------
 		// Object-Life Cycle State

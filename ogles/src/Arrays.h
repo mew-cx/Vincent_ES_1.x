@@ -42,6 +42,7 @@
 #include "GLES/gl.h"
 #include "Types.h"
 #include "linalg.h"
+#include "Buffer.h"
 #include "Texture.h"
 
 
@@ -52,49 +53,130 @@ namespace EGL {
 			pointer = 0;
 			stride = 0;
 			size = 4;
-			size = 0;
+			type = GL_FIXED;
+			effectivePointer = 0;
+			boundBuffer = 0;
+			fetchFunction = 0;
 		};
 
-		GLfixed GetValue(int row, int column) {
-			GLsizei rowOffset = row * stride;
-			const unsigned char * base = reinterpret_cast<const unsigned char *>(pointer) + rowOffset;
+		typedef void (VertexArray::*FetchValueFunction)(int row, GLfixed * buffer);
 
+		void FetchByteValues(int row, GLfixed * buffer) {
+			GLsizei rowOffset = row * stride;
+			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+			size_t count = size;
+
+			const GLbyte * byteBase = reinterpret_cast<const GLbyte *>(base);
+
+			do {
+				*buffer++ = EGL_FixedFromInt(*byteBase++);
+			} while (--count);
+		}
+
+		void FetchByteColorValues(int row, GLfixed * buffer) {
+			GLsizei rowOffset = row * stride;
+			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+			size_t count = size;
+
+			const GLbyte * byteBase = reinterpret_cast<const GLbyte *>(base);
+
+			do {
+				U8 byteValue = *byteBase++;
+				*buffer++ = static_cast<GLfixed>(((byteValue << 8) | byteValue) + (byteValue >> 7));
+			} while (--count);
+		}
+
+		void FetchShortValues(int row, GLfixed * buffer) {
+			GLsizei rowOffset = row * stride;
+			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+			size_t count = size;
+
+			const GLshort * shortBase = reinterpret_cast<const GLshort *>(base);
+
+			do {
+				*buffer++ = EGL_FixedFromInt(*shortBase++);
+			} while (--count);
+		}
+
+		void FetchFixedValues(int row, GLfixed * buffer) {
+			GLsizei rowOffset = row * stride;
+			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+			size_t count = size;
+
+			const GLfixed * fixedBase = reinterpret_cast<const GLfixed *>(base);
+
+			do {
+				*buffer++ = *fixedBase++;
+			} while (--count);
+		}
+
+		void FetchFloatValues(int row, GLfixed * buffer) {
+			GLsizei rowOffset = row * stride;
+			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+			size_t count = size;
+
+			const GLfloat * floatBase = reinterpret_cast<const GLfloat *>(base);
+
+			do {
+				*buffer++ = EGL_FixedFromFloat(*floatBase++);
+			} while (--count);
+		}
+
+		void PrepareFetchValues(bool colorMode) {
 			switch (type) {
 			case GL_BYTE:
-				return EGL_FixedFromInt(*(reinterpret_cast<const char *>(base) + column));
+				if (colorMode) {
+					fetchFunction = FetchByteColorValues;
+				} else {
+					fetchFunction = FetchByteValues;
+				}
+
+				break;
 
 			case GL_SHORT:
-				return EGL_FixedFromInt(*(reinterpret_cast<const short *>(base) + column));
+				fetchFunction = FetchShortValues;
+				break;
 
 			case GL_FIXED:
-				return *(reinterpret_cast<const I32 *>(base) + column);
+				fetchFunction = FetchFixedValues;
+				break;
 
 			case GL_FLOAT:
-				return EGL_FixedFromFloat(*(reinterpret_cast<const float *>(base) + column));
+				fetchFunction = FetchFloatValues;
+				break;
 
 			default:
-				return 0;
+				fetchFunction = 0;
+				break;
 			}
 		}
 
-		GLint			size;
-		GLenum			type;
-		GLsizei			stride;
-		const GLvoid *	pointer;
+		inline void FetchValues(int row, GLfixed * buffer) {
+			(this->*fetchFunction)(row, buffer);
+		}
+
+		GLint				size;
+		GLenum				type;
+		GLsizei				stride;
+		const GLvoid *		pointer;
+		size_t				boundBuffer;
+		const void *		effectivePointer;
+		FetchValueFunction	fetchFunction;
 	};
 
-	struct TextureArray {
+	template <class ELEMENT>
+	struct ObjectArray {
 
-		struct TextureRecord {
+		struct ObjectRecord {
 			U32 value;
 
-			void SetPointer(MultiTexture * texture) {
+			void SetPointer(ELEMENT * texture) {
 				value = reinterpret_cast<U32>(texture);
 			}
 
-			MultiTexture * GetPointer() {
+			ELEMENT * GetPointer() {
 				assert(IsPointer());
-				return reinterpret_cast<MultiTexture *>(value);
+				return reinterpret_cast<ELEMENT *>(value);
 			}
 
 			bool IsPointer() {
@@ -125,28 +207,28 @@ namespace EGL {
 			FACTOR = 2
 		};
 
-		TextureArray() {
-			m_Textures = new TextureRecord[INITIAL_SIZE];
+		ObjectArray() {
+			m_Objects = new ObjectRecord[INITIAL_SIZE];
 
 			for (size_t index = 0; index < INITIAL_SIZE; ++index) {
-				m_Textures[index].SetIndex(index + 1);
+				m_Objects[index].SetIndex(index + 1);
 			}
 
-			m_Textures[INITIAL_SIZE - 1].SetNil();
+			m_Objects[INITIAL_SIZE - 1].SetNil();
 
-			m_FreeTextures = m_AllocatedTextures = INITIAL_SIZE;
+			m_FreeObjects = m_AllocatedObjects = INITIAL_SIZE;
 			m_FreeListHead = 0;
 		}
 
-		~TextureArray() {
+		~ObjectArray() {
 
-			if (m_Textures != 0) {
-				for (size_t index = 0; index < m_AllocatedTextures; ++index) {
-					if (m_Textures[index].IsPointer() && m_Textures[index].GetPointer())
-						delete m_Textures[index].GetPointer();
+			if (m_Objects != 0) {
+				for (size_t index = 0; index < m_AllocatedObjects; ++index) {
+					if (m_Objects[index].IsPointer() && m_Objects[index].GetPointer())
+						delete m_Objects[index].GetPointer();
 				}
 
-				delete [] m_Textures;
+				delete [] m_Objects;
 			}
 		}
 
@@ -154,72 +236,80 @@ namespace EGL {
 
 			assert(m_FreeListHead == 0xffffffffu);
 
-			size_t newAllocatedTextures = m_AllocatedTextures * FACTOR;
+			size_t newAllocatedObjects = m_AllocatedObjects * FACTOR;
 
-			TextureRecord * newTextures = new TextureRecord[newAllocatedTextures];
+			ObjectRecord * newObjects = new ObjectRecord[newAllocatedObjects];
 			size_t index;
 
-			for (index = 0; index < m_AllocatedTextures; ++index) {
-				newTextures[index] = m_Textures[index];
+			for (index = 0; index < m_AllocatedObjects; ++index) {
+				newObjects[index] = m_Objects[index];
 			}
 
-			for (index = m_AllocatedTextures; index < newAllocatedTextures - 1; ++index) {
-				newTextures[index].SetIndex(index + 1);
+			for (index = m_AllocatedObjects; index < newAllocatedObjects - 1; ++index) {
+				newObjects[index].SetIndex(index + 1);
 			}
 
-			newTextures[newAllocatedTextures - 1].SetNil();
+			newObjects[newAllocatedObjects - 1].SetNil();
 
-			delete [] m_Textures;
-			m_Textures = newTextures;
-			m_FreeTextures = newAllocatedTextures - m_AllocatedTextures;
-			m_FreeListHead = m_AllocatedTextures;
-			m_AllocatedTextures = newAllocatedTextures;
+			delete [] m_Objects;
+			m_Objects = newObjects;
+			m_FreeObjects = newAllocatedObjects - m_AllocatedObjects;
+			m_FreeListHead = m_AllocatedObjects;
+			m_AllocatedObjects = newAllocatedObjects;
 		}
 
 		size_t Allocate() {
 
-			if (m_FreeTextures == 0) {
+			if (m_FreeObjects == 0) {
 				Increase();
-				assert(m_FreeTextures != 0);
+				assert(m_FreeObjects != 0);
 			}
 
 			size_t result = m_FreeListHead;
-			m_FreeListHead = m_Textures[result].IsNil() ? 0xffffffffu : m_Textures[result].GetIndex();
-			m_FreeTextures--;
-			m_Textures[result].SetPointer(0);
+			m_FreeListHead = m_Objects[result].IsNil() ? 0xffffffffu : m_Objects[result].GetIndex();
+			m_FreeObjects--;
+			m_Objects[result].SetPointer(0);
 
 			return result;
 		}
 
 		void Deallocate(size_t index) {
 
-			if (m_Textures[index].IsPointer()) {
-				if (m_Textures[index].GetPointer())
-					delete m_Textures[index].GetPointer();
+			if (m_Objects[index].IsPointer()) {
+				if (m_Objects[index].GetPointer())
+					delete m_Objects[index].GetPointer();
 
-				m_Textures[index].SetIndex(m_FreeListHead);
+				m_Objects[index].SetIndex(m_FreeListHead);
 				m_FreeListHead = index;
-				m_FreeTextures++;
+				m_FreeObjects++;
 			}
 		}
 
-		MultiTexture * GetTexture(size_t index) {
+		ELEMENT * GetObject(size_t index) {
 
-			if (index >= m_AllocatedTextures || !m_Textures[index].IsPointer()) 
+			if (index >= m_AllocatedObjects || !m_Objects[index].IsPointer()) 
 				return 0;
 
-			if (!m_Textures[index].GetPointer()) {
-				m_Textures[index].SetPointer(new MultiTexture());
+			if (!m_Objects[index].GetPointer()) {
+				m_Objects[index].SetPointer(new ELEMENT());
 			}
 
-			return m_Textures[index].GetPointer();
+			return m_Objects[index].GetPointer();
 		}
 
-		TextureRecord *		m_Textures;
-		size_t				m_FreeTextures;
-		size_t				m_AllocatedTextures;
+		bool IsObject(size_t index) {
+
+			return index < m_AllocatedObjects && m_Objects[index].IsPointer();
+		}
+
+		ObjectRecord *		m_Objects;
+		size_t				m_FreeObjects;
+		size_t				m_AllocatedObjects;
 		size_t				m_FreeListHead;
 	};
+
+	typedef ObjectArray<MultiTexture>	TextureArray;
+	typedef ObjectArray<Buffer>			BufferArray;
 }
 
 

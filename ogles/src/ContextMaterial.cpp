@@ -109,3 +109,8 @@ void Context :: Materialxv(GLenum face, GLenum pname, const GLfixed *params) {
 		break;
 	}
 }
+
+void Context :: GetMaterialxv(GLenum face, GLenum pname, GLfixed *params) {
+	assert(0);
+}
+

@@ -19,12 +19,19 @@ This version addresses the following issues:
 1011519 - Improve rasterizer state comparisons
 1001369 - Convert point rasterization to JIT
 1011035 - Convert line rasterization to JIT
+1001370 - fixed functions
 1014020 - Fog Linear test failed.
 1014019 - Blend test failed.
 1014018 - LogicOp Function test failed.
 1014016 - Stencil Plane Operation test failed.
 1014017 - Stencil Plane Function test failed.
 1015029 - Linear fog efficiency
+1008788	- Auto mipmap generation
+1008786 - Buffer Objects
+1012401 - Optimize SelectArrayElement
+1008792 - Enhanced point sprites and point sprite arrays
+1008791 - User-defined clip planes
+1025167 - glColorPointer with byte coordinates
 
 
 Version 0.81
