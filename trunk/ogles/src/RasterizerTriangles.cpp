@@ -221,11 +221,8 @@ inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const Ed
 
 		int count = LINEAR_SPAN; 
 
-		tu += deltaTu >> 1;
-		tv += deltaTv >> 1;
-
 		do {
-			Fragment(&rasterInfo, x, depth, tu, tv, baseColor, EGL_ONE - fogDensity);
+			Fragment(&rasterInfo, x, depth, tu, tv, baseColor, fogDensity);
 
 			baseColor += colorIncrement;
 			depth += deltaDepth;
@@ -235,9 +232,6 @@ inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const Ed
 			tv += deltaTv;
 			++x;
 		} while (--count);
-
-		tu -= deltaTu >> 1;
-		tv -= deltaTv >> 1;
 	}
 
 	if (x != xEnd) {
@@ -254,12 +248,9 @@ inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const Ed
 		EGL_Fixed deltaTu = EGL_Mul(endTu - tu, invSpan);
 		EGL_Fixed deltaTv = EGL_Mul(endTv - tv, invSpan);
 
-		tu += deltaTu >> 1;
-		tv += deltaTv >> 1;
-
 		for (; x < xEnd; ++x) {
 
-			Fragment(&rasterInfo, x, depth, tu, tv, baseColor, EGL_ONE - fogDensity);
+			Fragment(&rasterInfo, x, depth, tu, tv, baseColor, fogDensity);
 
 			baseColor += colorIncrement;
 			depth += deltaDepth;
