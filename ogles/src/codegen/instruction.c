@@ -1160,7 +1160,8 @@ static void block_add(cg_block_t * block, cg_inst_t * inst)
 
 
 static cg_inst_t * inst_create(cg_block_t * block, size_t size, 
-							   cg_inst_kind_t kind, cg_opcode_t op)
+							   cg_inst_kind_t kind, cg_opcode_t op
+							   CG_INST_DEBUG_ARG_DECL)
 {
 	cg_inst_t * inst = (cg_inst_t *)
 		cg_heap_allocate(block->proc->module->heap, size);
@@ -1168,6 +1169,7 @@ static cg_inst_t * inst_create(cg_block_t * block, size_t size,
 
 	inst->base.kind = cg_inst_unary;
 	inst->base.opcode = op;
+	CG_INST_SET_DEBUG(inst);
 
 	return inst;
 }
@@ -1176,9 +1178,10 @@ static cg_inst_t * inst_create(cg_block_t * block, size_t size,
 cg_inst_t * cg_create_inst_unary(cg_block_t * block, 
 								 cg_opcode_t op, 
 								 cg_virtual_reg_t * dest, 
-								 cg_virtual_reg_t * source)
+								 cg_virtual_reg_t * source
+								 CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_unary_t), cg_inst_unary, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_unary_t), cg_inst_unary, op CG_INST_DEBUG_PASS);
 
 	assert(dest->type == cg_reg_type_general);
 	assert(source->type == cg_reg_type_general);
@@ -1194,9 +1197,10 @@ cg_inst_t * cg_create_inst_unary_s(cg_block_t * block,
 								   cg_opcode_t op, 
 								   cg_virtual_reg_t * dest, 
 								   cg_virtual_reg_t * flags, 
-								   cg_virtual_reg_t * source)
+								   cg_virtual_reg_t * source
+								   CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_unary_t), cg_inst_unary, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_unary_t), cg_inst_unary, op CG_INST_DEBUG_PASS);
 
 	assert(dest->type == cg_reg_type_general);
 	assert(flags->type == cg_reg_type_flags);
@@ -1214,9 +1218,10 @@ cg_inst_t * cg_create_inst_binary(cg_block_t * block,
 								  cg_opcode_t op, 
 								  cg_virtual_reg_t * dest, 
 								  cg_virtual_reg_t * source, 
-								  cg_virtual_reg_t * operand)
+								  cg_virtual_reg_t * operand
+								  CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_binary_t), cg_inst_binary, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_binary_t), cg_inst_binary, op CG_INST_DEBUG_PASS);
 
 	assert(dest->type == cg_reg_type_general);
 	assert(source->type == cg_reg_type_general);
@@ -1235,9 +1240,10 @@ cg_inst_t * cg_create_inst_binary_s(cg_block_t * block,
 									cg_virtual_reg_t * dest, 
 									cg_virtual_reg_t * flags, 
 									cg_virtual_reg_t * source, 
-									cg_virtual_reg_t * operand)
+									cg_virtual_reg_t * operand
+									CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_binary_t), cg_inst_binary, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_binary_t), cg_inst_binary, op CG_INST_DEBUG_PASS);
 
 	assert(dest->type == cg_reg_type_general);
 	assert(flags->type == cg_reg_type_flags);
@@ -1257,9 +1263,10 @@ cg_inst_t * cg_create_inst_compare(cg_block_t * block,
 								   cg_opcode_t op, 
 								   cg_virtual_reg_t * dest, 
 								   cg_virtual_reg_t * source, 
-								   cg_virtual_reg_t * operand)
+								   cg_virtual_reg_t * operand
+								   CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_compare_t), cg_inst_compare, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_compare_t), cg_inst_compare, op CG_INST_DEBUG_PASS);
 
 	assert(dest->type == cg_reg_type_flags);
 	assert(source->type == cg_reg_type_general);
@@ -1276,9 +1283,10 @@ cg_inst_t * cg_create_inst_compare(cg_block_t * block,
 cg_inst_t * cg_create_inst_load(cg_block_t * block, 
 								cg_opcode_t op, 
 								cg_virtual_reg_t * dest, 
-								cg_virtual_reg_t * mem)
+								cg_virtual_reg_t * mem
+								CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_load_t), cg_inst_load, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_load_t), cg_inst_load, op CG_INST_DEBUG_PASS);
 
 	assert(dest->type == cg_reg_type_general);
 	assert(mem->type == cg_reg_type_general);
@@ -1293,9 +1301,10 @@ cg_inst_t * cg_create_inst_load(cg_block_t * block,
 cg_inst_t * cg_create_inst_store(cg_block_t * block, 
 								 cg_opcode_t op, 
 								 cg_virtual_reg_t * source, 
-								 cg_virtual_reg_t * mem)
+								 cg_virtual_reg_t * mem
+								 CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_store_t), cg_inst_store, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_store_t), cg_inst_store, op CG_INST_DEBUG_PASS);
 
 	assert(source->type == cg_reg_type_general);
 	assert(mem->type == cg_reg_type_general);
@@ -1310,9 +1319,10 @@ cg_inst_t * cg_create_inst_store(cg_block_t * block,
 cg_inst_t * cg_create_inst_load_immed(cg_block_t * block, 
 									  cg_opcode_t op, 
 									  cg_virtual_reg_t * dest, 
-									  U32 value)
+									  U32 value
+									  CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_load_immed_t), cg_inst_load_immed, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_load_immed_t), cg_inst_load_immed, op CG_INST_DEBUG_PASS);
 
 	assert(dest->type == cg_reg_type_general);
 
@@ -1325,9 +1335,10 @@ cg_inst_t * cg_create_inst_load_immed(cg_block_t * block,
 
 cg_inst_t * cg_create_inst_branch_label(cg_block_t * block, 
 										cg_opcode_t op, 
-										cg_block_ref_t * target)
+										cg_block_ref_t * target
+										CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_branch_t), cg_inst_branch_label, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_branch_t), cg_inst_branch_label, op CG_INST_DEBUG_PASS);
 
 	inst->branch.target = target;
 
@@ -1338,9 +1349,10 @@ cg_inst_t * cg_create_inst_branch_label(cg_block_t * block,
 cg_inst_t * cg_create_inst_branch_cond(cg_block_t * block, 
 									   cg_opcode_t op, 
 									   cg_virtual_reg_t * flags, 
-									   cg_block_ref_t * target)
+									   cg_block_ref_t * target
+									   CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_branch_t), cg_inst_branch_cond, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_branch_t), cg_inst_branch_cond, op CG_INST_DEBUG_PASS);
 
 	assert(flags->type == cg_reg_type_flags);
 
@@ -1354,9 +1366,10 @@ cg_inst_t * cg_create_inst_branch_cond(cg_block_t * block,
 cg_inst_t * cg_create_inst_phi(cg_block_t * block, 
 							   cg_opcode_t op, 
 							   cg_virtual_reg_t * dest, 
-							   cg_virtual_reg_list_t * regs)
+							   cg_virtual_reg_list_t * regs
+							   CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_phi_t), cg_inst_phi, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_phi_t), cg_inst_phi, op CG_INST_DEBUG_PASS);
 
 	inst->phi.dest = dest;
 	inst->phi.regs = regs;
@@ -1368,9 +1381,10 @@ cg_inst_t * cg_create_inst_phi(cg_block_t * block,
 cg_inst_t * cg_create_inst_call_proc(cg_block_t * block, 
 									 cg_opcode_t op, 
 									 cg_proc_t * proc, 
-									 cg_virtual_reg_list_t * args)
+									 cg_virtual_reg_list_t * args
+									 CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_call_t), cg_inst_call, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_call_t), cg_inst_call, op CG_INST_DEBUG_PASS);
 
 	inst->call.proc = proc;
 	inst->call.args = args;
@@ -1383,9 +1397,10 @@ cg_inst_t * cg_create_inst_call_func(cg_block_t * block,
 									 cg_opcode_t op, 
 									 cg_virtual_reg_t * dest, 
 									 cg_proc_t * proc, 
-									 cg_virtual_reg_list_t * args)
+									 cg_virtual_reg_list_t * args
+									 CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_call_t), cg_inst_call, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_call_t), cg_inst_call, op CG_INST_DEBUG_PASS);
 
 	assert(dest->type == cg_reg_type_general);
 
@@ -1398,9 +1413,10 @@ cg_inst_t * cg_create_inst_call_func(cg_block_t * block,
 
 
 cg_inst_t * cg_create_inst_ret(cg_block_t * block, 
-							   cg_opcode_t op)
+							   cg_opcode_t op
+							   CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_ret_t), cg_inst_ret, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_ret_t), cg_inst_ret, op CG_INST_DEBUG_PASS);
 
 	/* nothing */
 
@@ -1410,9 +1426,10 @@ cg_inst_t * cg_create_inst_ret(cg_block_t * block,
 
 cg_inst_t * cg_create_inst_ret_value(cg_block_t * block, 
 									 cg_opcode_t op, 
-									 cg_virtual_reg_t * value)
+									 cg_virtual_reg_t * value
+									 CG_INST_DEBUG_ARG_DECL)
 {
-	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_ret_t), cg_inst_ret, op);
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_ret_t), cg_inst_ret, op CG_INST_DEBUG_PASS);
 
 	assert(value->type == cg_reg_type_general);
 
