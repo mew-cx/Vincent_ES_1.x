@@ -57,9 +57,9 @@ namespace EGL {
 	class Surface;
 }
 
-typedef EGL::Config *	EGLConfig;
-typedef EGL::Surface *	EGLSurface;
-typedef EGL::Context  *	EGLContext;
+typedef const EGL::Config *		EGLConfig;
+typedef EGL::Surface *			EGLSurface;
+typedef EGL::Context  *			EGLContext;
 
 #else
 

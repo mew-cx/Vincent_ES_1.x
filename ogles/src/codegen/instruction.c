@@ -1472,7 +1472,7 @@ cg_block_ref_t * cg_block_ref_create(cg_proc_t * proc)
 	return result;
 }
 
-static char *opcodes[] = 
+static const char * const opcodes[] = 
 {
 	"nop",					
 	"add",		"and",		"asr",		"cmp",		"div",		
@@ -1489,7 +1489,7 @@ static char *opcodes[] =
 	"call",		"ret",		"phi"
 };
 
-static char * shift_opcodes[] = 
+static const char * const shift_opcodes[] = 
 {
 	"lsl",
 	"lsr",

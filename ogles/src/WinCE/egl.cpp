@@ -113,7 +113,7 @@ GLAPI const char * APIENTRY eglQueryString (EGLDisplay dpy, EGLint name) {
 }
 
 
-static struct {
+static const struct {
 	const char * name;
 	void * ptr;
 
@@ -171,7 +171,7 @@ GLAPI EGLSurface APIENTRY eglCreatePixmapSurface (EGLDisplay dpy, EGLConfig conf
 }
 
 GLAPI EGLSurface APIENTRY eglCreatePbufferSurface (EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list) {
-	static EGLint validAttributes[] = {
+	static const EGLint validAttributes[] = {
 		EGL_WIDTH,
 		EGL_HEIGHT,
 		EGL_NONE

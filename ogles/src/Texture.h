@@ -75,7 +75,7 @@ namespace EGL {
 		U32								m_Exponent;
 		RasterizerState::TextureFormat	m_InternalFormat;
 
-		static U8 s_BytesPerPixel[];
+		const static U8 s_BytesPerPixel[];
 	};
 
 

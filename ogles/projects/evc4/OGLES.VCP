@@ -247,92 +247,6 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\..\src\Color.cpp
-
-!IF  "$(CFG)" == "OGLES - Win32 (WCE emulator) Release"
-
-DEP_CPP_COLOR=\
-	"..\..\src\Color.h"\
-	"..\..\src\fixed.h"\
-	"..\..\src\Init.h"\
-	"..\..\src\OGLES.h"\
-	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_COLOR=\
-	".\pp.h"\
-	
-
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE emulator) Debug"
-
-DEP_CPP_COLOR=\
-	"..\..\src\Color.h"\
-	"..\..\src\fixed.h"\
-	"..\..\src\Init.h"\
-	"..\..\src\OGLES.h"\
-	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_COLOR=\
-	".\mnintrin.h"\
-	".\pp.h"\
-	
-
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
-
-DEP_CPP_COLOR=\
-	"..\..\src\Color.h"\
-	"..\..\src\fixed.h"\
-	"..\..\src\Init.h"\
-	"..\..\src\OGLES.h"\
-	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_COLOR=\
-	".\mnintrin.h"\
-	".\pp.h"\
-	
-
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
-
-DEP_CPP_COLOR=\
-	"..\..\src\Color.h"\
-	"..\..\src\fixed.h"\
-	"..\..\src\Init.h"\
-	"..\..\src\OGLES.h"\
-	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_COLOR=\
-	".\mnintrin.h"\
-	".\pp.h"\
-	
-
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
-
-DEP_CPP_COLOR=\
-	"..\..\src\Color.h"\
-	"..\..\src\fixed.h"\
-	"..\..\src\Init.h"\
-	"..\..\src\OGLES.h"\
-	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_COLOR=\
-	".\mnintrin.h"\
-	
-
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
-
-DEP_CPP_COLOR=\
-	"..\..\src\Color.h"\
-	"..\..\src\fixed.h"\
-	"..\..\src\Init.h"\
-	"..\..\src\OGLES.h"\
-	"..\..\src\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\src\Config.cpp
 
 !IF  "$(CFG)" == "OGLES - Win32 (WCE emulator) Release"
@@ -3837,10 +3751,6 @@ SOURCE=..\..\src\fixed.h
 # Begin Source File
 
 SOURCE=..\..\src\FractionalColor.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\src\Init.h
 # End Source File
 # Begin Source File
 

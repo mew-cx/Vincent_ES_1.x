@@ -47,7 +47,7 @@ using namespace EGL;
 // --------------------------------------------------------------------------
 
 
-U8 Texture :: s_BytesPerPixel[] = {
+const U8 Texture :: s_BytesPerPixel[] = {
 	1,				// ALPHA
 	1,				// LUMINANCE
 	2,				// LUMINANCE_ALPHA

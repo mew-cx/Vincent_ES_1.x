@@ -125,7 +125,7 @@ extern "C" {
 	}
 
 
-	static struct {
+	static const struct {
 		const char * name;
 		void * ptr;
 
@@ -188,7 +188,7 @@ extern "C" {
 
 	GLAPI EGLSurface APIENTRY eglCreatePbufferSurface (EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list) {
 
-		static EGLint validAttributes[] = {
+		static const EGLint validAttributes[] = {
 			EGL_WIDTH,
 			EGL_HEIGHT,
 			EGL_NONE

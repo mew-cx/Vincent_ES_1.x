@@ -32,9 +32,9 @@
 #include "arm-codegen.h"
 
 
-static ARMDis* gdisasm = NULL;
+static const ARMDis* gdisasm = NULL;
 
-static int use_reg_alias = 1;
+static const int use_reg_alias = 1;
 
 const static char* cond[] = {
 	"eq", "ne", "cs", "cc", "mi", "pl", "vs", "vc",
