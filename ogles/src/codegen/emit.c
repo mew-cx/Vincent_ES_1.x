@@ -2235,8 +2235,8 @@ static void emit_epilog(cg_codegen_t * gen, cg_proc_t * proc)
 {
 	ARM_LDMDB(gen->cseg, ARMREG_FP,
 		(1 << ARMREG_V1) | (1 << ARMREG_V2) | (1 << ARMREG_V3) | (1 << ARMREG_V4) |
-		(1 << ARMREG_V5) | (1 << ARMREG_V6) | (1 << ARMREG_V7) | (1 << ARMREG_SP) |
-		(1 << ARMREG_PC));
+		(1 << ARMREG_V5) | (1 << ARMREG_V6) | (1 << ARMREG_V7) | (1 << ARMREG_FP) |
+		(1 << ARMREG_SP) | (1 << ARMREG_PC));
 }
 
 
