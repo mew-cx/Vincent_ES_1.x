@@ -439,11 +439,15 @@ void Context :: SelectArrayElement(int vertexIndex, int normalIndex, int texture
 					  m_VertexArray.GetValue(vertexIndex, 1),
 					  0);
 		} else {
-			m_CurrentVertex = 
-				Vec4D(m_VertexArray.GetValue(vertexIndex, 0),
-					  m_VertexArray.GetValue(vertexIndex, 1),
-					  m_VertexArray.GetValue(vertexIndex, 2),
-					  m_VertexArray.GetValue(vertexIndex, 3));
+			if (m_VertexArray.GetValue(vertexIndex, 3)) {
+				m_CurrentVertex = 
+					Vec4D(m_VertexArray.GetValue(vertexIndex, 0),
+						  m_VertexArray.GetValue(vertexIndex, 1),
+						  m_VertexArray.GetValue(vertexIndex, 2),
+						  m_VertexArray.GetValue(vertexIndex, 3));
+			} else {
+				m_CurrentVertex = Vec3D(0, 0, 0);
+			}
 		}
 	}
 

@@ -10,6 +10,7 @@ Version 0.77
 
 This version addresses the following issues:
 
+968663 - Divide By Zero Test Hangs
 863637 - GL_OES_compressed_paletted_tex extension missing
 958796 - eglQueryString not implemented
 863638 - rescale normal vs. normalize

@@ -191,9 +191,9 @@ Matrix4x4 Matrix4x4 :: CreateFrustrum(EGL_Fixed l, EGL_Fixed r,
 									  EGL_Fixed b, EGL_Fixed t, EGL_Fixed n, EGL_Fixed f) {
 	Matrix4x4 matrix;
 
-	EGL_Fixed inv_width = EGL_Inverse(r - l);
-	EGL_Fixed inv_height = EGL_Inverse(t - b);
-	EGL_Fixed inv_depth = EGL_Inverse(f - n);
+	EGL_Fixed inv_width = (r - l) ? EGL_Inverse(r - l) : 0;
+	EGL_Fixed inv_height = (t - b) ? EGL_Inverse(t - b) : 0;
+	EGL_Fixed inv_depth = (f - n) ? EGL_Inverse(f - n) : 0;
 
 	EGL_Fixed two_n = n * 2;
 
@@ -217,9 +217,9 @@ Matrix4x4 Matrix4x4 :: CreateOrtho(EGL_Fixed l, EGL_Fixed r,
 								   EGL_Fixed b, EGL_Fixed t, EGL_Fixed n, EGL_Fixed f) {
 	Matrix4x4 matrix;
 
-	EGL_Fixed inv_width = EGL_Inverse(r - l);
-	EGL_Fixed inv_height = EGL_Inverse(t - b);
-	EGL_Fixed inv_depth = EGL_Inverse(f - n);
+	EGL_Fixed inv_width = (r - l) ? EGL_Inverse(r - l) : 0;
+	EGL_Fixed inv_height = (t - b) ? EGL_Inverse(t - b) : 0;
+	EGL_Fixed inv_depth = (f - n) ? EGL_Inverse(f - n) : 0;
 
 	EGL_Fixed two_n = n * 2;
 
