@@ -53,6 +53,15 @@ extern "C" {
 #define APIENTRY
 #endif
 
+#ifndef APIENTRY
+#define APIENTRY
+#endif
+
+#ifndef GLAPI
+#define GLAPI
+#endif
+
+
 #define GL_OES_querymatrix		    1
 
 /* OES_query_matrix */
