@@ -302,9 +302,6 @@
 		<File
 			RelativePath=".\VTune\OGLES.vpj">
 		</File>
-		<File
-			RelativePath="..\..\src\todo.txt">
-		</File>
 	</Files>
 	<Globals>
 	</Globals>
