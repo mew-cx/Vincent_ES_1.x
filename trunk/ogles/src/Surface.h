@@ -39,9 +39,9 @@ namespace EGL {
 		void ClearColorBuffer(const FractionalColor & rgba);
 		void ClearStencilBuffer(U32 value);
 
-		U16 Width();
-		U16 Height();
-		U32 Pixels();
+		U16 GetWidth();
+		U16 GetHeight();
+		U32 GetPixels();
 
 		void SetCurrentContext(Context * context);
 		Context * GetCurrentContext();
@@ -84,7 +84,7 @@ namespace EGL {
 		return &m_Config;
 	}
 
-	inline U32 Surface :: Pixels() {
+	inline U32 Surface :: GetPixels() {
 		return m_Width * m_Height;
 	}
 
@@ -114,11 +114,11 @@ namespace EGL {
 		return m_StencilBuffer;
 	}
 
-	inline U16 Surface :: Width() {
+	inline U16 Surface :: GetWidth() {
 		return m_Width;
 	}
 
-	inline U16 Surface :: Height() {
+	inline U16 Surface :: GetHeight() {
 		return m_Height;
 	}
 }
