@@ -632,7 +632,7 @@ void Context :: PrepareRendering() {
 	PrepareArray(m_NormalArray,	  m_NormalArrayEnabled);
 	PrepareArray(m_ColorArray,    m_ColorArrayEnabled, true);
 
-	for (size_t unit = 0; unit < EGL_NUM_TEXTRE_UNITS; ++unit) {
+	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		PrepareArray(m_TexCoordArray[unit], m_TexCoordArrayEnabled[unit]);
 	}
 
@@ -643,6 +643,21 @@ void Context :: PrepareRendering() {
 		PrepareArray(m_MatrixIndexArray,m_MatrixIndexArrayEnabled);
 		memset(m_CurrentWeights, 0, sizeof m_CurrentWeights);
 		memset(m_PaletteMatrixIndex, 0, sizeof m_PaletteMatrixIndex);
+	}
+}
+
+
+inline void Context :: CurrentTextureValuesToRasterPos(RasterPos * rasterPos) {
+	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		if (m_TextureMatrixStack.CurrentMatrix().IsIdentity()) {
+			rasterPos->m_TextureCoords[unit].tu = m_CurrentTextureCoords[unit].tu;
+			rasterPos->m_TextureCoords[unit].tv = m_CurrentTextureCoords[unit].tv;
+		} else {
+			Vec3D inCoords(m_CurrentTextureCoords[unit].tu, m_CurrentTextureCoords[unit].tv, 0);
+			Vec4D outCoords = m_TextureMatrixStack.CurrentMatrix() * inCoords;
+			rasterPos->m_TextureCoords[unit].tu = outCoords.x();
+			rasterPos->m_TextureCoords[unit].tv = outCoords.y();
+		}
 	}
 }
 
@@ -685,18 +700,7 @@ void Context :: CurrentValuesToRasterPosNoLight(RasterPos * rasterPos) {
 		rasterPos->m_FogDensity = 0;
 	}
 
-	// apply texture transform to texture coordinates
-	// really should have a transformation primitive of the correct dimensionality
-
-	if (m_TextureMatrixStack.CurrentMatrix().IsIdentity()) {
-		rasterPos->m_TextureCoords.tu = m_CurrentTextureCoords.tu;
-		rasterPos->m_TextureCoords.tv = m_CurrentTextureCoords.tv;
-	} else {
-		Vec3D inCoords(m_CurrentTextureCoords.tu, m_CurrentTextureCoords.tv, 0);
-		Vec4D outCoords = m_TextureMatrixStack.CurrentMatrix() * inCoords;
-		rasterPos->m_TextureCoords.tu = outCoords.x();
-		rasterPos->m_TextureCoords.tv = outCoords.y();
-	}
+	CurrentTextureValuesToRasterPos(rasterPos);
 }
 
 
@@ -755,18 +759,7 @@ void Context :: CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos) {
 	color.Clamp();
 	rasterPos->m_FrontColor = color;
 
-	// apply texture transform to texture coordinates
-	// really should have a transformation primitive of the correct dimensionality
-
-	if (m_TextureMatrixStack.CurrentMatrix().IsIdentity()) {
-		rasterPos->m_TextureCoords.tu = m_CurrentTextureCoords.tu;
-		rasterPos->m_TextureCoords.tv = m_CurrentTextureCoords.tv;
-	} else {
-		Vec3D inCoords(m_CurrentTextureCoords.tu, m_CurrentTextureCoords.tv, 0);
-		Vec4D outCoords = m_TextureMatrixStack.CurrentMatrix() * inCoords;
-		rasterPos->m_TextureCoords.tu = outCoords.x();
-		rasterPos->m_TextureCoords.tv = outCoords.y();
-	}
+	CurrentTextureValuesToRasterPos(rasterPos);
 }
 
 
@@ -823,18 +816,7 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos) {
 	color.Clamp();
 	rasterPos->m_FrontColor = color;
 
-	// apply texture transform to texture coordinates
-	// really should have a transformation primitive of the correct dimensionality
-
-	if (m_TextureMatrixStack.CurrentMatrix().IsIdentity()) {
-		rasterPos->m_TextureCoords.tu = m_CurrentTextureCoords.tu;
-		rasterPos->m_TextureCoords.tv = m_CurrentTextureCoords.tv;
-	} else {
-		Vec3D inCoords(m_CurrentTextureCoords.tu, m_CurrentTextureCoords.tv, 0);
-		Vec4D outCoords = m_TextureMatrixStack.CurrentMatrix() * inCoords;
-		rasterPos->m_TextureCoords.tu = outCoords.x();
-		rasterPos->m_TextureCoords.tv = outCoords.y();
-	}
+	CurrentTextureValuesToRasterPos(rasterPos);
 }
 
 
@@ -897,18 +879,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos) {
 	rasterPos->m_FrontColor = color;
 	rasterPos->m_BackColor = backColor;
 
-	// apply texture transform to texture coordinates
-	// really should have a transformation primitive of the correct dimensionality
-
-	if (m_TextureMatrixStack.CurrentMatrix().IsIdentity()) {
-		rasterPos->m_TextureCoords.tu = m_CurrentTextureCoords.tu;
-		rasterPos->m_TextureCoords.tv = m_CurrentTextureCoords.tv;
-	} else {
-		Vec3D inCoords(m_CurrentTextureCoords.tu, m_CurrentTextureCoords.tv, 0);
-		Vec4D outCoords = m_TextureMatrixStack.CurrentMatrix() * inCoords;
-		rasterPos->m_TextureCoords.tu = outCoords.x();
-		rasterPos->m_TextureCoords.tv = outCoords.y();
-	}
+	CurrentTextureValuesToRasterPos(rasterPos);
 }
 
 
@@ -970,18 +941,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 	rasterPos->m_FrontColor = color;
 	rasterPos->m_BackColor = backColor;
 
-	// apply texture transform to texture coordinates
-	// really should have a transformation primitive of the correct dimensionality
-
-	if (m_TextureMatrixStack.CurrentMatrix().IsIdentity()) {
-		rasterPos->m_TextureCoords.tu = m_CurrentTextureCoords.tu;
-		rasterPos->m_TextureCoords.tv = m_CurrentTextureCoords.tv;
-	} else {
-		Vec3D inCoords(m_CurrentTextureCoords.tu, m_CurrentTextureCoords.tv, 0);
-		Vec4D outCoords = m_TextureMatrixStack.CurrentMatrix() * inCoords;
-		rasterPos->m_TextureCoords.tu = outCoords.x();
-		rasterPos->m_TextureCoords.tv = outCoords.y();
-	}
+	CurrentTextureValuesToRasterPos(rasterPos);
 }
 
 
