@@ -49,18 +49,4 @@ typedef __int64			I64;
 #define elementsof(a) (sizeof(a) / sizeof(*(a)))
 
 
-#if 0
-// This class is exported from the OGLES.dll
-class OGLES_API COGLES {
-public:
-	COGLES(void);
-	// TODO: add your methods here.
-};
-
-extern OGLES_API int nOGLES;
-
-OGLES_API int fnOGLES(void);
-#endif
-
-
 #endif // ndef EGL_OGLES_H

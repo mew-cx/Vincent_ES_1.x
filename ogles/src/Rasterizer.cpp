@@ -110,14 +110,166 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, const Color & 
 		case RasterizerState::CompFuncAlways:	depthTest = true;						break;
 	}
 
+	if (m_State->m_AlphaTestEnabled) {
+		bool alphaTest;
+		U8 alpha = color.A();
+		U8 alphaRef = EGL_IntFromFixed(m_State->m_AlphaReference * 255);
+
+		switch (m_State->m_AlphaFunc) {
+			default:
+			case RasterizerState::CompFuncNever:	alphaTest = false;					break;
+			case RasterizerState::CompFuncLess:		alphaTest = alpha < alphaRef;		break;
+			case RasterizerState::CompFuncEqual:	alphaTest = alpha == alphaRef;		break;
+			case RasterizerState::CompFuncLEqual:	alphaTest = alpha <= alphaRef;		break;
+			case RasterizerState::CompFuncGreater:	alphaTest = alpha > alphaRef;		break;
+			case RasterizerState::CompFuncNotEqual:	alphaTest = alpha != alphaRef;		break;
+			case RasterizerState::CompFuncGEqual:	alphaTest = alpha >= alphaRef;		break;
+			case RasterizerState::CompFuncAlways:	alphaTest = true;					break;
+		}
+
+		if (!alphaTest) {
+			return;
+		}
+	}
+
 	// TODO: Update of stencil buffer
+	if (m_State->m_StencilTestEnabled) {
+
+		bool stencilTest;
+		U32 stencilRef = m_State->m_StencilReference & m_State->m_StencilMask;
+		U32 stencilValue = m_Surface->GetStencilBuffer()[offset];
+		U32 stencil = stencilValue & m_State->m_StencilMask;
+
+		switch (m_State->m_StencilFunc) {
+			default:
+			case RasterizerState::CompFuncNever:	stencilTest = false;				break;
+			case RasterizerState::CompFuncLess:		stencilTest = stencil < stencilRef;	break;
+			case RasterizerState::CompFuncEqual:	stencilTest = stencil == stencilRef;break;
+			case RasterizerState::CompFuncLEqual:	stencilTest = stencil <= stencilRef;break;
+			case RasterizerState::CompFuncGreater:	stencilTest = stencil > stencilRef;	break;
+			case RasterizerState::CompFuncNotEqual:	stencilTest = stencil != stencilRef;break;
+			case RasterizerState::CompFuncGEqual:	stencilTest = stencil >= stencilRef;break;
+			case RasterizerState::CompFuncAlways:	stencilTest = true;					break;
+		}
+
+		if (!stencilTest) {
+
+			switch (m_State->m_StencilFail) {
+				default:
+				case RasterizerState::StencilOpKeep: 
+					break;
+
+				case RasterizerState::StencilOpZero: 
+					stencilValue = 0; 
+					break;
+
+				case RasterizerState::StencilOpReplace: 
+					stencilValue = m_State->m_StencilReference; 
+					break;
+
+				case RasterizerState::StencilOpIncr: 
+					if (stencilValue != 0xffffffff) {
+						stencilValue++; 
+					}
+					
+					break;
+
+				case RasterizerState::StencilOpDecr: 
+					if (stencilValue != 0) {
+						stencilValue--; 
+					}
+					
+					break;
+
+				case RasterizerState::StencilOpInvert: 
+					stencilValue = ~stencilValue; 
+					break;
+			}
+
+			m_Surface->GetStencilBuffer()[offset] = stencilValue;
+			return;
+		}
+
+		if (depthTest) {
+			switch (m_State->m_StencilZPass) {
+				default:
+				case RasterizerState::StencilOpKeep: 
+					break;
+
+				case RasterizerState::StencilOpZero: 
+					stencilValue = 0; 
+					break;
+
+				case RasterizerState::StencilOpReplace: 
+					stencilValue = m_State->m_StencilReference; 
+					break;
+
+				case RasterizerState::StencilOpIncr: 
+					if (stencilValue != 0xffffffff) {
+						stencilValue++; 
+					}
+					
+					break;
+
+				case RasterizerState::StencilOpDecr: 
+					if (stencilValue != 0) {
+						stencilValue--; 
+					}
+					
+					break;
+
+				case RasterizerState::StencilOpInvert: 
+					stencilValue = ~stencilValue; 
+					break;
+			}
+
+			m_Surface->GetStencilBuffer()[offset] = stencilValue;
+		} else {
+			switch (m_State->m_StencilZFail) {
+				default:
+				case RasterizerState::StencilOpKeep: 
+					break;
+
+				case RasterizerState::StencilOpZero: 
+					stencilValue = 0; 
+					break;
+
+				case RasterizerState::StencilOpReplace: 
+					stencilValue = m_State->m_StencilReference; 
+					break;
+
+				case RasterizerState::StencilOpIncr: 
+					if (stencilValue != 0xffffffff) {
+						stencilValue++; 
+					}
+					
+					break;
+
+				case RasterizerState::StencilOpDecr: 
+					if (stencilValue != 0) {
+						stencilValue--; 
+					}
+					
+					break;
+
+				case RasterizerState::StencilOpInvert: 
+					stencilValue = ~stencilValue; 
+					break;
+			}
+
+			m_Surface->GetStencilBuffer()[offset] = stencilValue;
+		}
+	}
 
 	if (!depthTest && m_State->m_DepthTestEnabled) {
 		return;
 	}
 
-	// TODO: Alpha Buffer
-	// TODO: Blending
+	// Blending
+	if (m_State->m_BlendingEnabled) {
+
+	}
+
 	// TODO: Masking of color and depth
 
 	m_Surface->GetDepthBuffer()[offset] = depth;

@@ -25,7 +25,6 @@ Surface :: Surface(const Config & config, HDC hdc)
 //	m_Bitmap(reinterpret_cast<HBITMAP>(INVALID_HANDLE_VALUE)),
 	m_HDC(reinterpret_cast<HDC>(INVALID_HANDLE_VALUE))
 {
-	m_AlphaBuffer = new U16[m_Width * m_Height];
 	m_ColorBuffer = new U16[m_Width * m_Height];
 	m_DepthBuffer = new I32[m_Width * m_Height];
 	m_StencilBuffer = new U32[m_Width * m_Height];
@@ -47,11 +46,6 @@ Surface :: ~Surface() {
 	if (m_HDC != INVALID_HANDLE_VALUE) {
 		DeleteDC(m_HDC);
 		m_HDC = reinterpret_cast<HDC>(INVALID_HANDLE_VALUE);
-	}
-
-	if (m_AlphaBuffer != 0) {
-		delete [] m_AlphaBuffer;
-		m_AlphaBuffer = 0;
 	}
 
 	if (m_ColorBuffer != 0) {
