@@ -106,44 +106,17 @@ namespace EGL {
 			return 
 				 EGL_IntFromFixed(b * 0xFF) >> 3 | 
 				(EGL_IntFromFixed(g * 0xFF) & 0xFC) << 3 | 
-				(EGL_IntFromFixed(b * 0xFF) & 0xF8) << 8;
+				(EGL_IntFromFixed(r * 0xFF) & 0xF8) << 8;
 		}
 
 		inline U16 ConvertTo5551() const {
 			return 
 				 EGL_IntFromFixed(b * 0xFF) >> 3 | 
 				(EGL_IntFromFixed(g * 0xFF) & 0xF8) << 2 | 
-				(EGL_IntFromFixed(b * 0xFF) & 0xF8) << 7 | 
+				(EGL_IntFromFixed(r * 0xFF) & 0xF8) << 7 | 
 				(EGL_IntFromFixed(a * 0xFF) & 0x80) << 8;
 		}
 
-#if 0
-		static inline FractionalColor From565(U16 u565) {
-			U8 r = (u565 & 0x001Fu) << 3;
-			U8 g = (u565 & 0x07E0u) >> 3;
-			U8 b = (u565 & 0xF800u) >> 8;
-
-			return FractionalColor(
-				EGL_FixedFromInt(r), 
-				EGL_FixedFromInt(g), 
-				EGL_FixedFromInt(b), 
-				EGL_FixedFromInt(0xFF));
-		}
-
-		static inline FractionalColor From5551(U16 u5551) {
-			U8 r = (u5551 & 0x001Fu) << 3;
-			U8 g = (u5551 & 0x03E0u) >> 2;
-			U8 b = (u5551 & 0x7C00u) >> 7;
-			U8 a = (u5551 & 0x8000u) >> 8;
-
-			return FractionalColor(
-				EGL_FixedFromInt(r), 
-				EGL_FixedFromInt(g), 
-				EGL_FixedFromInt(b), 
-				EGL_FixedFromInt(a));
-		}
-#endif
-	
 		// convert fixed point to byte format
 		inline operator Color() const {
 			return Color(
@@ -196,7 +169,7 @@ namespace EGL {
 
 		inline void Accumulate(const FractionalColor& color,
 							EGL_Fixed scale) {
-			r  += EGL_Mul(color.r, scale);
+			r += EGL_Mul(color.r, scale);
 			g += EGL_Mul(color.g, scale);
 			b += EGL_Mul(color.b, scale);
 		}

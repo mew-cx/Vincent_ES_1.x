@@ -77,15 +77,15 @@ namespace EGL {
 
 		Color(const Color& other) {
 			r = other.r;
-			b = other.b;
 			g = other.g;
+			b = other.b;
 			a = other.a;
 		}
 
 		Color& operator=(const Color& other) {
 			r = other.r;
-			b = other.b;
 			g = other.g;
+			b = other.b;
 			a = other.a;
 			return *this;
 		}
@@ -111,7 +111,7 @@ namespace EGL {
 		}
 
 		inline U16 ConvertTo565() const {
-			return r >> 3 | (g & 0xFC) << 3 | (b & 0xF8) << 8;
+			return b >> 3 | (g & 0xFC) << 3 | (r & 0xF8) << 8;
 		}
 
 		inline U32 ConvertToRGBA() const {
@@ -119,7 +119,7 @@ namespace EGL {
 		}
 
 		inline U16 ConvertTo5551() const {
-			return r >> 3 | (g & 0xF8) << 2 | (b & 0xF8) << 7 | (a & 0x80) << 8;
+			return b >> 3 | (g & 0xF8) << 2 | (r & 0xF8) << 7 | (a & 0x80) << 8;
 		}
 
 		inline U16 ConvertTo4444() const {
@@ -148,25 +148,25 @@ namespace EGL {
 		}
 
 		static inline Color From565(U16 u565) {
-			U8 r = (u565 & 0x001Fu) << 3;
+			U8 b = (u565 & 0x001Fu) << 3;
 			U8 g = (u565 & 0x07E0u) >> 3;
-			U8 b = (u565 & 0xF800u) >> 8;
+			U8 r = (u565 & 0xF800u) >> 8;
 
 			return Color(r, g, b, 0xFF);
 		}
 
 		static inline Color From565A(U16 u565, U8 alpha) {
-			U8 r = (u565 & 0x001Fu) << 3;
+			U8 b = (u565 & 0x001Fu) << 3;
 			U8 g = (u565 & 0x07E0u) >> 3;
-			U8 b = (u565 & 0xF800u) >> 8;
+			U8 r = (u565 & 0xF800u) >> 8;
 
 			return Color(r, g, b, alpha);
 		}
 
 		static inline Color From5551(U16 u5551) {
-			U8 r = (u5551 & 0x001Fu) << 3;
+			U8 b = (u5551 & 0x001Fu) << 3;
 			U8 g = (u5551 & 0x03E0u) >> 2;
-			U8 b = (u5551 & 0x7C00u) >> 7;
+			U8 r = (u5551 & 0x7C00u) >> 7;
 			U8 a = (u5551 & 0x8000u) >> 8;
 
 			return Color(r, g, b, a);
