@@ -160,28 +160,31 @@ void Context :: RenderTriangleStrip(GLint first, GLsizei count) {
 		RenderTriangle(pos0, pos2, pos1);
 	}
 
-	switch (count) {
-	case 5:
+	if (count >= 1) {
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos2);
 		RenderTriangle(pos0, pos1, pos2);
+	}
 
-	case 4:
+	if (count >= 2) {
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos0);
 		RenderTriangle(pos2, pos1, pos0);
+	}
 
-	case 3:
+	if (count >= 3) {
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos1);
 		RenderTriangle(pos2, pos0, pos1);
+	}
 
-	case 2:
+	if (count >= 4) {
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos2);
 		RenderTriangle(pos1, pos0, pos2);
+	}
 
-	case 1:
+	if (count >= 5) {
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos0);
 		RenderTriangle(pos1, pos2, pos0);
@@ -235,28 +238,31 @@ void Context :: RenderTriangleStrip(GLsizei count, const GLubyte * indices) {
 		RenderTriangle(pos0, pos2, pos1);
 	}
 
-	switch (count) {
-	case 5:
+	if (count >= 1) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
 		RenderTriangle(pos0, pos1, pos2);
+	}
 
-	case 4:
+	if (count >= 2) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
 		RenderTriangle(pos2, pos1, pos0);
+	}
 
-	case 3:
+	if (count >= 3) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos1);
 		RenderTriangle(pos2, pos0, pos1);
+	}
 
-	case 2:
+	if (count >= 4) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
 		RenderTriangle(pos1, pos0, pos2);
+	}
 
-	case 1:
+	if (count >= 5) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
 		RenderTriangle(pos1, pos2, pos0);
@@ -310,32 +316,36 @@ void Context :: RenderTriangleStrip(GLsizei count, const GLushort * indices) {
 		RenderTriangle(pos0, pos2, pos1);
 	}
 
-	switch (count) {
-	case 5:
+	if (count >= 1) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
 		RenderTriangle(pos0, pos1, pos2);
+	}
 
-	case 4:
+	if (count >= 2) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
 		RenderTriangle(pos2, pos1, pos0);
+	}
 
-	case 3:
+	if (count >= 3) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos1);
 		RenderTriangle(pos2, pos0, pos1);
+	}
 
-	case 2:
+	if (count >= 4) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
 		RenderTriangle(pos1, pos0, pos2);
+	}
 
-	case 1:
+	if (count >= 5) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
 		RenderTriangle(pos1, pos2, pos0);
 	}
+
 }
 
 
