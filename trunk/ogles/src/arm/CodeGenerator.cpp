@@ -2607,7 +2607,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 	if (m_State->m_MaskAlpha) {
 		//m_Surface->GetAlphaBuffer()[offset] = maskedColor.A();
-		STB		(regAdjustedA, regAlphaAddr);
+		STB		(regColorA, regAlphaAddr);
 	}
 }
 
