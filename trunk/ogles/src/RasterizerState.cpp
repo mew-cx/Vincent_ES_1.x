@@ -94,7 +94,12 @@ RasterizerState :: RasterizerState():
 	m_MagFilterMode(MagFilterModeNearest),
 	m_WrappingModeS(WrappingModeRepeat),
 	m_WrappingModeT(WrappingModeRepeat),
-	m_InternalFormat(TextureFormatLuminance)
+	m_InternalFormat(TextureFormatLuminance),
+
+	m_ShadingModel(ShadeModelFlat),
+	m_ScissorWidth(320),
+	m_ScissorHeight(240),
+	m_ScissorTestEnabled(true)
 
 {
 }
@@ -148,8 +153,12 @@ RasterizerState :: RasterizerState(const RasterizerState& other):
 	m_MagFilterMode(other.m_MagFilterMode),
 	m_WrappingModeS(other.m_WrappingModeS),
 	m_WrappingModeT(other.m_WrappingModeT),
-	m_InternalFormat(other.m_InternalFormat)
+	m_InternalFormat(other.m_InternalFormat),
 
+	m_ShadingModel(other.m_ShadingModel),
+	m_ScissorWidth(other.m_ScissorWidth),
+	m_ScissorHeight(other.m_ScissorHeight),
+	m_ScissorTestEnabled(other.m_ScissorTestEnabled)
 {
 }
 
@@ -207,6 +216,11 @@ RasterizerState& RasterizerState :: operator=(const RasterizerState& other) {
 	m_WrappingModeS = other.m_WrappingModeS;
 	m_WrappingModeT = other.m_WrappingModeT;
 	m_InternalFormat = other.m_InternalFormat;
+
+	m_ShadingModel = other.m_ShadingModel;
+	m_ScissorWidth = other.m_ScissorWidth;
+	m_ScissorHeight = other.m_ScissorHeight;
+	m_ScissorTestEnabled = other.m_ScissorTestEnabled;
 
 	return *this;
 }

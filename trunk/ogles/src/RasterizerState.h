@@ -203,6 +203,7 @@ namespace EGL {
 
 		void SetFogColor(const Color& color);
 		void EnableFog(bool enabled);
+		bool IsEnabledFog() const;
 
 		void SetLineWidth(EGL_Fixed width);
 		void SetLineSmoothEnabled(bool enabled);
@@ -471,6 +472,10 @@ namespace EGL {
 
 	inline void RasterizerState :: SetPointSmoothEnabled(bool enabled) {
 		m_PointSmoothEnabled = enabled;
+	}
+
+	inline bool RasterizerState :: IsEnabledFog() const {
+		return m_FogEnabled;
 	}
 
 	class RasterizerStateCompare {
