@@ -78,23 +78,6 @@ namespace EGL {
 
 		}
 
-		void FetchUnsignedByteValues(int row, GLubyte * buffer) {
-			GLsizei rowOffset = row * stride;
-			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
-			size_t count = size;
-
-			const GLubyte * byteBase = reinterpret_cast<const GLubyte *>(base);
-
-			do {
-				*buffer++ = *byteBase++;
-			} while (--count);
-
-#ifdef EGL_XSCALE
-			_PreLoad(const_cast<unsigned long *>(reinterpret_cast<const unsigned long *>(base + stride)));
-#endif
-
-		}
-
 		void FetchUnsignedByteValues(int row, GLfixed * buffer) {
 			GLsizei rowOffset = row * stride;
 			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
@@ -104,6 +87,23 @@ namespace EGL {
 
 			do {
 				*buffer++ = EGL_FixedFromInt(*byteBase++);
+			} while (--count);
+
+#ifdef EGL_XSCALE
+			_PreLoad(const_cast<unsigned long *>(reinterpret_cast<const unsigned long *>(base + stride)));
+#endif
+
+		}
+
+		void FetchUnsignedByteValues(int row, GLubyte * buffer) {
+			GLsizei rowOffset = row * stride;
+			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+			size_t count = size;
+
+			const GLubyte * byteBase = reinterpret_cast<const GLubyte *>(base);
+
+			do {
+				*buffer++ = *byteBase++;
 			} while (--count);
 
 #ifdef EGL_XSCALE
@@ -184,29 +184,29 @@ namespace EGL {
 		void PrepareFetchValues(bool colorMode) {
 			switch (type) {
 			case GL_BYTE:
-				fetchFunction = FetchByteValues;
+				fetchFunction = &VertexArray::FetchByteValues;
 				
 				break;
 
 			case GL_UNSIGNED_BYTE:
 				if (colorMode) {
-					fetchFunction = FetchByteColorValues;
+                    fetchFunction = &VertexArray::FetchByteColorValues;
 				} else {
-					fetchFunction = FetchUnsignedByteValues;
+                    fetchFunction = &VertexArray::FetchUnsignedByteValues;
 				}
 
 				break;
 
 			case GL_SHORT:
-				fetchFunction = FetchShortValues;
+				fetchFunction = &VertexArray::FetchShortValues;
 				break;
 
 			case GL_FIXED:
-				fetchFunction = FetchFixedValues;
+				fetchFunction = &VertexArray::FetchFixedValues;
 				break;
 
 			case GL_FLOAT:
-				fetchFunction = FetchFloatValues;
+				fetchFunction = &VertexArray::FetchFloatValues;
 				break;
 
 			default:

@@ -13,21 +13,21 @@ extern "C" {
 ** this file except in compliance with the License. You may obtain a copy
 ** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
 ** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
-**
+** 
 ** http://oss.sgi.com/projects/FreeB
-**
+** 
 ** Note that, as provided in the License, the Software is distributed on an
 ** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
 ** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
 ** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
 ** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-**
+** 
 ** Original Code. The Original Code is: OpenGL Sample Implementation,
 ** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
 ** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
 ** Copyright in any portions created by third parties is as indicated
 ** elsewhere herein. All Rights Reserved.
-**
+** 
 ** Additional Notice Provisions: The application programming interfaces
 ** established by SGI in conjunction with the Original Code are The
 ** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
@@ -254,13 +254,11 @@ typedef void (*_GLfuncptr)();
 #define GL_CURRENT_COLOR                  0x0B00
 #define GL_CURRENT_NORMAL                 0x0B02
 #define GL_CURRENT_TEXTURE_COORDS         0x0B03
-#define GL_POINT_SIZE                     0x0B11
 #define GL_POINT_SIZE_MIN                 0x8126
 #define GL_POINT_SIZE_MAX                 0x8127
 #define GL_POINT_FADE_THRESHOLD_SIZE      0x8128
 #define GL_POINT_DISTANCE_ATTENUATION     0x8129
 #define GL_SMOOTH_POINT_SIZE_RANGE        0x0B12
-#define GL_LINE_WIDTH                     0x0B21
 #define GL_SMOOTH_LINE_WIDTH_RANGE        0x0B22
 #define GL_ALIASED_POINT_SIZE_RANGE       0x846D
 #define GL_ALIASED_LINE_WIDTH_RANGE       0x846E
@@ -806,7 +804,6 @@ GLAPI void APIENTRY glTexEnvfv (GLenum target, GLenum pname, const GLfloat *para
 GLAPI void APIENTRY glTexEnvx (GLenum target, GLenum pname, GLfixed param);
 GLAPI void APIENTRY glTexEnvxv (GLenum target, GLenum pname, const GLfixed *params);
 GLAPI void APIENTRY glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
-GLAPI void APIENTRY glTexParameteri (GLenum target, GLenum pname, GLint param);
 GLAPI void APIENTRY glTexParameterf (GLenum target, GLenum pname, GLfloat param);
 GLAPI void APIENTRY glTexParameterx (GLenum target, GLenum pname, GLfixed param);
 GLAPI void APIENTRY glTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
@@ -821,30 +818,32 @@ GLAPI void APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height)
 
 #ifdef GL_OES_matrix_palette
 
-GLAPI void APIENTRY glCurrentPaletteMatrixOES (GLuint matrixpaletteindex);
-GLAPI void APIENTRY glLoadPaletteFromModelViewMatrixOES (void);
-GLAPI void APIENTRY glMatrixIndexPointerOES (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
-GLAPI void APIENTRY glWeightPointerOES (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+GLAPI void APIENTRY glCurrentPaletteMatrixOES(GLint index);
+GLAPI void APIENTRY glLoadPaletteFromModelViewMatrixOES(void);
+GLAPI void APIENTRY glMatrixIndexPointerOES(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
+GLAPI void APIENTRY glWeightPointerOES(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
 
 #endif /* OES_matrix_palette */
 
-#ifdef GL_OES_point_size_array
+
+#ifdef GL_OES_point_size_array 
 
 GLAPI void APIENTRY glPointSizePointerOES(GLenum type, GLsizei stride, const GLvoid *pointer);
 
 #endif /* OES_point_size_array */
 
+
 #ifdef GL_OES_draw_texture
 
-GLAPI void APIENTRY glDrawTexsOES (GLshort x, GLshort y, GLshort z, GLshort width, GLshort height);
-GLAPI void APIENTRY glDrawTexiOES (GLint x, GLint y, GLint z, GLint width, GLint height);
-GLAPI void APIENTRY glDrawTexfOES (GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height);
-GLAPI void APIENTRY glDrawTexxOES (GLfixed x, GLfixed y, GLfixed z, GLfixed width, GLfixed height);
+GLAPI void APIENTRY glDrawTexsOES(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height);
+GLAPI void APIENTRY glDrawTexiOES(GLint x, GLint y, GLint z, GLint width, GLint height);
+GLAPI void APIENTRY glDrawTexfOES(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height);
+GLAPI void APIENTRY glDrawTexxOES(GLfixed x, GLfixed y, GLfixed z, GLfixed width, GLfixed height);
 
-GLAPI void APIENTRY glDrawTexsvOES (GLshort *coords);
-GLAPI void APIENTRY glDrawTexivOES (GLint *coords);
-GLAPI void APIENTRY glDrawTexfvOES (GLfloat *coords);
-GLAPI void APIENTRY glDrawTexxvOES (GLfixed *coords);
+GLAPI void APIENTRY glDrawTexsvOES(GLshort *coords);
+GLAPI void APIENTRY glDrawTexivOES(GLint *coords);
+GLAPI void APIENTRY glDrawTexfvOES(GLfloat *coords);
+GLAPI void APIENTRY glDrawTexxvOES(GLfixed *coords);
 
 #endif /* GL_OES_draw_texture */
 

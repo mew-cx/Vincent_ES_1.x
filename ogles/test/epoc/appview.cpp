@@ -4,19 +4,23 @@
 //
 // ------------------------------------------------------------------------------------
 //
+// 12-18-2004   Iwan Junianto       support both s60 and uiq
 // 11-05-2004   Iwan Junianto       initial version
 // ====================================================================================
 
 #include <w32std.h>
-#include <quartzkeys.h>
 #include "appview.h"
 
-extern int InitOpenGL(CWindowGc* gc, RWindow* win);
-extern void ShutdownOpenGL();
-extern void PaintProc(CWindowGc* gc, const TRect& aRect);
-extern float angle;
+extern int InitOpenGL(CWindowGc* gc, RWindow* win, TAppGlobal* data);
+extern void ShutdownOpenGL(TAppGlobal* data);
+extern void PaintProc(CWindowGc* gc, const TRect& aRect, TAppGlobal* data);
 
+#ifdef __MARM__
+_LIT(KOglesDll, "gles_cl.dll");
+_LIT(KBitmapFile, "c:\\system\\apps\\test\\dodge.mbm");
+#else
 _LIT(KBitmapFile, "z:\\system\\apps\\test\\dodge.mbm");
+#endif
 
 CAppView* CAppView::NewL(const TRect& aRect)
 {
@@ -30,17 +34,26 @@ CAppView* CAppView::NewL(const TRect& aRect)
 
 void CAppView::ConstructL(const TRect& aRect)
 {
+	// prevent kernel panic when app run for the first time by pre-loading the dll manually
+#ifdef __MARM__
+	User::LeaveIfError(iDll.Load(KOglesDll));
+#endif
 	CreateWindowL();
 	SetRect(aRect);
 	ActivateL();
-    InitOpenGL(Gc(), Win());
+    InitOpenGL(Gc(), Win(), &iData);
     iCallBack = new (ELeave) TCallBack(&CAppView::OnTimer, this);
 }
 
 void CAppView::Exit()
 {
     delete iCallBack;
-    ShutdownOpenGL();
+    delete iTimer;
+    iTimer = NULL;
+    ShutdownOpenGL(&iData);
+#ifdef __MARM__
+	iDll.Close();
+#endif
 }
 
 void CAppView::Draw(const TRect& aRect) const
@@ -63,7 +76,7 @@ void CAppView::Draw(const TRect& aRect) const
 
     if (iShowTest)
     {
-        PaintProc(&gc, aRect);
+        PaintProc(&gc, aRect, &iData);
         return;
     }
 
@@ -105,48 +118,15 @@ TCoeInputCapabilities CAppView::InputCapabilities() const
 	return TCoeInputCapabilities(TCoeInputCapabilities::ENavigation);
 }
 
-TKeyResponse CAppView::OfferKeyEventL(const TKeyEvent& aKeyEvent,TEventCode aType)
+TKeyResponse CAppView::OfferKeyEventL(const TKeyEvent& /*aKeyEvent*/,TEventCode /*aType*/)
 {
-	if (aType!=EEventKey)
-		return EKeyWasNotConsumed;
-		
-	switch (aKeyEvent.iCode) {
-	case EQuartzKeyFourWayLeft:
-		break;
-		
-	case EQuartzKeyFourWayRight:
-        break;
-
-	case EQuartzKeyFourWayUp:
-		break;
-		
-	case EQuartzKeyFourWayDown:
-		break;
-		
-	case EKeyYes:
-		break;
-		
-	case EKeyNo:
-		break;
-	
-	default:
-		return EKeyWasNotConsumed;
-	}
-	
-	return EKeyWasConsumed;
-}
-
-void CAppView::HandlePointerEventL(const TPointerEvent& aPointerEvent)
-{
-	if (aPointerEvent.iType==TPointerEvent::EButton1Down) 
-	{
-	}
+	return EKeyWasNotConsumed;
 }
 
 int CAppView::OnTimer(void* aArg)
 {
     CAppView* self = (CAppView*)aArg;
-    angle += 0.5f;
+    self->iData.angle += 0.5f;
     self->DrawNow();
     return 0;
 }

@@ -212,7 +212,7 @@ GLbitfield Context :: QueryMatrixx(GLfixed mantissa[16], GLint exponent[16]) {
 // Matrix palette extension
 // --------------------------------------------------------------------------
 
-void Context :: CurrentPaletteMatrix(GLuint index) {
+void Context :: CurrentPaletteMatrix(GLint index) {
 	if (index < 0 || index > MATRIX_PALETTE_SIZE) {
 		RecordError(GL_INVALID_VALUE);
 	} else {

@@ -217,7 +217,7 @@ xpow(EGL_Fixed x, EGL_Fixed y) {
     static const U16 __gl_log_tab[] = { /* domain .5 - 1.0 */
 		0xffff, 0xd47f, 0xad96, 0x8a62, 0x6a3f, 0x4caf, 0x3151, 0x17d6, 0x0000
     };
-    static U16 __gl_alog_tab[] = { /* domain 0 - 1.0 */
+    static const U16 __gl_alog_tab[] = { /* domain 0 - 1.0 */
 		0xffff, 0xeac0, 0xd744, 0xc567, 0xb504, 0xa5fe, 0x9837, 0x8b95, 0x8000
     };
 

@@ -897,10 +897,10 @@ namespace {
 	};
 
 	template <class SrcAccessor> inline void CreatePalette(const U8 *& data,
-		size_t numberOfColors, Color * colors, SrcAccessor& accessor) {
+		size_t numberOfColors, Color * colors, const SrcAccessor& accessor) {
 
 		for (size_t index = 0; index < numberOfColors; ++index) {
-			colors[index] = accessor(data);
+			colors[index] = const_cast<SrcAccessor&>(accessor)(data);
 		}
 	}
 
@@ -1404,16 +1404,6 @@ void Context :: CopyTexSubImage2D(GLenum target, GLint level,
 // --------------------------------------------------------------------------
 // Texture parameters
 // --------------------------------------------------------------------------
-
-void Context :: TexParameteri(GLenum target, GLenum pname, GLint param) { 
-
-	if (target != GL_TEXTURE_2D) {
-		RecordError(GL_INVALID_ENUM);
-		return;
-	}
-
-	RecordError(GL_INVALID_ENUM);
-}
 
 void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) { 
 

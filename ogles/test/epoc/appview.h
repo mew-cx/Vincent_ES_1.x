@@ -4,6 +4,7 @@
 //
 // ------------------------------------------------------------------------------------
 //
+// 12-18-2004   Iwan Junianto       support both s60 and uiq
 // 11-05-2004   Iwan Junianto       initial version
 // ====================================================================================
 
@@ -12,6 +13,7 @@
 
 #include <e32std.h>
 #include <coecntrl.h>
+#include "appglobal.h"
 
 class CAppView: public CCoeControl
 {
@@ -19,7 +21,6 @@ public:
 	static CAppView* NewL(const TRect& aRect);
 	
 	virtual TKeyResponse OfferKeyEventL(const TKeyEvent& aKeyEvent,TEventCode aType);	
-	virtual void HandlePointerEventL(const TPointerEvent& aPointerEvent);
 	virtual TCoeInputCapabilities InputCapabilities() const;
     
     CWindowGc* Gc() const;
@@ -28,7 +29,9 @@ public:
     void Exit();
     void ShowBitmap();
     void ShowTest();
-	
+
+    mutable TAppGlobal iData;	
+
 private:
 	void ConstructL(const TRect& aRect);
 	virtual void Draw(const TRect&) const;	
@@ -38,6 +41,9 @@ private:
     TBool iShowTest;
     TCallBack* iCallBack;
     CPeriodic* iTimer;
+#ifdef __MARM__
+	RLibrary iDll;
+#endif
 };
 
 #endif

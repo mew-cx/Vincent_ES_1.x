@@ -39,14 +39,21 @@
 extern "C" {
 #endif
 
-
+#if defined(__GCC32__) && defined(__cplusplus)
+struct cg_module_t;
+union cg_inst_t;
+struct cg_block_t;
+struct cg_proc_t;
+struct cg_virtual_reg_t;
+struct cg_block_ref_t;
+#else
 typedef struct cg_module_t cg_module_t;
 typedef union cg_inst_t cg_inst_t;
 typedef struct cg_block_t cg_block_t;
 typedef struct cg_proc_t cg_proc_t;
 typedef struct cg_virtual_reg_t cg_virtual_reg_t;
 typedef struct cg_block_ref_t cg_block_ref_t;
-
+#endif
 
 struct cg_label_t;
 struct cg_bitset_t;

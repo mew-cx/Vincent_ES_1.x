@@ -80,7 +80,7 @@ namespace EGL {
 			EGLint	height
 			);
 
-		Config() { }
+		OGLES_API Config() { }
 		Config (const Config &other, const EGLint * attribList = 0, const EGLint * validAttributes = 0);
 		Config & operator=(const Config & other);
 
@@ -121,11 +121,7 @@ namespace EGL {
 		EGLint	m_TransparentBlueValue;
 		EGLint  m_Width;
 		EGLint	m_Height;
-
-		static const Config s_AllConfigurations[];
-		static const int s_NumConfigurations;
 	};
-
 }
 
 #endif // ndef EGL_CONFIG_H

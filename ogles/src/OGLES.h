@@ -48,6 +48,7 @@
 #endif
 
 #ifdef EGL_ON_SYMBIAN
+#   define EGL_USE_TOP_DOWN_SURFACE
 #	ifdef OGLES_EXPORTS
 #		define OGLES_API EXPORT_C
 #	else
@@ -56,7 +57,7 @@
 #endif
 
 
-#if (defined(ARM) || defined(_ARM_)) && !defined(EGL_NO_COMPILE)
+#if (defined(ARM) || defined(_ARM_) || defined(__MARM__)) && !defined(EGL_NO_COMPILE)
 #	define EGL_USE_JIT	1
 #else
 #	define EGL_USE_JIT  0
@@ -136,10 +137,13 @@ typedef TInt64X	I64;
 
 namespace EGL {
 	class Context;
+    class Config;
 
 	struct TlsInfo {
-        TlsInfo(): m_Context(0), m_LastError(0) {}
+        TlsInfo();
+        ~TlsInfo();
 		Context * m_Context;
+        Config* m_AllConfigurations;
 		I32 m_LastError;
 	};
 }

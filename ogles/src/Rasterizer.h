@@ -137,20 +137,7 @@ namespace EGL {
 		U32			MipmapLevel[EGL_NUM_TEXTURE_UNITS];
 		U32			MaxMipmapLevel[EGL_NUM_TEXTURE_UNITS];
 
-
-		void Init(Surface * surface, I32 y) {
-			size_t offset = y * surface->GetWidth();
-			
-			SurfaceWidth = surface->GetWidth();
-			SurfaceHeight = surface->GetHeight();
-			DepthBuffer = surface->GetDepthBuffer() + offset;
-			ColorBuffer = surface->GetColorBuffer() + offset;
-			StencilBuffer = surface->GetStencilBuffer() + offset;
-			AlphaBuffer = surface->GetAlphaBuffer() + offset;
-			InversionTablePtr = InversionTable;
-		}
-
-		static const I32 InversionTable[];
+        void Init(Surface * surface, I32 y);
 	};
 
 	// signature for generated scanline functions

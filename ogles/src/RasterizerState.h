@@ -413,7 +413,7 @@ namespace EGL {
 			}
 
 			bool				Enabled;
-			Color				Color;
+            EGL::Color				Color;
 		}
 								m_Fog;
 

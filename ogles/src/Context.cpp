@@ -697,12 +697,8 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_MAX_PALETTE_MATRICES_OES:
-	case GL_MAX_VERTEX_UNITS_OES:
 		params[0] = MATRIX_PALETTE_SIZE;
 		break;
-
-//		params[0] = EGL_NUM_TEXTURE_UNITS;
-//		break;
 
 	case GL_VERTEX_ARRAY_SIZE:
 		params[0] = m_VertexArray.size;
@@ -956,6 +952,10 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 			}
 		}
 
+		break;
+
+	case GL_MAX_VERTEX_UNITS_OES:
+		params[0] = EGL_NUM_TEXTURE_UNITS;
 		break;
 
 	case GL_COORD_REPLACE_OES:
