@@ -196,7 +196,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32="C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xilinke42"
 # ADD BASE LINK32 aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
-# ADD LINK32 aygshell.lib commctrl.lib coredll.lib GLES_CL.LIB /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /libpath:"..\..\bin\arm\Debug" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
+# ADD LINK32 aygshell.lib commctrl.lib coredll.lib libGLES_CM.LIB /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /libpath:"..\..\bin\arm\Debug" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 
 !ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release ARM"
 
