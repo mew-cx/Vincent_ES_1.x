@@ -462,7 +462,7 @@ void Context :: Enable(GLenum cap) {
 void Context :: Hint(GLenum target, GLenum mode) { 
 
 	if (mode != GL_DONT_CARE && mode != GL_FASTEST && mode != GL_NICEST) {
-		RecordError(GL_INVALID_VALUE);
+		RecordError(GL_INVALID_ENUM);
 		return;
 	}
 
@@ -485,17 +485,6 @@ void Context :: Hint(GLenum target, GLenum mode) {
 
 	case GL_GENERATE_MIPMAP_HINT:
 		m_GenerateMipmapHint = mode;
-		break;
-
-	default:
-		RecordError(GL_INVALID_ENUM);
-		return;
-	}
-
-	switch (mode) {
-	case GL_FASTEST:
-	case GL_NICEST:
-	case GL_DONT_CARE:
 		break;
 
 	default:
