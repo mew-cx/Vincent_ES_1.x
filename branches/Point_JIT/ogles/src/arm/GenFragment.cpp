@@ -1795,10 +1795,14 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 			DECL_REG	(regClamped0);
 			DECL_REG	(regClamped1);
+			DECL_REG	(regRounded);
+
+			DECL_CONST_REG	(regConstantHalf, 0x80);
 
 			MAX		(regClamped0, fragmentInfo.regA, regConstant0);
 			MIN		(regClamped1, regClamped0, regConstantOne);
-			LSR		(regColorA, regClamped1, regConstant8);
+			ADD		(regRounded, regClamped1, regConstantHalf);
+			LSR		(regColorA, regRounded, regConstant8);
 		}
 		{
 			// create RGB 565 representation
@@ -2750,11 +2754,15 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		DECL_REG	(regConstant255);
 		DECL_REG	(regAdjustedA);
 		DECL_REG	(regMultipliedA);
+		DECL_REG	(regRounded);
+
+		DECL_CONST_REG	(regHalf, 0x80);
 
 		LDI		(regConstant255, 255);
 		LDI		(regConstant8, 8);
 		MUL		(regMultipliedA, regColorA, regConstant255);
-		LSR		(regAdjustedA, regMultipliedA, regConstant8);
+		ADD		(regRounded, regMultipliedA, regHalf);
+		LSR		(regAdjustedA, regRounded, regConstant8);
 
 		regColorA = regAdjustedA;
 	}
