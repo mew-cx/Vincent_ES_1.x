@@ -139,7 +139,7 @@ typedef struct literal_t
 literal_t;
 
 
-#define PHYSICAL_REGISTERS  16
+#define PHYSICAL_REGISTERS  (ARMREG_MAX + 1)
 
 struct cg_codegen_t 
 {
@@ -149,6 +149,7 @@ struct cg_codegen_t
 	cg_segment_t *			cseg;
 	
 	cg_physical_reg_t			registers[PHYSICAL_REGISTERS];
+	cg_physical_reg_t			flags;
 
 	physical_reg_list_t		free_regs;			/* phys regs free			*/
 	physical_reg_list_t		used_regs;			/* phys regs in use			*/
@@ -204,6 +205,8 @@ cg_codegen_t * cg_codegen_create(cg_heap_t * heap, cg_runtime_info_t * runtime)
 		gen->registers[regno].regno = (ARMReg) (ARMREG_R0 + regno);
 	}
 	
+	gen->flags.regno = ARMREG_CPSR;
+
 	return gen;
 }
 
@@ -263,6 +266,18 @@ static void branch_cond(cg_codegen_t * gen, cg_label_t * target, ARMCond cond)
 static void branch(cg_codegen_t * gen, cg_label_t * target)
 {
 	branch_cond(gen, target, ARMCOND_AL);
+}
+
+
+static void save_flags(cg_codegen_t * gen, cg_physical_reg_t * physical_reg)
+{
+	ARM_MRS_CPSR(gen->cseg, physical_reg->regno);
+}
+
+
+static void restore_flags(cg_codegen_t * gen, cg_physical_reg_t * reg)
+{
+	ARM_MSR_REG(gen->cseg, ARM_PSR_F, reg->regno, ARM_CPSR);
 }
 
 
@@ -1459,6 +1474,23 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 			/* to add spill code later										*/
 			/****************************************************************/
 
+			if (gen->flags.virtual_reg == reg)
+				continue;			/* OK, current value is what we need	*/
+
+			if (reg->physical_reg != NULL &&
+				reg->physical_reg->virtual_reg == reg)
+			{
+				// value is in a regular register
+				restore_flags(gen, reg->physical_reg);
+				gen->flags.virtual_reg = reg;
+				continue;
+			}
+
+			physical_reg = load_reg(gen, reg, 0);
+			restore_flags(gen, physical_reg);
+			deallocate_reg(gen, reg);
+			gen->flags.virtual_reg = reg;
+
 			continue;
 		}
 
@@ -1496,10 +1528,24 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 		if (reg->type == cg_reg_type_flags)
 		{
 			/****************************************************************/
-			/* do not allocate a register for flags, however we will have	*/
-			/* to add spill code later										*/
+			/* do not allocate a register for flags, but save flags if they	*/
+			/* are needed later												*/
 			/****************************************************************/
 			update_flags = 1;
+
+			if (gen->flags.virtual_reg != NULL &&
+				(gen->flags.virtual_reg->use != NULL || 
+				 CG_BITSET_TEST(inst->base.block->live_out, gen->flags.virtual_reg->reg_no)))
+			{
+				physical_reg = allocate_reg(gen, gen->flags.virtual_reg, 0);
+				assign_reg(gen, physical_reg, gen->flags.virtual_reg);
+				save_flags(gen, physical_reg);
+				physical_reg->dirty = physical_reg->defined = 1;
+			}
+
+			gen->flags.virtual_reg = reg;
+			reg->physical_reg = &gen->flags;
+
 			continue;
 		}
 
@@ -1518,11 +1564,6 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 		cg_virtual_reg_t * reg = *iter;
 		cg_physical_reg_t * physical_reg;
 		
-		if (reg->type == cg_reg_type_flags)
-		{
-			continue;
-		}
-
 		physical_reg = reg->physical_reg;
 		physical_reg->dirty = physical_reg->defined = 1;
 	}
@@ -1649,6 +1690,17 @@ void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 /****************************************************************************/
 
 
+static void init_flags(cg_codegen_t * gen)
+{
+	/* clean out any association between flags and virtual registers		*/
+
+	gen->flags.prev = gen->flags.next = (cg_physical_reg_t *) 0;
+	gen->flags.virtual_reg = (cg_virtual_reg_t *) 0;
+	gen->flags.next_use = (cg_inst_t *) 0;
+	gen->flags.dirty = gen->flags.defined = 0;	
+}
+
+
 static void begin_block(cg_codegen_t * gen)
 {
 	/* these assertions will change as soon as we preserve globals			*/
@@ -1666,6 +1718,8 @@ static void end_block(cg_codegen_t * gen)
 	{
 		deallocate_reg(gen, gen->used_regs.tail->virtual_reg);
 	}
+
+	init_flags(gen);
 }
 
 
@@ -1867,6 +1921,8 @@ static void begin_proc(cg_codegen_t * gen, cg_proc_t * proc)
 	{
 		init_free(gen, &gen->registers[regno]);
 	}
+
+	init_flags(gen);
 }
 
 

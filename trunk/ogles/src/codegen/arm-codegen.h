@@ -138,7 +138,11 @@ typedef enum {
 	/* XScale: acc0 on CP0 */
 	ARMREG_ACC0 = ARMREG_CR0,
 
-	ARMREG_MAX = ARMREG_R15
+	ARMREG_MAX = ARMREG_R15,
+
+	/* flags */
+	ARMREG_CPSR = 0,
+	ARMREG_SPSR = 1
 } ARMReg;
 
 typedef enum {
@@ -1044,6 +1048,26 @@ typedef union {
                      (ARM_MSR_ID3 << 20) | \
                      (ARM_MSR_ID4 << 12))
 
+#define ARM_DEF_MSR_REG_COND(mask, rm, r, cond) \
+		ARM_MSR_TAG				| \
+		ARM_DEF_COND(cond)		| \
+		((rm) & 0xf)			| \
+		(((r) & 1) << 22)		| \
+		(((mask) & 0xf) << 16)
+
+#define ARM_MSR_REG_COND(p, mask, rm, r, cond) \
+	ARM_EMIT(p, ARM_DEF_MSR_REG_COND(mask, rm, r, cond))
+
+#define ARM_MSR_REG(p, mask, rm, r) \
+	ARM_MSR_REG_COND(p, mask, rm, r, ARMCOND_AL)
+
+#define ARM_PSR_C 1
+#define ARM_PSR_X 2
+#define ARM_PSR_S 4
+#define ARM_PSR_F 8
+
+#define ARM_CPSR 0
+#define ARM_SPSR 1
 
 /* Move PSR to register. */
 typedef struct {
@@ -1061,7 +1085,26 @@ typedef struct {
 #define ARM_MRS_MASK ((0x1F << 23) | (0x3F << 16) | 0xFFF)
 #define ARM_MRS_TAG ((ARM_MRS_ID << 23) | (ARM_MRS_ID2 << 16) | ARM_MRS_ID3)
 
+#define ARM_DEF_MRS_COND(rd, r, cond) \
+	ARM_MRS_TAG				| \
+	ARM_DEF_COND(cond)		| \
+	(((r) & 1) << 22)		| \
+	((rd)& 0xf) << 12
 
+#define ARM_MRS_COND(p, rd, r, cond) \
+	ARM_EMIT(p, ARM_DEF_MRS_COND(rd, r, cond))
+
+#define ARM_MRS_CPSR_COND(p, rd, cond) \
+	ARM_MRS_COND(p, rd, ARM_CPSR, cond)
+
+#define ARM_MRS_CPSR(p, rd) \
+	ARM_MRS_CPSR_COND(p, rd, ARMCOND_AL)
+
+#define ARM_MRS_SPSR_COND(p, rd, cond) \
+	ARM_MRS_COND(p, rd, ARM_SPSR, cond)
+
+#define ARM_MRS_SPSR(p, rd) \
+	ARM_MRS_SPSR_COND(p, rd, ARMCOND_AL)
 
 
 #include "arm_dpimacros.h"
