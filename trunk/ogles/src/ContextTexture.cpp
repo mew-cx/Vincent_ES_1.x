@@ -90,6 +90,34 @@ namespace {
 				return Texture::TextureFormatInvalid;
 		}
 	}
+
+	MultiTexture::WrappingMode WrappingModeFromEnum(GLenum mode) {
+		switch (mode) {
+			case GL_CLAMP_TO_EDGE:	return MultiTexture::WrappingModeClampToEdge;
+			case GL_REPEAT:			return MultiTexture::WrappingModeRepeat;
+			default:				return MultiTexture::WrappingModeInvalid;
+		}
+	}
+
+	MultiTexture::MinFilterMode MinFilterModeFromEnum(GLenum mode) {
+		switch (mode) {
+			case GL_NEAREST:				return MultiTexture::MinFilterModeNearest;
+			case GL_LINEAR:					return MultiTexture::MinFilterModeLinear;
+			case GL_NEAREST_MIPMAP_LINEAR:	return MultiTexture::MinFilterModeNearestMipmapLinear;
+			case GL_NEAREST_MIPMAP_NEAREST:	return MultiTexture::MinFilterModeNearestMipmapNearest;
+			case GL_LINEAR_MIPMAP_LINEAR:	return MultiTexture::MinFilterModeLinearMipmapLinear;
+			case GL_LINEAR_MIPMAP_NEAREST:	return MultiTexture::MinFilterModeLinearMipmapNearest;
+			default:						return MultiTexture::MinFilterModeInvalid;
+		}
+	}
+
+	MultiTexture::MagFilterMode MagFilterModeFromEnum(GLenum mode) {
+		switch (mode) {
+			case GL_NEAREST:		return MultiTexture::MagFilterModeNearest;
+			case GL_LINEAR:			return MultiTexture::MagFilterModeLinear;
+			default:				return MultiTexture::MagFilterModeInvalid;
+		}
+	}
 }
 
 
@@ -194,6 +222,7 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat, GLs
 						}
 					}
 					break;
+
 				case GL_UNSIGNED_SHORT_5_5_5_1:
 					memcpy(texture->GetData(), pixels, width * height * texture->GetBytesPerPixel());
 					break;
@@ -237,17 +266,56 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 		return;
 	}
 
+	MultiTexture * multiTexture = GetCurrentTexture();
+	int intParam = EGL_IntFromFixed(param);
+
 	switch (pname) {
 		case GL_TEXTURE_MIN_FILTER:
+			{
+				MultiTexture::MinFilterMode mode = MinFilterModeFromEnum(intParam);
+
+				if (mode != MultiTexture::MinFilterModeInvalid) {
+					multiTexture->SetMinFilterMode(mode);
+				} else {
+					RecordError(GL_INVALID_VALUE);
+				}
+			}
 			break;
 
 		case GL_TEXTURE_MAG_FILTER:
+			{
+				MultiTexture::MagFilterMode mode = MagFilterModeFromEnum(intParam);
+
+				if (mode != MultiTexture::MagFilterModeInvalid) {
+					multiTexture->SetMagFilterMode(mode);
+				} else {
+					RecordError(GL_INVALID_VALUE);
+				}
+			}
 			break;
 
 		case GL_TEXTURE_WRAP_S:
+			{
+				MultiTexture::WrappingMode mode = WrappingModeFromEnum(intParam);
+
+				if (mode != MultiTexture::WrappingModeInvalid) {
+					multiTexture->SetWrappingModeS(mode);
+				} else {
+					RecordError(GL_INVALID_VALUE);
+				}
+			}
 			break;
 
 		case GL_TEXTURE_WRAP_T:
+			{
+				MultiTexture::WrappingMode mode = WrappingModeFromEnum(intParam);
+
+				if (mode != MultiTexture::WrappingModeInvalid) {
+					multiTexture->SetWrappingModeT(mode);
+				} else {
+					RecordError(GL_INVALID_VALUE);
+				}
+			}
 			break;
 
 		default:
