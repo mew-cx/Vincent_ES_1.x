@@ -98,15 +98,21 @@ extern void APIENTRY ugPostRedisplay(UGWindow uwin);
 extern void APIENTRY ugSwapBuffers(UGWindow uwin);
 
 
-extern void APIENTRY ugSolidTorusf(GLfloat ir, GLfloat or, GLint sides, GLint rings);
-extern void APIENTRY ugSolidSpheref(GLfloat radius, GLint slices, GLint stacks);
+extern void APIENTRY ugSolidBox(GLfloat Width, GLfloat Depth, GLfloat Height);
 extern void APIENTRY ugSolidConef(GLfloat base, GLfloat height, GLint slices, GLint stacks);
 extern void APIENTRY ugSolidCubef(GLfloat size);
+extern void APIENTRY ugSolidDisk(GLfloat inner_radius, GLfloat outer_radius, GLshort rings, GLshort slices);
+extern void APIENTRY ugSolidSpheref(GLfloat radius, GLint slices, GLint stacks);
+extern void APIENTRY ugSolidTorusf(GLfloat ir, GLfloat or, GLint sides, GLint rings);
+extern void APIENTRY ugSolidTube(GLfloat radius, GLfloat height, GLshort stacks, GLshort slices);
 
-extern void APIENTRY ugWireTorusf(GLfloat ir, GLfloat or, GLint sides, GLint rings);
-extern void APIENTRY ugWireSpheref(GLfloat radius, GLint slices, GLint stacks);
+extern void APIENTRY ugWireBox(GLfloat Width, GLfloat Depth, GLfloat Height);
 extern void APIENTRY ugWireConef(GLfloat base, GLfloat height, GLint slices, GLint stacks);
 extern void APIENTRY ugWireCubef(GLfloat size);
+extern void APIENTRY ugWireDisk(GLfloat inner_radius, GLfloat outer_radius, GLshort rings, GLshort slices);
+extern void APIENTRY ugWireSpheref(GLfloat radius, GLint slices, GLint stacks);
+extern void APIENTRY ugWireTorusf(GLfloat ir, GLfloat or, GLint sides, GLint rings);
+extern void APIENTRY ugWireTube(GLfloat radius, GLfloat height, GLshort stacks, GLshort slices);
 
 
 extern void APIENTRY ugluPerspectivef(GLfloat fovy, GLfloat aspect, GLfloat n, GLfloat f);
