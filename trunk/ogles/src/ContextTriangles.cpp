@@ -605,28 +605,15 @@ namespace {
 	}
 
 
-	inline EGL_Fixed Det3x3(EGL_Fixed x0, EGL_Fixed x1, EGL_Fixed x2,
-							EGL_Fixed y0, EGL_Fixed y1, EGL_Fixed y2,
-							EGL_Fixed z0, EGL_Fixed z1, EGL_Fixed z2) {
-
-		// TODO: Need to replace those float calculations by pseudo-floats (i.e. not fully normalized)
-		float result = 
-			+EGL_FloatFromFixed(x0) * EGL_FloatFromFixed(y1) * EGL_FloatFromFixed(z2)
-			+EGL_FloatFromFixed(x1) * EGL_FloatFromFixed(y2) * EGL_FloatFromFixed(z0)
-			+EGL_FloatFromFixed(x2) * EGL_FloatFromFixed(y0) * EGL_FloatFromFixed(z1)
-			-EGL_FloatFromFixed(x0) * EGL_FloatFromFixed(y2) * EGL_FloatFromFixed(z1)
-			-EGL_FloatFromFixed(x1) * EGL_FloatFromFixed(y0) * EGL_FloatFromFixed(z2)
-			-EGL_FloatFromFixed(x2) * EGL_FloatFromFixed(y1) * EGL_FloatFromFixed(z0);
-
-		if (result > 0) 
-			return 1;
-		else if (result < 0)
-			return -1;
-		else 
-			return 0;
+	inline I64 MulLong(EGL_Fixed a, EGL_Fixed b) {
+		return (((I64) a * (I64) b)  >> EGL_PRECISION);
 	}
-}
 
+	inline EGL_Fixed Round(EGL_Fixed value) {
+		return (value + 8) >> 4;
+	}
+
+}
 
 
 void Context :: FrontFace(GLenum mode) { 
@@ -670,10 +657,33 @@ void Context :: CullFace(GLenum mode) {
 
 inline bool Context :: IsCulled(RasterPos& a, RasterPos& b, RasterPos& c) {
 
-	EGL_Fixed sign = 
-		Det3x3(a.m_ClipCoords.w(), a.m_ClipCoords.x(), a.m_ClipCoords.y(),
-			   b.m_ClipCoords.w(), b.m_ClipCoords.x(), b.m_ClipCoords.y(),
-			   c.m_ClipCoords.w(), c.m_ClipCoords.x(), c.m_ClipCoords.y());
+	EGL_Fixed x0 = a.m_ClipCoords.w();
+	EGL_Fixed x1 = a.m_ClipCoords.x();
+	EGL_Fixed x2 = a.m_ClipCoords.y();
+								
+	EGL_Fixed y0 = b.m_ClipCoords.w();
+	EGL_Fixed y1 = b.m_ClipCoords.x();
+	EGL_Fixed y2 = b.m_ClipCoords.y();
+								
+	EGL_Fixed z0 = c.m_ClipCoords.w();
+	EGL_Fixed z1 = c.m_ClipCoords.x();
+	EGL_Fixed z2 = c.m_ClipCoords.y();
+
+	I64 sign;
+	
+	if (((x0 & 0xff000000) == 0 || (x0 & 0xff000000) == 0xff000000) &&
+		((y0 & 0xff000000) == 0 || (y0 & 0xff000000) == 0xff000000) &&
+		((z0 & 0xff000000) == 0 || (z0 & 0xff000000) == 0xff000000)) {
+		sign = 
+			+ Round(x0) * (MulLong(Round(y1), Round(z2)) - MulLong(Round(z1), Round(y2)))
+			- Round(y0) * (MulLong(Round(x1), Round(z2)) - MulLong(Round(z1), Round(x2)))
+			+ Round(z0) * (MulLong(Round(x1), Round(y2)) - MulLong(Round(y1), Round(x2)));
+	} else {
+		sign = 
+			+ Round(x0 >> 6) * (MulLong(Round(y1), Round(z2)) - MulLong(Round(z1), Round(y2)))
+			- Round(y0 >> 6) * (MulLong(Round(x1), Round(z2)) - MulLong(Round(z1), Round(x2)))
+			+ Round(z0 >> 6) * (MulLong(Round(x1), Round(y2)) - MulLong(Round(y1), Round(x2)));
+	}
 
 	switch (m_CullMode) {
 		case CullModeBack:
