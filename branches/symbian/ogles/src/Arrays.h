@@ -230,6 +230,10 @@ namespace EGL {
 
 	template <class ELEMENT>
 	struct ObjectArray {
+		enum {
+			INITIAL_SIZE = 64,
+			FACTOR = 2
+		};
 
 		struct ObjectRecord {
 			U32 value;
@@ -264,11 +268,6 @@ namespace EGL {
 				return (value >> 1);
 			}
 
-		};
-
-		enum {
-			INITIAL_SIZE = 64,
-			FACTOR = 2
 		};
 
 		ObjectArray() {
