@@ -56,7 +56,7 @@ extern "C" {
 #define GL_OES_querymatrix		    1
 
 /* OES_query_matrix */
-GLbitfield APIENTRY glQueryMatrixxOES(GLfixed *mantissa, GLint *exponent);
+GLAPI GLbitfield APIENTRY glQueryMatrixxOES(GLfixed *mantissa, GLint *exponent);
 
 /****************************************************************************/
 /* Extension: SGIS_generate_mipmap											*/

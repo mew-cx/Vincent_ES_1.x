@@ -72,6 +72,9 @@
 #	define EGL_CONFIG_RENDERER		"Software"
 #endif
 
+#define EGL_VERSION_NUMBER			"0.77 " EGL_CONFIG_RENDERER
+
+
 // --------------------------------------------------------------------------
 // type definitions
 // --------------------------------------------------------------------------

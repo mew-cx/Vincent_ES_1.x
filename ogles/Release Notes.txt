@@ -10,6 +10,7 @@ Version 0.77
 
 This version addresses the following issues:
 
+958796 - eglQueryString not implemented
 863638 - rescale normal vs. normalize
 864273 - PixelStorei is not implemented
 

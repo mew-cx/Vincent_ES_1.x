@@ -42,6 +42,7 @@
 
 #include "OGLES.h"
 #include "GLES/gl.h"
+#include "GLES/glext.h"
 #include "Types.h"
 #include "Arrays.h"
 #include "linalg.h"

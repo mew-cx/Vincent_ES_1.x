@@ -92,7 +92,20 @@ GLAPI EGLBoolean APIENTRY eglTerminate (EGLDisplay dpy) {
 }
 
 GLAPI const char * APIENTRY eglQueryString (EGLDisplay dpy, EGLint name) {
-	return 0;
+	switch (name) {
+	case EGL_VENDOR:
+		return EGL_CONFIG_VENDOR;
+
+	case EGL_VERSION:
+		return EGL_VERSION_NUMBER;
+
+	case EGL_EXTENSIONS:
+		return "";
+
+	default:
+		eglRecordError(EGL_BAD_PARAMETER);
+		return 0;
+	}
 }
 
 
