@@ -47,7 +47,7 @@ CPP=clarm.exe
 # PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "NDEBUG" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /O2 /M$(CECrtMT) /c
-# ADD CPP /nologo /W3 /I "..\..\ctk" /I "..\.." /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "..\..\include" /I "..\..\ctk" /I "..\.." /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /O2 /M$(CECrtMT) /c
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
@@ -72,7 +72,7 @@ BSC32=bscmake.exe
 # PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /M$(CECrtMTDebug) /c
-# ADD CPP /nologo /W3 /Zi /Od /I "..\..\ctk" /I "..\.." /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "..\..\include" /I "..\..\ctk" /I "..\.." /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /M$(CECrtMTDebug) /c
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
@@ -97,7 +97,7 @@ BSC32=bscmake.exe
 # PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /O2 /M$(CECrtMT) /c
-# ADD CPP /nologo /W3 /I "..\..\ctk" /I "..\.." /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "..\..\include" /I "..\..\ctk" /I "..\.." /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /O2 /M$(CECrtMT) /c
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
@@ -122,7 +122,7 @@ BSC32=bscmake.exe
 # PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /M$(CECrtMTDebug) /c
-# ADD CPP /nologo /W3 /Zi /Od /I "..\..\ctk" /I "..\.." /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "..\..\include" /I "..\..\ctk" /I "..\.." /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /M$(CECrtMTDebug) /c
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
@@ -144,7 +144,7 @@ BSC32=bscmake.exe
 # Begin Source File
 
 SOURCE=..\..\conform\conformshell\driver.c
-DEP_CPP_DRIVE=\
+NODEP_CPP_DRIVE=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\driver.h"\
 	"..\..\conform\conformshell\path.h"\
@@ -171,7 +171,7 @@ DEP_CPP_DRIVE=\
 # Begin Source File
 
 SOURCE=..\..\conform\conformshell\path.c
-DEP_CPP_PATH_=\
+NODEP_CPP_PATH_=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\driver.h"\
 	"..\..\conform\conformshell\path.h"\
@@ -198,7 +198,7 @@ DEP_CPP_PATH_=\
 # Begin Source File
 
 SOURCE=..\..\conform\conformshell\pathdata.c
-DEP_CPP_PATHD=\
+NODEP_CPP_PATHD=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\pathdata.h"\
 	"..\..\ctk\ctk.h"\
@@ -222,7 +222,7 @@ DEP_CPP_PATHD=\
 # Begin Source File
 
 SOURCE=..\..\conform\conformshell\paths.c
-DEP_CPP_PATHS=\
+NODEP_CPP_PATHS=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\path.h"\
 	"..\..\conform\conformshell\pathdata.h"\
@@ -247,7 +247,7 @@ DEP_CPP_PATHS=\
 # Begin Source File
 
 SOURCE=..\..\conform\conformshell\shell.c
-DEP_CPP_SHELL=\
+NODEP_CPP_SHELL=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\driver.h"\
 	"..\..\conform\conformshell\pathdata.h"\
@@ -273,7 +273,7 @@ DEP_CPP_SHELL=\
 # Begin Source File
 
 SOURCE=..\..\conform\conformshell\util.c
-DEP_CPP_UTIL_=\
+NODEP_CPP_UTIL_=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\path.h"\
 	"..\..\conform\conformshell\pathdata.h"\
@@ -299,7 +299,7 @@ DEP_CPP_UTIL_=\
 # Begin Source File
 
 SOURCE=..\..\conform\conformshell\utilg.c
-DEP_CPP_UTILG=\
+NODEP_CPP_UTILG=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\utilg.h"\
 	"..\..\ctk\ctk.h"\
@@ -323,7 +323,7 @@ DEP_CPP_UTILG=\
 # Begin Source File
 
 SOURCE=..\..\conform\conformshell\utilm.c
-DEP_CPP_UTILM=\
+NODEP_CPP_UTILM=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\utilm.h"\
 	"..\..\ctk\ctk.h"\
@@ -347,7 +347,7 @@ DEP_CPP_UTILM=\
 # Begin Source File
 
 SOURCE=..\..\conform\conformshell\utilp.c
-DEP_CPP_UTILP=\
+NODEP_CPP_UTILP=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\utilp.h"\
 	"..\..\ctk\ctk.h"\
@@ -371,7 +371,7 @@ DEP_CPP_UTILP=\
 # Begin Source File
 
 SOURCE=..\..\conform\conformshell\utilru.c
-DEP_CPP_UTILR=\
+NODEP_CPP_UTILR=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\utilru.h"\
 	"..\..\ctk\ctk.h"\
@@ -395,7 +395,7 @@ DEP_CPP_UTILR=\
 # Begin Source File
 
 SOURCE=..\..\conform\conformshell\utils.c
-DEP_CPP_UTILS=\
+NODEP_CPP_UTILS=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\driver.h"\
 	"..\..\conform\conformshell\pathdata.h"\
@@ -421,7 +421,7 @@ DEP_CPP_UTILS=\
 # Begin Source File
 
 SOURCE=..\..\conform\conformshell\utilt.c
-DEP_CPP_UTILT=\
+NODEP_CPP_UTILT=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\driver.h"\
 	"..\..\conform\conformshell\pathdata.h"\
