@@ -24,7 +24,12 @@
 #define USE_BUFFERS 1
 //#define DEBUG_OUTPUT    // define this to debug drawing output (saved as c\system\data\image.mbm)
 
+#ifdef __MARM__
+_LIT(KBitmapFile, "c:\\system\\apps\\test\\dodge.mbm");
+#else
 _LIT(KBitmapFile, "z:\\system\\apps\\test\\dodge.mbm");
+#endif
+
 GLAPI EGLBoolean APIENTRY eglSaveSurfaceHM(EGLSurface surface, const TDesC& filename)
 {
     // debug return code
