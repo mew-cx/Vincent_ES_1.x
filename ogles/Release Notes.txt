@@ -16,6 +16,7 @@ In addition, a couple of defects that showed up in those examples have been addr
 
 1001348 - By default, smooth shading should be enabled
 1001352 - movelight example is rendered incorrectly
+1001351 - alpha3d example does not render correctly
 
 
 Version 0.80
