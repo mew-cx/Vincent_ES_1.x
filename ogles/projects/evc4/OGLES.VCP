@@ -2315,9 +2315,5 @@ SOURCE=..\..\src\Texture.h
 
 SOURCE=..\..\license.txt
 # End Source File
-# Begin Source File
-
-SOURCE=..\..\src\todo.txt
-# End Source File
 # End Target
 # End Project
