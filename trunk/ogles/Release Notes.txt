@@ -8,6 +8,7 @@ the bug database on sourceforge.
 Version 0.71
 ------------
 
+944663 - Does not handle the case Z=0 properly
 937516 - Context::TexEnv target should be checked against GL_TEXTURE_ 
 937517 - bug in Light::AccumulateLight 
 937524 - EGL_Power should read switch (exponen >> EGL_PRECISION) 

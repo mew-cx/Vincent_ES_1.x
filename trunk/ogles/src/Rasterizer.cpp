@@ -725,7 +725,7 @@ inline void Rasterizer :: Fragment(I32 offset, EGL_Fixed depth, I32 texOffset,
 #define LOG_LINEAR_SPAN 3					// logarithm of value base 2
 #define LINEAR_SPAN (1 << LOG_LINEAR_SPAN)	// must be power of 2
 
-
+//#define NO_COMPILE
 #if !defined(NO_COMPILE) && (defined(ARM) || defined(_ARM_))
 
 inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& end, U32 y) {
@@ -769,15 +769,16 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 
 	FractionalColor colorIncrement = (end.m_Color - start.m_Color) * invSpan;
 
-	EGL_Fixed deltaInvZ = EGL_Mul(end.m_WindowCoords.z - start.m_WindowCoords.z, invSpan);
+	EGL_Fixed deltaInvZ = EGL_Mul(end.m_WindowCoords.invZ - start.m_WindowCoords.invZ, invSpan);
 	EGL_Fixed deltaInvU = EGL_Mul(end.m_TextureCoords.tu - start.m_TextureCoords.tu, invSpan);
 	EGL_Fixed deltaInvV = EGL_Mul(end.m_TextureCoords.tv - start.m_TextureCoords.tv, invSpan);
 
 	EGL_Fixed deltaFog = EGL_Mul(end.m_FogDensity - start.m_FogDensity, invSpan);
+	EGL_Fixed deltaDepth = EGL_Mul(end.m_WindowCoords.depth - start.m_WindowCoords.depth, invSpan);
 
 	EGL_Fixed invTu = start.m_TextureCoords.tu;
 	EGL_Fixed invTv = start.m_TextureCoords.tv;
-	EGL_Fixed invZ = start.m_WindowCoords.z;
+	EGL_Fixed invZ = start.m_WindowCoords.invZ;
 
 	EGL_Fixed fogDensity = start.m_FogDensity;
 	I32 x = EGL_IntFromFixed(start.m_WindowCoords.x);
@@ -787,6 +788,7 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 	EGL_Fixed z = EGL_Inverse(invZ);
 	EGL_Fixed tu = EGL_Mul(invTu, z);
 	EGL_Fixed tv = EGL_Mul(invTv, z);
+	EGL_Fixed depth = start.m_WindowCoords.depth;
 
 	for (; x < xLinEnd;) {
 
@@ -805,9 +807,10 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 		int count = LINEAR_SPAN; 
 
 		do {
-			Fragment(x, y, z, tu, tv, fogDensity, baseColor);
+			Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
 
 			baseColor += colorIncrement;
+			depth += deltaDepth;
 			fogDensity += deltaFog;
 			z += deltaZ;
 			tu += deltaTu;
@@ -817,7 +820,7 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 	}
 
 	if (x != xEnd) {
-		EGL_Fixed endZ = EGL_Inverse(end.m_WindowCoords.z);
+		EGL_Fixed endZ = EGL_Inverse(end.m_WindowCoords.invZ);
 		EGL_Fixed endTu = EGL_Mul(end.m_TextureCoords.tu, endZ);
 		EGL_Fixed endTv = EGL_Mul(end.m_TextureCoords.tv, endZ);
 
@@ -829,9 +832,10 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 
 		for (; x < xEnd; ++x) {
 
-			Fragment(x, y, z, tu, tv, fogDensity, baseColor);
+			Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
 
 			baseColor += colorIncrement;
+			depth += deltaDepth;
 			z += deltaZ;
 			tu += deltaTu;
 			tv += deltaTv;
@@ -870,13 +874,13 @@ void Rasterizer :: RasterPoint(const RasterPos& point) {
 
 	I32 x = EGL_IntFromFixed(point.m_WindowCoords.x);
 	I32 y = EGL_IntFromFixed(point.m_WindowCoords.y);
-	EGL_Fixed z = point.m_WindowCoords.z;
+	EGL_Fixed depth = point.m_WindowCoords.depth;
 	EGL_Fixed tu = point.m_TextureCoords.tu;
 	EGL_Fixed tv = point.m_TextureCoords.tv;
 	FractionalColor baseColor = point.m_Color;
 	EGL_Fixed fogDensity = point.m_FogDensity;
 
-	Fragment(x, y, z, tu, tv, fogDensity, baseColor);
+	Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
 }
 
 
@@ -892,11 +896,12 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 	EGL_Fixed deltaY = to.m_WindowCoords.y - from.m_WindowCoords.y;
 
 	FractionalColor baseColor = from.m_Color;
-	EGL_Fixed OneOverZ = EGL_Inverse(from.m_WindowCoords.z);
-	EGL_Fixed OneOverZTo = EGL_Inverse(from.m_WindowCoords.z);
+	EGL_Fixed OneOverZ = from.m_WindowCoords.invZ;
+	EGL_Fixed OneOverZTo = to.m_WindowCoords.invZ;
 	EGL_Fixed tuOverZ = EGL_Mul(from.m_TextureCoords.tu, OneOverZ);
 	EGL_Fixed tvOverZ = EGL_Mul(from.m_TextureCoords.tv, OneOverZ);
 	EGL_Fixed fogDensity = from.m_FogDensity;
+	EGL_Fixed depth = from.m_WindowCoords.depth;
 
 	if (EGL_Abs(deltaX) > EGL_Abs(deltaY)) {
 		// Bresenheim along x-axis
@@ -915,6 +920,8 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 		EGL_Fixed deltaV = EGL_Mul(EGL_Mul(to.m_TextureCoords.tv, OneOverZTo) - 
 								   EGL_Mul(from.m_TextureCoords.tv, OneOverZ), invSpan);
 
+		EGL_Fixed deltaDepth = EGL_Mul(to.m_WindowCoords.depth - from.m_WindowCoords.depth, invSpan);
+
 		I32 x = EGL_IntFromFixed(from.m_WindowCoords.x);
 		I32 y = EGL_IntFromFixed(from.m_WindowCoords.y);
 		I32 endX = EGL_IntFromFixed(to.m_WindowCoords.x);
@@ -927,7 +934,7 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 			EGL_Fixed tu = EGL_Mul(tuOverZ, z);
 			EGL_Fixed tv = EGL_Mul(tvOverZ, z);
 
-			Fragment(x, y, z, tu, tv, fogDensity, baseColor);
+			Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
 
 			error += slope;
 			if (error > EGL_FixedFromFloat(0.5f)) {
@@ -936,6 +943,7 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 			}
 
 			baseColor += colorIncrement;
+			depth += deltaDepth;
 			OneOverZ += deltaZ;
 			tuOverZ += deltaU;
 			tvOverZ += deltaV;
@@ -959,6 +967,8 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 		EGL_Fixed deltaV = EGL_Mul(EGL_Mul(to.m_TextureCoords.tv, OneOverZTo) - 
 								   EGL_Mul(from.m_TextureCoords.tv, OneOverZ), invSpan);
 
+		EGL_Fixed deltaDepth = EGL_Mul(to.m_WindowCoords.depth - from.m_WindowCoords.depth, invSpan);
+
 		I32 x = EGL_IntFromFixed(from.m_WindowCoords.x);
 		I32 y = EGL_IntFromFixed(from.m_WindowCoords.y);
 		I32 endY = EGL_IntFromFixed(to.m_WindowCoords.y);
@@ -971,7 +981,7 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 			EGL_Fixed tu = EGL_Mul(tuOverZ, z);
 			EGL_Fixed tv = EGL_Mul(tvOverZ, z);
 
-			Fragment(x, y, z, tu, tv, fogDensity, baseColor);
+			Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
 
 			error += slope;
 			if (error > EGL_FixedFromFloat(0.5f)) {
@@ -980,6 +990,7 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 			}
 
 			baseColor += colorIncrement;
+			depth += deltaDepth;
 			OneOverZ += deltaZ;
 			tuOverZ += deltaU;
 			tvOverZ += deltaV;
@@ -1090,28 +1101,14 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	const RasterPos &pos2 = *pos[permutation[1]];
 	const RasterPos &pos3 = *pos[permutation[2]];
 
-	EGL_Fixed invZ1;
-	EGL_Fixed invZ2;
-	EGL_Fixed invZ3;
-
-	if (pos1.m_WindowCoords.z)
-		invZ1 = EGL_Inverse(pos1.m_WindowCoords.z);
-	else
-		invZ1 = EGL_ONE;
-
-	if (pos2.m_WindowCoords.z)
-		invZ2 = EGL_Inverse(pos2.m_WindowCoords.z);
-	else
-		invZ2 = EGL_ONE;
-
-	if (pos3.m_WindowCoords.z)
-		invZ3 = EGL_Inverse(pos3.m_WindowCoords.z);
-	else
-		invZ3 = EGL_ONE;
+	EGL_Fixed invZ1 = pos1.m_WindowCoords.invZ;
+	EGL_Fixed invZ2 = pos2.m_WindowCoords.invZ;
+	EGL_Fixed invZ3 = pos3.m_WindowCoords.invZ;
 
 	EdgePos start, end;
 	start.m_WindowCoords.x = end.m_WindowCoords.x = pos1.m_WindowCoords.x;
-	start.m_WindowCoords.z = end.m_WindowCoords.z = invZ1;
+	start.m_WindowCoords.invZ = end.m_WindowCoords.invZ = invZ1;
+	start.m_WindowCoords.depth = end.m_WindowCoords.depth = pos1.m_WindowCoords.depth;
 	start.m_Color = end.m_Color = pos1.m_Color;
 	start.m_TextureCoords.tu = end.m_TextureCoords.tu = EGL_Mul(pos1.m_TextureCoords.tu, invZ1);
 	start.m_TextureCoords.tv = end.m_TextureCoords.tv = EGL_Mul(pos1.m_TextureCoords.tv, invZ1);
@@ -1129,6 +1126,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	EGL_Fixed incB2;
 	EGL_Fixed incA2;
 	EGL_Fixed incFog2;
+	EGL_Fixed incDepth2;
 
 	// perspective interpolation
 	EGL_Fixed incZ2;
@@ -1142,6 +1140,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		incB2 = EGL_Mul(pos2.m_Color.b - pos1.m_Color.b, invDeltaY2);
 		incA2 = EGL_Mul(pos2.m_Color.a - pos1.m_Color.a, invDeltaY2);
 		incFog2 = EGL_Mul(pos2.m_FogDensity - pos1.m_FogDensity, invDeltaY2);
+		incDepth2 = EGL_Mul(pos2.m_WindowCoords.depth - pos1.m_WindowCoords.depth, invDeltaY2);
 
 		// perspective interpolation
 		incZ2 = EGL_Mul(invZ2 - invZ1, invDeltaY2);
@@ -1155,6 +1154,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		incB2 = 0;
 		incA2 = 0;
 		incFog2 = 0;
+		incDepth2 = 0;
 
 		// perspective interpolation
 		incZ2 = 0;
@@ -1178,6 +1178,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	EGL_Fixed incB3;
 	EGL_Fixed incA3;
 	EGL_Fixed incFog3;
+	EGL_Fixed incDepth3;
 
 	// perspective interpolation
 	EGL_Fixed incZ3;
@@ -1191,6 +1192,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		incB3 = EGL_Mul(pos3.m_Color.b - pos1.m_Color.b, invDeltaY3);
 		incA3 = EGL_Mul(pos3.m_Color.a - pos1.m_Color.a, invDeltaY3);
 		incFog3 = EGL_Mul(pos3.m_FogDensity - pos1.m_FogDensity, invDeltaY3);
+		incDepth3 = EGL_Mul(pos3.m_WindowCoords.depth - pos1.m_WindowCoords.depth, invDeltaY3);
 
 		// perspective interpolation
 		incZ3 = EGL_Mul(invZ3 - invZ1, invDeltaY3);
@@ -1203,6 +1205,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		incB3 = 0;
 		incA3 = 0;
 		incFog3 = 0;
+		incDepth3 = 0;
 
 		// perspective interpolation
 		incZ3 = 0;
@@ -1223,6 +1226,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	EGL_Fixed incB23;
 	EGL_Fixed incA23;
 	EGL_Fixed incFog23;
+	EGL_Fixed incDepth23;
 
 	// perspective interpolation
 	EGL_Fixed incZ23;
@@ -1236,6 +1240,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		incB23 = EGL_Mul(pos3.m_Color.b - pos2.m_Color.b, invDeltaY23);
 		incA23 = EGL_Mul(pos3.m_Color.a - pos2.m_Color.a, invDeltaY23);
 		incFog23 = EGL_Mul(pos3.m_FogDensity - pos2.m_FogDensity, invDeltaY23);
+		incDepth23 = EGL_Mul(pos3.m_WindowCoords.depth - pos2.m_WindowCoords.depth, invDeltaY23);
 
 		// perspective interpolation
 		incZ23 = EGL_Mul(invZ3 - invZ2, invDeltaY23);
@@ -1249,6 +1254,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		incB23 = 0;
 		incA23 = 0;
 		incFog23 = 0;
+		incDepth23 = 0;
 
 		// perspective interpolation
 		incZ23 = 0;
@@ -1276,11 +1282,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			start.m_Color.b += incB2;
 			start.m_Color.a += incA2;
 
-			start.m_WindowCoords.z += incZ2;
+			start.m_WindowCoords.invZ += incZ2;
 			start.m_TextureCoords.tu += incTu2;
 			start.m_TextureCoords.tv += incTv2;
 
 			start.m_FogDensity += incFog2;
+			start.m_WindowCoords.depth += incDepth2;
 
 			// update end
 			end.m_WindowCoords.x += incX3;
@@ -1289,17 +1296,19 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			end.m_Color.b += incB3;
 			end.m_Color.a += incA3;
 
-			end.m_WindowCoords.z += incZ3;
+			end.m_WindowCoords.invZ += incZ3;
 			end.m_TextureCoords.tu += incTu3;
 			end.m_TextureCoords.tv += incTv3;
 
 			end.m_FogDensity += incFog3;
+			end.m_WindowCoords.depth += incDepth3;
 		}
 
 		yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
 
 		start.m_WindowCoords.x = pos2.m_WindowCoords.x;
-		start.m_WindowCoords.z = invZ2;
+		start.m_WindowCoords.invZ = invZ2;
+		start.m_WindowCoords.depth = pos2.m_WindowCoords.depth;
 		start.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
 		start.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
 		start.m_Color = pos2.m_Color;
@@ -1314,11 +1323,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			start.m_Color.b += incB23;
 			start.m_Color.a += incA23;
 
-			start.m_WindowCoords.z += incZ23;
+			start.m_WindowCoords.invZ += incZ23;
 			start.m_TextureCoords.tu += incTu23;
 			start.m_TextureCoords.tv += incTv23;
 
 			start.m_FogDensity += incFog23;
+			start.m_WindowCoords.depth += incDepth23;
 
 			// update end
 			end.m_WindowCoords.x += incX3;
@@ -1327,11 +1337,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			end.m_Color.b += incB3;
 			end.m_Color.a += incA3;
 
-			end.m_WindowCoords.z += incZ3;
+			end.m_WindowCoords.invZ += incZ3;
 			end.m_TextureCoords.tu += incTu3;
 			end.m_TextureCoords.tv += incTv3;
 
 			end.m_FogDensity += incFog3;
+			end.m_WindowCoords.depth += incDepth3;
 		}
 	} else {
 		for (y = yStart; y < yEnd; ++y) {
@@ -1344,11 +1355,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			start.m_Color.b += incB3;
 			start.m_Color.a += incA3;
 
-			start.m_WindowCoords.z += incZ3;
+			start.m_WindowCoords.invZ += incZ3;
 			start.m_TextureCoords.tu += incTu3;
 			start.m_TextureCoords.tv += incTv3;
 
 			start.m_FogDensity += incFog3;
+			start.m_WindowCoords.depth += incDepth3;
 
 			// update end
 			end.m_WindowCoords.x += incX2;
@@ -1357,18 +1369,20 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			end.m_Color.b += incB2;
 			end.m_Color.a += incA2;
 
-			end.m_WindowCoords.z += incZ2;
+			end.m_WindowCoords.invZ += incZ2;
 			end.m_TextureCoords.tu += incTu2;
 			end.m_TextureCoords.tv += incTv2;
 
 			end.m_FogDensity += incFog2;
+			end.m_WindowCoords.depth += incDepth2;
 		}
 
 		yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
 
 		end.m_WindowCoords.x = pos2.m_WindowCoords.x;
 		end.m_Color = pos2.m_Color;
-		end.m_WindowCoords.z = invZ2;
+		end.m_WindowCoords.invZ = invZ2;
+		end.m_WindowCoords.depth = pos2.m_WindowCoords.depth;
 		end.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
 		end.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
 		end.m_FogDensity = pos2.m_FogDensity;
@@ -1382,11 +1396,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			start.m_Color.b += incB3;
 			start.m_Color.a += incA3;
 
-			start.m_WindowCoords.z += incZ3;
+			start.m_WindowCoords.invZ += incZ3;
 			start.m_TextureCoords.tu += incTu3;
 			start.m_TextureCoords.tv += incTv3;
 
 			start.m_FogDensity += incFog3;
+			start.m_WindowCoords.depth += incDepth3;
 
 			// update end
 			end.m_WindowCoords.x += incX23;
@@ -1395,11 +1410,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			end.m_Color.b += incB23;
 			end.m_Color.a += incA23;
 
-			end.m_WindowCoords.z += incZ23;
+			end.m_WindowCoords.invZ += incZ23;
 			end.m_TextureCoords.tu += incTu23;
 			end.m_TextureCoords.tv += incTv23;
 
 			end.m_FogDensity += incFog23;
+			end.m_WindowCoords.depth += incDepth23;
 		}
 	}
 }
