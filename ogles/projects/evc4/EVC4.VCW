@@ -18,6 +18,21 @@ Package=<4>
 
 ###############################################################################
 
+Project: "alpha3D"=.\alpha3D.vcp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name ug
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "codegen"=.\codegen.vcp - Package Owner=<4>
 
 Package=<5>
@@ -144,6 +159,21 @@ Package=<4>
 
 ###############################################################################
 
+Project: "fog"=.\fog.vcp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name ug
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "platform"=.\platform.vcp - Package Owner=<4>
 
 Package=<5>
@@ -152,6 +182,21 @@ Package=<5>
 
 Package=<4>
 {{{
+}}}
+
+###############################################################################
+
+Project: "polyoff"=.\polyoff.vcp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name ug
+    End Project Dependency
 }}}
 
 ###############################################################################
@@ -181,6 +226,21 @@ Package=<4>
 ###############################################################################
 
 Project: "test"=.\test.vcp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name OGLES
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "ug"=.\ug.vcp - Package Owner=<4>
 
 Package=<5>
 {{{

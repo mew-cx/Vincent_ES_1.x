@@ -1,8 +1,8 @@
 // ==========================================================================
 //
-// lines.cpp	Rendering Context Class for 3D Rendering Library
+// ContextLines.cpp	Rendering Context Class for 3D Rendering Library
 //
-//				Rendering Operations for Lines
+//					Rendering Operations for Lines
 //
 // --------------------------------------------------------------------------
 //
