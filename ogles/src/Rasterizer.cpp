@@ -1134,6 +1134,10 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 		I32 xIncrement = (deltaX > 0) ? 1 : -1;
 		EGL_Fixed error = 0;//EGL_ONE/2;
 
+		// can have xIncrement; yIncrement; xBaseIncrement, yBaseIncrement
+		// then both x/y loops become the same
+		// question: how to add correct mipmap selection?
+
 		for (; y < endY; ++y) {
 
 			EGL_Fixed z = EGL_Inverse(OneOverZ);
