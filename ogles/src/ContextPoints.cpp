@@ -108,6 +108,7 @@ void Context :: RenderPoint(RasterPos& point) {
 		return;
 
 	ClipCoordsToWindowCoords(point);
+	point.m_Color = point.m_FrontColor;
 	m_Rasterizer->RasterPoint(point);
 }
 
