@@ -833,6 +833,8 @@ static void emit_binary_shifter(cg_codegen_t * gen, cg_inst_binary_t * inst,
 static void emit_binary_regular(cg_codegen_t * gen, cg_inst_binary_t * inst,
 								ARMOpcode opcode, int update_flags)
 {
+	int shift;
+
 	switch (inst->base.kind)
 	{
 		case cg_inst_binary:
@@ -854,20 +856,22 @@ static void emit_binary_regular(cg_codegen_t * gen, cg_inst_binary_t * inst,
 			break;
 			
 		case cg_inst_arm_binary_immed:
-			assert(inst->operand.immed >= 0 && inst->operand.immed <= 0xff);
+			shift = calc_arm_mov_const_shift(inst->operand.immed);
+			assert((shift & 0x80000001) != 1 && shift >= 0);
+
 			if (update_flags)
 				ARM_DPIOP_S_REG_IMM8ROT_COND(gen->cseg, 
 											 opcode, 
 											 inst->dest_value->physical_reg->regno, 
 											 inst->source->physical_reg->regno, 
-											 inst->operand.immed, 0,
+											 inst->operand.immed >> ((32 - shift) & 31), shift,
 											 ARMCOND_AL);
 			else
 				ARM_DPIOP_REG_IMM8ROT_COND(gen->cseg, 
 										   opcode, 
 										   inst->dest_value->physical_reg->regno, 
 										   inst->source->physical_reg->regno, 
-										   inst->operand.immed, 0,
+										   inst->operand.immed >> ((32 - shift) & 31), shift,
 										   ARMCOND_AL);
 
 			break;

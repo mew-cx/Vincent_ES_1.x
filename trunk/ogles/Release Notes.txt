@@ -10,6 +10,7 @@ Version 0.75
 
 This version addresses the following issues:
 
+949644 - Texture functions fail in mustpass.c
 949642 - Scissor test not implemented for code generator
 864080 - PolygonOffset is not implemented
 944663 - Does not handle the case Z=0 properly

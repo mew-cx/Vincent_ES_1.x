@@ -148,9 +148,11 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 								   EGL_Fixed fogDensity, const Color& baseColor) {
 
 	// fragment level clipping (for now)
-	if (m_Surface->GetWidth() <= x || x < 0 ||
-		m_Surface->GetHeight() <= y || y < 0) {
-		return;
+	if (m_State->m_ScissorTestEnabled) {
+		if (x < m_State->m_ScissorX || x - m_State->m_ScissorX >= m_State->m_ScissorWidth ||
+			y < m_State->m_ScissorY || y - m_State->m_ScissorY >= m_State->m_ScissorHeight) {
+			return;
+		}
 	}
 
 	I32 offset = x + y * m_Surface->GetWidth();
@@ -851,16 +853,29 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 // --------------------------------------------------------------------------
 
 void Rasterizer :: PreparePoint() {
+
+	if (m_State->m_TextureEnabled) {
+		SetTexture(m_Texture);
+	}
+
 	m_MipMapLevel = 0;
 }
 
 
 void Rasterizer :: PrepareLine() {
+	if (m_State->m_TextureEnabled) {
+		SetTexture(m_Texture);
+	}
+
 	m_MipMapLevel = 0;
 }
 
 
 void Rasterizer :: PrepareTriangle() {
+	if (m_State->m_TextureEnabled) {
+		SetTexture(m_Texture);
+	}
+
 	m_ScanlineFunction = m_FunctionCache->GetFunction(*m_State);
 	m_MipMapLevel = 0;
 }
