@@ -175,8 +175,9 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 		h.Normalize();
 		EGL_Fixed specularFactor = vertexNormal * h;
 
-		result.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
-			EGL_Mul(att, EGL_Power(specularFactor, currMaterial.GetSpecularExponent())));
+		if (specularFactor > 0)
+			result.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
+				EGL_Mul(att, EGL_Power(specularFactor, currMaterial.GetSpecularExponent())));
 	}
 }
 
@@ -223,8 +224,9 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 		h.Normalize();
 		EGL_Fixed specularFactor = vertexNormal * h;
 
-		result.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
-			EGL_Mul(att, EGL_Power(specularFactor, currMaterial.GetSpecularExponent())));
+		if (specularFactor > 0)
+			result.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
+				EGL_Mul(att, EGL_Power(specularFactor, currMaterial.GetSpecularExponent())));
 	}
 }
 
@@ -268,23 +270,30 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 
 	EGL_Fixed diffuseFactor = vertexNormal * vp_li;
 
-	if (diffuseFactor > 0)
+	if (diffuseFactor > 0) {
 		result.Accumulate(currMaterial.GetDiffuseColor() * m_DiffuseColor, EGL_Mul(diffuseFactor, att));
-	else
-		result2.Accumulate(currMaterial.GetDiffuseColor() * m_DiffuseColor, EGL_Mul(-diffuseFactor, att));
 
 		// add specular component
 		// calculate h^
-	Vec3D h = vp_li + Vec3D(0, 0, EGL_ONE);
-	h.Normalize();
-	EGL_Fixed specularFactor = vertexNormal * h;
+		Vec3D h = vp_li + Vec3D(0, 0, EGL_ONE);
+		h.Normalize();
+		EGL_Fixed specularFactor = vertexNormal * h;
 
-	if (specularFactor > 0)
-		result.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
-			EGL_Mul(att, EGL_Power(specularFactor, currMaterial.GetSpecularExponent())));
-	else
-		result2.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
-			EGL_Mul(att, EGL_Power(-specularFactor, currMaterial.GetSpecularExponent())));
+		if (specularFactor > 0)
+			result.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
+				EGL_Mul(att, EGL_Power(specularFactor, currMaterial.GetSpecularExponent())));
+	} else {
+		result2.Accumulate(currMaterial.GetDiffuseColor() * m_DiffuseColor, EGL_Mul(-diffuseFactor, att));
+
+		Vec3D h = vp_li + Vec3D(0, 0, EGL_ONE);
+		h.Normalize();
+		EGL_Fixed specularFactor = vertexNormal * h;
+
+		if (specularFactor < 0)
+			result2.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
+				EGL_Mul(att, EGL_Power(-specularFactor, currMaterial.GetSpecularExponent())));
+	}
+
 //	}
 }
 
@@ -326,23 +335,29 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 
 	EGL_Fixed diffuseFactor = vertexNormal * vp_li;
 
-	if (diffuseFactor > 0)
+	if (diffuseFactor > 0) {
 		result.Accumulate(currentColor * m_DiffuseColor, EGL_Mul(diffuseFactor, att));
-	else
+			// add specular component
+			// calculate h^
+		Vec3D h = vp_li + Vec3D(0, 0, EGL_ONE);
+		h.Normalize();
+		EGL_Fixed specularFactor = vertexNormal * h;
+
+		if (specularFactor > 0)
+			result.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
+				EGL_Mul(att, EGL_Power(specularFactor, currMaterial.GetSpecularExponent())));
+	} else {
 		result2.Accumulate(currentColor * m_DiffuseColor, EGL_Mul(-diffuseFactor, att));
+			// add specular component
+			// calculate h^
+		Vec3D h = vp_li + Vec3D(0, 0, EGL_ONE);
+		h.Normalize();
+		EGL_Fixed specularFactor = vertexNormal * h;
 
-		// add specular component
-		// calculate h^
-	Vec3D h = vp_li + Vec3D(0, 0, EGL_ONE);
-	h.Normalize();
-	EGL_Fixed specularFactor = vertexNormal * h;
-
-	if (specularFactor > 0)
-		result.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
-			EGL_Mul(att, EGL_Power(specularFactor, currMaterial.GetSpecularExponent())));
-	else
-		result2.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
-			EGL_Mul(att, EGL_Power(specularFactor, currMaterial.GetSpecularExponent())));
+		if (specularFactor < 0)
+			result2.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
+				EGL_Mul(att, EGL_Power(-specularFactor, currMaterial.GetSpecularExponent())));
+	}
 //	}
 }
 
