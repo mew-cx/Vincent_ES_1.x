@@ -54,7 +54,7 @@ using namespace EGL;
 void Context :: ToggleClientState(GLenum array, bool value) { 
 	switch (array) {
 	case GL_TEXTURE_COORD_ARRAY:
-		m_TexCoordArrayEnabled = value;
+		m_TexCoordArrayEnabled[m_ClientActiveTexture] = value;
 		break;
 
 	case GL_COLOR_ARRAY:
@@ -259,11 +259,11 @@ void Context :: TexCoordPointer(GLint size, GLenum type, GLsizei stride, const G
 		}
 	}
 
-	m_TexCoordArray.pointer = pointer;
-	m_TexCoordArray.stride = stride;
-	m_TexCoordArray.type = type;
-	m_TexCoordArray.size = size;
-	m_TexCoordArray.boundBuffer = m_CurrentArrayBuffer;
+	m_TexCoordArray[m_ClientActiveTexture].pointer = pointer;
+	m_TexCoordArray[m_ClientActiveTexture].stride = stride;
+	m_TexCoordArray[m_ClientActiveTexture].type = type;
+	m_TexCoordArray[m_ClientActiveTexture].size = size;
+	m_TexCoordArray[m_ClientActiveTexture].boundBuffer = m_CurrentArrayBuffer;
 }
 
 
@@ -282,15 +282,17 @@ void Context :: Color4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
 
 void Context :: MultiTexCoord4x(GLenum target, GLfixed s, GLfixed t, GLfixed r, GLfixed q) { 
 	
-	if (target != GL_TEXTURE0) {
+	if (target < GL_TEXTURE0 || target >= GL_TEXTURE0 + EGL_NUM_TEXTURE_UNITS) {
 		// only have one texture unit
 		RecordError(GL_INVALID_VALUE);
 		return;
 	}
 
+	size_t unit = target - GL_TEXTURE0;
+
 	I32 inverse = EGL_Inverse(q);
-	m_DefaultTextureCoords.tu = EGL_Mul(s, inverse);
-	m_DefaultTextureCoords.tv = EGL_Mul(t, inverse);
+	m_DefaultTextureCoords[unit].tu = EGL_Mul(s, inverse);
+	m_DefaultTextureCoords[unit].tv = EGL_Mul(t, inverse);
 }
 
 
@@ -526,21 +528,23 @@ void Context :: SelectArrayElement(int index) {
 		m_CurrentRGBA = FractionalColor(coords);
 	}
 
-	if (!m_TexCoordArray.effectivePointer) {
-		m_CurrentTextureCoords.tu = m_DefaultTextureCoords.tu;
-		m_CurrentTextureCoords.tv = m_DefaultTextureCoords.tv;
-	} else {
-		EGL_Fixed coords[4];
-
-		m_TexCoordArray.FetchValues(index, coords);
-
-		if (m_TexCoordArray.size < 4) {
-			m_CurrentTextureCoords.tu = coords[0];
-			m_CurrentTextureCoords.tv = coords[1];
+	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		if (!m_TexCoordArray[unit].effectivePointer) {
+			m_CurrentTextureCoords[unit].tu = m_DefaultTextureCoords[unit].tu;
+			m_CurrentTextureCoords[unit].tv = m_DefaultTextureCoords[unit].tv;
 		} else {
-			I32 factor = EGL_Inverse(coords[3]);
-			m_CurrentTextureCoords.tu = EGL_Mul(coords[0], factor);
-			m_CurrentTextureCoords.tv = EGL_Mul(coords[1], factor);
+			EGL_Fixed coords[4];
+
+			m_TexCoordArray[unit].FetchValues(index, coords);
+
+			if (m_TexCoordArray[unit].size < 4) {
+				m_CurrentTextureCoords[unit].tu = coords[0];
+				m_CurrentTextureCoords[unit].tv = coords[1];
+			} else {
+				I32 factor = EGL_Inverse(coords[3]);
+				m_CurrentTextureCoords[unit].tu = EGL_Mul(coords[0], factor);
+				m_CurrentTextureCoords[unit].tv = EGL_Mul(coords[1], factor);
+			}
 		}
 	}
 }
@@ -627,7 +631,11 @@ void Context :: PrepareRendering() {
 	PrepareArray(m_VertexArray,   m_VertexArrayEnabled);
 	PrepareArray(m_NormalArray,	  m_NormalArrayEnabled);
 	PrepareArray(m_ColorArray,    m_ColorArrayEnabled, true);
-	PrepareArray(m_TexCoordArray, m_TexCoordArrayEnabled);
+
+	for (size_t unit = 0; unit < EGL_NUM_TEXTRE_UNITS; ++unit) {
+		PrepareArray(m_TexCoordArray[unit], m_TexCoordArrayEnabled[unit]);
+	}
+
 	PrepareArray(m_PointSizeArray,m_PointSizeArrayEnabled);
 
 	if (m_MatrixPaletteEnabled) {
