@@ -58,6 +58,32 @@ static cg_virtual_reg_t ** add_reg_list(cg_virtual_reg_list_t * list,
 	return dest;
 }
 
+
+static void add_interference(cg_heap_t * heap, cg_virtual_reg_t * source, cg_virtual_reg_t * target)
+{
+	cg_virtual_reg_list_t ** iter;
+	cg_virtual_reg_list_t * node;
+
+	source = source->representative;
+	target = target->representative;
+
+	if (source == target)
+		return;
+
+	for (iter = &source->interferences; *iter; iter = &(*iter)->next)
+	{
+		if ((*iter)->reg == target)
+			return;
+	}
+
+	node = (cg_virtual_reg_list_t *) cg_heap_allocate(heap, sizeof(cg_virtual_reg_list_t));
+	node->next = NULL;
+	node->reg = target;
+
+	*iter = node;
+}
+
+
 /****************************************************************************/
 /* Determine the set of defined registers for the instruction passed in.	*/
 /* dest points to a buffer into which the result will be stored, limit		*/
@@ -1780,11 +1806,27 @@ static void dump_bitset(const char * name, cg_bitset_t * bitset, FILE * out)
 }
 
 
+void dump_register_info(cg_virtual_reg_t * reg, FILE * out)
+{
+	cg_virtual_reg_list_t * list;
+
+	fprintf(out, "\tr%d => ", reg->reg_no);
+
+	for (list = reg->interferences; list; list = list->next)
+	{
+		fprintf(out, "%d ", list->reg->reg_no);
+	}
+
+	fprintf(out, "\n");
+}
+
+
 void cg_module_dump(cg_module_t * module, FILE * out)
 {
 	cg_proc_t * proc;
 	cg_block_t * block;
 	cg_inst_t * inst;
+	cg_virtual_reg_t * reg;
 
 	for (proc = module->procs; proc; proc = proc->next)
 	{
@@ -1802,6 +1844,15 @@ void cg_module_dump(cg_module_t * module, FILE * out)
 			}
 
 			fprintf(out, "\n");
+		}
+
+		fprintf(out, "\n\n");
+		fprintf(out, "Interference information\n");
+
+		for (reg = proc->registers; reg; reg = reg->next)
+		{
+			if (reg->representative == NULL || reg->representative == reg)
+				dump_register_info(reg, out);
 		}
 	}
 }
@@ -1883,6 +1934,130 @@ void cg_module_reorder_instructions(cg_module_t * module)
 		for (block = proc->blocks; block; block = block->next) 
 		{
 			block_reorder_instructions(block);
+		}
+	}
+}
+
+
+static void count_uses(int * result, cg_block_t * block) 
+{
+	cg_inst_t * inst;
+	size_t num_registers = block->proc->num_registers;
+	size_t regno;
+	
+	for (regno = 0; regno != num_registers; ++regno) 
+	{
+		result[regno] = 0;
+	}
+	
+	for (inst = block->insts.head; inst != (cg_inst_t *) 0; inst = inst->base.next)
+	{
+		cg_virtual_reg_t * buffer[64];
+		cg_virtual_reg_t **iter, ** end = cg_inst_use(inst, buffer, buffer + 64);
+		
+		for (iter = buffer; iter != end; ++iter)
+		{
+			++result[regno];
+		}
+	}
+}
+
+
+static void block_interferences(cg_block_t * block)
+{
+	cg_heap_t * heap = block->proc->module->heap;
+	cg_inst_t * inst;
+	size_t outer_index, inner_index;
+
+	// for any registers live in input, create an edge and add them to current list of live registers
+	// create list of uses for each instruction
+	// iterate over instructions:
+	//	for each def, add edge to all live registers
+	//	add def to live registers
+	//	for each use, remove current use from use list; if # uses = 0 and not in live out, remove variable from live register set
+
+	cg_bitset_t * live = cg_bitset_create(heap, block->live_in->elements);
+	int * uses = (int *) _alloca(sizeof(int) * block->live_in->elements);
+
+	count_uses(uses, block);
+	cg_bitset_assign(live, block->live_in);
+
+	for (outer_index = 0; outer_index < live->elements - 1; ++outer_index)
+	{
+		if (!CG_BITSET_TEST(live, outer_index)) 
+			continue;
+
+		for (inner_index = outer_index + 1; inner_index < live->elements; ++inner_index)
+		{
+			if (CG_BITSET_TEST(live, inner_index))
+			{
+				add_interference(heap, block->proc->reg_array[outer_index], 
+								 block->proc->reg_array[inner_index]);
+				add_interference(heap, block->proc->reg_array[inner_index], 
+								 block->proc->reg_array[outer_index]);
+			}
+		}
+	}
+
+	for (inst = block->insts.head; inst != NULL; inst = inst->base.next)
+	{
+		cg_virtual_reg_t * buffer[64];
+		cg_virtual_reg_t **iter, ** end = cg_inst_def(inst, buffer, buffer + 64);
+		
+		for (iter = buffer; iter != end; ++iter)
+		{
+			// add an edge between def register and each element in live set
+			// add def to live set
+
+			if (!CG_BITSET_TEST(live, (*iter)->reg_no))
+			{
+				for (inner_index = 0; inner_index < live->elements; ++inner_index)
+				{
+					if (CG_BITSET_TEST(live, inner_index))
+					{
+						add_interference(heap, block->proc->reg_array[(*iter)->reg_no], 
+										block->proc->reg_array[inner_index]);
+						add_interference(heap, block->proc->reg_array[inner_index], 
+										block->proc->reg_array[(*iter)->reg_no]);
+					}
+				}
+
+				CG_BITSET_SET(live, (*iter)->reg_no);
+			}
+		}
+
+		end = cg_inst_use(inst, buffer, buffer + 64);
+		
+		for (iter = buffer; iter != end; ++iter)
+		{
+			--uses[(*iter)->reg_no];
+
+			if (uses[(*iter)->reg_no] == 0 && !CG_BITSET_TEST(block->live_out, (*iter)->reg_no)) 
+				CG_BITSET_CLEAR(live, (*iter)->reg_no);
+		}
+	}
+}
+
+
+void cg_module_interferences(cg_module_t * module)
+{
+	cg_proc_t * proc;
+	cg_block_t * block;
+
+	for (proc = module->procs; proc; proc = proc->next)
+	{
+		cg_virtual_reg_t * reg;
+
+		proc->reg_array = (cg_virtual_reg_t **) cg_heap_allocate(module->heap, sizeof(cg_virtual_reg_t *) * proc->num_registers);
+
+		for (reg = proc->registers; reg; reg = reg->next)
+		{
+			proc->reg_array[reg->reg_no] = reg;
+		}
+
+		for (block = proc->blocks; block; block = block->next) 
+		{
+			block_interferences(block);
 		}
 	}
 }

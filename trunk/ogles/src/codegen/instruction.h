@@ -334,17 +334,17 @@ cg_reg_type_t;
 
 struct cg_virtual_reg_t 
 {
-	cg_virtual_reg_t *  next;
-	cg_virtual_reg_t *	representative;		/* for union-find				*/
-	struct cg_physical_reg_t *	
-						physical_reg;		/* physical register assigned   */
-	size_t				reg_no;				/* virtual register number		*/
-	int					fp_offset;			/* FP offset for spilling		*/
-	cg_inst_t *			def;				/* defining instruction			*/
-	cg_inst_list_t *	use;				/* use set						*/
-	cg_reg_type_t		type;				/* type of this register		*/
-	int					is_global : 1;		/* is this a global register?   */
-	int					is_arg : 1;			/* is passed in as argument val.*/
+	cg_virtual_reg_t *			next;
+	cg_virtual_reg_t *			representative;		/* for union-find				*/
+	struct cg_physical_reg_t *	physical_reg;		/* physical register assigned   */
+	cg_virtual_reg_list_t *		interferences;		/* list of interfering regs.	*/
+	size_t						reg_no;				/* virtual register number		*/
+	int							fp_offset;			/* FP offset for spilling		*/
+	cg_inst_t *					def;				/* defining instruction			*/
+	cg_inst_list_t *			use;				/* use set						*/
+	cg_reg_type_t				type;				/* type of this register		*/
+	int							is_global : 1;		/* is this a global register?   */
+	int							is_arg : 1;			/* is passed in as argument val.*/
 };
 
 
@@ -356,6 +356,7 @@ struct cg_proc_t
 	cg_block_t *		last_block;			/* pointer to last block		*/
 	cg_virtual_reg_t *  registers;			/* list of virtual registers	*/
 	cg_virtual_reg_t *	last_register;		/* ptr to last register in list */
+	cg_virtual_reg_t **	reg_array;			/* array of register pointers	*/	
 	size_t				num_registers;		/* number of virtual registers  */
 	size_t				num_args;			/* number of arguments			*/
 	size_t				local_storage;		/* size of activation record	*/
@@ -614,6 +615,7 @@ void cg_module_allocate_variables(cg_module_t * module);
 void cg_module_inst_use_chains(cg_module_t * module);
 void cg_module_reorder_instructions(cg_module_t * module);
 void cg_module_dataflow(cg_module_t * module);
+void cg_module_interferences(cg_module_t * module);
 
 void cg_module_dump(cg_module_t * module, FILE * out);
 
