@@ -20,10 +20,10 @@ CFG=test - Win32 (WCE emulator) Debug
 !MESSAGE 
 !MESSAGE "test - Win32 (WCE emulator) Release" (based on "Win32 (WCE emulator) Application")
 !MESSAGE "test - Win32 (WCE emulator) Debug" (based on "Win32 (WCE emulator) Application")
-!MESSAGE "test - Win32 (WCE ARMV4) Release" (based on "Win32 (WCE ARMV4) Application")
-!MESSAGE "test - Win32 (WCE ARMV4) Debug" (based on "Win32 (WCE ARMV4) Application")
-!MESSAGE "test - Win32 (WCE ARMV4) Debug StrongARM" (based on "Win32 (WCE ARMV4) Application")
-!MESSAGE "test - Win32 (WCE ARMV4) Release StrongARM" (based on "Win32 (WCE ARMV4) Application")
+!MESSAGE "test - Win32 (WCE ARMV4) Release XScale" (based on "Win32 (WCE ARMV4) Application")
+!MESSAGE "test - Win32 (WCE ARMV4) Debug XScale" (based on "Win32 (WCE ARMV4) Application")
+!MESSAGE "test - Win32 (WCE ARMV4) Debug ARM" (based on "Win32 (WCE ARMV4) Application")
+!MESSAGE "test - Win32 (WCE ARMV4) Release ARM" (based on "Win32 (WCE ARMV4) Application")
 !MESSAGE 
 
 # Begin Project
@@ -98,7 +98,7 @@ LINK32=link.exe
 # ADD BASE LINK32 commctrl.lib coredll.lib $(CEx86Corelibc) aygshell.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"OLDNAMES.lib" /nodefaultlib:$(CENoDefaultLib) /subsystem:$(CESubsystem) /MACHINE:IX86
 # ADD LINK32 $(CEx86Corelibc) aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /map /debug /nodefaultlib:"OLDNAMES.lib" /nodefaultlib:$(CENoDefaultLib) /subsystem:$(CESubsystem) /MACHINE:IX86
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release XScale"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 0
@@ -129,9 +129,9 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xilinke42
 # ADD BASE LINK32 commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
-# ADD LINK32 aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
+# ADD LINK32 aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /libpath:"..\..\bin\xscale\Release" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug XScale"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
@@ -162,14 +162,14 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xilinke42
 # ADD BASE LINK32 commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
-# ADD LINK32 aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
+# ADD LINK32 aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /libpath:"..\..\bin\xscale\Debug" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug ARM"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
-# PROP BASE Output_Dir "ARMV4Debug StrongARM"
-# PROP BASE Intermediate_Dir "ARMV4Debug StrongARM"
+# PROP BASE Output_Dir "ARMV4Debug ARM"
+# PROP BASE Intermediate_Dir "ARMV4Debug ARM"
 # PROP BASE CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
 # PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
 # PROP BASE Ignore_Export_Lib 0
@@ -198,12 +198,12 @@ LINK32=C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xilinke42
 # ADD BASE LINK32 aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 # ADD LINK32 aygshell.lib commctrl.lib coredll.lib GLES_CL.LIB /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /libpath:"..\..\bin\arm\Debug" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release ARM"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 0
-# PROP BASE Output_Dir "ARMV4Release StrongARM"
-# PROP BASE Intermediate_Dir "ARMV4Release StrongARM"
+# PROP BASE Output_Dir "ARMV4Release ARM"
+# PROP BASE Intermediate_Dir "ARMV4Release ARM"
 # PROP BASE CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
 # PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
 # PROP BASE Ignore_Export_Lib 0
@@ -230,7 +230,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xilinke42
 # ADD BASE LINK32 aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
-# ADD LINK32 aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
+# ADD LINK32 aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /libpath:"..\..\bin\arm\Release" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 
 !ENDIF 
 
@@ -238,10 +238,10 @@ LINK32=C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xilinke42
 
 # Name "test - Win32 (WCE emulator) Release"
 # Name "test - Win32 (WCE emulator) Debug"
-# Name "test - Win32 (WCE ARMV4) Release"
-# Name "test - Win32 (WCE ARMV4) Debug"
-# Name "test - Win32 (WCE ARMV4) Debug StrongARM"
-# Name "test - Win32 (WCE ARMV4) Release StrongARM"
+# Name "test - Win32 (WCE ARMV4) Release XScale"
+# Name "test - Win32 (WCE ARMV4) Debug XScale"
+# Name "test - Win32 (WCE ARMV4) Debug ARM"
+# Name "test - Win32 (WCE ARMV4) Release ARM"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
@@ -270,11 +270,13 @@ DEP_CPP_PAINT=\
 	"..\..\src\Texture.h"\
 	"..\..\test\stdafx.h"\
 	"..\..\test\test.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gpp.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_PAINT=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\pp.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 
 !ELSEIF  "$(CFG)" == "test - Win32 (WCE emulator) Debug"
@@ -298,14 +300,16 @@ DEP_CPP_PAINT=\
 	"..\..\src\Texture.h"\
 	"..\..\test\stdafx.h"\
 	"..\..\test\test.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gpp.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_PAINT=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\pp.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_PAINT=\
 	"..\..\src\Color.h"\
@@ -326,14 +330,16 @@ DEP_CPP_PAINT=\
 	"..\..\src\Texture.h"\
 	"..\..\test\stdafx.h"\
 	"..\..\test\test.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gpp.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_PAINT=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\pp.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_PAINT=\
 	"..\..\src\Color.h"\
@@ -354,22 +360,20 @@ DEP_CPP_PAINT=\
 	"..\..\src\Texture.h"\
 	"..\..\test\stdafx.h"\
 	"..\..\test\test.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gpp.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_PAINT=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\pp.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_PAINT=\
 	"..\..\test\stdafx.h"\
 	"..\..\test\test.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
 	
 NODEP_CPP_PAINT=\
 	"..\..\test\Color.h"\
@@ -378,9 +382,13 @@ NODEP_CPP_PAINT=\
 	"..\..\test\GLES\egl.h"\
 	"..\..\test\GLES\gl.h"\
 	"..\..\test\Rasterizer.h"\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_PAINT=\
 	"..\..\src\Color.h"\
@@ -401,11 +409,13 @@ DEP_CPP_PAINT=\
 	"..\..\src\Texture.h"\
 	"..\..\test\stdafx.h"\
 	"..\..\test\test.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gpp.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_PAINT=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\pp.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 
 !ENDIF 
@@ -419,10 +429,12 @@ SOURCE=..\..\test\stdafx.cpp
 
 DEP_CPP_STDAF=\
 	"..\..\test\stdafx.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_STDAF=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 # ADD CPP /Yc"stdafx.h"
 
@@ -430,55 +442,65 @@ DEP_CPP_STDAF=\
 
 DEP_CPP_STDAF=\
 	"..\..\test\stdafx.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_STDAF=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 # ADD CPP /Yc"stdafx.h"
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_STDAF=\
 	"..\..\test\stdafx.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_STDAF=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 # ADD CPP /Yc"stdafx.h"
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_STDAF=\
 	"..\..\test\stdafx.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_STDAF=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 # ADD CPP /Yc"stdafx.h"
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_STDAF=\
 	"..\..\test\stdafx.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_STDAF=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 # ADD BASE CPP /Yc"stdafx.h"
 # ADD CPP /Yc"stdafx.h"
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_STDAF=\
 	"..\..\test\stdafx.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_STDAF=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 # ADD BASE CPP /Yc"stdafx.h"
 # ADD CPP /Yc"stdafx.h"
@@ -495,10 +517,12 @@ SOURCE=..\..\test\testce.cpp
 DEP_CPP_TESTC=\
 	"..\..\test\stdafx.h"\
 	"..\..\test\test.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_TESTC=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 
 !ELSEIF  "$(CFG)" == "test - Win32 (WCE emulator) Debug"
@@ -506,54 +530,64 @@ DEP_CPP_TESTC=\
 DEP_CPP_TESTC=\
 	"..\..\test\stdafx.h"\
 	"..\..\test\test.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_TESTC=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_TESTC=\
 	"..\..\test\stdafx.h"\
 	"..\..\test\test.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_TESTC=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_TESTC=\
 	"..\..\test\stdafx.h"\
 	"..\..\test\test.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_TESTC=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_TESTC=\
 	"..\..\test\stdafx.h"\
 	"..\..\test\test.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_TESTC=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_TESTC=\
 	"..\..\test\stdafx.h"\
 	"..\..\test\test.h"\
-	{$(INCLUDE)}"aygshell.h"\
-	{$(INCLUDE)}"gx.h"\
-	{$(INCLUDE)}"sipapi.h"\
-	{$(INCLUDE)}"winuserm.h"\
+	
+NODEP_CPP_TESTC=\
+	".\inuserm.h"\
+	".\ipapi.h"\
+	".\x.h"\
+	".\ygshell.h"\
 	
 
 !ENDIF 
@@ -595,13 +629,13 @@ SOURCE=..\..\test\test.rc
 
 !ELSEIF  "$(CFG)" == "test - Win32 (WCE emulator) Debug"
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release XScale"
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug XScale"
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Debug ARM"
 
-!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "test - Win32 (WCE ARMV4) Release ARM"
 
 !ENDIF 
 

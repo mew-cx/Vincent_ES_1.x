@@ -3,21 +3,6 @@ Microsoft eMbedded Visual Tools Workspace File, Format Version 4.00
 
 ###############################################################################
 
-Project: "Bubble"="..\..\..\Bubble\Bubble.vcp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name OGLES
-    End Project Dependency
-}}}
-
-###############################################################################
-
 Project: "OGLES"=".\OGLES.VCP" - Package Owner=<4>
 
 Package=<5>
@@ -45,6 +30,24 @@ Package=<4>
 
 ###############################################################################
 
+Project: "conform"=".\conform.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name conformshell
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name fixed
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "conformshell"=".\conformshell.vcp" - Package Owner=<4>
 
 Package=<5>
@@ -53,6 +56,9 @@ Package=<5>
 
 Package=<4>
 {{{
+    Begin Project Dependency
+    Project_Dep_Name ctk
+    End Project Dependency
 }}}
 
 ###############################################################################
@@ -123,18 +129,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "evc4"="..\..\..\LIB3DS-1.2.0\evc4\evc4.vcp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
 Project: "fixed"=".\fixed.vcp" - Package Owner=<4>
 
 Package=<5>
@@ -145,21 +139,6 @@ Package=<4>
 {{{
     Begin Project Dependency
     Project_Dep_Name platform
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "innercity"="..\..\..\innercity\innercity.vcp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name OGLES
     End Project Dependency
 }}}
 
