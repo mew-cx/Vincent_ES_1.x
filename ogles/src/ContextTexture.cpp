@@ -1405,6 +1405,16 @@ void Context :: CopyTexSubImage2D(GLenum target, GLint level,
 // Texture parameters
 // --------------------------------------------------------------------------
 
+void Context :: TexParameteri(GLenum target, GLenum pname, GLint param) { 
+
+	if (target != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	RecordError(GL_INVALID_ENUM);
+}
+
 void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) { 
 
 	if (target != GL_TEXTURE_2D) {

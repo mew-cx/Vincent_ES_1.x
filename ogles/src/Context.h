@@ -242,6 +242,7 @@ namespace EGL {
 		void Scalef(GLfloat x, GLfloat y, GLfloat z);
 		void TexEnvf(GLenum target, GLenum pname, GLfloat param);
 		void TexEnvfv(GLenum target, GLenum pname, const GLfloat *params);
+		void TexParameteri(GLenum target, GLenum pname, GLint param);
 		void TexParameterf(GLenum target, GLenum pname, GLfloat param);
 		void Translatef(GLfloat x, GLfloat y, GLfloat z);
 
@@ -253,10 +254,10 @@ namespace EGL {
 		void PointSizePointer(GLenum type, GLsizei stride, const GLvoid *pointer);
 
 		/* OES_matrix_palette */
-		void CurrentPaletteMatrix(GLint index);
+		void CurrentPaletteMatrix(GLuint index);
 		void LoadPaletteFromModelViewMatrix(void);
-		void MatrixIndexPointer(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
-		void WeightPointer(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
+		void MatrixIndexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+		void WeightPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
 
 		// ----------------------------------------------------------------------
 		// Context Management Functions

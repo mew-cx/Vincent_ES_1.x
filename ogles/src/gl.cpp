@@ -36,7 +36,6 @@
 
 
 #include "stdafx.h"
-#include "GLES/gl.h"
 #include "Context.h"
 
 
@@ -56,6 +55,7 @@ using namespace EGL;
 	} else {															\
 		return 0;														\
 	}
+
 
 GLAPI void APIENTRY glActiveTexture (GLenum texture) { 
 	CONTEXT_EXEC(ActiveTexture(texture));
@@ -581,6 +581,10 @@ GLAPI void APIENTRY glTexImage2D (GLenum target, GLint level, GLint internalform
 	CONTEXT_EXEC(TexImage2D(target, level, internalformat, width, height, border, format, type, pixels));
 }
 
+GLAPI void APIENTRY glTexParameteri (GLenum target, GLenum pname, GLint param) { 
+	CONTEXT_EXEC(TexParameteri(target, pname, param));
+}
+
 GLAPI void APIENTRY glTexParameterf (GLenum target, GLenum pname, GLfloat param) { 
 	CONTEXT_EXEC(TexParameterf(target, pname, param));
 }
@@ -619,18 +623,18 @@ GLAPI void APIENTRY glPointSizePointerOES(GLenum type, GLsizei stride, const GLv
 }
 
 /* OES_matrix_palette */
-GLAPI void APIENTRY glCurrentPaletteMatrixOES(GLint index) {
-	CONTEXT_EXEC(CurrentPaletteMatrix(index));
-}
-
 GLAPI void APIENTRY glLoadPaletteFromModelViewMatrixOES(void) {
 	CONTEXT_EXEC(LoadPaletteFromModelViewMatrix());
 }
 
-GLAPI void APIENTRY glMatrixIndexPointerOES(GLint size, GLenum type, GLsizei stride, GLvoid *pointer) {
+GLAPI void APIENTRY glCurrentPaletteMatrixOES(GLuint index) {
+	CONTEXT_EXEC(CurrentPaletteMatrix(index));
+}
+
+GLAPI void APIENTRY glMatrixIndexPointerOES(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
 	CONTEXT_EXEC(MatrixIndexPointer(size, type, stride, pointer));
 }
 
-GLAPI void APIENTRY glWeightPointerOES(GLint size, GLenum type, GLsizei stride, GLvoid *pointer) {
+GLAPI void APIENTRY glWeightPointerOES(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
 	CONTEXT_EXEC(WeightPointer(size, type, stride, pointer));
 }
