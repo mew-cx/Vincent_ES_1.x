@@ -2456,6 +2456,276 @@ static void init_use_chains(cg_codegen_t * gen, cg_block_t * block)
 }
 
 
+typedef struct cg_inst_double_list_t 
+{
+	cg_inst_t *						inst;
+	struct cg_inst_double_list_t *	prev;
+	struct cg_inst_double_list_t *	next;
+}
+cg_inst_double_list_t;
+
+
+static size_t count_instructions(cg_block_t * block)
+{
+	size_t count = 0;
+	cg_inst_t * inst;
+
+	for (inst = block->insts.head; inst; inst = inst->base.next)
+	{
+		++count;
+	}
+
+	return count;
+}
+
+/* Transfer all instructions out of the singly linked list
+ * associated with the block into a doubly linked list with
+ * the given head
+ */
+static void transfer_instructions(cg_block_t * block, 
+								  cg_inst_double_list_t * head,
+								  cg_inst_double_list_t * memory)
+{
+	cg_inst_t * inst;
+
+	for (inst = block->insts.head; inst; inst = inst->base.next, ++memory)
+	{
+		memory->next = head->next;
+		memory->prev = head->prev;
+		head->prev = memory;
+
+		if (head->next == head)
+			head->next = memory;
+
+		memory->inst = inst;
+		inst->base.next = 0;
+		inst->base.scheduled = 0;
+		inst->base.user = memory;
+	}
+
+	block->insts.head = block->insts.tail = 0;
+}
+
+
+static void double_list_append(cg_inst_double_list_t * list, 
+							   cg_inst_double_list_t * element)
+{
+	assert(element->prev == element && element->next == element);
+
+	element->prev = list->prev;
+	list->prev = element;
+	element->next = element->prev->next;
+	element->prev->next = element;
+}
+
+
+static void double_list_remove(cg_inst_double_list_t * list, 
+							   cg_inst_double_list_t * element)
+{
+	assert(element != list);
+
+	element->prev->next = element->next;
+	element->next->prev = element->prev;
+
+	element->prev = element->next = element;
+}
+
+
+static void block_append(cg_block_t * block, cg_inst_t * inst)
+{
+	if (block->insts.head) 
+	{
+		block->insts.tail->base.next = inst;
+	}
+	else
+	{
+		block->insts.head = inst;
+	}
+
+	block->insts.tail = inst;
+	inst->base.next = 0;
+	inst->base.scheduled = 1;
+}
+
+
+static void schedule_sequence(cg_codegen_t * gen, cg_block_t * block,
+							  cg_inst_double_list_t * sequence)
+{
+	cg_inst_double_list_t * seq_iter;
+	cg_inst_double_list_t ready;
+	ready.prev = ready.next = &ready;
+
+	for (seq_iter = sequence->next; seq_iter != sequence; )
+	{
+		int dependencies = 0;
+
+		cg_inst_double_list_t * element = seq_iter;
+		cg_inst_t * inst = element->inst;
+		cg_virtual_reg_t * buffer[64];
+		cg_virtual_reg_t **iter, ** end = cg_inst_use(inst, buffer, buffer + 64);
+		seq_iter = seq_iter->next;
+
+		// count the number of dependencies
+		// if no dependency, this instruction is ready
+
+		for (iter = buffer; iter != end; ++iter)
+		{
+			cg_virtual_reg_t * reg = *iter;
+
+			if (reg->def->base.block == block &&
+				!reg->def->base.scheduled) 
+			{
+				++dependencies;
+			}
+		}
+
+		if (dependencies) 
+		{
+			inst->base.dependencies = dependencies;
+		}
+		else
+		{
+			double_list_remove(sequence, element);
+			double_list_append(&ready, element);
+		}
+	}
+
+	/*
+	 * At this point there is better at least one instruction ready
+	 */
+
+	assert(ready.next != &ready);
+
+	do
+	{
+		/* pick an element from ready */
+		cg_inst_double_list_t * selection = ready.next;
+		cg_inst_t * inst = selection->inst;
+
+		cg_virtual_reg_t * buffer[64];
+		cg_virtual_reg_t **iter, ** end = cg_inst_def(inst, buffer, buffer + 64);
+
+		double_list_remove(&ready, selection);
+
+		/* update all dependent instructions */
+
+		for (iter = buffer; iter != end; ++iter) 
+		{
+			cg_virtual_reg_t * def_reg = *iter;
+			cg_inst_list_t * list = gen->use_chains[def_reg->reg_no];
+
+			for (; list; list = list->next)
+			{
+				cg_inst_t * dependent_inst = list->inst;
+				cg_virtual_reg_t * buffer0[64];
+				cg_virtual_reg_t **use_iter, 
+					** use_end = cg_inst_use(dependent_inst, buffer0, buffer0 + 64);
+
+				for (use_iter = buffer0; use_iter != use_end; ++use_iter)
+				{
+					cg_virtual_reg_t * use_reg = * use_iter;
+
+					if (use_reg == def_reg) 
+					{
+						--dependent_inst->base.dependencies;
+
+						if (dependent_inst->base.dependencies == 0)
+						{
+							cg_inst_double_list_t * link =
+								(cg_inst_double_list_t *) dependent_inst->base.user;
+
+							double_list_remove(sequence, link);
+							double_list_append(&ready, link);
+						}
+					}
+				}
+			}
+		}
+		// get def set of instruction
+		// for each register in def set traverse use chain
+		// for each instruction in use chain:
+		// validate that it is indeed dependent on the current instruction (because of phi-projections)
+		// if it is dependent, decrease dependency count
+		// if dependency count reaches 0, move to ready list
+		// HOW TO RESTRICT THIS TO THE CURRENT SEQUENCE?
+		// PROBABLY IT"S BETTER TO CREATE AN EXPLICIT DEPENDENCY
+		// GRAPH IN THIS FUNCTION
+		// THIS WOULD ALSO ALEVIATE THE REPEATED CALLS INTO cg_inst_use
+	}
+	while (ready.next != &ready);
+
+	/* now all instructions better have been processed */
+	assert(sequence->next = sequence);
+}
+
+
+static void schedule_instructions(cg_codegen_t * gen, cg_block_t * block)
+{
+	cg_inst_double_list_t	all_instructions;
+	cg_inst_double_list_t	seq_instructions;
+	size_t					num_instructions;
+	cg_inst_double_list_t *	list_nodes;
+
+	if (block->insts.head == block->insts.tail)	// 0 or 1 instruction
+		return;
+
+	all_instructions.inst = seq_instructions.inst = 0;
+	all_instructions.prev = all_instructions.next = &all_instructions;
+	seq_instructions.prev = seq_instructions.next = &seq_instructions;
+
+	num_instructions = count_instructions(block);
+	list_nodes = malloc(num_instructions * sizeof(cg_inst_double_list_t));
+	
+	if (!list_nodes)
+		return;
+
+	memset(list_nodes, 0, num_instructions * sizeof(cg_inst_double_list_t));
+
+	transfer_instructions(block, &all_instructions, list_nodes);
+
+	/*
+	 * skip any phi instructions and schedule them as is
+	 */
+	while (all_instructions.next != &all_instructions &&
+		all_instructions.next->inst->base.opcode == cg_op_phi)
+	{
+		cg_inst_t * inst = all_instructions.next->inst;
+		double_list_remove(&all_instructions, all_instructions.next);
+		block_append(block, inst);
+	}
+	
+	/*
+	 * Schedule the next chunk of instructions up to the next
+	 * branching instruction
+	 */
+	while (all_instructions.next != &all_instructions)
+	{
+		cg_inst_double_list_t * element = all_instructions.next;
+
+		double_list_remove(&all_instructions, element);
+		double_list_append(&seq_instructions, element);
+
+		if (element->inst->base.kind == cg_inst_branch_label ||
+			element->inst->base.kind == cg_inst_branch_cond ||
+			element->inst->base.kind == cg_inst_ret)
+		{
+			schedule_sequence(gen, block, &seq_instructions);
+		}
+	}
+
+	/* 
+	 * Schedule the remaining set of instructions
+	 */
+
+	if (seq_instructions.next != &seq_instructions)
+	{
+		schedule_sequence(gen, block, &seq_instructions);
+	}
+
+	free(list_nodes);
+}
+
+
 void cg_codegen_emit_block(cg_codegen_t * gen, cg_block_t * block, int reinit)
 {
 	cg_inst_t * inst;
@@ -2469,6 +2739,7 @@ void cg_codegen_emit_block(cg_codegen_t * gen, cg_block_t * block, int reinit)
 		begin_block(gen);
 
 	allocate_globals(gen);
+	schedule_instructions(gen, block);
 
 	/************************************************************************/
 	/* Assign sequence numbers to instructions								*/
