@@ -907,31 +907,47 @@ void Rasterizer :: RasterPoint(const RasterPos& point) {
 }
 
 
-void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
+void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 
-	if (from.m_WindowCoords.x == to.m_WindowCoords.x &&
-		from.m_WindowCoords.y == to.m_WindowCoords.y) {
-		RasterPoint(from);
+	if (EGL_Round(p_from.m_WindowCoords.x) == EGL_Round(p_to.m_WindowCoords.x) &&
+		EGL_Round(p_from.m_WindowCoords.y) == EGL_Round(p_to.m_WindowCoords.y)) {
+		// both ends of line on same pixel
+		RasterPoint(p_from);
 		return;
 	}
 
-	EGL_Fixed deltaX = to.m_WindowCoords.x - from.m_WindowCoords.x;
-	EGL_Fixed deltaY = to.m_WindowCoords.y - from.m_WindowCoords.y;
-
-	FractionalColor baseColor = from.m_Color;
-	EGL_Fixed OneOverZ = from.m_WindowCoords.invZ;
-	EGL_Fixed OneOverZTo = to.m_WindowCoords.invZ;
-	EGL_Fixed tuOverZ = EGL_Mul(from.m_TextureCoords.tu, OneOverZ);
-	EGL_Fixed tvOverZ = EGL_Mul(from.m_TextureCoords.tv, OneOverZ);
-	EGL_Fixed fogDensity = from.m_FogDensity;
-	EGL_Fixed depth = from.m_WindowCoords.depth;
+	EGL_Fixed deltaX = p_to.m_WindowCoords.x - p_from.m_WindowCoords.x;
+	EGL_Fixed deltaY = p_to.m_WindowCoords.y - p_from.m_WindowCoords.y;
 
 	if (EGL_Abs(deltaX) > EGL_Abs(deltaY)) {
 		// Bresenheim along x-axis
 
+		const RasterPos * start, *end;
+
+		if (deltaX < 0) {
+			deltaY = -deltaY;
+			deltaX = -deltaX;
+			start = &p_to;
+			end = &p_from;
+		} else {
+			start = &p_from;
+			end = &p_to;
+		}
+
+		const RasterPos& from = *start;
+		const RasterPos& to = *end;
+
+		FractionalColor baseColor = from.m_Color;
+		EGL_Fixed OneOverZ = from.m_WindowCoords.invZ;
+		EGL_Fixed OneOverZTo = to.m_WindowCoords.invZ;
+		EGL_Fixed tuOverZ = EGL_Mul(from.m_TextureCoords.tu, OneOverZ);
+		EGL_Fixed tvOverZ = EGL_Mul(from.m_TextureCoords.tv, OneOverZ);
+		EGL_Fixed fogDensity = from.m_FogDensity;
+		EGL_Fixed depth = from.m_WindowCoords.depth;
+
 		EGL_Fixed invSpan = EGL_Inverse(deltaX);
 
-		EGL_Fixed slope = EGL_Abs(EGL_Mul(deltaY, invSpan));
+		EGL_Fixed slope = EGL_Mul(EGL_Abs(deltaY), invSpan);
 		FractionalColor colorIncrement = (to.m_Color - from.m_Color) * invSpan;
 		EGL_Fixed deltaFog = EGL_Mul(to.m_FogDensity - from.m_FogDensity, invSpan);
 
@@ -949,7 +965,7 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 		I32 y = EGL_IntFromFixed(from.m_WindowCoords.y);
 		I32 endX = EGL_IntFromFixed(to.m_WindowCoords.x);
 		I32 yIncrement = (deltaY > 0) ? 1 : -1;
-		EGL_Fixed error = 0;
+		EGL_Fixed error = 0;//EGL_ONE/2;
 
 		for (; x < endX; ++x) {
 
@@ -960,7 +976,7 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 			Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
 
 			error += slope;
-			if (error > EGL_FixedFromFloat(0.5f)) {
+			if (error > EGL_ONE) {
 				y += yIncrement;
 				error -= EGL_ONE;
 			}
@@ -976,9 +992,32 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 	} else {
 		// Bresenheim along y-axis
 
+		const RasterPos * start, *end;
+
+		if (deltaY < 0) {
+			deltaY = -deltaY;
+			deltaX = -deltaX;
+			start = &p_to;
+			end = &p_from;
+		} else {
+			start = &p_from;
+			end = &p_to;
+		}
+
+		const RasterPos& from = *start;
+		const RasterPos& to = *end;
+
+		FractionalColor baseColor = from.m_Color;
+		EGL_Fixed OneOverZ = from.m_WindowCoords.invZ;
+		EGL_Fixed OneOverZTo = to.m_WindowCoords.invZ;
+		EGL_Fixed tuOverZ = EGL_Mul(from.m_TextureCoords.tu, OneOverZ);
+		EGL_Fixed tvOverZ = EGL_Mul(from.m_TextureCoords.tv, OneOverZ);
+		EGL_Fixed fogDensity = from.m_FogDensity;
+		EGL_Fixed depth = from.m_WindowCoords.depth;
+
 		EGL_Fixed invSpan = EGL_Inverse(deltaY);
 
-		EGL_Fixed slope = EGL_Abs(EGL_Mul(deltaX, invSpan));
+		EGL_Fixed slope = EGL_Mul(EGL_Abs(deltaX), invSpan);
 		FractionalColor colorIncrement = (to.m_Color - from.m_Color) * invSpan;
 		EGL_Fixed deltaFog = EGL_Mul(to.m_FogDensity - from.m_FogDensity, invSpan);
 
@@ -995,8 +1034,9 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 		I32 x = EGL_IntFromFixed(from.m_WindowCoords.x);
 		I32 y = EGL_IntFromFixed(from.m_WindowCoords.y);
 		I32 endY = EGL_IntFromFixed(to.m_WindowCoords.y);
+
 		I32 xIncrement = (deltaX > 0) ? 1 : -1;
-		EGL_Fixed error = 0;
+		EGL_Fixed error = 0;//EGL_ONE/2;
 
 		for (; y < endY; ++y) {
 
@@ -1007,7 +1047,7 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 			Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
 
 			error += slope;
-			if (error > EGL_FixedFromFloat(0.5f)) {
+			if (error > EGL_ONE) {
 				x += xIncrement;
 				error -= EGL_ONE;
 			}
@@ -1019,6 +1059,7 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 			tvOverZ += deltaV;
 			fogDensity += deltaFog;
 		}
+
 	}
 }
 
