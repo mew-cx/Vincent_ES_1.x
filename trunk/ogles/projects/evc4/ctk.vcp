@@ -28,7 +28,7 @@ CFG=ctk - Win32 (WCE ARMV4) Release ARM
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 # PROP ATL_Project 2
-CPP=clarm.exe
+CPP="C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xicle42"
 
 !IF  "$(CFG)" == "ctk - Win32 (WCE ARMV4) Release ARM"
 
@@ -72,7 +72,7 @@ BSC32=bscmake.exe
 # PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /M$(CECrtMTDebug) /c
-# ADD CPP /nologo /W3 /Zi /Od /I "..\..\include" /I "..\..\ctk" /I "..\.." /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "..\..\include" /I "..\..\ctk" /I "..\.." /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON" /YX /M$(CECrtMTDebug) /c
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
@@ -144,13 +144,13 @@ BSC32=bscmake.exe
 # Begin Source File
 
 SOURCE=..\..\ctk\ctkw.c
-NODEP_CPP_CTKW_=\
+DEP_CPP_CTKW_=\
 	"..\..\ctk\ctk.h"\
-	"..\..\ctk\GLES\egl.h"\
-	"..\..\ctk\GLES\egltypes.h"\
-	"..\..\ctk\GLES\gl.h"\
 	"..\..\ctk\GLES\glext.h"\
 	"..\..\fixed\fixed.h"\
+	"..\..\include\GLES\egl.h"\
+	"..\..\include\GLES\egltypes.h"\
+	"..\..\include\GLES\gl.h"\
 	"..\..\platform\gl_fixed_point.h"\
 	"..\..\platform\gl_single_precision.h"\
 	"..\..\platform\math_fixed.h"\
@@ -168,13 +168,13 @@ NODEP_CPP_CTKW_=\
 # Begin Source File
 
 SOURCE=..\..\ctk\glext.c
-NODEP_CPP_GLEXT=\
+DEP_CPP_GLEXT=\
 	"..\..\ctk\ctk.h"\
-	"..\..\ctk\GLES\egl.h"\
-	"..\..\ctk\GLES\egltypes.h"\
-	"..\..\ctk\GLES\gl.h"\
 	"..\..\ctk\GLES\glext.h"\
 	"..\..\fixed\fixed.h"\
+	"..\..\include\GLES\egl.h"\
+	"..\..\include\GLES\egltypes.h"\
+	"..\..\include\GLES\gl.h"\
 	"..\..\platform\gl_fixed_point.h"\
 	"..\..\platform\gl_single_precision.h"\
 	"..\..\platform\math_fixed.h"\

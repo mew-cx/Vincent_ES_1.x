@@ -606,6 +606,14 @@ namespace {
 
 void Context :: GetIntegerv(GLenum pname, GLint *params) { 
 	switch (pname) {
+	/* 1.0 stuff */
+	case GL_SMOOTH_LINE_WIDTH_RANGE:
+	case GL_SMOOTH_POINT_SIZE_RANGE:
+	case GL_ALIASED_POINT_SIZE_RANGE:
+	case GL_ALIASED_LINE_WIDTH_RANGE:
+		params[0] = params[1] = 1;
+		return;
+
 	case GL_ALPHA_BITS:
 		params[0] = m_Config.GetConfigAttrib(EGL_ALPHA_SIZE);
 		break;
