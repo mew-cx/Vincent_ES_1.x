@@ -666,6 +666,10 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat,
 	CopyPixels(const_cast<const void *>(pixels), width, height, 0, 0, width, height,
 		texture->GetData(), width, height, 0, 0, internalFormat, type,
 		InternalTypeForInternalFormat(internalFormat));
+
+	if (level == 0 && m_GenerateMipmaps) {
+		UpdateMipmaps();
+	}
 }
 
 void Context :: TexSubImage2D(GLenum target, GLint level, 
@@ -695,6 +699,10 @@ void Context :: TexSubImage2D(GLenum target, GLint level,
 	CopyPixels(const_cast<const void *>(pixels), width, height, 0, 0, width, height,
 		texture->GetData(), texture->GetWidth(), texture->GetHeight(),
 		xoffset, yoffset, internalFormat, type, InternalTypeForInternalFormat(internalFormat));
+
+	if (level == 0 && m_GenerateMipmaps) {
+		UpdateMipmaps();
+	}
 }
 
 void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat, 
@@ -730,6 +738,10 @@ void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat
 				0, 0, width, height,
 				texture->GetData(), width, height, 0, 0, internalFormat, type,
 				InternalTypeForInternalFormat(internalFormat));
+
+	if (level == 0 && m_GenerateMipmaps) {
+		UpdateMipmaps();
+	}
 }
 
 void Context :: CopyTexSubImage2D(GLenum target, GLint level, 
@@ -764,6 +776,10 @@ void Context :: CopyTexSubImage2D(GLenum target, GLint level,
 				0, 0, width, height,
 				texture->GetData(), texture->GetWidth(), texture->GetHeight(), 0, 0, 
 				internalFormat, type, InternalTypeForInternalFormat(internalFormat));
+
+	if (level == 0 && m_GenerateMipmaps) {
+		UpdateMipmaps();
+	}
 }
 
 // --------------------------------------------------------------------------
@@ -830,6 +846,11 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 				}
 			}
 			break;
+
+		case GL_GENERATE_MIPMAP_SGIS:
+			{
+				m_GenerateMipmaps = (intParam != 0);
+			}
 
 		default:
 			RecordError(GL_INVALID_ENUM);
@@ -949,3 +970,351 @@ void Context :: PixelStorei(GLenum pname, GLint param) {
 }
 
 
+namespace {
+	U32 Log(U32 value) {
+		U32 result = 0;
+		U32 mask = 1;
+
+		while ((value & mask) != value) {
+			++result;
+			mask = (mask << 1) | 1;
+		}
+
+		return result;
+	}
+}
+
+
+void Context :: UpdateMipmaps(void) {
+
+	MultiTexture * multiTexture = GetCurrentTexture();
+	Texture * texture = multiTexture->GetTexture(0);
+
+	U32 logWidth = Log(texture->GetWidth());
+	U32 logHeight = Log(texture->GetHeight());
+
+	U32 logSquareBound = logWidth < logHeight ? logWidth : logHeight;
+	U32 level;
+
+	for (level = 1; level < logSquareBound; ++level) {
+		Texture * outer = multiTexture->GetTexture(level - 1);
+		Texture * inner = multiTexture->GetTexture(level);
+			
+		inner->Initialize(outer->GetWidth() / 2, 
+			outer->GetHeight() / 2, outer->GetInternalFormat());
+
+		size_t x, y;
+		size_t width = inner->GetWidth();
+		size_t height = inner->GetHeight();
+
+		switch (outer->GetInternalFormat()) {
+		case RasterizerState::TextureFormatAlpha:
+			{
+				U8 * outerBase = reinterpret_cast<U8 *>(outer->GetData());
+				U8 * innerBase = reinterpret_cast<U8 *>(inner->GetData());
+
+				for (y = 0; y < height; ++y) {
+					for (x = 0; x < width; ++x) {
+						Color a = Color(0xff, 0xff, 0xff, outerBase[2 * x + (2 * width) * 2 * y]);
+						Color b = Color(0xff, 0xff, 0xff, outerBase[2 * x + 1 + (2 * width) * 2 * y]);
+						Color c = Color(0xff, 0xff, 0xff, outerBase[2 * x + (2 * width) * (2 * y + 1)]);
+						Color d = Color(0xff, 0xff, 0xff, outerBase[2 * x + 1+ (2 * width) * (2 * y + 1)]);
+
+						Color target = Color::Average(a, b, c, d);
+						innerBase[x + width * y] = target.A();
+					}
+				}
+			}
+			break;
+
+		case RasterizerState::TextureFormatLuminance:
+			{
+				U8 * outerBase = reinterpret_cast<U8 *>(outer->GetData());
+				U8 * innerBase = reinterpret_cast<U8 *>(inner->GetData());
+
+				for (y = 0; y < height; ++y) {
+					for (x = 0; x < width; ++x) {
+						Color a = Color(outerBase[2 * x + (2 * width) * 2 * y], 0xff, 0xff, 0xff);
+						Color b = Color(outerBase[2 * x + 1 + (2 * width) * 2 * y], 0xff, 0xff, 0xff);
+						Color c = Color(outerBase[2 * x + (2 * width) * (2 * y + 1)], 0xff, 0xff, 0xff);
+						Color d = Color(outerBase[2 * x + 1+ (2 * width) * (2 * y + 1)], 0xff, 0xff, 0xff);
+
+						Color target = Color::Average(a, b, c, d);
+						innerBase[x + width * y] = target.R();
+					}
+				}
+			}
+			break;
+
+		case RasterizerState::TextureFormatLuminanceAlpha:
+			{
+				U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
+				U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
+
+				for (y = 0; y < height; ++y) {
+					for (x = 0; x < width; ++x) {
+						Color a = Color::FromLuminanceAlpha(outerBase[2 * x + (2 * width) * 2 * y]);
+						Color b = Color::FromLuminanceAlpha(outerBase[2 * x + 1 + (2 * width) * 2 * y]);
+						Color c = Color::FromLuminanceAlpha(outerBase[2 * x + (2 * width) * (2 * y + 1)]);
+						Color d = Color::FromLuminanceAlpha(outerBase[2 * x + 1+ (2 * width) * (2 * y + 1)]);
+
+						Color target = Color::Average(a, b, c, d);
+						innerBase[x + width * y] = target.R() | target.A() << 8;
+					}
+				}
+			}
+			break;
+
+		case RasterizerState::TextureFormatRGB:
+			{
+				U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
+				U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
+
+				for (y = 0; y < height; ++y) {
+					for (x = 0; x < width; ++x) {
+						Color a = Color::From565(outerBase[2 * x + (2 * width) * 2 * y]);
+						Color b = Color::From565(outerBase[2 * x + 1 + (2 * width) * 2 * y]);
+						Color c = Color::From565(outerBase[2 * x + (2 * width) * (2 * y + 1)]);
+						Color d = Color::From565(outerBase[2 * x + 1+ (2 * width) * (2 * y + 1)]);
+
+						Color target = Color::Average(a, b, c, d);
+						innerBase[x + width * y] = target.ConvertTo565();
+					}
+				}
+			}
+			break;
+
+		case RasterizerState::TextureFormatRGBA:
+			{
+				U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
+				U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
+
+				for (y = 0; y < height; ++y) {
+					for (x = 0; x < width; ++x) {
+						Color a = Color::From5551(outerBase[2 * x + (2 * width) * 2 * y]);
+						Color b = Color::From5551(outerBase[2 * x + 1 + (2 * width) * 2 * y]);
+						Color c = Color::From5551(outerBase[2 * x + (2 * width) * (2 * y + 1)]);
+						Color d = Color::From5551(outerBase[2 * x + 1+ (2 * width) * (2 * y + 1)]);
+
+						Color target = Color::Average(a, b, c, d);
+						innerBase[x + width * y] = target.ConvertTo5551();
+					}
+				}
+			}
+			break;
+
+		default:
+			assert(0);
+		}
+	}
+
+	if (logWidth < logHeight) {
+		assert(multiTexture->GetTexture(level - 1)->GetWidth() == 1);
+
+		for (; level < logHeight; ++level) {
+			Texture * outer = multiTexture->GetTexture(level - 1);
+			Texture * inner = multiTexture->GetTexture(level);
+				
+			inner->Initialize(outer->GetWidth(), 
+				outer->GetHeight() / 2, outer->GetInternalFormat());
+
+			size_t x, y;
+			size_t width = inner->GetWidth();
+			size_t height = inner->GetHeight();
+
+			switch (outer->GetInternalFormat()) {
+			case RasterizerState::TextureFormatAlpha:
+				{
+					U8 * outerBase = reinterpret_cast<U8 *>(outer->GetData());
+					U8 * innerBase = reinterpret_cast<U8 *>(inner->GetData());
+
+					for (y = 0; y < height; ++y) {
+						for (x = 0; x < width; ++x) {
+							Color a = Color(0xff, 0xff, 0xff, outerBase[x + width * 2 * y]);
+							Color b = Color(0xff, 0xff, 0xff, outerBase[x + width * (2 * y + 1)]);
+
+							Color target = Color::Average(a, b);
+							innerBase[x + width * y] = target.A();
+						}
+					}
+				}
+				break;
+
+			case RasterizerState::TextureFormatLuminance:
+				{
+					U8 * outerBase = reinterpret_cast<U8 *>(outer->GetData());
+					U8 * innerBase = reinterpret_cast<U8 *>(inner->GetData());
+
+					for (y = 0; y < height; ++y) {
+						for (x = 0; x < width; ++x) {
+							Color a = Color(outerBase[x + width * 2 * y], 0xff, 0xff, 0xff);
+							Color b = Color(outerBase[x + width * (2 * y + 1)], 0xff, 0xff, 0xff);
+
+							Color target = Color::Average(a, b);
+							innerBase[x + width * y] = target.R();
+						}
+					}
+				}
+				break;
+
+			case RasterizerState::TextureFormatLuminanceAlpha:
+				{
+					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
+					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
+
+					for (y = 0; y < height; ++y) {
+						for (x = 0; x < width; ++x) {
+							Color a = Color::FromLuminanceAlpha(outerBase[x + width * 2 * y]);
+							Color b = Color::FromLuminanceAlpha(outerBase[x + width * (2 * y + 1)]);
+
+							Color target = Color::Average(a, b);
+							innerBase[x + width * y] = target.R() | target.A() << 8;
+						}
+					}
+				}
+				break;
+
+			case RasterizerState::TextureFormatRGB:
+				{
+					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
+					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
+
+					for (y = 0; y < height; ++y) {
+						for (x = 0; x < width; ++x) {
+							Color a = Color::From565(outerBase[x + width * 2 * y]);
+							Color b = Color::From565(outerBase[x + width * (2 * y + 1)]);
+
+							Color target = Color::Average(a, b);
+							innerBase[x + width * y] = target.ConvertTo565();
+						}
+					}
+				}
+				break;
+
+			case RasterizerState::TextureFormatRGBA:
+				{
+					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
+					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
+
+					for (y = 0; y < height; ++y) {
+						for (x = 0; x < width; ++x) {
+							Color a = Color::From5551(outerBase[x + width * 2 * y]);
+							Color b = Color::From5551(outerBase[x + width * (2 * y + 1)]);
+
+							Color target = Color::Average(a, b);
+							innerBase[x + width * y] = target.ConvertTo5551();
+						}
+					}
+				}
+				break;
+
+			default:
+				assert(0);
+			}
+		}
+	} else if (logWidth > logHeight) {
+		assert(multiTexture->GetTexture(level - 1)->GetHeight() == 1);
+
+		for (; level < logWidth; ++level) {
+			Texture * outer = multiTexture->GetTexture(level - 1);
+			Texture * inner = multiTexture->GetTexture(level);
+				
+			inner->Initialize(outer->GetWidth() / 2, 
+				outer->GetHeight(), outer->GetInternalFormat());
+
+			size_t x, y;
+			size_t width = inner->GetWidth();
+			size_t height = inner->GetHeight();
+
+			switch (outer->GetInternalFormat()) {
+			case RasterizerState::TextureFormatAlpha:
+				{
+					U8 * outerBase = reinterpret_cast<U8 *>(outer->GetData());
+					U8 * innerBase = reinterpret_cast<U8 *>(inner->GetData());
+
+					for (y = 0; y < height; ++y) {
+						for (x = 0; x < width; ++x) {
+							Color a = Color(0xff, 0xff, 0xff, outerBase[2 * x + (2 * width) * y]);
+							Color b = Color(0xff, 0xff, 0xff, outerBase[2 * x + 1 + (2 * width) * y]);
+
+							Color target = Color::Average(a, b);
+							innerBase[x + width * y] = target.A();
+						}
+					}
+				}
+				break;
+
+			case RasterizerState::TextureFormatLuminance:
+				{
+					U8 * outerBase = reinterpret_cast<U8 *>(outer->GetData());
+					U8 * innerBase = reinterpret_cast<U8 *>(inner->GetData());
+
+					for (y = 0; y < height; ++y) {
+						for (x = 0; x < width; ++x) {
+							Color a = Color(outerBase[2 * x + (2 * width) * y], 0xff, 0xff, 0xff);
+							Color b = Color(outerBase[2 * x + 1 + (2 * width) * y], 0xff, 0xff, 0xff);
+
+							Color target = Color::Average(a, b);
+							innerBase[x + width * y] = target.R();
+						}
+					}
+				}
+				break;
+
+			case RasterizerState::TextureFormatLuminanceAlpha:
+				{
+					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
+					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
+
+					for (y = 0; y < height; ++y) {
+						for (x = 0; x < width; ++x) {
+							Color a = Color::FromLuminanceAlpha(outerBase[2 * x + (2 * width) * y]);
+							Color b = Color::FromLuminanceAlpha(outerBase[2 * x + 1 + (2 * width) * y]);
+
+							Color target = Color::Average(a, b);
+							innerBase[x + width * y] = target.R() | target.A() << 8;
+						}
+					}
+				}
+				break;
+
+			case RasterizerState::TextureFormatRGB:
+				{
+					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
+					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
+
+					for (y = 0; y < height; ++y) {
+						for (x = 0; x < width; ++x) {
+							Color a = Color::From565(outerBase[2 * x + (2 * width) * y]);
+							Color b = Color::From565(outerBase[2 * x + 1 + (2 * width) * y]);
+
+							Color target = Color::Average(a, b);
+							innerBase[x + width * y] = target.ConvertTo565();
+						}
+					}
+				}
+				break;
+
+			case RasterizerState::TextureFormatRGBA:
+				{
+					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
+					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
+
+					for (y = 0; y < height; ++y) {
+						for (x = 0; x < width; ++x) {
+							Color a = Color::From5551(outerBase[2 * x + (2 * width) * y]);
+							Color b = Color::From5551(outerBase[2 * x + 1 + (2 * width) * y]);
+
+							Color target = Color::Average(a, b);
+							innerBase[x + width * y] = target.ConvertTo5551();
+						}
+					}
+				}
+				break;
+
+			default:
+				assert(0);
+			}
+		}
+	}
+}
