@@ -115,6 +115,12 @@ void Rasterizer :: SetTexture(MultiTexture * texture) {
 inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv, 
 								   EGL_Fixed fogDensity, const Color& baseColor) {
 
+	// pixel ownership test
+	if (x < 0 || x >= m_Surface->GetWidth() ||
+		y < 0 || y >= m_Surface->GetHeight()) {
+		return;
+	}
+
 	// fragment level clipping (for now)
 	if (m_State->m_ScissorTestEnabled) {
 		if (x < m_State->m_ScissorX || x - m_State->m_ScissorX >= m_State->m_ScissorWidth ||
