@@ -466,19 +466,6 @@ cg_inst_t * cg_create_inst_ret_value(cg_block_t * block,
 									 cg_opcode_t op, 
 									 cg_virtual_reg_t * value);
 
-// constructor functions for basic instruction formats:
-/*	cg_inst_unary,		
-	cg_inst_binary,		
-	cg_inst_compare,	
-	cg_inst_load,	
-	cg_inst_store,	
-	cg_inst_load_immed,
-	cg_inst_branch_label,	
-	cg_inst_branch_cond,	
-	cg_inst_phi,	
-	cg_inst_call,
-	cg_inst_ret,						
-*/
 
 /****************************************************************************/
 /* The intermediate code needs to be processed by the following				*/
