@@ -2293,7 +2293,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 }
 
 
-#define LOG_LINEAR_SPAN 0 /* 3 */					// logarithm of value base 2
+#define LOG_LINEAR_SPAN  3 					// logarithm of value base 2
 #define LINEAR_SPAN (1 << LOG_LINEAR_SPAN)	// must be power of 2
 
 
