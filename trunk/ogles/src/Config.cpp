@@ -431,7 +431,7 @@ Config Config :: s_AllConfigurations[1] = {
 		EGL_NONE,		//	EGLint	nativeVisualType,
 		0,				//	EGLint	sampleBuffers,
 		0,				//	EGLint	samples,
-		8,				//	EGLint	stencilSize,
+		32,				//	EGLint	stencilSize,
 		EGL_PBUFFER_BIT,//	EGLint	surfaceType,
 		EGL_NONE,		//	EGLint	transparentType,
 		0,				//	EGLint	transparentRedValue,
