@@ -1725,7 +1725,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		cg_block_ref_t * labelStencilPassed = cg_block_ref_create(procedure);
 		cg_block_ref_t * labelStencilBypassed = cg_block_ref_create(procedure);
 
-		cg_create_inst_branch_cond(block, passedTest,	regStencilTest, labelStencilPassed CG_INST_DEBUG_ARGS);
+		if (passedTest != cg_op_nop) {
+			cg_create_inst_branch_cond(block, passedTest,	regStencilTest, labelStencilPassed CG_INST_DEBUG_ARGS);
+		}
 
 		//if (!stencilTest) {
 		{
