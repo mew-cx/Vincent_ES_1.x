@@ -82,7 +82,7 @@ namespace {
 }
 
 
-Matrix4x4 Matrix4x4 :: Inverse() const {
+Matrix4x4 Matrix4x4 :: Inverse(bool rescale) const {
 
 	Matrix4x4 result;
 	const Matrix4x4& matrix = *this;
@@ -109,6 +109,20 @@ Matrix4x4 Matrix4x4 :: Inverse() const {
 	result.Element(2, 2) =  ScaledDet2X2(matrix, 2, 2, inverseDet);
 
 	result.m_identity = false;
+
+	if (rescale) {
+		EGL_Fixed sumOfSquares = 
+			EGL_Mul(result.Element(2, 0), result.Element(2, 0)) +
+			EGL_Mul(result.Element(2, 1), result.Element(2, 1)) +
+			EGL_Mul(result.Element(2, 2), result.Element(2, 2));
+
+		EGL_Fixed factor = EGL_InvSqrt(sumOfSquares);
+
+		for (size_t index = 0; index < 16; ++index) {
+			result.Element(index) *= factor;
+		}
+	}
+
 	return result;
 }
 

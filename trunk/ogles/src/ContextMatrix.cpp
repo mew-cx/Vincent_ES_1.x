@@ -78,7 +78,7 @@ void Context :: RebuildMatrices(void) {
 }
 
 void Context :: UpdateInverseModelViewMatrix(void) {
-	m_InverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().Inverse();
+	m_InverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().Inverse(m_RescaleNormalEnabled);
 }
 
 void Context :: UpdateVertexTransformation(void) {
