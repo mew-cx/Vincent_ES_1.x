@@ -655,6 +655,10 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat,
 	Texture * texture = multiTexture->GetTexture(level);
 	texture->Initialize(width, height, internalFormat);
 
+	if (!level) {
+		GetRasterizerState()->SetInternalFormat(internalFormat);
+	}
+
 	CopyPixels(const_cast<const void *>(pixels), width, height, 0, 0, width, height,
 		texture->GetData(), width, height, 0, 0, internalFormat, type,
 		InternalTypeForInternalFormat(internalFormat));
@@ -777,6 +781,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 				if (mode != RasterizerState::MinFilterModeInvalid) {
 					multiTexture->SetMinFilterMode(mode);
+					GetRasterizerState()->SetMinFilterMode(mode);
 				} else {
 					RecordError(GL_INVALID_VALUE);
 				}
@@ -789,6 +794,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 				if (mode != RasterizerState::MagFilterModeInvalid) {
 					multiTexture->SetMagFilterMode(mode);
+					GetRasterizerState()->SetMagFilterMode(mode);
 				} else {
 					RecordError(GL_INVALID_VALUE);
 				}
@@ -801,6 +807,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 				if (mode != RasterizerState::WrappingModeInvalid) {
 					multiTexture->SetWrappingModeS(mode);
+					GetRasterizerState()->SetWrappingModeS(mode);
 				} else {
 					RecordError(GL_INVALID_VALUE);
 				}
@@ -813,6 +820,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 				if (mode != RasterizerState::WrappingModeInvalid) {
 					multiTexture->SetWrappingModeT(mode);
+					GetRasterizerState()->SetWrappingModeT(mode);
 				} else {
 					RecordError(GL_INVALID_VALUE);
 				}
