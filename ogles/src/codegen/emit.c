@@ -54,10 +54,13 @@ struct cg_label_t
 };
 
 
+struct physical_reg_list_t;
+
 typedef struct cg_physical_reg_t 
 {
 	struct cg_physical_reg_t * prev;				/* for LRU chain			*/
 	struct cg_physical_reg_t * next;				/* for LRU chain			*/
+	struct physical_reg_list_t * list;
 	ARMReg					regno;				/* physical register		*/
 	cg_virtual_reg_t *		virtual_reg;		/* assigned virtual reg.	*/
 	cg_inst_t *				next_use;			/* next use of ass. value   */
@@ -77,6 +80,7 @@ physical_reg_list_t;
 
 void reg_list_add(physical_reg_list_t * list, cg_physical_reg_t * reg)
 {
+	assert(!reg->list);
 	assert(!reg->prev);
 	assert(!reg->next);
 	
@@ -84,19 +88,25 @@ void reg_list_add(physical_reg_list_t * list, cg_physical_reg_t * reg)
 	{
 		assert(list->head == (cg_physical_reg_t *) 0);
 		list->head = list->tail = reg;
+		reg->prev = reg->next = NULL;
 	}
 	else 
 	{
 		assert(list->head != (cg_physical_reg_t *) 0);
+		reg->prev = NULL;
 		reg->next = list->head;
 		list->head->prev = reg;
 		list->head = reg;
 	}
+
+	reg->list = list;
 }
 
 
 void reg_list_remove(physical_reg_list_t * list, cg_physical_reg_t * reg)
 {
+	assert(reg->list == list);
+
 	if (reg->prev != (cg_physical_reg_t *) 0)
 	{
 		assert(list->head != reg);
@@ -120,6 +130,7 @@ void reg_list_remove(physical_reg_list_t * list, cg_physical_reg_t * reg)
 	}
 	
 	reg->prev = reg->next = (cg_physical_reg_t *) 0;
+	reg->list = NULL;
 }
 
 
@@ -363,17 +374,20 @@ static void kill_argument_registers(cg_codegen_t * gen)
 		cg_physical_reg_t * physical_reg = gen->registers + regno;
 		cg_virtual_reg_t * reg = physical_reg->virtual_reg;
 
-		if (reg->physical_reg == physical_reg)
+		if (reg != NULL)
 		{
-			deallocate_reg(gen, reg);
-		}
-		else if (physical_reg->virtual_reg != (cg_virtual_reg_t *) 0)
-		{
-			/* register is a duplicate of another register, just free it up */
-			reg_list_remove(&gen->used_regs, physical_reg);
-			reg_list_add(&gen->free_regs, physical_reg);
-			
-			physical_reg->virtual_reg = 0;
+			if (reg->physical_reg == physical_reg)
+			{
+				deallocate_reg(gen, reg);
+			}
+			else
+			{
+				/* register is a duplicate of another register, just free it up */
+				reg_list_remove(&gen->used_regs, physical_reg);
+				reg_list_add(&gen->free_regs, physical_reg);
+				
+				physical_reg->virtual_reg = 0;
+			}
 		}
 	}
 }
@@ -1173,6 +1187,7 @@ static void emit_branch(cg_codegen_t * gen, cg_inst_branch_t * inst)
 			}
 			
 			branch_cond(gen, inst->target->block->label, cond);
+			break;
 			
 		default:
 			assert(0);
@@ -1352,8 +1367,12 @@ static void deallocate_reg(cg_codegen_t * gen, cg_virtual_reg_t * reg)
 			save_reg(gen, physical_reg, reg);
 		}
 		
-		reg_list_remove(&gen->used_regs, physical_reg);
+		if (physical_reg->list == &gen->used_regs) /* hack */
+			reg_list_remove(&gen->used_regs, physical_reg);
+
 		reg_list_add(&gen->free_regs, physical_reg);
+
+		physical_reg->dirty = 0;
 	}
 }
 
@@ -1396,7 +1415,8 @@ static cg_physical_reg_t * allocate_reg(cg_codegen_t * gen, cg_virtual_reg_t * r
 	physical_reg = spill_candidate(gen, reg, mask);
 	
 	deallocate_reg(gen, physical_reg->virtual_reg);
-	reg_list_move_to_front(&gen->used_regs, physical_reg);
+	reg_list_remove(&gen->free_regs, physical_reg);
+	reg_list_add(&gen->used_regs, physical_reg);
 		
 	return physical_reg;
 }
@@ -1766,7 +1786,20 @@ static void end_block(cg_codegen_t * gen)
 	/* deallocate all registers												*/
 	while (gen->used_regs.tail != (cg_physical_reg_t *) 0)
 	{
-		deallocate_reg(gen, gen->used_regs.tail->virtual_reg);
+		cg_physical_reg_t * physical_reg = gen->used_regs.tail;
+
+		if (physical_reg->virtual_reg != NULL &&
+			physical_reg->virtual_reg->physical_reg == physical_reg) 
+		{
+			deallocate_reg(gen, physical_reg->virtual_reg);
+		}
+		else
+		{
+			reg_list_remove(&gen->used_regs, physical_reg);
+			reg_list_add(&gen->free_regs, physical_reg);
+			physical_reg->defined = physical_reg->dirty = 0;
+			physical_reg->virtual_reg = NULL;
+		}
 	}
 
 	init_flags(gen);
@@ -1893,6 +1926,7 @@ static void init_arg(cg_codegen_t * gen, cg_physical_reg_t * physical_reg,
 	/* init physical reg as physical register bound to reg, marked dirty	*/
 	/************************************************************************/
 
+	physical_reg->list = NULL;
 	physical_reg->prev = physical_reg->next = (cg_physical_reg_t *) 0;
 	physical_reg->virtual_reg = reg;
 	reg->physical_reg = physical_reg;
@@ -1909,6 +1943,7 @@ static void init_free(cg_codegen_t * gen, cg_physical_reg_t * physical_reg)
 	/* init physical_reg as unsed register									*/
 	/************************************************************************/
 
+	physical_reg->list = NULL;
 	physical_reg->prev = physical_reg->next = (cg_physical_reg_t *) 0;
 	physical_reg->virtual_reg = (cg_virtual_reg_t *) 0;
 	physical_reg->next_use = (cg_inst_t *) 0;
