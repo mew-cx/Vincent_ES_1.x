@@ -451,6 +451,7 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 	case GL_SMOOTH_LINE_WIDTH_RANGE:
 	case GL_SMOOTH_POINT_SIZE_RANGE:
 		params[0] = 1;
+		params[1] = 1;
 		break;
 
 	case GL_COMPRESSED_TEXTURE_FORMATS:
