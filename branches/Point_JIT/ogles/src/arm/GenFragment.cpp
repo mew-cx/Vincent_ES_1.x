@@ -858,8 +858,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	cg_virtual_reg_t * regOffset;
 	
 	if (fragmentInfo.regY) {
+		regOffset = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
 		cg_virtual_reg_t * regWidth = LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_WIDTH);
-		cg_virtual_reg_t * regOffset = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
 		DECL_REG	(regScaledY);
 
 		MUL		(regScaledY, fragmentInfo.regY, regWidth);
