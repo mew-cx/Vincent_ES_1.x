@@ -56,6 +56,8 @@ namespace EGL {
 
 	public:
 
+		Surface();
+
 		// Create a PBuffer surface
 		static Surface * NewL(const Config & config);
 		static Surface * NewLC(const Config & config);

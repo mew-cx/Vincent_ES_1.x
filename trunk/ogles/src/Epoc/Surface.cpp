@@ -44,6 +44,10 @@
 using namespace EGL;
 
 
+Surface :: Surface() {
+}
+
+
 Surface * Surface :: NewL(const Config & config) {
     Surface * self = Surface::NewLC(config);
     CleanupStack::Pop();
@@ -73,7 +77,11 @@ void Surface :: ConstructL(const Config & config) {
 	m_StencilBuffer = new U32[width * height];
 
 	// Ideally, we would have another configuration to support 12-bit 4-4-4 format
-	m_Bitmap = NBitmapMethods::CreateBitmapL(TSize(width, height), EColor64K);
+    m_Bitmap = new(ELeave) CFbsBitmap();
+    CleanupStack::PushL(m_Bitmap);
+    User::LeaveIfError(m_Bitmap->Create(TSize(width, height), EColor64K));
+    CleanupStack::Pop(m_Bitmap);
+
 	m_ColorBuffer = reinterpret_cast<U16 *>(m_Bitmap->DataAddress());
 }
 

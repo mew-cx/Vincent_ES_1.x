@@ -53,7 +53,8 @@ namespace EGL {
 	}
 
 	struct Rect {
-		Rect(GLint _x, GLint _y, GLsizei _width, GLsizei _height): 
+
+		Rect(GLint _x = 0, GLint _y = 0, GLsizei _width = 0, GLsizei _height = 0): 
 			x(_x), y(_y), width(_width), height(_height) 
 		{}
 

@@ -80,6 +80,7 @@ namespace EGL {
 			EGLint	height
 			);
 
+		Config() { }
 		Config (const Config &other, const EGLint * attribList = 0, const EGLint * validAttributes = 0);
 		Config & operator=(const Config & other);
 
