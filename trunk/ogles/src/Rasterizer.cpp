@@ -143,70 +143,141 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 		rasterInfo.TextureData = texture->GetData();
 	}
 
-	if (m_State->m_TextureEnabled) {
-
-		EGL_Fixed tu0;
-		EGL_Fixed tv0;
-
-		// for nearest texel
-//		tu += ((EGL_ONE/2) >> rasterInfo->TextureLogWidth) - 1;
-//		tv += ((EGL_ONE/2) >> rasterInfo->TextureLogHeight) - 1;
-
-		switch (m_Texture->GetWrappingModeS()) {
-			case RasterizerState::WrappingModeClampToEdge:
-				if (tu < 0)
-					tu0 = 0;
-				else if (tu >= EGL_ONE)
-					tu0 = EGL_ONE - 1;
-				else 
-					tu0 = tu;
-
-				break;
-
-			default:
-			case RasterizerState::WrappingModeRepeat:
-				tu0 = tu & 0xffff;
-				break;
-		}
-
-		switch (m_Texture->GetWrappingModeT()) {
-			case RasterizerState::WrappingModeClampToEdge:
-				if (tv < 0)
-					tv0 = 0;
-				else if (tv >= EGL_ONE)
-					tv0 = EGL_ONE - 1;
-				else
-					tv0 = tv;
-
-				break;
-
-			default:
-			case RasterizerState::WrappingModeRepeat:
-				tv0 = tv & 0xffff;
-				break;
-		}
-
-		// get the pixel color
-		Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
-
-		I32 texX = EGL_IntFromFixed(texture->GetWidth() * tu0);		// can become a shift
-		I32 texY = EGL_IntFromFixed(texture->GetHeight() * tv0);	// can become a shift
-
-		// do wrapping mode here
-		I32 texOffset = texX + (texY << texture->GetLogWidth());
-
-		Fragment(&rasterInfo, x, depth, texOffset, baseColor.ConvertToRGBA(), fogDensity);
-	} else {
-		Fragment(&rasterInfo, x, depth, 0, baseColor.ConvertToRGBA(), fogDensity);
-	}
+	Fragment(&rasterInfo, x, depth, tu, tv, baseColor, fogDensity);
 }
 
 
+Color Rasterizer :: GetRawTexColor(const Texture * texture, EGL_Fixed tu, EGL_Fixed tv) {
+	// retrieve the texture color from a texture plane
+
+	EGL_Fixed tu0;
+	EGL_Fixed tv0;
+
+	// for nearest texel
+
+	switch (m_Texture->GetWrappingModeS()) {
+		case RasterizerState::WrappingModeClampToEdge:
+			if (tu < 0)
+				tu0 = 0;
+			else if (tu >= EGL_ONE)
+				tu0 = EGL_ONE - 1;
+			else 
+				tu0 = tu;
+
+			break;
+
+		default:
+		case RasterizerState::WrappingModeRepeat:
+			tu0 = tu & 0xffff;
+			break;
+	}
+
+	switch (m_Texture->GetWrappingModeT()) {
+		case RasterizerState::WrappingModeClampToEdge:
+			if (tv < 0)
+				tv0 = 0;
+			else if (tv >= EGL_ONE)
+				tv0 = EGL_ONE - 1;
+			else tv0 = tv;
+
+			break;
+
+		default:
+		case RasterizerState::WrappingModeRepeat:
+			tv0 = tv & 0xffff;
+			break;
+	}
+
+	// get the pixel color
+	I32 texX = EGL_IntFromFixed(texture->GetWidth() * tu0);		// can become a shift
+	I32 texY = EGL_IntFromFixed(texture->GetHeight() * tv0);	// can become a shift
+
+	// do wrapping mode here
+	I32 texOffset = texX + (texY << texture->GetLogWidth());
+
+	void * data = texture->GetData();
+
+	switch (m_Texture->GetInternalFormat()) {
+		default:
+		case RasterizerState::TextureFormatAlpha:
+			return Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
+
+		case RasterizerState::TextureFormatLuminance:
+			{
+			U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset];
+			return Color (luminance, luminance, luminance, 0xff);
+			}
+
+		case RasterizerState::TextureFormatRGB565:
+			return Color::From565(reinterpret_cast<const U16 *>(data)[texOffset]);
+
+		case RasterizerState::TextureFormatRGB8:
+			{
+			texOffset = (texOffset << 1) + texOffset;
+			const U8 * ptr = reinterpret_cast<const U8 *>(data) + texOffset;
+			return Color(ptr[0], ptr[1], ptr[2], 0xff);
+			}
+
+		case RasterizerState::TextureFormatLuminanceAlpha:
+			{
+			U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset * 2];
+			U8 alpha = reinterpret_cast<const U8 *>(data)[texOffset * 2 + 1];
+			return Color (luminance, luminance, luminance, alpha);
+			}
+
+		case RasterizerState::TextureFormatRGBA8:
+			//texColor = Color::FromRGBA(reinterpret_cast<const U32 *>(data)[texOffset]);
+			{
+			texOffset = texOffset << 2;
+			const U8 * ptr = reinterpret_cast<const U8 *>(data) + texOffset;
+			return Color(ptr[0], ptr[1], ptr[2], ptr[3]);
+			}
+
+		case RasterizerState::TextureFormatRGBA4444:
+			return Color::From4444(reinterpret_cast<const U16 *>(data)[texOffset]);
+
+		case RasterizerState::TextureFormatRGBA5551:
+			return Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
+	}
+}
+				  
+
+inline Color Rasterizer :: GetTexColor(const Texture * texture, EGL_Fixed tu, EGL_Fixed tv,
+								RasterizerState::FilterMode filterMode) {
+	// retrieve the texture color from a texture plane 
+
+	if (filterMode == RasterizerState::FilterModeNearest) {
+		return GetRawTexColor(texture, tu, tv);
+	} else if (filterMode == RasterizerState::FilterModeLinear) {
+		I32 logWidth = texture->GetLogWidth();
+		I32 logHeight = texture->GetLogHeight();
+
+		EGL_Fixed tu0 = tu - (0x8000 >> logWidth);
+		EGL_Fixed tu1 = tu + (0x7fff >> logWidth);
+		EGL_Fixed tv0 = tv - (0x8000 >> logHeight);
+		EGL_Fixed tv1 = tv + (0x7fff >> logHeight);
+
+		U32 alpha = EGL_FractionFromFixed(tu0 << logWidth) >> 8;
+		U32 beta = EGL_FractionFromFixed(tv0 << logHeight) >> 8;
+
+		return Color::BlendAlpha(Color::BlendAlpha(GetRawTexColor(texture, tu1, tv1), 
+												   GetRawTexColor(texture, tu0, tv1), alpha), 
+								 Color::BlendAlpha(GetRawTexColor(texture, tu1, tv0), 
+												   GetRawTexColor(texture, tu0, tv0), alpha),
+								 beta);
+	} else {
+		return Color(0, 0, 0, 0xff);
+	}
+}
+
+				  
 void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv,
 			  const Color& baseColor, EGL_Fixed fogDensity) {
 	// fragment rendering with signature corresponding to function fragment
 	// generated by code generator
 
+	bool depthTest;
+	
 	// fragment level clipping (for now)
 	if (m_State->m_ScissorTestEnabled) {
 		if (x < m_State->m_ScissorX || x - m_State->m_ScissorX >= m_State->m_ScissorWidth) {
@@ -216,70 +287,6 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 	I32 offset = x;
 
-	if (m_State->m_TextureEnabled) {
-
-		EGL_Fixed tu0;
-		EGL_Fixed tv0;
-
-		// for nearest texel
-//		tu += ((EGL_ONE/2) >> rasterInfo->TextureLogWidth) - 1;
-//		tv += ((EGL_ONE/2) >> rasterInfo->TextureLogHeight) - 1;
-
-		switch (m_Texture->GetWrappingModeS()) {
-			case RasterizerState::WrappingModeClampToEdge:
-				if (tu < 0)
-					tu0 = 0;
-				else if (tu >= EGL_ONE)
-					tu0 = EGL_ONE - 1;
-				else 
-					tu0 = tu;
-
-				break;
-
-			default:
-			case RasterizerState::WrappingModeRepeat:
-				tu0 = tu & 0xffff;
-				break;
-		}
-
-		switch (m_Texture->GetWrappingModeT()) {
-			case RasterizerState::WrappingModeClampToEdge:
-				if (tv < 0)
-					tv0 = 0;
-				else if (tv >= EGL_ONE)
-					tv0 = EGL_ONE - 1;
-				else tv0 = tv;
-
-				break;
-
-			default:
-			case RasterizerState::WrappingModeRepeat:
-				tv0 = tv & 0xffff;
-				break;
-		}
-
-
-		// get the pixel color
-		Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
-
-		I32 texX = EGL_IntFromFixed(texture->GetWidth() * tu0);		// can become a shift
-		I32 texY = EGL_IntFromFixed(texture->GetHeight() * tv0);	// can become a shift
-
-		// do wrapping mode here
-		I32 texOffset = texX + (texY << texture->GetLogWidth());
-
-		Fragment(rasterInfo, offset, depth, texOffset, baseColor.ConvertToRGBA(), fogDensity);
-	} else {
-		Fragment(rasterInfo, offset, depth, 0, baseColor.ConvertToRGBA(), fogDensity);
-	}
-}
-
-
-inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
-								   I32 offset, EGL_Fixed depth, I32 texOffset, 
-								   U32 baseColor, EGL_Fixed fogDensity) {
-	bool depthTest;
-	
 	I32 zBufferValue = rasterInfo->DepthBuffer[offset];
 
 	switch (m_State->m_DepthFunc) {
@@ -305,59 +312,7 @@ inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
 	if (m_State->m_TextureEnabled) {
 
 		Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
-		void * data = texture->GetData();
-		Color texColor;
-
-		switch (m_Texture->GetInternalFormat()) {
-			default:
-			case RasterizerState::TextureFormatAlpha:
-				texColor = Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
-				break;
-
-			case RasterizerState::TextureFormatLuminance:
-				{
-				U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset];
-				texColor = Color (luminance, luminance, luminance, 0xff);
-				}
-				break;
-
-			case RasterizerState::TextureFormatRGB565:
-				texColor = Color::From565(reinterpret_cast<const U16 *>(data)[texOffset]);
-				break;
-
-			case RasterizerState::TextureFormatRGB8:
-				{
-				texOffset = (texOffset << 1) + texOffset;
-				const U8 * ptr = reinterpret_cast<const U8 *>(data) + texOffset;
-				texColor = Color(ptr[0], ptr[1], ptr[2], 0xff);
-				}
-				break;
-
-			case RasterizerState::TextureFormatLuminanceAlpha:
-				{
-				U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset * 2];
-				U8 alpha = reinterpret_cast<const U8 *>(data)[texOffset * 2 + 1];
-				texColor = Color (luminance, luminance, luminance, alpha);
-				}
-				break;
-
-			case RasterizerState::TextureFormatRGBA8:
-				//texColor = Color::FromRGBA(reinterpret_cast<const U32 *>(data)[texOffset]);
-				{
-				texOffset = texOffset << 2;
-				const U8 * ptr = reinterpret_cast<const U8 *>(data) + texOffset;
-				texColor = Color(ptr[0], ptr[1], ptr[2], ptr[3]);
-				}
-				break;
-
-			case RasterizerState::TextureFormatRGBA4444:
-				texColor = Color::From4444(reinterpret_cast<const U16 *>(data)[texOffset]);
-				break;
-
-			case RasterizerState::TextureFormatRGBA5551:
-				texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
-				break;
-		}
+		Color texColor = GetTexColor(texture, tu, tv, m_State->GetMinFilterMode());
 
 		switch (m_Texture->GetInternalFormat()) {
 			default:

@@ -150,23 +150,40 @@ namespace {
 		}
 	}
 
-	RasterizerState::MinFilterMode MinFilterModeFromEnum(GLenum mode) {
+	RasterizerState::FilterMode MinFilterModeFromEnum(GLenum mode) {
 		switch (mode) {
-			case GL_NEAREST:				return RasterizerState::MinFilterModeNearest;
-			case GL_LINEAR:					return RasterizerState::MinFilterModeLinear;
-			case GL_NEAREST_MIPMAP_LINEAR:	return RasterizerState::MinFilterModeNearestMipmapLinear;
-			case GL_NEAREST_MIPMAP_NEAREST:	return RasterizerState::MinFilterModeNearestMipmapNearest;
-			case GL_LINEAR_MIPMAP_LINEAR:	return RasterizerState::MinFilterModeLinearMipmapLinear;
-			case GL_LINEAR_MIPMAP_NEAREST:	return RasterizerState::MinFilterModeLinearMipmapNearest;
-			default:						return RasterizerState::MinFilterModeInvalid;
+			case GL_NEAREST_MIPMAP_LINEAR:	
+			case GL_NEAREST_MIPMAP_NEAREST:	
+			case GL_NEAREST:				return RasterizerState::FilterModeNearest;
+
+			case GL_LINEAR_MIPMAP_LINEAR:	
+			case GL_LINEAR_MIPMAP_NEAREST:	
+			case GL_LINEAR:					return RasterizerState::FilterModeLinear;
+
+			default:						return RasterizerState::FilterModeInvalid;
 		}
 	}
 
-	RasterizerState::MagFilterMode MagFilterModeFromEnum(GLenum mode) {
+	RasterizerState::FilterMode MipmapFilterModeFromEnum(GLenum mode) {
 		switch (mode) {
-			case GL_NEAREST:		return RasterizerState::MagFilterModeNearest;
-			case GL_LINEAR:			return RasterizerState::MagFilterModeLinear;
-			default:				return RasterizerState::MagFilterModeInvalid;
+			case GL_NEAREST_MIPMAP_LINEAR:	
+			case GL_LINEAR_MIPMAP_LINEAR:	return RasterizerState::FilterModeLinear;
+
+			case GL_NEAREST_MIPMAP_NEAREST:	
+			case GL_LINEAR_MIPMAP_NEAREST:	return RasterizerState::FilterModeNearest;
+
+			case GL_NEAREST:				
+			case GL_LINEAR:					return RasterizerState::FilterModeNone;
+
+			default:						return RasterizerState::FilterModeInvalid;
+		}
+	}
+
+	RasterizerState::FilterMode MagFilterModeFromEnum(GLenum mode) {
+		switch (mode) {
+			case GL_NEAREST:		return RasterizerState::FilterModeNearest;
+			case GL_LINEAR:			return RasterizerState::FilterModeLinear;
+			default:				return RasterizerState::FilterModeInvalid;
 		}
 	}
 
@@ -1267,11 +1284,15 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 	switch (pname) {
 		case GL_TEXTURE_MIN_FILTER:
 			{
-				RasterizerState::MinFilterMode mode = MinFilterModeFromEnum(param);
+				RasterizerState::FilterMode mode = MinFilterModeFromEnum(param);
 
-				if (mode != RasterizerState::MinFilterModeInvalid) {
+				if (mode != RasterizerState::FilterModeInvalid) {
 					multiTexture->SetMinFilterMode(mode);
 					GetRasterizerState()->SetMinFilterMode(mode);
+
+					RasterizerState::FilterMode mipmapMode = MipmapFilterModeFromEnum(param);
+					multiTexture->SetMipmapFilterMode(mipmapMode);
+					GetRasterizerState()->SetMipmapFilterMode(mipmapMode);
 				} else {
 					RecordError(GL_INVALID_VALUE);
 				}
@@ -1280,9 +1301,9 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 		case GL_TEXTURE_MAG_FILTER:
 			{
-				RasterizerState::MagFilterMode mode = MagFilterModeFromEnum(param);
+				RasterizerState::FilterMode mode = MagFilterModeFromEnum(param);
 
-				if (mode != RasterizerState::MagFilterModeInvalid) {
+				if (mode != RasterizerState::FilterModeInvalid) {
 					multiTexture->SetMagFilterMode(mode);
 					GetRasterizerState()->SetMagFilterMode(mode);
 				} else {
