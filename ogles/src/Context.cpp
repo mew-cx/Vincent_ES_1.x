@@ -138,7 +138,6 @@ Context :: Context(const Config & config)
 	ClearStencil(0);
 
 	m_Rasterizer = new Rasterizer(GetRasterizerState());	
-	m_Rasterizer->SetTexture(m_Textures.GetObject(m_Textures.Allocate()));
 	m_Buffers.Allocate();			// default buffer
 
 	m_LightModelAmbient.r = m_LightModelAmbient.g = m_LightModelAmbient.b = F(0.2f);
@@ -151,8 +150,11 @@ Context :: Context(const Config & config)
 	m_PointDistanceAttenuation[1] = 0;
 	m_PointDistanceAttenuation[2] = 0;
 
+	size_t defaultTexture = m_Textures.Allocate();
+
 	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		m_TexCoordArrayEnabled[unit] = false;
+		m_Rasterizer->SetTexture(unit, m_Textures.GetObject(defaultTexture));
 	}
 
 	memset(&m_ClipPlanes, 0, sizeof(m_ClipPlanes));
@@ -941,7 +943,7 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 
 	case GL_TEXTURE_BINDING_2D:
 		{
-			size_t index = m_Textures.GetIndex(m_Rasterizer->GetTexture());
+			size_t index = m_Textures.GetIndex(m_Rasterizer->GetTexture(m_ActiveTexture));
 
 			if (~index) {
 				params[0] = 0;

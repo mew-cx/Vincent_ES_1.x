@@ -66,7 +66,7 @@ void Context :: BindTexture(GLenum target, GLuint texture) {
 	MultiTexture * multiTexture = m_Textures.GetObject(texture);
 
 	if (multiTexture) {
-		GetRasterizer()->SetTexture(multiTexture);
+		GetRasterizer()->SetTexture(m_ActiveTexture, multiTexture);
 	}
 }
 
@@ -81,8 +81,10 @@ void Context :: DeleteTextures(GLsizei n, const GLuint *textures) {
 		U32 texture = *textures++;
 
 		if (texture != 0) {
-			if (m_Textures.GetObject(texture) == GetRasterizer()->GetTexture()) {
-				GetRasterizer()->SetTexture(m_Textures.GetObject(0));
+			for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+				if (m_Textures.GetObject(texture) == GetRasterizer()->GetTexture(unit)) {
+					GetRasterizer()->SetTexture(unit, m_Textures.GetObject(0));
+				}
 			}
 
 			if (texture != 0) {
