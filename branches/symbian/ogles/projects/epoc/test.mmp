@@ -1,6 +1,6 @@
 TARGET			test.app
 TARGETTYPE		app
-UID			0x100039ce 0x101f6163
+UID			0x100039ce 0x10202DA0
 TARGETPATH		\system\apps\test
 SOURCEPATH		..\..\test\epoc
 SOURCE			test.cpp

@@ -12,6 +12,7 @@
 
 #include <e32std.h>
 #include <coecntrl.h>
+#include "appglobal.h"
 
 class CAppView: public CCoeControl
 {
@@ -28,7 +29,9 @@ public:
     void Exit();
     void ShowBitmap();
     void ShowTest();
-	
+
+    mutable TAppGlobal iData;	
+
 private:
 	void ConstructL(const TRect& aRect);
 	virtual void Draw(const TRect&) const;	
