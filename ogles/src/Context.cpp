@@ -153,7 +153,9 @@ Context :: Context(const Config & config)
 	m_PointDistanceAttenuation[1] = 0;
 	m_PointDistanceAttenuation[2] = 0;
 
-	m_TexCoordArrayEnabled[0] = m_TexCoordArrayEnabled[1] = false;
+	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		m_TexCoordArrayEnabled[unit] = false;
+	}
 
 	memset(&m_ClipPlanes, 0, sizeof(m_ClipPlanes));
 }

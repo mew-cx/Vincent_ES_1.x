@@ -363,6 +363,7 @@ private:
 		EGL_Fixed SelectPointSizeArrayElement(int index);
 
 		void CurrentValuesToRasterPos(RasterPos * rasterPos);
+		void CurrentTextureValuesToRasterPos(RasterPos * rasterPos);
 
 		typedef void (Context::*GeometryFunction)(RasterPos * rasterPos);
 
