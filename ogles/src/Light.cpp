@@ -134,6 +134,10 @@ void Light :: InitWithMaterial(const Material& material) {
 // One-sided lightning calculation
 // --------------------------------------------------------------------------
 
+
+#define EGL_Sqrt EGL_FastSqrt
+
+
 void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
 							  const Material& currMaterial,
 							  FractionalColor& result) {

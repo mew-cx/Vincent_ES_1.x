@@ -634,10 +634,12 @@ void Context :: CurrentValuesToRasterPosNoLight(RasterPos * rasterPos) {
 
 	if (m_RasterizerState.IsEnabledFog()) {
 		// populate fog density here...
-		EGL_Fixed eyeDistance = EGL_Abs(m_ModelViewMatrixStack.CurrentMatrix().GetTransformedZ(m_CurrentVertex));
-		rasterPos->m_FogDensity = FogDensity(eyeDistance);
+		rasterPos->m_EyeDistance = EGL_Abs(m_ModelViewMatrixStack.CurrentMatrix().GetTransformedZ(m_CurrentVertex));
+		rasterPos->m_FogDensity = FogDensity(rasterPos->m_EyeDistance);
+	} else if (m_PointSizeAttenuate) {
+		rasterPos->m_EyeDistance = EGL_Abs(m_ModelViewMatrixStack.CurrentMatrix().GetTransformedZ(m_CurrentVertex));
+		rasterPos->m_FogDensity = 0;
 	} else {
-		// populate fog density here...
 		rasterPos->m_FogDensity = 0;
 	}
 
@@ -671,7 +673,10 @@ void Context :: CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos) {
 	// apply model view matrix to vertex coordinate -> eye coordinates vertex
 	Vec4D eyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
 
-	EGL_Fixed eyeDistance = EGL_Abs(eyeCoords.z());
+	rasterPos->m_EyeDistance = EGL_Abs(eyeCoords.z());
+
+	// populate fog density here...
+	rasterPos->m_FogDensity = FogDensity(rasterPos->m_EyeDistance);
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
@@ -696,9 +701,6 @@ void Context :: CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos) {
 
 	color.Clamp();
 	rasterPos->m_FrontColor = color;
-
-	// populate fog density here...
-	rasterPos->m_FogDensity = FogDensity(eyeDistance);
 
 	// apply texture transform to texture coordinates
 	// really should have a transformation primitive of the correct dimensionality
@@ -729,7 +731,10 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos) {
 	// apply model view matrix to vertex coordinate -> eye coordinates vertex
 	Vec4D eyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
 
-	EGL_Fixed eyeDistance = EGL_Abs(eyeCoords.z());
+	rasterPos->m_EyeDistance = EGL_Abs(eyeCoords.z());
+
+	// populate fog density here...
+	rasterPos->m_FogDensity = FogDensity(rasterPos->m_EyeDistance);
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
@@ -754,9 +759,6 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos) {
 
 	color.Clamp();
 	rasterPos->m_FrontColor = color;
-
-	// populate fog density here...
-	rasterPos->m_FogDensity = FogDensity(eyeDistance);
 
 	// apply texture transform to texture coordinates
 	// really should have a transformation primitive of the correct dimensionality
@@ -787,7 +789,10 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos) {
 	// apply model view matrix to vertex coordinate -> eye coordinates vertex
 	Vec4D eyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
 
-	EGL_Fixed eyeDistance = EGL_Abs(eyeCoords.z());
+	rasterPos->m_EyeDistance = EGL_Abs(eyeCoords.z());
+
+	// populate fog density here...
+	rasterPos->m_FogDensity = FogDensity(rasterPos->m_EyeDistance);
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
@@ -819,9 +824,6 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos) {
 	rasterPos->m_FrontColor = color;
 	rasterPos->m_BackColor = backColor;
 
-	// populate fog density here...
-	rasterPos->m_FogDensity = FogDensity(eyeDistance);
-
 	// apply texture transform to texture coordinates
 	// really should have a transformation primitive of the correct dimensionality
 
@@ -851,7 +853,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 	// apply model view matrix to vertex coordinate -> eye coordinates vertex
 	Vec4D eyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
 
-	EGL_Fixed eyeDistance = EGL_Abs(eyeCoords.z());
+	rasterPos->m_EyeDistance = EGL_Abs(eyeCoords.z());
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
@@ -883,7 +885,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 	rasterPos->m_BackColor = backColor;
 
 	// populate fog density here...
-	rasterPos->m_FogDensity = FogDensity(eyeDistance);
+	rasterPos->m_FogDensity = FogDensity(rasterPos->m_EyeDistance);
 
 	// apply texture transform to texture coordinates
 	// really should have a transformation primitive of the correct dimensionality
@@ -960,5 +962,12 @@ void Context :: GetClipPlanex(GLenum pname, GLfixed eqn[4]) {
 }
 
 void Context :: ClipPlanex(GLenum plane, const GLfixed *equation) {
-	assert(0);
+	
+	if (plane < GL_CLIP_PLANE0 || plane >= GL_CLIP_PLANE0 + NUM_CLIP_PLANES) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	size_t index = plane - GL_CLIP_PLANE0;
+	m_ClipPlanes[index] = Vec4D(equation);
 }

@@ -351,7 +351,13 @@ void Context :: Translatef (GLfloat x, GLfloat y, GLfloat z) {
 }
 
 void Context :: ClipPlanef(GLenum plane, const GLfloat *equation) {
-	assert(0);
+	EGL_Fixed fixedEqn[4];
+
+	for (size_t index = 0; index < 4; ++index) {
+		fixedEqn[index] = EGL_FixedFromFloat(equation[index]);
+	}
+
+	ClipPlanex(plane, fixedEqn);
 }
 
 void Context :: DrawTexf(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height) {
@@ -387,9 +393,25 @@ void Context :: GetTexParameterfv(GLenum target, GLenum pname, GLfloat *params) 
 }
 
 void Context :: PointParameterf(GLenum pname, GLfloat param) {
-	assert(0);
+	PointParameterx(pname, EGL_FixedFromFloat(param));
 }
 
 void Context :: PointParameterfv(GLenum pname, const GLfloat *params) {
-	assert(0);
+	switch (pname) {
+	case GL_POINT_DISTANCE_ATTENUATION:
+		{
+			GLfixed fixedParams[3];
+
+			for (size_t index = 0; index < 3; ++index) {
+				fixedParams[index] = EGL_FixedFromFloat(params[index]);
+			}
+
+			PointParameterxv(pname, fixedParams);
+		}
+
+		break;
+
+	default:
+		PointParameterx(pname, EGL_FixedFromFloat(*params));
+	}
 }

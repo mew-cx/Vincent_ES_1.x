@@ -256,6 +256,18 @@ EGL_Fixed EGL_InvSqrt(EGL_Fixed value);
 
 
 // --------------------------------------------------------------------------
+// Calculate square root of fixed point number; fast calculation using
+// inverse and inverse square root
+//
+// Parameters:
+//	value		-	the number whose square root should be calculated
+// --------------------------------------------------------------------------
+inline EGL_Fixed EGL_FastSqrt(EGL_Fixed value) {
+	return EGL_Inverse(EGL_InvSqrt(value));
+}
+
+
+// --------------------------------------------------------------------------
 // Calculate sine of fixed point number
 //
 // Parameters:

@@ -65,6 +65,7 @@ Context :: Context(const Config & config)
 	m_Viewport(0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
 
 	// server flags
+	m_ClipPlaneEnabled(0),
 	m_LightingEnabled(false),
 	m_TwoSidedLightning(false),
 	m_LightEnabled(0),				// no light on
@@ -80,6 +81,13 @@ Context :: Context(const Config & config)
 	m_SampleAlphaToOneEnabled(false),
 	m_SampleCoverageEnabled(false),
 	m_ScissorTestEnabled(false),
+
+	// point parameters
+	m_PointSize(EGL_ONE),
+	m_PointSizeMin(0),
+	m_PointSizeMax(EGL_ONE),		// what is the correct value?
+	m_PointFadeThresholdSize(EGL_ONE),
+	m_PointSizeAttenuate(false),
 
 	// fog parameters for setup phase
 	m_FogMode(FogModeExp),
@@ -127,6 +135,12 @@ Context :: Context(const Config & config)
 
 	m_Lights[0].SetDiffuseColor(FractionalColor(F(1.0), F(1.0), F(1.0), F(1.0)));
 	m_Lights[0].SetSpecularColor(FractionalColor(F(1.0), F(1.0), F(1.0), F(1.0)));
+
+	m_PointDistanceAttenuation[0] = EGL_ONE;
+	m_PointDistanceAttenuation[1] = 0;
+	m_PointDistanceAttenuation[2] = 0;
+
+	memset(&m_ClipPlanes, 0, sizeof(m_ClipPlanes));
 }
 
 
@@ -372,6 +386,22 @@ void Context :: Toggle(GLenum cap, bool value) {
 
 	case GL_NORMALIZE:
 		m_NormalizeEnabled = value;
+		break;
+
+	case GL_CLIP_PLANE0:
+	case GL_CLIP_PLANE1:
+	case GL_CLIP_PLANE2:
+	case GL_CLIP_PLANE3:
+	case GL_CLIP_PLANE4:
+	case GL_CLIP_PLANE5:
+		{
+			size_t plane = cap - GL_CLIP_PLANE0;
+			U32 mask = ~(1u << plane);
+			U32 bit = cap ? (1u << plane) : 0;
+
+			m_ClipPlaneEnabled = (m_ClipPlaneEnabled & mask) | bit;
+		}
+
 		break;
 
 	case GL_RESCALE_NORMAL:
