@@ -104,10 +104,10 @@ ugCreateWindow(UGCtx ug, const char* config,
         //TODO proxi: handle errors
         //TODO proxi: think of multiple UG windows
         w->wsWindowGroup = RWindowGroup(_ug->wsSession);
-	w->wsWindowGroup.Construct(reinterpret_cast<TInt>(w));
+	w->wsWindowGroup.Construct(reinterpret_cast<TInt>(&w->wsWindowGroup));
 
 	w->wsWindow = RWindow(_ug->wsSession);
-	w->wsWindow.Construct(w->wsWindowGroup, reinterpret_cast<TInt>(w));
+	w->wsWindow.Construct(w->wsWindowGroup, reinterpret_cast<TInt>(&w->wsWindow));
 	w->wsWindow.SetSize(_ug->wsScreenDevice->SizeInPixels()); 
 	w->wsWindow.SetVisible(ETrue);
         w->wsWindow.Activate();
@@ -233,7 +233,7 @@ TInt E32Main()
 {
     CTrapCleanup* cleanup = CTrapCleanup::New();
 
-#if defined(__WINS__)
+#if defined(__WINS__) && !defined(EXEDLL)
     // Note: By default window server is unavailable for console applications
     // in WINS environment. An undocumented trick found in Epoc port of SDL
     // library by Hannu Viitala (http://koti.mbnet.fi/~haviital/) is used here.
@@ -243,7 +243,7 @@ TInt E32Main()
     RSemaphore sem;
     sem.CreateGlobal(_L("WsExeSem"), 0);
     RegisterWsExe(sem.FullName());
-#endif // defined(__WINS__)
+#endif // defined(__WINS__) && !defined(EXEDLL)
 
     int argc = 0;
     char** argv = 0;
@@ -257,3 +257,17 @@ TInt E32Main()
 
     return KErrNone;
 }
+
+#if defined(__WINS__) && defined(EXEDLL)
+
+EXPORT_C TInt InitEmulator()
+{
+    return E32Main();
+}
+
+TInt E32Dll(TDllReason)
+{
+    return KErrNone;
+}
+
+#endif // defined(__WINS__) && defined(EXEDLL)
