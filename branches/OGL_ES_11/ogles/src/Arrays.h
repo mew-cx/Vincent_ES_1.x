@@ -73,6 +73,19 @@ namespace EGL {
 			} while (--count);
 		}
 
+		void FetchByteColorValues(int row, GLfixed * buffer) {
+			GLsizei rowOffset = row * stride;
+			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+			size_t count = size;
+
+			const GLbyte * byteBase = reinterpret_cast<const GLbyte *>(base);
+
+			do {
+				U8 byteValue = *byteBase++;
+				*buffer++ = static_cast<GLfixed>(((byteValue << 8) | byteValue) + (byteValue >> 7));
+			} while (--count);
+		}
+
 		void FetchShortValues(int row, GLfixed * buffer) {
 			GLsizei rowOffset = row * stride;
 			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
@@ -109,10 +122,15 @@ namespace EGL {
 			} while (--count);
 		}
 
-		void PrepareFetchValues() {
+		void PrepareFetchValues(bool colorMode = false) {
 			switch (type) {
 			case GL_BYTE:
-				fetchFunction = FetchByteValues;
+				if (colorMode) {
+					fetchFunction = FetchByteColorValues;
+				} else {
+					fetchFunction = FetchByteValues;
+				}
+
 				break;
 
 			case GL_SHORT:

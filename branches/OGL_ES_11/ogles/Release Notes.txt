@@ -30,6 +30,8 @@ This version addresses the following issues:
 1008786 - Buffer Objects
 1012401 - Optimize SelectArrayElement
 1008792 - Enhanced point sprites and point sprite arrays
+1008791 - User-defined clip planes
+1025167 - glColorPointer with byte coordinates
 
 
 Version 0.81

@@ -71,18 +71,12 @@ void Context :: MatrixMode(GLenum mode) {
 void Context :: RebuildMatrices(void) {
 	if (m_CurrentMatrixStack == &m_ModelViewMatrixStack) {
 		UpdateInverseModelViewMatrix();
-		UpdateVertexTransformation();
-	} else if (m_CurrentMatrixStack == &m_ProjectionMatrixStack) {
-		UpdateVertexTransformation();
 	}
 }
 
 void Context :: UpdateInverseModelViewMatrix(void) {
-	m_InverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().Inverse(m_RescaleNormalEnabled);
-}
-
-void Context :: UpdateVertexTransformation(void) {
-	m_VertexTransformation = m_ProjectionMatrixStack.CurrentMatrix() * m_ModelViewMatrixStack.CurrentMatrix();
+	m_InverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().InverseUpper3(m_RescaleNormalEnabled);
+	m_FullInverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().Inverse();
 }
 
 void Context :: LoadIdentity(void) { 

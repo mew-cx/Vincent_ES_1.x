@@ -371,8 +371,8 @@ namespace {
 
 	inline bool ClipUser(const Vec4D& plane, RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices) {
 
-		EGL_Fixed f = from->m_ClipCoords * plane;
-		EGL_Fixed t = to->m_ClipCoords * plane;
+		EGL_Fixed f = from->m_EyeCoords * plane;
+		EGL_Fixed t = to->m_EyeCoords * plane;
 
 		if (f < 0) {
 			if (t < 0) {

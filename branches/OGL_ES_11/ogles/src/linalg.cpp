@@ -58,7 +58,7 @@ namespace {
 	}
 }
 
-Matrix4x4 Matrix4x4 :: Inverse(bool rescale) const {
+Matrix4x4 Matrix4x4 :: InverseUpper3(bool rescale) const {
 
 	Matrix4x4 result;
 
@@ -118,6 +118,120 @@ Matrix4x4 Matrix4x4 :: Inverse(bool rescale) const {
 	}
 
 	return result;
+}
+
+
+#define SWAP_ROWS(a, b) { EGL_Fixed *_tmp = a; (a)=(b); (b)=_tmp; }
+
+
+Matrix4x4 Matrix4x4 :: Inverse() const {
+   Matrix4x4 out;
+   EGL_Fixed wtmp[4][8];
+   EGL_Fixed m0, m1, m2, m3, s;
+   EGL_Fixed *r0, *r1, *r2, *r3;
+
+   r0 = wtmp[0], r1 = wtmp[1], r2 = wtmp[2], r3 = wtmp[3];
+
+   r0[0] = Element(0,0), r0[1] = Element(0,1),
+   r0[2] = Element(0,2), r0[3] = Element(0,3),
+   r0[4] = EGL_ONE, r0[5] = r0[6] = r0[7] = 0,
+
+   r1[0] = Element(1,0), r1[1] = Element(1,1),
+   r1[2] = Element(1,2), r1[3] = Element(1,3),
+   r1[5] = EGL_ONE, r1[4] = r1[6] = r1[7] = 0,
+
+   r2[0] = Element(2,0), r2[1] = Element(2,1),
+   r2[2] = Element(2,2), r2[3] = Element(2,3),
+   r2[6] = EGL_ONE, r2[4] = r2[5] = r2[7] = 0,
+
+   r3[0] = Element(3,0), r3[1] = Element(3,1),
+   r3[2] = Element(3,2), r3[3] = Element(3,3),
+   r3[7] = EGL_ONE, r3[4] = r3[5] = r3[6] = 0;
+
+   /* choose pivot - or die */
+   if (EGL_Abs(r3[0])>EGL_Abs(r2[0])) SWAP_ROWS(r3, r2);
+   if (EGL_Abs(r2[0])>EGL_Abs(r1[0])) SWAP_ROWS(r2, r1);
+   if (EGL_Abs(r1[0])>EGL_Abs(r0[0])) SWAP_ROWS(r1, r0);
+   if (0 == r0[0])  return out;
+
+   /* eliminate first variable     */
+   m1 = EGL_Div(r1[0], r0[0]); m2 = EGL_Div(r2[0], r0[0]); m3 = EGL_Div(r3[0], r0[0]);
+   s = r0[1]; r1[1] -= EGL_Mul(m1, s); r2[1] -= EGL_Mul(m2, s); r3[1] -= EGL_Mul(m3, s);
+   s = r0[2]; r1[2] -= EGL_Mul(m1, s); r2[2] -= EGL_Mul(m2, s); r3[2] -= EGL_Mul(m3, s);
+   s = r0[3]; r1[3] -= EGL_Mul(m1, s); r2[3] -= EGL_Mul(m2, s); r3[3] -= EGL_Mul(m3, s);
+   s = r0[4];
+   if (s != 0) { r1[4] -= EGL_Mul(m1, s); r2[4] -= EGL_Mul(m2, s); r3[4] -= EGL_Mul(m3, s); }
+   s = r0[5];
+   if (s != 0) { r1[5] -= EGL_Mul(m1, s); r2[5] -= EGL_Mul(m2, s); r3[5] -= EGL_Mul(m3, s); }
+   s = r0[6];
+   if (s != 0) { r1[6] -= EGL_Mul(m1, s); r2[6] -= EGL_Mul(m2, s); r3[6] -= EGL_Mul(m3, s); }
+   s = r0[7];
+   if (s != 0) { r1[7] -= EGL_Mul(m1, s); r2[7] -= EGL_Mul(m2, s); r3[7] -= EGL_Mul(m3, s); }
+
+   /* choose pivot - or die */
+   if (EGL_Abs(r3[1])>EGL_Abs(r2[1])) SWAP_ROWS(r3, r2);
+   if (EGL_Abs(r2[1])>EGL_Abs(r1[1])) SWAP_ROWS(r2, r1);
+   if (0 == r1[1])  return out;
+
+   /* eliminate second variable */
+   m2 = EGL_Div(r2[1], r1[1]); m3 = EGL_Div(r3[1], r1[1]);
+   r2[2] -= EGL_Mul(m2, r1[2]); r3[2] -= EGL_Mul(m3, r1[2]);
+   r2[3] -= EGL_Mul(m2, r1[3]); r3[3] -= EGL_Mul(m3, r1[3]);
+   s = r1[4]; if (0 != s) { r2[4] -= EGL_Mul(m2, s); r3[4] -= EGL_Mul(m3, s); }
+   s = r1[5]; if (0 != s) { r2[5] -= EGL_Mul(m2, s); r3[5] -= EGL_Mul(m3, s); }
+   s = r1[6]; if (0 != s) { r2[6] -= EGL_Mul(m2, s); r3[6] -= EGL_Mul(m3, s); }
+   s = r1[7]; if (0 != s) { r2[7] -= EGL_Mul(m2, s); r3[7] -= EGL_Mul(m3, s); }
+
+   /* choose pivot - or die */
+   if (EGL_Abs(r3[2])>EGL_Abs(r2[2])) SWAP_ROWS(r3, r2);
+   if (0 == r2[2])  return out;
+
+   /* eliminate third variable */
+   m3 = EGL_Div(r3[2], r2[2]);
+   r3[3] -= EGL_Mul(m3, r2[3]), r3[4] -= EGL_Mul(m3, r2[4]),
+   r3[5] -= EGL_Mul(m3, r2[5]), r3[6] -= EGL_Mul(m3, r2[6]),
+   r3[7] -= EGL_Mul(m3, r2[7]);
+
+   /* last check */
+   if (0 == r3[3]) return out;
+
+   s = EGL_Inverse(r3[3]);             /* now back substitute row 3 */
+   r3[4] = EGL_Mul(r3[4], s); r3[5] = EGL_Mul(r3[5], s); r3[6] = EGL_Mul(r3[6], s); r3[7] = EGL_Mul(r3[7], s);
+
+   m2 = r2[3];                 /* now back substitute row 2 */
+   s  = EGL_Inverse(r2[2]);
+   r2[4] = EGL_Mul(s, (r2[4] - EGL_Mul(r3[4], m2))), r2[5] = EGL_Mul(s, (r2[5] - EGL_Mul(r3[5], m2))),
+   r2[6] = EGL_Mul(s, (r2[6] - EGL_Mul(r3[6], m2))), r2[7] = EGL_Mul(s, (r2[7] - EGL_Mul(r3[7], m2)));
+   m1 = r1[3];
+   r1[4] -= EGL_Mul(r3[4], m1), r1[5] -= EGL_Mul(r3[5], m1),
+   r1[6] -= EGL_Mul(r3[6], m1), r1[7] -= EGL_Mul(r3[7], m1);
+   m0 = r0[3];
+   r0[4] -= EGL_Mul(r3[4], m0), r0[5] -= EGL_Mul(r3[5], m0),
+   r0[6] -= EGL_Mul(r3[6], m0), r0[7] -= EGL_Mul(r3[7], m0);
+
+   m1 = r1[2];                 /* now back substitute row 1 */
+   s  = EGL_Inverse(r1[1]);
+   r1[4] = EGL_Mul(s, (r1[4] - EGL_Mul(r2[4], m1))), r1[5] = EGL_Mul(s, (r1[5] - EGL_Mul(r2[5], m1))),
+   r1[6] = EGL_Mul(s, (r1[6] - EGL_Mul(r2[6], m1))), r1[7] = EGL_Mul(s, (r1[7] - EGL_Mul(r2[7], m1)));
+   m0 = r0[2];
+   r0[4] -= EGL_Mul(r2[4], m0), r0[5] -= EGL_Mul(r2[5], m0),
+   r0[6] -= EGL_Mul(r2[6], m0), r0[7] -= EGL_Mul(r2[7], m0);
+
+   m0 = r0[1];                 /* now back substitute row 0 */
+   s  = EGL_Inverse(r0[0]);
+   r0[4] = EGL_Mul(s, (r0[4] - EGL_Mul(r1[4], m0))), r0[5] = EGL_Mul(s, (r0[5] - EGL_Mul(r1[5], m0))),
+   r0[6] = EGL_Mul(s, (r0[6] - EGL_Mul(r1[6], m0))), r0[7] = EGL_Mul(s, (r0[7] - EGL_Mul(r1[7], m0)));
+
+   out.Element(0,0) = r0[4]; out.Element(0,1) = r0[5],
+   out.Element(0,2) = r0[6]; out.Element(0,3) = r0[7],
+   out.Element(1,0) = r1[4]; out.Element(1,1) = r1[5],
+   out.Element(1,2) = r1[6]; out.Element(1,3) = r1[7],
+   out.Element(2,0) = r2[4]; out.Element(2,1) = r2[5],
+   out.Element(2,2) = r2[6]; out.Element(2,3) = r2[7],
+   out.Element(3,0) = r3[4]; out.Element(3,1) = r3[5],
+   out.Element(3,2) = r3[6]; out.Element(3,3) = r3[7];
+
+   return out;
 }
 
 
