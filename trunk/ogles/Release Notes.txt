@@ -11,6 +11,9 @@ Version 0.83
 For XScale builds, the Intel Graphics Performance Primitives are no longer needed by default. If you
 want to use this library, simply define the constant EGL_USE_GPP in your compiler options.
 
+OGLES.h now contains several configuration parameters that allow for fine-tuning the behavior of the
+library being built. See also README.txt for updated information.
+
 This version addresses the following issues:
 
 1030170 - Support more than one texture unit
