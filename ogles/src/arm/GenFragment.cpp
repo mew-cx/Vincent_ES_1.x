@@ -505,6 +505,189 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				}
 				break;
 
+			case RasterizerState::TextureFormatRGB8:						// 8-8-8
+				{
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+				DECL_REG	(regConstant1);
+				DECL_REG	(regConstant2);
+				DECL_REG	(regConstant3);
+				DECL_REG	(regShiftedOffset);
+				DECL_REG	(regScaledOffset);
+				DECL_REG	(regTexAddr0);
+				DECL_REG	(regTexAddr1);
+				DECL_REG	(regTexAddr2);
+				DECL_REG	(regByteR);
+				DECL_REG	(regByteG);
+				DECL_REG	(regByteB);
+
+				LDI		(regTexColorA, 0x100);
+				LDI		(regConstant1, 1);
+				LDI		(regConstant2, 2);
+				LDI		(regConstant3, 3);
+
+				LSL		(regShiftedOffset, regTexOffset, regConstant1);
+				ADD		(regScaledOffset, regTexOffset, regShiftedOffset);
+				ADD		(regTexAddr0, regTextureData, regScaledOffset);
+				LDB		(regByteR, regTexAddr0);
+				ADD		(regTexAddr1, regTexAddr0, regConstant1);
+				LSR		(regTexColorR, regByteR, regConstant3);
+				LDB		(regByteG, regTexAddr1);
+				ADD		(regTexAddr2, regTexAddr0, regConstant2);
+				LDB		(regByteB, regTexAddr2);
+				LSR		(regTexColorG, regByteG, regConstant2);
+				LSR		(regTexColorB, regByteB, regConstant3);
+
+				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+				Color565FromRGB(block, regTexColor565, regTexColorR,
+					regTexColorG, regTexColorB);
+
+				}
+
+				break;
+
+			case RasterizerState::TextureFormatRGBA4444:					// 4-4-4-4
+				{
+				DECL_REG	(regScaledOffset);
+				DECL_REG	(regConstantOne);
+				DECL_REG	(regTexAddr);
+				DECL_REG	(regTexColor4444);
+
+				LDI		(regConstantOne, 1);
+				LSL		(regScaledOffset, regTexOffset, regConstantOne);
+				ADD		(regTexAddr, regScaledOffset, regTextureData);
+				LDH		(regTexColor4444, regTexAddr);
+
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+				//U8 r = (u4444 & 0xF000u) >> 8;
+				//r |= r >> 4;
+				DECL_REG	(regConstant11);
+				DECL_REG	(regMask41);
+				DECL_REG	(regBaseR);
+				DECL_REG	(regMaskedR);
+				DECL_REG	(regConstant4);
+				DECL_REG	(regShiftedR);
+
+				LDI			(regConstant11, 11);
+				LSR			(regBaseR, regTexColor4444, regConstant11);
+				LDI			(regMask41, 0x1E);
+				AND			(regMaskedR, regBaseR, regMask41);
+				LDI			(regConstant4, 4);
+				LSR			(regShiftedR, regMaskedR, regConstant4);
+				OR			(regTexColorR, regMaskedR, regShiftedR);
+				
+				//U8 g = (u4444 & 0x0F00u) >> 4;
+				//g |= g >> 4;
+				DECL_REG	(regConstant6);
+				DECL_REG	(regMask42);
+				DECL_REG	(regBaseG);
+				DECL_REG	(regMaskedG);
+				DECL_REG	(regShiftedG);
+
+				LDI			(regConstant6, 6);
+				LSR			(regBaseG, regTexColor4444, regConstant6);
+				LDI			(regMask42, 0x3C);
+				AND			(regMaskedG, regBaseG, regMask42);
+				LSR			(regShiftedG, regMaskedG, regConstant4);
+				OR			(regTexColorG, regMaskedG, regShiftedG);				
+
+				//U8 b = (u4444 & 0x00F0u);
+				//b |= b >> 4;
+				DECL_REG	(regConstant3);
+				DECL_REG	(regBaseB);
+				DECL_REG	(regMaskedB);
+				DECL_REG	(regShiftedB);
+
+				LDI			(regConstant3, 3);
+				LSR			(regBaseB, regTexColor4444, regConstant3);
+				AND			(regMaskedB, regBaseB, regMask41);
+				LSR			(regShiftedB, regMaskedB, regConstant4);
+				OR			(regTexColorB, regMaskedB, regShiftedB);
+				
+
+				//U8 a = (u4444 & 0x000Fu) << 4;
+				//a |= a >> 4;
+				DECL_REG	(regMask4);
+				DECL_REG	(regMaskedA);
+				DECL_REG	(regShiftedA);
+				DECL_REG	(regAdjustedA);
+
+				LDI			(regMask4, 0xf);
+				AND			(regMaskedA, regTexColor4444, regMask4);
+				LSR			(regShiftedA, regMaskedA, regConstant3);
+				ADD			(regAdjustedA, regMaskedA, regShiftedA);
+				LSL			(regTexColorA, regAdjustedA, regConstant4);
+
+				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+				Color565FromRGB(block, regTexColor565, regTexColorR,
+					regTexColorG, regTexColorB);
+
+				}
+
+				break;
+
+			case RasterizerState::TextureFormatRGBA8:						// 8-8-8-8
+				{
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+				DECL_REG	(regConstant1);
+				DECL_REG	(regConstant2);
+				DECL_REG	(regConstant3);
+				DECL_REG	(regConstant7);
+				DECL_REG	(regShiftedOffset);
+				DECL_REG	(regScaledOffset);
+				DECL_REG	(regTexAddr0);
+				DECL_REG	(regTexAddr1);
+				DECL_REG	(regTexAddr2);
+				DECL_REG	(regTexAddr3);
+				DECL_REG	(regByteR);
+				DECL_REG	(regByteG);
+				DECL_REG	(regByteB);
+				DECL_REG	(regByteA);
+				DECL_REG	(regShifted7);
+
+				LDI		(regConstant1, 1);
+				LDI		(regConstant2, 2);
+				LDI		(regConstant3, 3);
+				LDI		(regConstant7, 7);
+
+				LSL		(regShiftedOffset, regTexOffset, regConstant1);
+				ADD		(regScaledOffset, regTexOffset, regShiftedOffset);
+				ADD		(regTexAddr0, regTextureData, regScaledOffset);
+				LDB		(regByteR, regTexAddr0);
+				ADD		(regTexAddr1, regTexAddr0, regConstant1);
+				LSR		(regTexColorR, regByteR, regConstant3);
+				LDB		(regByteG, regTexAddr1);
+				ADD		(regTexAddr2, regTexAddr0, regConstant2);
+				LDB		(regByteB, regTexAddr2);
+				LSR		(regTexColorG, regByteG, regConstant2);
+				ADD		(regTexAddr3, regTexAddr0, regConstant3);
+				LDB		(regByteA, regTexAddr3);
+				LSR		(regTexColorB, regByteB, regConstant3);
+				LSR		(regShifted7, regByteA, regConstant7);
+				ADD		(regTexColorA, regByteA, regShifted7);
+
+				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+				Color565FromRGB(block, regTexColor565, regTexColorR,
+					regTexColorG, regTexColorB);
+
+				}
+
+				break;
+
 			case RasterizerState::TextureFormatRGBA5551:					// 5-5-5-1
 				//texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
 				{
@@ -660,6 +843,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 			case RasterizerState::TextureFormatLuminance:
 			case RasterizerState::TextureFormatRGB565:
+			case RasterizerState::TextureFormatRGB8:
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeDecal:
 					case RasterizerState::TextureModeReplace:
@@ -934,6 +1118,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 			case RasterizerState::TextureFormatLuminanceAlpha:
 			case RasterizerState::TextureFormatRGBA5551:
+			case RasterizerState::TextureFormatRGBA4444:
+			case RasterizerState::TextureFormatRGBA8:
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeReplace:
 						{

@@ -312,7 +312,56 @@ inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
 			default:
 			case RasterizerState::TextureFormatAlpha:
 				texColor = Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
+				break;
 
+			case RasterizerState::TextureFormatLuminance:
+				{
+				U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset];
+				texColor = Color (luminance, luminance, luminance, 0xff);
+				}
+				break;
+
+			case RasterizerState::TextureFormatRGB565:
+				texColor = Color::From565(reinterpret_cast<const U16 *>(data)[texOffset]);
+				break;
+
+			case RasterizerState::TextureFormatRGB8:
+				{
+				texOffset = (texOffset << 1) + texOffset;
+				const U8 * ptr = reinterpret_cast<const U8 *>(data) + texOffset;
+				texColor = Color(ptr[0], ptr[1], ptr[2], 0xff);
+				}
+				break;
+
+			case RasterizerState::TextureFormatLuminanceAlpha:
+				{
+				U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset * 2];
+				U8 alpha = reinterpret_cast<const U8 *>(data)[texOffset * 2 + 1];
+				texColor = Color (luminance, luminance, luminance, alpha);
+				}
+				break;
+
+			case RasterizerState::TextureFormatRGBA8:
+				//texColor = Color::FromRGBA(reinterpret_cast<const U32 *>(data)[texOffset]);
+				{
+				texOffset = texOffset << 2;
+				const U8 * ptr = reinterpret_cast<const U8 *>(data) + texOffset;
+				texColor = Color(ptr[0], ptr[1], ptr[2], ptr[3]);
+				}
+				break;
+
+			case RasterizerState::TextureFormatRGBA4444:
+				texColor = Color::From4444(reinterpret_cast<const U16 *>(data)[texOffset]);
+				break;
+
+			case RasterizerState::TextureFormatRGBA5551:
+				texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
+				break;
+		}
+
+		switch (m_Texture->GetInternalFormat()) {
+			default:
+			case RasterizerState::TextureFormatAlpha:
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeReplace:
 						color = Color(color.r, color.g, color.b, texColor.a);
@@ -327,11 +376,6 @@ inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
 				break;
 
 			case RasterizerState::TextureFormatLuminance:
-				{
-				U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset];
-				texColor = Color (luminance, luminance, luminance, 0xff);
-				}
-
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeDecal:
 					case RasterizerState::TextureModeReplace:
@@ -364,8 +408,7 @@ inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
 				break;
 
 			case RasterizerState::TextureFormatRGB565:
-				texColor = Color::From565(reinterpret_cast<const U16 *>(data)[texOffset]);
-
+			case RasterizerState::TextureFormatRGB8:
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeDecal:
 					case RasterizerState::TextureModeReplace:
@@ -398,12 +441,6 @@ inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
 				break;
 
 			case RasterizerState::TextureFormatLuminanceAlpha:
-				{
-				U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset * 2];
-				U8 alpha = reinterpret_cast<const U8 *>(data)[texOffset * 2 + 1];
-				texColor = Color (luminance, luminance, luminance, alpha);
-				}
-
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeReplace:
 						color = texColor;
@@ -443,8 +480,8 @@ inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
 				break;
 
 			case RasterizerState::TextureFormatRGBA5551:
-				texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
-
+			case RasterizerState::TextureFormatRGBA4444:
+			case RasterizerState::TextureFormatRGBA8:
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeReplace:
 						color = texColor;

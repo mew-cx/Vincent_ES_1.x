@@ -346,19 +346,19 @@ namespace {
 		result.m_FogDensity = Interpolate(dst.m_FogDensity, src.m_FogDensity, num, denom);
 	}
 
-	inline bool ClipX(RasterPos& from, RasterPos& to) {
+	inline bool ClipX(RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices) {
 #		define COORDINATE x()
 #		include "LineClipper.inc"
 #		undef COORDINATE
 	}
 
-	inline bool ClipY(RasterPos& from, RasterPos& to) {
+	inline bool ClipY(RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices) {
 #		define COORDINATE y()
 #		include "LineClipper.inc"
 #		undef COORDINATE
 	}
 
-	inline bool ClipZ(RasterPos& from, RasterPos& to) {
+	inline bool ClipZ(RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices) {
 #		define COORDINATE z()
 #		include "LineClipper.inc"
 #		undef COORDINATE
@@ -368,20 +368,25 @@ namespace {
 
 void Context :: RenderLine(RasterPos& from, RasterPos& to) {
 
-	if (ClipX(from, to) &&
-		ClipY(from, to) &&
-		ClipZ(from, to)) {
-		ClipCoordsToWindowCoords(from);
-		ClipCoordsToWindowCoords(to);
+	RasterPos * tempVertices = m_Temporary;
+	RasterPos * pFrom = &from;
+	RasterPos * pTo = &to;
+
+	if (ClipX(pFrom, pTo, tempVertices) &&
+		ClipY(pFrom, pTo, tempVertices) &&
+		ClipZ(pFrom, pTo, tempVertices)) {
+
+		ClipCoordsToWindowCoords(*pFrom);
+		ClipCoordsToWindowCoords(*pTo);
 
 		if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
-			from.m_Color = from.m_FrontColor;
+			pFrom->m_Color = pFrom->m_FrontColor;
 		} else {
-			from.m_Color = to.m_FrontColor;
+			pFrom->m_Color = pTo->m_FrontColor;
 		}
 
-		to.m_Color = to.m_FrontColor;
-		m_Rasterizer->RasterLine(from, to);
+		pTo->m_Color = pTo->m_FrontColor;
+		m_Rasterizer->RasterLine(*pFrom, *pTo);
 	}
 }
 

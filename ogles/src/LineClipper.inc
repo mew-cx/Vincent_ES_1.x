@@ -44,54 +44,57 @@
 // line end points to lie withinn valid range.
 // --------------------------------------------------------------------------
 
-	if (from.m_ClipCoords.COORDINATE < -from.m_ClipCoords.w()) {
-		if (to.m_ClipCoords.COORDINATE < -to.m_ClipCoords.w()) {
+	if (from->m_ClipCoords.COORDINATE < -from->m_ClipCoords.w()) {
+		if (to->m_ClipCoords.COORDINATE < -to->m_ClipCoords.w()) {
 			return false;
 		}
 
-		EGL_Fixed c_x = from.m_ClipCoords.COORDINATE;
-		EGL_Fixed c_w = -from.m_ClipCoords.w();
-		EGL_Fixed p_x = to.m_ClipCoords.COORDINATE;
-		EGL_Fixed p_w = -to.m_ClipCoords.w();
+		EGL_Fixed c_x = from->m_ClipCoords.COORDINATE;
+		EGL_Fixed c_w = -from->m_ClipCoords.w();
+		EGL_Fixed p_x = to->m_ClipCoords.COORDINATE;
+		EGL_Fixed p_w = -to->m_ClipCoords.w();
 		
-		Interpolate(from, from, to, p_w - p_x, (p_w - p_x) - (c_w - c_x));
+		Interpolate(*tempVertices, *from, *to, p_w - p_x, (p_w - p_x) - (c_w - c_x));
+		from = tempVertices++;
 
 		return true;
 
-	} else if (from.m_ClipCoords.COORDINATE > from.m_ClipCoords.w()) {
-		if (to.m_ClipCoords.COORDINATE > to.m_ClipCoords.w()) {
+	} else if (from->m_ClipCoords.COORDINATE > from->m_ClipCoords.w()) {
+		if (to->m_ClipCoords.COORDINATE > to->m_ClipCoords.w()) {
 			return false;
 		}
 
-		EGL_Fixed c_x = from.m_ClipCoords.COORDINATE;
-		EGL_Fixed c_w = from.m_ClipCoords.w();
-		EGL_Fixed p_x = to.m_ClipCoords.COORDINATE;
-		EGL_Fixed p_w = to.m_ClipCoords.w();
+		EGL_Fixed c_x = from->m_ClipCoords.COORDINATE;
+		EGL_Fixed c_w = from->m_ClipCoords.w();
+		EGL_Fixed p_x = to->m_ClipCoords.COORDINATE;
+		EGL_Fixed p_w = to->m_ClipCoords.w();
 		
-		Interpolate(from, from, to, p_w - p_x, (p_w - p_x) - (c_w - c_x));
-
+		Interpolate(*tempVertices, *from, *to, p_w - p_x, (p_w - p_x) - (c_w - c_x));
+		from = tempVertices++;
 
 		return true;
 
-	} else if (to.m_ClipCoords.COORDINATE < -to.m_ClipCoords.w()) {
+	} else if (to->m_ClipCoords.COORDINATE < -to->m_ClipCoords.w()) {
 
-		EGL_Fixed c_x = to.m_ClipCoords.COORDINATE;
-		EGL_Fixed c_w = -to.m_ClipCoords.w();
-		EGL_Fixed p_x = from.m_ClipCoords.COORDINATE;
-		EGL_Fixed p_w = -from.m_ClipCoords.w();
+		EGL_Fixed c_x = to->m_ClipCoords.COORDINATE;
+		EGL_Fixed c_w = -to->m_ClipCoords.w();
+		EGL_Fixed p_x = from->m_ClipCoords.COORDINATE;
+		EGL_Fixed p_w = -from->m_ClipCoords.w();
 		
-		Interpolate(to, to, from, p_w - p_x, (p_w - p_x) - (c_w - c_x));
+		Interpolate(*tempVertices, *to, *from, p_w - p_x, (p_w - p_x) - (c_w - c_x));
+		to = tempVertices++;
 
 		return true;
 
-	} else if (to.m_ClipCoords.COORDINATE > to.m_ClipCoords.w()) {
+	} else if (to->m_ClipCoords.COORDINATE > to->m_ClipCoords.w()) {
 
-		EGL_Fixed c_x = to.m_ClipCoords.COORDINATE;
-		EGL_Fixed c_w = to.m_ClipCoords.w();
-		EGL_Fixed p_x = from.m_ClipCoords.COORDINATE;
-		EGL_Fixed p_w = from.m_ClipCoords.w();
+		EGL_Fixed c_x = to->m_ClipCoords.COORDINATE;
+		EGL_Fixed c_w = to->m_ClipCoords.w();
+		EGL_Fixed p_x = from->m_ClipCoords.COORDINATE;
+		EGL_Fixed p_w = from->m_ClipCoords.w();
 		
-		Interpolate(to, to, from, p_w - p_x, (p_w - p_x) - (c_w - c_x));
+		Interpolate(*tempVertices, *to, *from, p_w - p_x, (p_w - p_x) - (c_w - c_x));
+		to = tempVertices++;
 
 		return true;
 
