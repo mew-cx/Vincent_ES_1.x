@@ -1187,6 +1187,23 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 	}
 }
 
+namespace {
+	inline int Log2(int value) {
+		if (value <= 1) {
+			return 0;
+		}
+
+		int result = 0;
+
+		while (value > 1) {
+			result++;
+			value >>= 1;
+		}
+
+		return result;
+	}
+}
+
 void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
 
 	EGL_Fixed halfSize = size / 2;
@@ -1212,6 +1229,17 @@ void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
 		}
 	} else {
 		EGL_Fixed delta = EGL_Inverse(size);
+
+		if (m_UseMipmap) {
+			EGL_Fixed maxDu = delta >> (16 - m_Texture->GetTexture(0)->GetLogWidth());
+			EGL_Fixed maxDv = delta >> (16 - m_Texture->GetTexture(0)->GetLogHeight());
+
+			EGL_Fixed rho = maxDu + maxDv;
+
+			// we start with nearest/minification only selection; will add LINEAR later
+
+			m_RasterInfo.MipmapLevel = EGL_Min(Log2(rho), m_RasterInfo.MaxMipmapLevel);
+		}
 
 		for (I32 y = ymin, tv = delta / 2; y <= ymax; y++, tv += delta) {
 			for (I32 x = xmin, tu = delta / 2; x <= xmax; x++, tu += delta) {
