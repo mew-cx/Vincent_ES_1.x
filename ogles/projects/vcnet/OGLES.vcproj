@@ -21,11 +21,11 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions=""
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)..\..\src&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)..\..\src&quot;;&quot;$(ProjectDir)..\..\src\codegen&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OGLES_EXPORTS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="FALSE"
@@ -73,9 +73,9 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions=""
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)..\..\src&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)..\..\src&quot;;&quot;$(ProjectDir)..\..\src\codegen&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OGLES_EXPORTS"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="FALSE"
@@ -123,9 +123,6 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
-			<File
-				RelativePath="..\..\src\CodeGenerator.cpp">
-			</File>
 			<File
 				RelativePath="..\..\src\Color.cpp">
 			</File>
@@ -175,9 +172,6 @@
 				RelativePath="..\..\src\gl.cpp">
 			</File>
 			<File
-				RelativePath="..\..\src\Inst.cpp">
-			</File>
-			<File
 				RelativePath="..\..\src\Light.cpp">
 			</File>
 			<File
@@ -225,25 +219,10 @@
 				RelativePath="..\..\src\Surface.cpp">
 			</File>
 			<File
-				RelativePath="..\..\src\Sweep.cpp">
-			</File>
-			<File
 				RelativePath="..\..\src\Texture.cpp">
 			</File>
 			<File
 				RelativePath="..\..\src\TriangleClipper.inc">
-			</File>
-			<File
-				RelativePath="..\..\src\trivm.cpp">
-			</File>
-			<File
-				RelativePath="..\..\src\trivmDump.cpp">
-			</File>
-			<File
-				RelativePath="..\..\src\trivmFindDefinition.cpp">
-			</File>
-			<File
-				RelativePath="..\..\src\trivmMarkUsed.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -270,9 +249,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\Init.h">
-			</File>
-			<File
-				RelativePath="..\..\src\Inst.h">
 			</File>
 			<File
 				RelativePath="..\..\src\Light.h">
@@ -302,13 +278,7 @@
 				RelativePath="..\..\src\Surface.h">
 			</File>
 			<File
-				RelativePath="..\..\src\Sweep.h">
-			</File>
-			<File
 				RelativePath="..\..\src\Texture.h">
-			</File>
-			<File
-				RelativePath="..\..\src\trivm.h">
 			</File>
 			<Filter
 				Name="GLES"
@@ -328,6 +298,16 @@
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
+		</Filter>
+		<Filter
+			Name="arm"
+			Filter="">
+			<File
+				RelativePath="..\..\src\arm\CodeGenerator.cpp">
+			</File>
+			<File
+				RelativePath="..\..\src\arm\CodeGenerator.h">
+			</File>
 		</Filter>
 		<File
 			RelativePath=".\VTune\OGLES.vpj">

@@ -44,58 +44,23 @@
 #include "Rasterizer.h"
 #include "Surface.h"
 #include "Texture.h"
-#include "codegen.h.h"
+#include "codegen.h"
 #include "instruction.h"
 #include "emit.h"
 
 using namespace EGL;
-using namespace triVM;
 
-
-#define IMMEDIATE	new InstructionLoadImmediateType
-#define UNARY		new InstructionUnaryType
-#define BINARY		new InstructionBinaryType
-#define COMPARE		new InstructionCompareType
-#define LOAD		new InstructionLoadType
-#define STORE		new InstructionStoreType
-#define	BCOND		new InstructionBranchConditionallyType
-#define	BLABEL		new InstructionBranchLabelType
-#define	BREG		new InstructionBranchRegType
-#define CALL		new InstructionCallType
-#define RET			new InstructionRetType
-#define PHI			new InstructionPhiType
 
 namespace {
 
-	RegisterList * REG_LIST(I32 r1) {
-		RegisterList * result = new RegisterList();
-		result->push_back(r1);
-		return result;
-	}
+	cg_virtual_reg_t * LOAD_DATA(cg_block_t * block, cg_virtual_reg_t * base, I32 constant) {
+		cg_virtual_reg_t * offset = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+		cg_virtual_reg_t * addr = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+		cg_virtual_reg_t * value = cg_virtual_reg_create(block->proc, cg_reg_type_general);
 
-	RegisterList * REG_LIST(I32 r1, I32 r2) {
-		RegisterList * result = new RegisterList();
-		result->push_back(r1);
-		result->push_back(r2);
-		return result;
-	}
-
-	RegisterList * REG_LIST(I32 r1, I32 r2, I32 r3) {
-		RegisterList * result = new RegisterList();
-		result->push_back(r1);
-		result->push_back(r2);
-		result->push_back(r3);
-		return result;
-	}
-
-	I32 LOAD_DATA(Block & block, I32& nextRegister, I32 base, I32 constant, const char * comment = "") {
-		I32 offset = nextRegister++;
-		I32 addr = nextRegister++;
-		I32 value = nextRegister++;
-
-		block +=	IMMEDIATE	(ldi,	offset, Constant::createInt(constant));
-		block +=	BINARY		(add,	addr, base, offset);
-		block +=	LOAD		(ldw,	value, addr, comment);
+		cg_create_inst_load_immed(block, cg_op_ldi,	offset, constant);
+		cg_create_inst_binary(block, cg_op_add,	addr, base, offset);
+		cg_create_inst_load(block, cg_op_ldw,	value, addr);
 
 		return value;
 	}
@@ -196,28 +161,28 @@ namespace {
 
 namespace EGL {
 	struct FragmentGenerationInfo {
-		I32 regX;
-		I32 regDepth;
-		I32 regU;
-		I32 regV; 
-		I32 regFog;
-		I32 regR;
-		I32 regG;
-		I32 regB; 
-		I32 regA;	
+		cg_virtual_reg_t * regX;
+		cg_virtual_reg_t * regDepth;
+		cg_virtual_reg_t * regU;
+		cg_virtual_reg_t * regV; 
+		cg_virtual_reg_t * regFog;
+		cg_virtual_reg_t * regR;
+		cg_virtual_reg_t * regG;
+		cg_virtual_reg_t * regB; 
+		cg_virtual_reg_t * regA;	
 
-		I32 regTextureData;
-		I32 regTextureWidth;
-		I32 regTextureHeight;
-		I32 regTextureExponent;
+		cg_virtual_reg_t * regTextureData;
+		cg_virtual_reg_t * regTextureWidth;
+		cg_virtual_reg_t * regTextureHeight;
+		cg_virtual_reg_t * regTextureExponent;
 
 		// surface color buffer, depth buffer, alpha buffer, stencil buffer
-		I32 regColorBuffer;
-		I32 regDepthBuffer;
-		I32 regAlphaBuffer;
-		I32 regStencilBuffer;
+		cg_virtual_reg_t * regColorBuffer;
+		cg_virtual_reg_t * regDepthBuffer;
+		cg_virtual_reg_t * regAlphaBuffer;
+		cg_virtual_reg_t * regStencilBuffer;
 
-		I32 regSurfaceWidth;
+		cg_virtual_reg_t * regSurfaceWidth;
 	};
 }
 
@@ -225,8 +190,8 @@ namespace EGL {
 // Actually, we could extract the scaling of the texture coordinates into the outer driving loop, 
 // and have the adjusted clipping range for tu and tv be stored in the rasterizer.
 
-void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlock,
-			Label * continuation, I32 & nextRegister, FragmentGenerationInfo & fragmentInfo) {
+void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * currentBlock,
+			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo) {
 	// Signature of generated function is:
 	// (I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv, EGL_Fixed fogDensity, const Color& baseColor);
 	
@@ -240,74 +205,74 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 	//bool depthTest;
 	//U32 offset = x + y * m_Surface->GetWidth();
 	//I32 zBufferValue = m_Surface->GetDepthBuffer()[offset];
-	I32 regOffset = fragmentInfo.regX;
-	I32 regDepthTest = nextRegister++;
-	I32 regScaledY = nextRegister++;
-	I32 regConstant1 = nextRegister++;
-	I32 regConstant2 = nextRegister++;
-	I32 regOffset4 = nextRegister++;
-	I32 regOffset2 = nextRegister++;
-	I32 regZBufferAddr = nextRegister++;
-	I32 regZBufferValue = nextRegister++;
+	cg_virtual_reg_t * regOffset = fragmentInfo.regX;
+	cg_virtual_reg_t * regDepthTest = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+	cg_virtual_reg_t * regScaledY = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regConstant2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regOffset4 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regOffset2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regZBufferAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regZBufferValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	currentBlock +=		IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
-	currentBlock +=		IMMEDIATE	(ldi,	regConstant2, Constant::createInt(2));
-	currentBlock +=		BINARY		(lsl,	regOffset2, regOffset, regConstant1); 
-	currentBlock +=		BINARY		(lsl,	regOffset4, regOffset, regConstant2);
-	currentBlock +=		BINARY		(add,	regZBufferAddr, fragmentInfo.regDepthBuffer, regOffset4);
-	currentBlock +=		LOAD		(ldw,	regZBufferValue, regZBufferAddr);
-	currentBlock +=		COMPARE		(fcmp,	regDepthTest, regZBufferValue, fragmentInfo.regDepth, "depth test");
+	cg_create_inst_load_immed(currentBlock,		cg_op_ldi,		regConstant1, 1);
+	cg_create_inst_load_immed(currentBlock,		cg_op_ldi,		regConstant2, 2);
+	cg_create_inst_binary(currentBlock,			cg_op_lsl,		regOffset2, regOffset, regConstant1);
+	cg_create_inst_binary(currentBlock,			cg_op_lsl,		regOffset4,	regOffset, regConstant2);
+	cg_create_inst_binary(currentBlock,			cg_op_add,		regZBufferAddr, fragmentInfo.regDepthBuffer, regOffset4);
+	cg_create_inst_load(currentBlock,			cg_op_ldw,		regZBufferValue, regZBufferAddr);
+	cg_create_inst_compare(currentBlock,		cg_op_fcmp,		regDepthTest, regZBufferValue, fragmentInfo.regDepth);
 
-	Opcode branchOnDepthTestPassed, branchOnDepthTestFailed;
+	cg_opcode_t branchOnDepthTestPassed, branchOnDepthTestFailed;
 
 	switch (m_State->m_DepthFunc) {
 		default:
 		case RasterizerState::CompFuncNever:	
 			//depthTest = false;						
-			branchOnDepthTestPassed = nop;
-			branchOnDepthTestFailed = bra;
+			branchOnDepthTestPassed = cg_op_nop;
+			branchOnDepthTestFailed = cg_op_bra;
 			break;
 
 		case RasterizerState::CompFuncLess:		
 			//depthTest = depth < zBufferValue;		
-			branchOnDepthTestPassed = blt;
-			branchOnDepthTestFailed = bge;
+			branchOnDepthTestPassed = cg_op_blt;
+			branchOnDepthTestFailed = cg_op_bge;
 			break;
 
 		case RasterizerState::CompFuncEqual:	
 			//depthTest = depth == zBufferValue;		
-			branchOnDepthTestPassed = beq;
-			branchOnDepthTestFailed = bne;
+			branchOnDepthTestPassed = cg_op_beq;
+			branchOnDepthTestFailed = cg_op_bne;
 			break;
 
 		case RasterizerState::CompFuncLEqual:	
 			//depthTest = depth <= zBufferValue;		
-			branchOnDepthTestPassed = ble;
-			branchOnDepthTestFailed = bgt;
+			branchOnDepthTestPassed = cg_op_ble;
+			branchOnDepthTestFailed = cg_op_bgt;
 			break;
 
 		case RasterizerState::CompFuncGreater:	
 			//depthTest = depth > zBufferValue;		
-			branchOnDepthTestPassed = bgt;
-			branchOnDepthTestFailed = ble;
+			branchOnDepthTestPassed = cg_op_bgt;
+			branchOnDepthTestFailed = cg_op_ble;
 			break;
 
 		case RasterizerState::CompFuncNotEqual:	
 			//depthTest = depth != zBufferValue;		
-			branchOnDepthTestPassed = bne;
-			branchOnDepthTestFailed = beq;
+			branchOnDepthTestPassed = cg_op_bne;
+			branchOnDepthTestFailed = cg_op_beq;
 			break;
 
 		case RasterizerState::CompFuncGEqual:	
 			//depthTest = depth >= zBufferValue;		
-			branchOnDepthTestPassed = bge;
-			branchOnDepthTestFailed = blt;
+			branchOnDepthTestPassed = cg_op_bge;
+			branchOnDepthTestFailed = cg_op_blt;
 			break;
 
 		case RasterizerState::CompFuncAlways:	
 			//depthTest = true;						
-			branchOnDepthTestPassed = bra;
-			branchOnDepthTestFailed = nop;
+			branchOnDepthTestPassed = cg_op_bra;
+			branchOnDepthTestFailed = cg_op_nop;
 			break;
 	}
 
@@ -315,63 +280,67 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 		//if (!depthTest)
 		//	return;
 
-		if (branchOnDepthTestFailed == nop) {
+		if (branchOnDepthTestFailed == cg_op_nop) {
 			// nothing
-		} else if (branchOnDepthTestFailed == bra) {
-			currentBlock +=		BLABEL	(bra,	continuation);
+		} else if (branchOnDepthTestFailed == cg_op_bra) {
+			cg_create_inst_branch_label(currentBlock,	cg_op_bra,		continuation);
 		} else {
-			currentBlock +=		BCOND	(branchOnDepthTestFailed, regDepthTest, continuation);
+			cg_create_inst_branch_cond(currentBlock,	branchOnDepthTestFailed, regDepthTest, continuation);
 		}
 	}
 
 	//Color color = baseColor;
-	I32 regColorR;
-	I32 regColorG;
-	I32 regColorB;
-	I32 regColorA;
-	I32 regColor565;
+	cg_virtual_reg_t * regColorR;
+	cg_virtual_reg_t * regColorG;
+	cg_virtual_reg_t * regColorB;
+	cg_virtual_reg_t * regColorA;
+	cg_virtual_reg_t * regColor565;
 
-	Block * block = &currentBlock;
+	cg_block_t * block = currentBlock;
 
 	if (m_State->m_TextureEnabled) {
 
 		//EGL_Fixed tu0;
 		//EGL_Fixed tv0;
-		I32 regU0 = nextRegister++;
-		I32 regV0 = nextRegister++;
+		cg_virtual_reg_t * regU0 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regV0 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
 		switch (m_Texture->GetWrappingModeS()) {
 			case MultiTexture::WrappingModeClampToEdge:
 				//tu0 = EGL_CLAMP(tu, 0, EGL_ONE);
 				{
-					I32 regConstantOne = nextRegister++;
-					I32 regConstantZero = nextRegister++;
-					I32 regCompareOne = nextRegister++;
-					I32 regCompareZero = nextRegister++;
-					I32 regNewU1 = nextRegister++;
-					I32 regNewU2 = nextRegister++;
+					cg_virtual_reg_t * regConstantOne = cg_virtual_reg_create(procedure, cg_reg_type_general);
+					cg_virtual_reg_t * regConstantZero = cg_virtual_reg_create(procedure, cg_reg_type_general);
+					cg_virtual_reg_t * regCompareOne = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+					cg_virtual_reg_t * regCompareZero = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+					cg_virtual_reg_t * regNewU1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+					cg_virtual_reg_t * regNewU2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-					Label * label1 = Label::create("wrapU1", LabelBlock);
-					Label * label2 = Label::create("wrapU2", LabelBlock);
+					cg_block_ref_t * label1 = cg_block_ref_create(procedure);
+					cg_block_ref_t * label2 = cg_block_ref_create(procedure);
 
-					*block +=	IMMEDIATE		(ldi,	regConstantOne, Constant::createFixed(EGL_FixedFromInt(1)));
-					*block +=	COMPARE			(fcmp,	regCompareOne, fragmentInfo.regU, regConstantOne);
-					*block +=	BCOND			(ble,	regCompareOne, label1);
-					*block +=	IMMEDIATE		(ldi,	regNewU1, Constant::createFixed(EGL_FixedFromInt(1)));
-					*block +=	BLABEL			(bra,	label2);
+					cg_create_inst_load_immed(block,	cg_op_ldi,		regConstantOne, EGL_FixedFromInt(1));
+					cg_create_inst_compare(block,		cg_op_fcmp,		regCompareOne, fragmentInfo.regU, regConstantOne);
+					cg_create_inst_branch_cond(block,	cg_op_ble,		regCompareOne, label1);
+					cg_create_inst_load_immed(block,	cg_op_ldi,		regNewU1, EGL_FixedFromInt(1));
+					cg_create_inst_branch_label(block,	cg_op_bra,		label2);
 
-					block = procedure->CreateBlock();
-					block->AttachLabel(label1);
+					block = cg_block_create(procedure);
+					label1->block = block;
 
-					*block +=	IMMEDIATE		(ldi,	regConstantZero, Constant::createFixed(EGL_FixedFromInt(0)));
-					*block +=	COMPARE			(fcmp,	regCompareZero, fragmentInfo.regU, regConstantZero);
-					*block +=	BCOND			(bge,	regCompareZero, label2);
-					*block +=	IMMEDIATE		(ldi,	regNewU2, Constant::createFixed(EGL_FixedFromInt(0)));
+					cg_create_inst_load_immed(block,	cg_op_ldi,		regConstantZero, EGL_FixedFromInt(0));
+					cg_create_inst_compare(block,		cg_op_fcmp,		regCompareZero, fragmentInfo.regU, regConstantZero);
+					cg_create_inst_branch_cond(block,	cg_op_bge,		regCompareZero, label2);
+					cg_create_inst_load_immed(block,	cg_op_ldi,		regNewU2, EGL_FixedFromInt(0));
 
-					block = procedure->CreateBlock();
-					block->AttachLabel(label2);
+					block = cg_block_create(procedure);
+					label2->block = block;
 
-					*block +=	PHI				(phi,	regU0, REG_LIST(fragmentInfo.regU, regNewU1, regNewU2));
+					cg_virtual_reg_list_t * regList = 
+						cg_create_virtual_reg_list(procedure->module->heap,
+												   fragmentInfo.regU, regNewU1, regNewU2, NULL);
+
+					cg_create_inst_phi(block,			cg_op_phi,		regU0, regList);
 				}
 				break;
 
@@ -379,9 +348,9 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 			case MultiTexture::WrappingModeRepeat:
 				//tu0 = tu & 0xffff;
 				{
-					I32 regMask = nextRegister++;
-					*block +=	IMMEDIATE		(ldi,	regMask, Constant::createInt(0xffff));
-					*block +=	BINARY			(and,	regU0, fragmentInfo.regU, regMask);
+					cg_virtual_reg_t * regMask = cg_virtual_reg_create(procedure, cg_reg_type_general);
+					cg_create_inst_load_immed(block,	cg_op_ldi,		regMask, 0xffff);
+					cg_create_inst_binary(block,		cg_op_and,		regU0, fragmentInfo.regU, regMask);
 				}
 				break;
 		}
@@ -390,34 +359,34 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 			case MultiTexture::WrappingModeClampToEdge:
 				//tv0 = EGL_CLAMP(tv, 0, EGL_ONE);
 				{
-					I32 regConstantOne = nextRegister++;
-					I32 regConstantZero = nextRegister++;
-					I32 regCompareOne = nextRegister++;
-					I32 regCompareZero = nextRegister++;
-					I32 regNewV1 = nextRegister++;
-					I32 regNewV2 = nextRegister++;
+					cg_virtual_reg_t * regConstantOne = cg_virtual_reg_create(procedure, cg_reg_type_general);
+					cg_virtual_reg_t * regConstantZero = cg_virtual_reg_create(procedure, cg_reg_type_general);
+					cg_virtual_reg_t * regCompareOne = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+					cg_virtual_reg_t * regCompareZero = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+					cg_virtual_reg_t * regNewV1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+					cg_virtual_reg_t * regNewV2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-					Label * label1 = Label::create("wrapV1", LabelBlock);
-					Label * label2 = Label::create("wrapV2", LabelBlock);
+					cg_block_ref_t * label1 = cg_block_ref_create(procedure);
+					cg_block_ref_t * label2 = cg_block_ref_create(procedure);
 
-					*block +=	IMMEDIATE		(ldi,	regConstantOne, Constant::createFixed(EGL_FixedFromInt(1)));
-					*block +=	COMPARE			(fcmp,	regCompareOne, fragmentInfo.regV, regConstantOne);
-					*block +=	BCOND			(ble,	regCompareOne, label1);
-					*block +=	IMMEDIATE		(ldi,	regNewV1, Constant::createFixed(EGL_FixedFromInt(1)));
-					*block +=	BLABEL			(bra,	label2);
+					cg_create_inst_load_immed(block,	cg_op_ldi,	regConstantOne, EGL_FixedFromInt(1));
+					cg_create_inst_compare(block,		cg_op_fcmp,	regCompareOne, fragmentInfo.regV, regConstantOne);
+					cg_create_inst_branch_cond(block,	cg_op_ble,	regCompareOne, label1);
+					cg_create_inst_load_immed(block,	cg_op_ldi,	regNewV1, EGL_FixedFromInt(1));
+					cg_create_inst_branch_label(block,	cg_op_bra,	label2);
 
-					block = procedure->CreateBlock();
-					block->AttachLabel(label1);
+					block = cg_block_create(procedure);
+					label1->block = block;
 
-					*block +=	IMMEDIATE		(ldi,	regConstantZero, Constant::createFixed(EGL_FixedFromInt(0)));
-					*block +=	COMPARE			(fcmp,	regCompareZero, fragmentInfo.regV, regConstantZero);
-					*block +=	BCOND			(bge,	regCompareZero, label2);
-					*block +=	IMMEDIATE		(ldi,	regNewV2, Constant::createFixed(EGL_FixedFromInt(0)));
+					cg_create_inst_load_immed(block, cg_op_ldi,	regConstantZero, EGL_FixedFromInt(0));
+					cg_create_inst_compare(block, cg_op_fcmp,	regCompareZero, fragmentInfo.regV, regConstantZero);
+					cg_create_inst_branch_cond(block, cg_op_bge,	regCompareZero, label2);
+					cg_create_inst_load_immed(block, cg_op_ldi,	regNewV2, EGL_FixedFromInt(0));
 
-					block = procedure->CreateBlock();
-					block->AttachLabel(label2);
+					block = cg_block_create(procedure);
+					label2->block = block;
 
-					*block +=	PHI				(phi,	regV0, REG_LIST(fragmentInfo.regV, regNewV1, regNewV2));
+					cg_create_inst_phi(block, cg_op_phi,	regV0, cg_create_virtual_reg_list(procedure->module->heap, fragmentInfo.regV, regNewV1, regNewV2, NULL));
 				}
 				break;
 
@@ -425,9 +394,9 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 			case MultiTexture::WrappingModeRepeat:
 				//tv0 = tv & 0xffff;
 				{
-					I32 regMask = nextRegister++;
-					*block +=	IMMEDIATE		(ldi,	regMask, Constant::createInt(0xffff));
-					*block +=	BINARY			(and,	regV0, fragmentInfo.regV, regMask);
+					cg_virtual_reg_t * regMask = cg_virtual_reg_create(procedure, cg_reg_type_general);
+					cg_create_inst_load_immed(block, cg_op_ldi,	regMask, 0xffff);
+					cg_create_inst_binary(block, cg_op_and,	regV0, fragmentInfo.regV, regMask);
 				}
 				break;
 		}
@@ -435,52 +404,52 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 		// get the pixel color
 		//Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
 		//Color texColor; 
-		I32 regTexColorR;			
-		I32 regTexColorG;			
-		I32 regTexColorB;			
-		I32 regTexColorA;
-		I32 regTexColor565;
+		cg_virtual_reg_t * regTexColorR;			
+		cg_virtual_reg_t * regTexColorG;			
+		cg_virtual_reg_t * regTexColorB;			
+		cg_virtual_reg_t * regTexColorA;
+		cg_virtual_reg_t * regTexColor565;
 
-		//I32 texX = EGL_IntFromFixed(texture->GetWidth() * tu0);
-		//I32 texY = EGL_IntFromFixed(texture->GetHeight() * tv0);
-		//I32 texOffset = texX + (texY << texture->GetExponent());
+		//cg_virtual_reg_t * texX = EGL_IntFromFixed(texture->GetWidth() * tu0);
+		//cg_virtual_reg_t * texY = EGL_IntFromFixed(texture->GetHeight() * tv0);
+		//cg_virtual_reg_t * texOffset = texX + (texY << texture->GetExponent());
 		//void * data = texture->GetData();
-		I32 regScaledU = nextRegister++;
-		I32 regTexX = nextRegister++;
-		I32 regScaledV = nextRegister++;
-		I32 regTexY = nextRegister++;
-		I32 regScaledTexY = nextRegister++;
-		I32 regTexOffset = nextRegister++;
+		cg_virtual_reg_t * regScaledU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regTexX = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regScaledV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regTexY = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regScaledTexY = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regTexOffset = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-		*block +=	BINARY		(mul,		regScaledU, regU0, fragmentInfo.regTextureWidth);
-		*block +=	UNARY		(trunc,		regTexX, regScaledU);
-		*block +=	BINARY		(mul,		regScaledV, regV0, fragmentInfo.regTextureHeight);
-		*block +=	UNARY		(trunc,		regTexY, regScaledV);
-		*block +=	BINARY		(lsl,		regScaledTexY, regTexY, fragmentInfo.regTextureExponent);
-		*block +=	BINARY		(add,		regTexOffset, regTexX, regScaledTexY);
+		cg_create_inst_binary(block, cg_op_mul,		regScaledU, regU0, fragmentInfo.regTextureWidth);
+		cg_create_inst_unary(block, cg_op_trunc,		regTexX, regScaledU);
+		cg_create_inst_binary(block, cg_op_mul,		regScaledV, regV0, fragmentInfo.regTextureHeight);
+		cg_create_inst_unary(block, cg_op_trunc,		regTexY, regScaledV);
+		cg_create_inst_binary(block, cg_op_lsl,		regScaledTexY, regTexY, fragmentInfo.regTextureExponent);
+		cg_create_inst_binary(block, cg_op_add,		regTexOffset, regTexX, regScaledTexY);
 
 		switch (m_Texture->GetInternalFormat()) {
 			case Texture::TextureFormatAlpha:				// 8
 				{
 				//texColor = Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
-				regTexColorR = regTexColorB = nextRegister++;
-				regTexColorG = nextRegister++;
-				regTexColorA = nextRegister++;
-				regTexColor565 = nextRegister++;
-				I32 regTexAddr = nextRegister++;
-				I32 regConstant7 = nextRegister++;
-				I32 regShifted7 = nextRegister++;
-				I32 regTexData = nextRegister++;
+				regTexColorR = regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regTexAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant7 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regShifted7 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regTexData = cg_virtual_reg_create(procedure, cg_reg_type_general);
 				
 
-				*block +=	BINARY		(add,	regTexAddr, regTexOffset, fragmentInfo.regTextureData);
-				*block +=	LOAD		(ldb,	regTexData, regTexAddr, "fetch texture data");
-				*block +=	IMMEDIATE	(ldi,	regConstant7, Constant::createInt(7));
-				*block +=	BINARY		(lsr,	regShifted7, regTexData, regConstant7);
-				*block +=	BINARY		(add,	regTexColorA, regTexData, regShifted7);
-				*block +=	IMMEDIATE	(ldi,	regTexColorR, Constant::createInt(0x1f));
-				*block +=	IMMEDIATE	(ldi,	regTexColorG, Constant::createInt(0x3f));
-				*block +=	IMMEDIATE	(ldi,	regTexColor565, Constant::createInt(0xffff));
+				cg_create_inst_binary(block, cg_op_add,	regTexAddr, regTexOffset, fragmentInfo.regTextureData);
+				cg_create_inst_load(block, cg_op_ldb,	regTexData, regTexAddr);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant7, 7);
+				cg_create_inst_binary(block, cg_op_lsr,	regShifted7, regTexData, regConstant7);
+				cg_create_inst_binary(block, cg_op_add,	regTexColorA, regTexData, regShifted7);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regTexColorR, 0x1f);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regTexColorG, 0x3f);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regTexColor565, 0xffff);
 
 				}
 				break;
@@ -489,41 +458,41 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 				{
 				//U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset];
 				//texColor = Color (luminance, luminance, luminance, 0xff);
-				regTexColorR = regTexColorB = nextRegister++;
-				regTexColorG = nextRegister++;
-				regTexColorA = nextRegister++;
-				regTexColor565 = nextRegister++;
-				I32 regTexAddr = nextRegister++;
-				I32 regTexData = nextRegister++;
-				I32 regMask5 = nextRegister++;
-				I32 regMask6 = nextRegister++;
-				I32 regConstant2 = nextRegister++;
-				I32 regConstant3 = nextRegister++;
-				I32 regConstant5 = nextRegister++;
-				I32 regConstant11 = nextRegister++;
-				I32 regColor5 = nextRegister++;
-				I32 regColor6 = nextRegister++;
-				I32 regShiftedB = nextRegister++;
-				I32 regShiftedG = nextRegister++;
-				I32 regRG = nextRegister++;
+				regTexColorR = regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regTexAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regTexData = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regMask5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regMask6 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant3 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regColor5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regColor6 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-				*block +=	BINARY		(add,	regTexAddr, regTexOffset, fragmentInfo.regTextureData);
-				*block +=	LOAD		(ldb,	regTexData, regTexAddr, "fetch texture data");
-				*block +=	IMMEDIATE	(ldi,	regTexColorA, Constant::createInt(0x100));
-				*block +=	IMMEDIATE	(ldi,	regMask5, Constant::createInt(0x1f));
-				*block +=	IMMEDIATE	(ldi,	regMask6, Constant::createInt(0x3f));
-				*block +=	IMMEDIATE	(ldi,	regConstant2, Constant::createInt(2));
-				*block +=	IMMEDIATE	(ldi,	regConstant3, Constant::createInt(3));
-				*block +=	BINARY		(lsl,	regColor5, regTexData, regConstant3);
-				*block +=	BINARY		(and,	regTexColorR, regColor5, regMask5);
-				*block +=	BINARY		(lsl,	regColor6, regTexData, regConstant2);
-				*block +=	BINARY		(and,	regTexColorG, regColor6, regMask6);
-				*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-				*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-				*block +=	BINARY		(lsl,	regShiftedB, regTexColorB, regConstant11);
-				*block +=	BINARY		(lsl,	regShiftedG, regTexColorG, regConstant5);
-				*block +=	BINARY		(or,	regRG, regTexColorR, regShiftedG);
-				*block +=	BINARY		(or,	regTexColor565, regRG, regShiftedB);
+				cg_create_inst_binary(block, cg_op_add,	regTexAddr, regTexOffset, fragmentInfo.regTextureData);
+				cg_create_inst_load(block, cg_op_ldb,	regTexData, regTexAddr);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regTexColorA, 0x100);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regMask5, 0x1f);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regMask6, 0x3f);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant2, 2);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant3, 3);
+				cg_create_inst_binary(block, cg_op_lsl,	regColor5, regTexData, regConstant3);
+				cg_create_inst_binary(block, cg_op_and,	regTexColorR, regColor5, regMask5);
+				cg_create_inst_binary(block, cg_op_lsl,	regColor6, regTexData, regConstant2);
+				cg_create_inst_binary(block, cg_op_and,	regTexColorG, regColor6, regMask6);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+				cg_create_inst_binary(block, cg_op_lsl,	regShiftedB, regTexColorB, regConstant11);
+				cg_create_inst_binary(block, cg_op_lsl,	regShiftedG, regTexColorG, regConstant5);
+				cg_create_inst_binary(block, cg_op_or,	regRG, regTexColorR, regShiftedG);
+				cg_create_inst_binary(block, cg_op_or,	regTexColor565, regRG, regShiftedB);
 				}
 				break;
 
@@ -532,57 +501,57 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 				//U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset * 2];
 				//U8 alpha = reinterpret_cast<const U8 *>(data)[texOffset * 2 + 1];
 				//texColor = Color (luminance, luminance, luminance, alpha);
-				regTexColorR = regTexColorB = nextRegister++;
-				regTexColorG = nextRegister++;
-				regTexColorA = nextRegister++;
-				regTexColor565 = nextRegister++;
-				I32 regTexAddr = nextRegister++;
-				I32 regTexData = nextRegister++;
-				I32 regMask5 = nextRegister++;
-				I32 regMask6 = nextRegister++;
-				I32 regConstant2 = nextRegister++;
-				I32 regConstant3 = nextRegister++;
-				I32 regConstant5 = nextRegister++;
-				I32 regConstant11 = nextRegister++;
-				I32 regColor5 = nextRegister++;
-				I32 regColor6 = nextRegister++;
-				I32 regShiftedB = nextRegister++;
-				I32 regShiftedG = nextRegister++;
-				I32 regRG = nextRegister++;
-				I32 regScaledOffset = nextRegister++;
-				I32 regConstantOne = nextRegister++;
-				I32 regMask = nextRegister++;
-				I32 regConstant8 = nextRegister++;
-				I32 regAlpha = nextRegister++;
-				I32 regMaskedAlphaByte = nextRegister++;
-				I32 regConstant7 = nextRegister++;
-				I32 regShifted7 = nextRegister++;
+				regTexColorR = regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regTexAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regTexData = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regMask5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regMask6 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant3 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regColor5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regColor6 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regScaledOffset = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstantOne = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regMask = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regAlpha = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regMaskedAlphaByte = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant7 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regShifted7 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-				*block +=	IMMEDIATE	(ldi,	regConstantOne, Constant::createInt(1));
-				*block +=	BINARY		(lsl,	regScaledOffset, regTexOffset, regConstantOne);
-				*block +=	BINARY		(add,	regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
-				*block +=	LOAD		(ldh,	regTexData, regTexAddr, "fetch texture data");
-				*block +=	IMMEDIATE	(ldi,	regMask, Constant::createInt(0xff));
-				*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
-				*block +=	BINARY		(lsr,	regAlpha, regTexData, regConstant8);
-				*block +=	BINARY		(and,	regMaskedAlphaByte, regAlpha, regMask);
-				*block +=	IMMEDIATE	(ldi,	regConstant7, Constant::createInt(7));
-				*block +=	BINARY		(lsr,	regShifted7, regMaskedAlphaByte, regConstant7);
-				*block +=	BINARY		(add,	regTexColorA, regMaskedAlphaByte, regShifted7);
-				*block +=	IMMEDIATE	(ldi,	regMask5, Constant::createInt(0x1f));
-				*block +=	IMMEDIATE	(ldi,	regMask6, Constant::createInt(0x3f));
-				*block +=	IMMEDIATE	(ldi,	regConstant2, Constant::createInt(2));
-				*block +=	IMMEDIATE	(ldi,	regConstant3, Constant::createInt(3));
-				*block +=	BINARY		(lsl,	regColor5, regTexData, regConstant3);
-				*block +=	BINARY		(and,	regTexColorR, regColor5, regMask5);
-				*block +=	BINARY		(lsl,	regColor6, regTexData, regConstant2);
-				*block +=	BINARY		(and,	regTexColorG, regColor6, regMask6);
-				*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-				*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-				*block +=	BINARY		(lsl,	regShiftedB, regTexColorB, regConstant11);
-				*block +=	BINARY		(lsl,	regShiftedG, regTexColorG, regConstant5);
-				*block +=	BINARY		(or,	regRG, regTexColorR, regShiftedG);
-				*block +=	BINARY		(or,	regTexColor565, regRG, regShiftedB);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstantOne, 1);
+				cg_create_inst_binary(block, cg_op_lsl,	regScaledOffset, regTexOffset, regConstantOne);
+				cg_create_inst_binary(block, cg_op_add,	regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
+				cg_create_inst_load(block, cg_op_ldh,	regTexData, regTexAddr);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regMask, 0xff);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant8, 8);
+				cg_create_inst_binary(block, cg_op_lsr,	regAlpha, regTexData, regConstant8);
+				cg_create_inst_binary(block, cg_op_and,	regMaskedAlphaByte, regAlpha, regMask);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant7, 7);
+				cg_create_inst_binary(block, cg_op_lsr,	regShifted7, regMaskedAlphaByte, regConstant7);
+				cg_create_inst_binary(block, cg_op_add,	regTexColorA, regMaskedAlphaByte, regShifted7);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regMask5, 0x1f);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regMask6, 0x3f);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant2, 2);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant3, 3);
+				cg_create_inst_binary(block, cg_op_lsl,	regColor5, regTexData, regConstant3);
+				cg_create_inst_binary(block, cg_op_and,	regTexColorR, regColor5, regMask5);
+				cg_create_inst_binary(block, cg_op_lsl,	regColor6, regTexData, regConstant2);
+				cg_create_inst_binary(block, cg_op_and,	regTexColorG, regColor6, regMask6);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+				cg_create_inst_binary(block, cg_op_lsl,	regShiftedB, regTexColorB, regConstant11);
+				cg_create_inst_binary(block, cg_op_lsl,	regShiftedG, regTexColorG, regConstant5);
+				cg_create_inst_binary(block, cg_op_or,	regRG, regTexColorR, regShiftedG);
+				cg_create_inst_binary(block, cg_op_or,	regTexColor565, regRG, regShiftedB);
 
 				}
 				break;
@@ -590,35 +559,35 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 			case Texture::TextureFormatRGB:					// 5-6-5
 				//texColor = Color::From565(reinterpret_cast<const U16 *>(data)[texOffset]);
 				{
-				regTexColorR = nextRegister++;
-				regTexColorB = nextRegister++;
-				regTexColorG = nextRegister++;
-				regTexColorA = nextRegister++;
-				regTexColor565 = nextRegister++;
-				I32 regScaledOffset = nextRegister++;
-				I32 regConstantOne = nextRegister++;
-				I32 regTexAddr = nextRegister++;
-				I32 regMask5 = nextRegister++;
-				I32 regMask6 = nextRegister++;
-				I32 regConstant5 = nextRegister++;
-				I32 regShifted5 = nextRegister++;
-				I32 regConstant11 = nextRegister++;
-				I32 regShifted11 = nextRegister++;
+				regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regScaledOffset = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstantOne = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regTexAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regMask5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regMask6 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regShifted5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regShifted11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-				*block +=	IMMEDIATE	(ldi,	regConstantOne, Constant::createInt(1));
-				*block +=	BINARY		(lsl,	regScaledOffset, regTexOffset, regConstantOne);
-				*block +=	BINARY		(add,	regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
-				*block +=	LOAD		(ldh,	regTexColor565, regTexAddr, "fetch texture data");
-				*block +=	IMMEDIATE	(ldi,	regTexColorA, Constant::createInt(0x100));
-				*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-				*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-				*block +=	BINARY		(lsr,	regShifted5, regTexColor565, regConstant5);
-				*block +=	BINARY		(lsr,	regShifted11, regTexColor565, regConstant11);
-				*block +=	IMMEDIATE	(ldi,	regMask5, Constant::createInt(0x1f));
-				*block +=	IMMEDIATE	(ldi,	regMask6, Constant::createInt(0x3f));
-				*block +=	BINARY		(and,	regTexColorR, regTexColor565, regMask5);
-				*block +=	BINARY		(and,	regTexColorG, regShifted5, regMask6);
-				*block +=	BINARY		(and,	regTexColorB, regShifted11, regMask5);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstantOne, 1);
+				cg_create_inst_binary(block, cg_op_lsl,	regScaledOffset, regTexOffset, regConstantOne);
+				cg_create_inst_binary(block, cg_op_add,	regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
+				cg_create_inst_load(block, cg_op_ldh,	regTexColor565, regTexAddr);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regTexColorA, 0x100);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+				cg_create_inst_binary(block, cg_op_lsr,	regShifted5, regTexColor565, regConstant5);
+				cg_create_inst_binary(block, cg_op_lsr,	regShifted11, regTexColor565, regConstant11);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regMask5, 0x1f);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regMask6, 0x3f);
+				cg_create_inst_binary(block, cg_op_and,	regTexColorR, regTexColor565, regMask5);
+				cg_create_inst_binary(block, cg_op_and,	regTexColorG, regShifted5, regMask6);
+				cg_create_inst_binary(block, cg_op_and,	regTexColorB, regShifted11, regMask5);
 
 				}
 				break;
@@ -626,74 +595,74 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 			case Texture::TextureFormatRGBA:					// 5-5-5-1
 				//texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
 				{
-				I32 regTexData = nextRegister++;
-				I32 regScaledOffset = nextRegister++;
-				I32 regConstantOne = nextRegister++;
-				I32 regTexAddr = nextRegister++;
+				cg_virtual_reg_t * regTexData = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regScaledOffset = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstantOne = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regTexAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-				*block +=	IMMEDIATE	(ldi,	regConstantOne, Constant::createInt(1));
-				*block +=	BINARY		(lsl,	regScaledOffset, regTexOffset, regConstantOne);
-				*block +=	BINARY		(add,	regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
-				*block +=	LOAD		(ldh,	regTexData, regTexAddr, "fetch texture data");
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstantOne, 1);
+				cg_create_inst_binary(block, cg_op_lsl,	regScaledOffset, regTexOffset, regConstantOne);
+				cg_create_inst_binary(block, cg_op_add,	regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
+				cg_create_inst_load(block, cg_op_ldh,	regTexData, regTexAddr);
 
-				regTexColorA = nextRegister++;
-				I32 regConstant7 = nextRegister++;
-				I32 regShifted7 = nextRegister++;
-				I32 regMask100 = nextRegister++;
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant7 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regShifted7 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regMask100 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-				*block +=	IMMEDIATE	(ldi,	regConstant7, Constant::createInt(7));
-				*block +=	IMMEDIATE	(ldi,	regMask100, Constant::createInt(0x100));
-				*block +=	BINARY		(lsr,	regShifted7, regTexData, regConstant7);
-				*block +=	BINARY		(and,	regTexColorA, regShifted7, regMask100);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant7, 7);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regMask100, 0x100);
+				cg_create_inst_binary(block, cg_op_lsr,	regShifted7, regTexData, regConstant7);
+				cg_create_inst_binary(block, cg_op_and,	regTexColorA, regShifted7, regMask100);
 
-				I32 regMask5 = nextRegister++;
-				regTexColorR = nextRegister++;
-				regTexColorG = nextRegister++;
-				regTexColorB = nextRegister++;
-				I32 regMask51 = nextRegister++;
-				I32 regConstant4 = nextRegister++;
-				I32 regConstant10 = nextRegister++;
-				I32 regShifted4 = nextRegister++;
-				I32 regShifted10 = nextRegister++;
+				cg_virtual_reg_t * regMask5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regMask51 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant4 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant10 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regShifted4 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regShifted10 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-				*block +=	IMMEDIATE	(ldi,	regMask5, Constant::createInt(0x1f));
-				*block +=	BINARY		(and,	regTexColorR, regTexData, regMask5);
-				*block +=	IMMEDIATE	(ldi,	regMask51, Constant::createInt(0x3e));
-				*block +=	IMMEDIATE	(ldi,	regConstant4, Constant::createInt(4));
-				*block +=	IMMEDIATE	(ldi,	regConstant10, Constant::createInt(10));
-				*block +=	BINARY		(lsr,	regShifted4, regTexData, regConstant4);
-				*block +=	BINARY		(and,	regTexColorG, regShifted4, regMask51);
-				*block +=	BINARY		(lsr,	regShifted10, regTexData, regConstant10);
-				*block +=	BINARY		(and,	regTexColorB, regShifted10, regMask5);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regMask5, 0x1f);
+				cg_create_inst_binary(block, cg_op_and,	regTexColorR, regTexData, regMask5);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regMask51, 0x3e);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant4, 4);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant10, 10);
+				cg_create_inst_binary(block, cg_op_lsr,	regShifted4, regTexData, regConstant4);
+				cg_create_inst_binary(block, cg_op_and,	regTexColorG, regShifted4, regMask51);
+				cg_create_inst_binary(block, cg_op_lsr,	regShifted10, regTexData, regConstant10);
+				cg_create_inst_binary(block, cg_op_and,	regTexColorB, regShifted10, regMask5);
 
-				regTexColor565 = nextRegister++;
-				I32 regConstant5 = nextRegister++;
-				I32 regConstant11 = nextRegister++;
-				I32 regShiftedB = nextRegister++;
-				I32 regShiftedG = nextRegister++;
-				I32 regRG = nextRegister++;
+				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-				*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-				*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-				*block +=	BINARY		(lsl,	regShiftedB, regTexColorB, regConstant11);
-				*block +=	BINARY		(lsl,	regShiftedG, regTexColorG, regConstant5);
-				*block +=	BINARY		(or,	regRG, regTexColorR, regShiftedG);
-				*block +=	BINARY		(or,	regTexColor565, regRG, regShiftedB);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+				cg_create_inst_binary(block, cg_op_lsl,	regShiftedB, regTexColorB, regConstant11);
+				cg_create_inst_binary(block, cg_op_lsl,	regShiftedG, regTexColorG, regConstant5);
+				cg_create_inst_binary(block, cg_op_or,	regRG, regTexColorR, regShiftedG);
+				cg_create_inst_binary(block, cg_op_or,	regTexColor565, regRG, regShiftedB);
 				}
 				break;
 
 			default:
 				//texColor = Color(0xff, 0xff, 0xff, 0x100);
 				{
-				regTexColorR = regTexColorB = nextRegister++;
-				regTexColorG = nextRegister++;
-				regTexColorA = nextRegister++;
-				regTexColor565 = nextRegister++;
+				regTexColorR = regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-				*block +=	IMMEDIATE	(ldi,	regTexColorR, Constant::createInt(0x1f));
-				*block +=	IMMEDIATE	(ldi,	regTexColorG, Constant::createInt(0x3f));
-				*block +=	IMMEDIATE	(ldi,	regTexColorA, Constant::createInt(0x100));
-				*block +=	IMMEDIATE	(ldi,	regTexColor565, Constant::createInt(0xffff));
+				cg_create_inst_load_immed(block, cg_op_ldi,	regTexColorR, 0x1f);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regTexColorG, 0x3f);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regTexColorA, 0x100);
+				cg_create_inst_load_immed(block, cg_op_ldi,	regTexColor565, 0xffff);
 				}
 				break;
 		}
@@ -705,40 +674,40 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 					case RasterizerState::TextureModeReplace:
 						{
 						//color = Color(color.r, color.g, color.b, texColor.a);
-						regColorR = nextRegister++;
-						regColorG = nextRegister++;
-						regColorB = nextRegister++;
-						regColor565 = nextRegister++;
-						I32 regConstant31 = nextRegister++;
-						I32 regConstant63 = nextRegister++;
-						I32 regConstant16 = nextRegister++;
-						I32 regScaledR = nextRegister++;
-						I32 regScaledG = nextRegister++;
-						I32 regScaledB = nextRegister++;
+						regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant31 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant63 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regScaledR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regScaledG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regScaledB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant31, Constant::createInt(0x1f));
-						*block +=	IMMEDIATE	(ldi,	regConstant63, Constant::createInt(0x3f));
-						*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(0x10));
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant31, 0x1f);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant63, 0x3f);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant16, 0x10);
 
-						*block +=	BINARY		(mul,	regScaledR, fragmentInfo.regR, regConstant31);
-						*block +=	BINARY		(lsr,	regColorR, regScaledR, regConstant16);
-						*block +=	BINARY		(mul,	regScaledG, fragmentInfo.regG, regConstant63);
-						*block +=	BINARY		(lsr,	regColorG, regScaledG, regConstant16);
-						*block +=	BINARY		(mul,	regScaledB, fragmentInfo.regB, regConstant31);
-						*block +=	BINARY		(lsr,	regColorB, regScaledB, regConstant16);
+						cg_create_inst_binary(block, cg_op_mul,	regScaledR, fragmentInfo.regR, regConstant31);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorR, regScaledR, regConstant16);
+						cg_create_inst_binary(block, cg_op_mul,	regScaledG, fragmentInfo.regG, regConstant63);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorG, regScaledG, regConstant16);
+						cg_create_inst_binary(block, cg_op_mul,	regScaledB, fragmentInfo.regB, regConstant31);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorB, regScaledB, regConstant16);
 
-						I32 regConstant5 = nextRegister++;
-						I32 regConstant11 = nextRegister++;
-						I32 regShiftedB = nextRegister++;
-						I32 regShiftedG = nextRegister++;
-						I32 regRG = nextRegister++;
+						cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-						*block +=	BINARY		(lsl,	regShiftedB, regTexColorB, regConstant11);
-						*block +=	BINARY		(lsl,	regShiftedG, regTexColorG, regConstant5);
-						*block +=	BINARY		(or,	regRG, regTexColorR, regShiftedG);
-						*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+						cg_create_inst_binary(block, cg_op_lsl,	regShiftedB, regTexColorB, regConstant11);
+						cg_create_inst_binary(block, cg_op_lsl,	regShiftedG, regTexColorG, regConstant5);
+						cg_create_inst_binary(block, cg_op_or,	regRG, regTexColorR, regShiftedG);
+						cg_create_inst_binary(block, cg_op_or,	regColor565, regRG, regShiftedB);
 
 						regColorA = regTexColorA;
 						}
@@ -750,46 +719,46 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 					case RasterizerState::TextureModeAdd:
 						{
 						//color = Color(color.r, color.g, color.b, MulU8(color.a, texColor.a));
-						regColorR = nextRegister++;
-						regColorG = nextRegister++;
-						regColorB = nextRegister++;
-						I32 regConstant31 = nextRegister++;
-						I32 regConstant63 = nextRegister++;
-						I32 regConstant16 = nextRegister++;
-						I32 regScaledR = nextRegister++;
-						I32 regScaledG = nextRegister++;
-						I32 regScaledB = nextRegister++;
+						regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant31 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant63 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regScaledR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regScaledG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regScaledB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant31, Constant::createInt(0x1f));
-						*block +=	IMMEDIATE	(ldi,	regConstant63, Constant::createInt(0x3f));
-						*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(0x10));
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant31, 0x1f);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant63, 0x3f);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant16, 0x10);
 
-						*block +=	BINARY		(mul,	regScaledR, fragmentInfo.regR, regConstant31);
-						*block +=	BINARY		(lsr,	regColorR, regScaledR, regConstant16);
-						*block +=	BINARY		(mul,	regScaledG, fragmentInfo.regG, regConstant63);
-						*block +=	BINARY		(lsr,	regColorG, regScaledG, regConstant16);
-						*block +=	BINARY		(mul,	regScaledB, fragmentInfo.regB, regConstant31);
-						*block +=	BINARY		(lsr,	regColorB, regScaledB, regConstant16);
+						cg_create_inst_binary(block, cg_op_mul,	regScaledR, fragmentInfo.regR, regConstant31);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorR, regScaledR, regConstant16);
+						cg_create_inst_binary(block, cg_op_mul,	regScaledG, fragmentInfo.regG, regConstant63);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorG, regScaledG, regConstant16);
+						cg_create_inst_binary(block, cg_op_mul,	regScaledB, fragmentInfo.regB, regConstant31);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorB, regScaledB, regConstant16);
 
-						I32 regConstant5 = nextRegister++;
-						I32 regConstant11 = nextRegister++;
-						I32 regShiftedB = nextRegister++;
-						I32 regShiftedG = nextRegister++;
-						I32 regRG = nextRegister++;
-						regColor565 = nextRegister++;
+						cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-						*block +=	BINARY		(lsl,	regShiftedB, regTexColorB, regConstant11);
-						*block +=	BINARY		(lsl,	regShiftedG, regTexColorG, regConstant5);
-						*block +=	BINARY		(or,	regRG, regTexColorR, regShiftedG);
-						*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+						cg_create_inst_binary(block, cg_op_lsl,	regShiftedB, regTexColorB, regConstant11);
+						cg_create_inst_binary(block, cg_op_lsl,	regShiftedG, regTexColorG, regConstant5);
+						cg_create_inst_binary(block, cg_op_or,	regRG, regTexColorR, regShiftedG);
+						cg_create_inst_binary(block, cg_op_or,	regColor565, regRG, regShiftedB);
 
-						I32 regAlphaProduct = nextRegister++;
-						regColorA = nextRegister++;
+						cg_virtual_reg_t * regAlphaProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	BINARY		(mul,	regAlphaProduct, fragmentInfo.regA, regTexColorA);
-						*block +=	BINARY		(lsr,	regColorA, regAlphaProduct, regConstant16);
+						cg_create_inst_binary(block, cg_op_mul,	regAlphaProduct, fragmentInfo.regA, regTexColorA);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorA, regAlphaProduct, regConstant16);
 						}
 
 						break;
@@ -806,12 +775,12 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 						regColorR = regTexColorR;
 						regColorG = regTexColorG;
 						regColorB = regTexColorB;
-						regColorA = nextRegister++;
+						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 						regColor565 = regTexColor565;
-						I32 regConstant8 = nextRegister++;
+						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
-						*block +=	BINARY		(lsr,	regColorA, fragmentInfo.regA, regConstant8);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant8, 8);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorA, fragmentInfo.regA, regConstant8);
 						}
 
 						break;
@@ -820,40 +789,40 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 						{
 						//color = Color(MulU8(color.r, texColor.r), 
 						//	MulU8(color.g, texColor.g), MulU8(color.b, texColor.b), color.a);
-						regColorR = nextRegister++;
-						regColorG = nextRegister++;
-						regColorB = nextRegister++;
-						regColorA = nextRegister++;
-						I32 regConstant8 = nextRegister++;
-						I32 regConstant16 = nextRegister++;
-						I32 regScaledR = nextRegister++;
-						I32 regScaledG = nextRegister++;
-						I32 regScaledB = nextRegister++;
+						regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regScaledR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regScaledG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regScaledB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
-						*block +=	BINARY		(lsr,	regColorA, fragmentInfo.regA, regConstant8);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant8, 8);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorA, fragmentInfo.regA, regConstant8);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(16));
-						*block +=	BINARY		(mul,	regScaledR, regTexColorR, fragmentInfo.regR);
-						*block +=	BINARY		(lsr,	regColorR, regScaledR, regConstant16);
-						*block +=	BINARY		(mul,	regScaledG, regTexColorG, fragmentInfo.regG);
-						*block +=	BINARY		(lsr,	regColorG, regScaledG, regConstant16);
-						*block +=	BINARY		(mul,	regScaledB, regTexColorB, fragmentInfo.regB);
-						*block +=	BINARY		(lsr,	regColorB, regScaledB, regConstant16);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant16, 16);
+						cg_create_inst_binary(block, cg_op_mul,	regScaledR, regTexColorR, fragmentInfo.regR);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorR, regScaledR, regConstant16);
+						cg_create_inst_binary(block, cg_op_mul,	regScaledG, regTexColorG, fragmentInfo.regG);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorG, regScaledG, regConstant16);
+						cg_create_inst_binary(block, cg_op_mul,	regScaledB, regTexColorB, fragmentInfo.regB);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorB, regScaledB, regConstant16);
 
-						I32 regConstant5 = nextRegister++;
-						I32 regConstant11 = nextRegister++;
-						I32 regShiftedB = nextRegister++;
-						I32 regShiftedG = nextRegister++;
-						I32 regRG = nextRegister++;
-						regColor565 = nextRegister++;
+						cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-						*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
-						*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
-						*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
-						*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+						cg_create_inst_binary(block, cg_op_lsl,	regShiftedB, regColorB, regConstant11);
+						cg_create_inst_binary(block, cg_op_lsl,	regShiftedG, regColorG, regConstant5);
+						cg_create_inst_binary(block, cg_op_or,	regRG, regColorR, regShiftedG);
+						cg_create_inst_binary(block, cg_op_or,	regColor565, regRG, regShiftedB);
 						}
 
 						break;
@@ -866,108 +835,108 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 						//		MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
 						//		MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
 						//		color.a);
-						regColorA = nextRegister++;
-						I32 regConstant2 = nextRegister++;
-						I32 regConstant3 = nextRegister++;
-						I32 regConstant8 = nextRegister++;
-						I32 regConstant15 = nextRegister++;
+						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant3 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant15 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant2, Constant::createInt(2));
-						*block +=	IMMEDIATE	(ldi,	regConstant3, Constant::createInt(3));
-						*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
-						*block +=	BINARY		(lsr,	regColorA, fragmentInfo.regA, regConstant8);
-						*block +=	IMMEDIATE	(ldi,	regConstant15, Constant::createInt(15));
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant2, 2);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant3, 3);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant8, 8);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorA, fragmentInfo.regA, regConstant8);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant15, 15);
 
 						// red component
 						{
-							regColorR = nextRegister++;
-							I32 regShifted = nextRegister++;
-							I32 regAdjusted = nextRegister++;
-							I32 regColorAdjusted = nextRegister++;
+							regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regColorAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regR, regConstant15);
-							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regR, regShifted);
-							*block +=	BINARY		(lsr,	regColorAdjusted, regAdjusted, regConstant3);
+							cg_create_inst_binary(block, cg_op_lsr,	regShifted, fragmentInfo.regR, regConstant15);
+							cg_create_inst_binary(block, cg_op_sub,	regAdjusted, fragmentInfo.regR, regShifted);
+							cg_create_inst_binary(block, cg_op_lsr,	regColorAdjusted, regAdjusted, regConstant3);
 
-							I32 regShiftedAdjusted = nextRegister++;
-							I32	regDiff = nextRegister++;
-							I32 regTexEnv = nextRegister++;
-							I32 regProduct = nextRegister++;
-							I32 regDifference = nextRegister++;
+							cg_virtual_reg_t * regShiftedAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t *	regDiff = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regTexEnv = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regDifference = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
-							*block +=	IMMEDIATE	(ldi,	regTexEnv, Constant::createInt(m_State->m_TexEnvColor.r));
-							*block +=	BINARY		(sub,	regDiff, regShiftedAdjusted, regTexEnv);
-							*block +=	BINARY		(mul,	regProduct, regDiff, regTexColorR);
-							*block +=	BINARY		(sub,	regDifference, regColorAdjusted, regProduct);
-							*block +=	BINARY		(lsr,	regColorR, regDifference, regConstant8);
+							cg_create_inst_binary(block, cg_op_lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regTexEnv, m_State->m_TexEnvColor.r);
+							cg_create_inst_binary(block, cg_op_sub,	regDiff, regShiftedAdjusted, regTexEnv);
+							cg_create_inst_binary(block, cg_op_mul,	regProduct, regDiff, regTexColorR);
+							cg_create_inst_binary(block, cg_op_sub,	regDifference, regColorAdjusted, regProduct);
+							cg_create_inst_binary(block, cg_op_lsr,	regColorR, regDifference, regConstant8);
 						}
 
 						// green component
 						{
-							regColorG = nextRegister++;
-							I32 regShifted = nextRegister++;
-							I32 regAdjusted = nextRegister++;
-							I32 regColorAdjusted = nextRegister++;
+							regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regColorAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regG, regConstant15);
-							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regG, regShifted);
-							*block +=	BINARY		(lsr,	regColorAdjusted, regAdjusted, regConstant2);
+							cg_create_inst_binary(block, cg_op_lsr,	regShifted, fragmentInfo.regG, regConstant15);
+							cg_create_inst_binary(block, cg_op_sub,	regAdjusted, fragmentInfo.regG, regShifted);
+							cg_create_inst_binary(block, cg_op_lsr,	regColorAdjusted, regAdjusted, regConstant2);
 
-							I32 regShiftedAdjusted = nextRegister++;
-							I32	regDiff = nextRegister++;
-							I32 regTexEnv = nextRegister++;
-							I32 regProduct = nextRegister++;
-							I32 regDifference = nextRegister++;
+							cg_virtual_reg_t * regShiftedAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t *	regDiff = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regTexEnv = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regDifference = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
-							*block +=	IMMEDIATE	(ldi,	regTexEnv, Constant::createInt(m_State->m_TexEnvColor.g));
-							*block +=	BINARY		(sub,	regDiff, regShiftedAdjusted, regTexEnv);
-							*block +=	BINARY		(mul,	regProduct, regDiff, regTexColorG);
-							*block +=	BINARY		(sub,	regDifference, regColorAdjusted, regProduct);
-							*block +=	BINARY		(lsr,	regColorG, regDifference, regConstant8);
+							cg_create_inst_binary(block, cg_op_lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regTexEnv, m_State->m_TexEnvColor.g);
+							cg_create_inst_binary(block, cg_op_sub,	regDiff, regShiftedAdjusted, regTexEnv);
+							cg_create_inst_binary(block, cg_op_mul,	regProduct, regDiff, regTexColorG);
+							cg_create_inst_binary(block, cg_op_sub,	regDifference, regColorAdjusted, regProduct);
+							cg_create_inst_binary(block, cg_op_lsr,	regColorG, regDifference, regConstant8);
 						}
 
 						// blue component
 						{
-							regColorB = nextRegister++;
-							I32 regShifted = nextRegister++;
-							I32 regAdjusted = nextRegister++;
-							I32 regColorAdjusted = nextRegister++;
+							regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regColorAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regB, regConstant15);
-							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regB, regShifted);
-							*block +=	BINARY		(lsr,	regColorAdjusted, regAdjusted, regConstant3);
+							cg_create_inst_binary(block, cg_op_lsr,	regShifted, fragmentInfo.regB, regConstant15);
+							cg_create_inst_binary(block, cg_op_sub,	regAdjusted, fragmentInfo.regB, regShifted);
+							cg_create_inst_binary(block, cg_op_lsr,	regColorAdjusted, regAdjusted, regConstant3);
 
-							I32 regShiftedAdjusted = nextRegister++;
-							I32	regDiff = nextRegister++;
-							I32 regTexEnv = nextRegister++;
-							I32 regProduct = nextRegister++;
-							I32 regDifference = nextRegister++;
+							cg_virtual_reg_t * regShiftedAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t *	regDiff = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regTexEnv = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regDifference = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
-							*block +=	IMMEDIATE	(ldi,	regTexEnv, Constant::createInt(m_State->m_TexEnvColor.b));
-							*block +=	BINARY		(sub,	regDiff, regShiftedAdjusted, regTexEnv);
-							*block +=	BINARY		(mul,	regProduct, regDiff, regTexColorB);
-							*block +=	BINARY		(sub,	regDifference, regColorAdjusted, regProduct);
-							*block +=	BINARY		(lsr,	regColorB, regDifference, regConstant8);
+							cg_create_inst_binary(block, cg_op_lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regTexEnv, m_State->m_TexEnvColor.b);
+							cg_create_inst_binary(block, cg_op_sub,	regDiff, regShiftedAdjusted, regTexEnv);
+							cg_create_inst_binary(block, cg_op_mul,	regProduct, regDiff, regTexColorB);
+							cg_create_inst_binary(block, cg_op_sub,	regDifference, regColorAdjusted, regProduct);
+							cg_create_inst_binary(block, cg_op_lsr,	regColorB, regDifference, regConstant8);
 						}
 
 						// create RGB 565 representation
 						{
-							I32 regConstant5 = nextRegister++;
-							I32 regConstant11 = nextRegister++;
-							I32 regShiftedB = nextRegister++;
-							I32 regShiftedG = nextRegister++;
-							I32 regRG = nextRegister++;
-							regColor565 = nextRegister++;
+							cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-							*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-							*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
-							*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
-							*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
-							*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+							cg_create_inst_binary(block, cg_op_lsl,	regShiftedB, regColorB, regConstant11);
+							cg_create_inst_binary(block, cg_op_lsl,	regShiftedG, regColorG, regConstant5);
+							cg_create_inst_binary(block, cg_op_or,	regRG, regColorR, regShiftedG);
+							cg_create_inst_binary(block, cg_op_or,	regColor565, regRG, regShiftedB);
 						}
 						}
 
@@ -981,113 +950,104 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 						//		ClampU8(color.g + texColor.g),
 						//		ClampU8(color.b + texColor.b),
 						//		color.a);
-						regColorA = nextRegister++;
-						I32 regConstant10 = nextRegister++;
-						I32 regConstant11 = nextRegister++;
-						I32 regConstant8 = nextRegister++;
-						I32 regConstant255 = nextRegister++;
+						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant10 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant255 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant10, Constant::createInt(10));
-						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-						*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
-						*block +=	BINARY		(lsr,	regColorA, fragmentInfo.regA, regConstant8);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant10, 10);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant8, 8);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorA, fragmentInfo.regA, regConstant8);
 
 						// R channel
 						{
-							regColorR = nextRegister++;
-							I32 regScaledR = nextRegister++;
-							I32 regShiftedR = nextRegister++;
-							I32 regSumR = nextRegister++;
-							I32 regNeedsClampingR = nextRegister++;
+							regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regScaledR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regSumR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regNeedsClampingR = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant255, Constant::createInt(0x1f));
-							*block +=	BINARY		(lsr,	regShiftedR, fragmentInfo.regR, regConstant11);
-							*block +=	BINARY		(add,	regSumR, regShiftedR, regTexColorR);
-							*block +=	COMPARE		(cmp,	regNeedsClampingR, regSumR, regConstant255);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant255, 0x1f);
+							cg_create_inst_binary(block, cg_op_lsr,	regShiftedR, fragmentInfo.regR, regConstant11);
+							cg_create_inst_binary(block, cg_op_add,	regSumR, regShiftedR, regTexColorR);
+							cg_create_inst_compare(block, cg_op_cmp,	regNeedsClampingR, regSumR, regConstant255);
 
-							Label * noClampingR = Label::create("noClampingR", LabelBlock);
-							I32 regClampedR = nextRegister++;
+							cg_block_ref_t * noClampingR = cg_block_ref_create(procedure);
+							cg_virtual_reg_t * regClampedR = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BCOND		(ble,	regNeedsClampingR, noClampingR);
-							*block +=	IMMEDIATE	(ldi,	regClampedR, Constant::createInt(0x1f));
+							cg_create_inst_branch_cond(block, cg_op_ble,	regNeedsClampingR, noClampingR);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regClampedR, 0x1f);
 
-							Block& blockClampingR = *new Block(procedure);
-							procedure->blocks.push_back(&blockClampingR);
-							noClampingR->block.block = &blockClampingR;
-							blockClampingR.labels.push_back(noClampingR);
-							block = &blockClampingR;
+							block = cg_block_create(procedure);
+							noClampingR->block = block;
 
-							*block +=	PHI			(phi,	regColorR, REG_LIST(regClampedR, regSumR));
+							cg_create_inst_phi(block, cg_op_phi,	regColorR, cg_create_virtual_reg_list(procedure->module->heap, regClampedR, regSumR, NULL));
 						}
 						// G channel
 						{
-							regColorG = nextRegister++;
-							I32 regScaledG = nextRegister++;
-							I32 regShiftedG = nextRegister++;
-							I32 regSumG = nextRegister++;
-							I32 regNeedsClampingG = nextRegister++;
+							regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regScaledG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regSumG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regNeedsClampingG = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant255, Constant::createInt(0x3f));
-							*block +=	BINARY		(lsr,	regShiftedG, fragmentInfo.regG, regConstant10);
-							*block +=	BINARY		(add,	regSumG, regShiftedG, regTexColorR);
-							*block +=	COMPARE		(cmp,	regNeedsClampingG, regSumG, regConstant255);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant255, 0x3f);
+							cg_create_inst_binary(block, cg_op_lsr,	regShiftedG, fragmentInfo.regG, regConstant10);
+							cg_create_inst_binary(block, cg_op_add,	regSumG, regShiftedG, regTexColorR);
+							cg_create_inst_compare(block, cg_op_cmp,	regNeedsClampingG, regSumG, regConstant255);
 
-							Label * noClampingG = Label::create("noClampingG", LabelBlock);
-							I32 regClampedG = nextRegister++;
+							cg_block_ref_t * noClampingG = cg_block_ref_create(procedure);
+							cg_virtual_reg_t * regClampedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BCOND		(ble,	regNeedsClampingG, noClampingG);
-							*block +=	IMMEDIATE	(ldi,	regClampedG, Constant::createInt(0x3f));
+							cg_create_inst_branch_cond(block, cg_op_ble,	regNeedsClampingG, noClampingG);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regClampedG, 0x3f);
 
-							Block& blockClampingG = *new Block(procedure);
-							procedure->blocks.push_back(&blockClampingG);
-							noClampingG->block.block = &blockClampingG;
-							blockClampingG.labels.push_back(noClampingG);
-							block = &blockClampingG;
+							block = cg_block_create(procedure);
+							noClampingG->block = block;
 
-							*block +=	PHI			(phi,	regColorG, REG_LIST(regClampedG, regSumG));
+							cg_create_inst_phi(block, cg_op_phi,	regColorG, cg_create_virtual_reg_list(procedure->module->heap, regClampedG, regSumG, NULL));
 						}
 						// B channel
 						{
-							regColorB = nextRegister++;
-							I32 regScaledB = nextRegister++;
-							I32 regShiftedB = nextRegister++;
-							I32 regSumB = nextRegister++;
-							I32 regNeedsClampingB = nextRegister++;
+							regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regScaledB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regSumB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regNeedsClampingB = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant255, Constant::createInt(0x1f));
-							*block +=	BINARY		(lsr,	regShiftedB, fragmentInfo.regB, regConstant10);
-							*block +=	BINARY		(add,	regSumB, regShiftedB, regTexColorR);
-							*block +=	COMPARE		(cmp,	regNeedsClampingB, regSumB, regConstant255);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant255, 0x1f);
+							cg_create_inst_binary(block, cg_op_lsr,	regShiftedB, fragmentInfo.regB, regConstant10);
+							cg_create_inst_binary(block, cg_op_add,	regSumB, regShiftedB, regTexColorR);
+							cg_create_inst_compare(block, cg_op_cmp,	regNeedsClampingB, regSumB, regConstant255);
 
-							Label * noClampingB = Label::create("noClampingB", LabelBlock);
-							I32 regClampedB = nextRegister++;
+							cg_block_ref_t * noClampingB = cg_block_ref_create(procedure);
+							cg_virtual_reg_t * regClampedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BCOND		(ble,	regNeedsClampingB, noClampingB);
-							*block +=	IMMEDIATE	(ldi,	regClampedB, Constant::createInt(0x1f));
+							cg_create_inst_branch_cond(block, cg_op_ble,	regNeedsClampingB, noClampingB);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regClampedB, 0x1f);
 
-							Block& blockClampingB = *new Block(procedure);
-							procedure->blocks.push_back(&blockClampingB);
-							noClampingB->block.block = &blockClampingB;
-							blockClampingB.labels.push_back(noClampingB);
-							block = &blockClampingB;
+							block = cg_block_create(procedure);
+							noClampingB->block = block;
 
-							*block +=	PHI			(phi,	regColorB, REG_LIST(regClampedB, regSumB));
+							cg_create_inst_phi(block, cg_op_phi,	regColorB, cg_create_virtual_reg_list(procedure->module->heap, regClampedB, regSumB, NULL));
 						}
 						// create RGB 565 representation
 						{
-							I32 regConstant5 = nextRegister++;
-							I32 regConstant11 = nextRegister++;
-							I32 regShiftedB = nextRegister++;
-							I32 regShiftedG = nextRegister++;
-							I32 regRG = nextRegister++;
-							regColor565 = nextRegister++;
+							cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-							*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-							*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
-							*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
-							*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
-							*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+							cg_create_inst_binary(block, cg_op_lsl,	regShiftedB, regColorB, regConstant11);
+							cg_create_inst_binary(block, cg_op_lsl,	regShiftedG, regColorG, regConstant5);
+							cg_create_inst_binary(block, cg_op_or,	regRG, regColorR, regShiftedG);
+							cg_create_inst_binary(block, cg_op_or,	regColor565, regRG, regShiftedB);
 						}
 						}
 
@@ -1113,41 +1073,41 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 					case RasterizerState::TextureModeModulate:
 						{
 						//color = color * texColor;
-						regColorR = nextRegister++;
-						regColorG = nextRegister++;
-						regColorB = nextRegister++;
-						regColorA = nextRegister++;
-						I32 regConstant8 = nextRegister++;
-						I32 regConstant16 = nextRegister++;
-						I32 regScaledR = nextRegister++;
-						I32 regScaledG = nextRegister++;
-						I32 regScaledB = nextRegister++;
-						I32 regAlphaProduct = nextRegister++;
+						regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regScaledR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regScaledG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regScaledB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regAlphaProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(16));
-						*block +=	BINARY		(mul,	regAlphaProduct, fragmentInfo.regA, regTexColorA);
-						*block +=	BINARY		(lsr,	regColorA, regAlphaProduct, regConstant16);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant16, 16);
+						cg_create_inst_binary(block, cg_op_mul,	regAlphaProduct, fragmentInfo.regA, regTexColorA);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorA, regAlphaProduct, regConstant16);
 
-						*block +=	BINARY		(mul,	regScaledR, regTexColorR, fragmentInfo.regR);
-						*block +=	BINARY		(lsr,	regColorR, regScaledR, regConstant16);
-						*block +=	BINARY		(mul,	regScaledG, regTexColorG, fragmentInfo.regG);
-						*block +=	BINARY		(lsr,	regColorG, regScaledG, regConstant16);
-						*block +=	BINARY		(mul,	regScaledB, regTexColorB, fragmentInfo.regB);
-						*block +=	BINARY		(lsr,	regColorB, regScaledB, regConstant16);
+						cg_create_inst_binary(block, cg_op_mul,	regScaledR, regTexColorR, fragmentInfo.regR);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorR, regScaledR, regConstant16);
+						cg_create_inst_binary(block, cg_op_mul,	regScaledG, regTexColorG, fragmentInfo.regG);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorG, regScaledG, regConstant16);
+						cg_create_inst_binary(block, cg_op_mul,	regScaledB, regTexColorB, fragmentInfo.regB);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorB, regScaledB, regConstant16);
 
-						I32 regConstant5 = nextRegister++;
-						I32 regConstant11 = nextRegister++;
-						I32 regShiftedB = nextRegister++;
-						I32 regShiftedG = nextRegister++;
-						I32 regRG = nextRegister++;
-						regColor565 = nextRegister++;
+						cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-						*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
-						*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
-						*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
-						*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+						cg_create_inst_binary(block, cg_op_lsl,	regShiftedB, regColorB, regConstant11);
+						cg_create_inst_binary(block, cg_op_lsl,	regShiftedG, regColorG, regConstant5);
+						cg_create_inst_binary(block, cg_op_or,	regRG, regColorR, regShiftedG);
+						cg_create_inst_binary(block, cg_op_or,	regColor565, regRG, regShiftedB);
 
 						}
 
@@ -1162,102 +1122,102 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 						//		MulU8(color.b, 0xff - texColor.a) + MulU8(texColor.b, texColor.a),
 						//		color.a);
 
-						regColorA = nextRegister++;
-						I32 regConstant2 = nextRegister++;
-						I32 regConstant3 = nextRegister++;
-						I32 regConstant8 = nextRegister++;
-						I32 regConstant10 = nextRegister++;
-						I32 regConstant11 = nextRegister++;
-						I32 regConstant15 = nextRegister++;
-						I32 regShiftedA = nextRegister++;
+						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant3 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant10 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant15 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regShiftedA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant2, Constant::createInt(2));
-						*block +=	IMMEDIATE	(ldi,	regConstant3, Constant::createInt(3));
-						*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
-						*block +=	IMMEDIATE	(ldi,	regConstant10, Constant::createInt(10));
-						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-						*block +=	IMMEDIATE	(ldi,	regConstant15, Constant::createInt(15));
-						*block +=	BINARY		(lsr,	regShiftedA, fragmentInfo.regA, regConstant15);
-						*block +=	BINARY		(sub,	regColorA, fragmentInfo.regA, regShiftedA);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant2, 2);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant3, 3);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant8, 8);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant10, 10);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant15, 15);
+						cg_create_inst_binary(block, cg_op_lsr,	regShiftedA, fragmentInfo.regA, regConstant15);
+						cg_create_inst_binary(block, cg_op_sub,	regColorA, fragmentInfo.regA, regShiftedA);
 
 						// red component
 						{
-							I32 regShifted = nextRegister++;
-							I32 regAdjusted = nextRegister++;
-							I32 regToColor = nextRegister++;
-							I32 regDeltaColor = nextRegister++;
-							I32 regProduct = nextRegister++;
-							I32 regColorShift = nextRegister++;
-							I32 regDelta = nextRegister++;
-							regColorR = nextRegister++;
+							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regToColor = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regDeltaColor = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regColorShift = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regDelta = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regR, regConstant15);
-							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regR, regShifted);
-							*block +=	BINARY		(lsr,	regToColor, regAdjusted, regConstant11);
-							*block +=	BINARY		(sub,	regDeltaColor, regTexColorR, regToColor);
-							*block +=	BINARY		(mul,	regProduct, regDeltaColor, regTexColorA);	
-							*block +=	BINARY		(lsr,	regColorShift, regAdjusted, regConstant3);
-							*block +=	BINARY		(add,	regDelta, regColorShift, regProduct);
-							*block +=	BINARY		(asr,	regColorR, regDelta, regConstant8);
+							cg_create_inst_binary(block, cg_op_lsr,	regShifted, fragmentInfo.regR, regConstant15);
+							cg_create_inst_binary(block, cg_op_sub,	regAdjusted, fragmentInfo.regR, regShifted);
+							cg_create_inst_binary(block, cg_op_lsr,	regToColor, regAdjusted, regConstant11);
+							cg_create_inst_binary(block, cg_op_sub,	regDeltaColor, regTexColorR, regToColor);
+							cg_create_inst_binary(block, cg_op_mul,	regProduct, regDeltaColor, regTexColorA);	
+							cg_create_inst_binary(block, cg_op_lsr,	regColorShift, regAdjusted, regConstant3);
+							cg_create_inst_binary(block, cg_op_add,	regDelta, regColorShift, regProduct);
+							cg_create_inst_binary(block, cg_op_asr,	regColorR, regDelta, regConstant8);
 						}
 
 						// green component
 						{
-							I32 regShifted = nextRegister++;
-							I32 regAdjusted = nextRegister++;
-							I32 regToColor = nextRegister++;
-							I32 regDeltaColor = nextRegister++;
-							I32 regProduct = nextRegister++;
-							I32 regColorShift = nextRegister++;
-							I32 regDelta = nextRegister++;
-							regColorG = nextRegister++;
+							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regToColor = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regDeltaColor = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regColorShift = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regDelta = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regG, regConstant15);
-							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regG, regShifted);
-							*block +=	BINARY		(lsr,	regToColor, regAdjusted, regConstant10);
-							*block +=	BINARY		(sub,	regDeltaColor, regTexColorG, regToColor);
-							*block +=	BINARY		(mul,	regProduct, regDeltaColor, regTexColorA);	
-							*block +=	BINARY		(lsr,	regColorShift, regAdjusted, regConstant2);
-							*block +=	BINARY		(add,	regDelta, regColorShift, regProduct);
-							*block +=	BINARY		(asr,	regColorG, regDelta, regConstant8);
+							cg_create_inst_binary(block, cg_op_lsr,	regShifted, fragmentInfo.regG, regConstant15);
+							cg_create_inst_binary(block, cg_op_sub,	regAdjusted, fragmentInfo.regG, regShifted);
+							cg_create_inst_binary(block, cg_op_lsr,	regToColor, regAdjusted, regConstant10);
+							cg_create_inst_binary(block, cg_op_sub,	regDeltaColor, regTexColorG, regToColor);
+							cg_create_inst_binary(block, cg_op_mul,	regProduct, regDeltaColor, regTexColorA);	
+							cg_create_inst_binary(block, cg_op_lsr,	regColorShift, regAdjusted, regConstant2);
+							cg_create_inst_binary(block, cg_op_add,	regDelta, regColorShift, regProduct);
+							cg_create_inst_binary(block, cg_op_asr,	regColorG, regDelta, regConstant8);
 						}
 
 						// blue component
 						{
-							I32 regShifted = nextRegister++;
-							I32 regAdjusted = nextRegister++;
-							I32 regToColor = nextRegister++;
-							I32 regDeltaColor = nextRegister++;
-							I32 regProduct = nextRegister++;
-							I32 regColorShift = nextRegister++;
-							I32 regDelta = nextRegister++;
-							regColorB = nextRegister++;
+							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regToColor = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regDeltaColor = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regColorShift = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regDelta = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regB, regConstant15);
-							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regB, regShifted);
-							*block +=	BINARY		(lsr,	regToColor, regAdjusted, regConstant11);
-							*block +=	BINARY		(sub,	regDeltaColor, regTexColorB, regToColor);
-							*block +=	BINARY		(mul,	regProduct, regDeltaColor, regTexColorA);	
-							*block +=	BINARY		(lsr,	regColorShift, regAdjusted, regConstant3);
-							*block +=	BINARY		(add,	regDelta, regColorShift, regProduct);
-							*block +=	BINARY		(asr,	regColorB, regDelta, regConstant8);
+							cg_create_inst_binary(block, cg_op_lsr,	regShifted, fragmentInfo.regB, regConstant15);
+							cg_create_inst_binary(block, cg_op_sub,	regAdjusted, fragmentInfo.regB, regShifted);
+							cg_create_inst_binary(block, cg_op_lsr,	regToColor, regAdjusted, regConstant11);
+							cg_create_inst_binary(block, cg_op_sub,	regDeltaColor, regTexColorB, regToColor);
+							cg_create_inst_binary(block, cg_op_mul,	regProduct, regDeltaColor, regTexColorA);	
+							cg_create_inst_binary(block, cg_op_lsr,	regColorShift, regAdjusted, regConstant3);
+							cg_create_inst_binary(block, cg_op_add,	regDelta, regColorShift, regProduct);
+							cg_create_inst_binary(block, cg_op_asr,	regColorB, regDelta, regConstant8);
 						}
 
 						// create RGB 565 representation
 						{
-							I32 regConstant5 = nextRegister++;
-							I32 regConstant11 = nextRegister++;
-							I32 regShiftedB = nextRegister++;
-							I32 regShiftedG = nextRegister++;
-							I32 regRG = nextRegister++;
-							regColor565 = nextRegister++;
+							cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-							*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-							*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
-							*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
-							*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
-							*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+							cg_create_inst_binary(block, cg_op_lsl,	regShiftedB, regColorB, regConstant11);
+							cg_create_inst_binary(block, cg_op_lsl,	regShiftedG, regColorG, regConstant5);
+							cg_create_inst_binary(block, cg_op_or,	regRG, regColorR, regShiftedG);
+							cg_create_inst_binary(block, cg_op_or,	regColor565, regRG, regShiftedB);
 						}
 						}
 
@@ -1271,112 +1231,112 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 						//		MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
 						//		MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
 						//		MulU8(color.a, texColor.a));
-						regColorA = nextRegister++;
-						I32 regConstant2 = nextRegister++;
-						I32 regConstant3 = nextRegister++;
-						I32 regConstant8 = nextRegister++;
-						I32 regConstant15 = nextRegister++;
-						I32 regConstant16 = nextRegister++;
-						I32 regAlphaProduct = nextRegister++;
+						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant3 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant15 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regAlphaProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant2, Constant::createInt(2));
-						*block +=	IMMEDIATE	(ldi,	regConstant3, Constant::createInt(3));
-						*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
-						*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(16));
-						*block +=	BINARY		(mul,	regAlphaProduct, fragmentInfo.regA, regTexColorA);
-						*block +=	BINARY		(lsr,	regColorA, regAlphaProduct, regConstant16);
-						*block +=	IMMEDIATE	(ldi,	regConstant15, Constant::createInt(15));
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant2, 2);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant3, 3);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant8, 8);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant16, 16);
+						cg_create_inst_binary(block, cg_op_mul,	regAlphaProduct, fragmentInfo.regA, regTexColorA);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorA, regAlphaProduct, regConstant16);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant15, 15);
 
 						// red component
 						{
-							regColorR = nextRegister++;
-							I32 regShifted = nextRegister++;
-							I32 regAdjusted = nextRegister++;
-							I32 regColorAdjusted = nextRegister++;
+							regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regColorAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regR, regConstant15);
-							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regR, regShifted);
-							*block +=	BINARY		(lsr,	regColorAdjusted, regAdjusted, regConstant3);
+							cg_create_inst_binary(block, cg_op_lsr,	regShifted, fragmentInfo.regR, regConstant15);
+							cg_create_inst_binary(block, cg_op_sub,	regAdjusted, fragmentInfo.regR, regShifted);
+							cg_create_inst_binary(block, cg_op_lsr,	regColorAdjusted, regAdjusted, regConstant3);
 
-							I32 regShiftedAdjusted = nextRegister++;
-							I32	regDiff = nextRegister++;
-							I32 regTexEnv = nextRegister++;
-							I32 regProduct = nextRegister++;
-							I32 regDifference = nextRegister++;
+							cg_virtual_reg_t * regShiftedAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t *	regDiff = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regTexEnv = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regDifference = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
-							*block +=	IMMEDIATE	(ldi,	regTexEnv, Constant::createInt(m_State->m_TexEnvColor.r));
-							*block +=	BINARY		(sub,	regDiff, regShiftedAdjusted, regTexEnv);
-							*block +=	BINARY		(mul,	regProduct, regDiff, regTexColorR);
-							*block +=	BINARY		(sub,	regDifference, regColorAdjusted, regProduct);
-							*block +=	BINARY		(lsr,	regColorR, regDifference, regConstant8);
+							cg_create_inst_binary(block, cg_op_lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regTexEnv, m_State->m_TexEnvColor.r);
+							cg_create_inst_binary(block, cg_op_sub,	regDiff, regShiftedAdjusted, regTexEnv);
+							cg_create_inst_binary(block, cg_op_mul,	regProduct, regDiff, regTexColorR);
+							cg_create_inst_binary(block, cg_op_sub,	regDifference, regColorAdjusted, regProduct);
+							cg_create_inst_binary(block, cg_op_lsr,	regColorR, regDifference, regConstant8);
 						}
 
 						// green component
 						{
-							regColorG = nextRegister++;
-							I32 regShifted = nextRegister++;
-							I32 regAdjusted = nextRegister++;
-							I32 regColorAdjusted = nextRegister++;
+							regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regColorAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regG, regConstant15);
-							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regG, regShifted);
-							*block +=	BINARY		(lsr,	regColorAdjusted, regAdjusted, regConstant2);
+							cg_create_inst_binary(block, cg_op_lsr,	regShifted, fragmentInfo.regG, regConstant15);
+							cg_create_inst_binary(block, cg_op_sub,	regAdjusted, fragmentInfo.regG, regShifted);
+							cg_create_inst_binary(block, cg_op_lsr,	regColorAdjusted, regAdjusted, regConstant2);
 
-							I32 regShiftedAdjusted = nextRegister++;
-							I32	regDiff = nextRegister++;
-							I32 regTexEnv = nextRegister++;
-							I32 regProduct = nextRegister++;
-							I32 regDifference = nextRegister++;
+							cg_virtual_reg_t * regShiftedAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t *	regDiff = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regTexEnv = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regDifference = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
-							*block +=	IMMEDIATE	(ldi,	regTexEnv, Constant::createInt(m_State->m_TexEnvColor.g));
-							*block +=	BINARY		(sub,	regDiff, regShiftedAdjusted, regTexEnv);
-							*block +=	BINARY		(mul,	regProduct, regDiff, regTexColorG);
-							*block +=	BINARY		(sub,	regDifference, regColorAdjusted, regProduct);
-							*block +=	BINARY		(lsr,	regColorG, regDifference, regConstant8);
+							cg_create_inst_binary(block, cg_op_lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regTexEnv, m_State->m_TexEnvColor.g);
+							cg_create_inst_binary(block, cg_op_sub,	regDiff, regShiftedAdjusted, regTexEnv);
+							cg_create_inst_binary(block, cg_op_mul,	regProduct, regDiff, regTexColorG);
+							cg_create_inst_binary(block, cg_op_sub,	regDifference, regColorAdjusted, regProduct);
+							cg_create_inst_binary(block, cg_op_lsr,	regColorG, regDifference, regConstant8);
 						}
 
 						// blue component
 						{
-							regColorB = nextRegister++;
-							I32 regShifted = nextRegister++;
-							I32 regAdjusted = nextRegister++;
-							I32 regColorAdjusted = nextRegister++;
+							regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regColorAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regB, regConstant15);
-							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regB, regShifted);
-							*block +=	BINARY		(lsr,	regColorAdjusted, regAdjusted, regConstant3);
+							cg_create_inst_binary(block, cg_op_lsr,	regShifted, fragmentInfo.regB, regConstant15);
+							cg_create_inst_binary(block, cg_op_sub,	regAdjusted, fragmentInfo.regB, regShifted);
+							cg_create_inst_binary(block, cg_op_lsr,	regColorAdjusted, regAdjusted, regConstant3);
 
-							I32 regShiftedAdjusted = nextRegister++;
-							I32	regDiff = nextRegister++;
-							I32 regTexEnv = nextRegister++;
-							I32 regProduct = nextRegister++;
-							I32 regDifference = nextRegister++;
+							cg_virtual_reg_t * regShiftedAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t *	regDiff = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regTexEnv = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regDifference = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BINARY		(lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
-							*block +=	IMMEDIATE	(ldi,	regTexEnv, Constant::createInt(m_State->m_TexEnvColor.b));
-							*block +=	BINARY		(sub,	regDiff, regShiftedAdjusted, regTexEnv);
-							*block +=	BINARY		(mul,	regProduct, regDiff, regTexColorB);
-							*block +=	BINARY		(sub,	regDifference, regColorAdjusted, regProduct);
-							*block +=	BINARY		(lsr,	regColorB, regDifference, regConstant8);
+							cg_create_inst_binary(block, cg_op_lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regTexEnv, m_State->m_TexEnvColor.b);
+							cg_create_inst_binary(block, cg_op_sub,	regDiff, regShiftedAdjusted, regTexEnv);
+							cg_create_inst_binary(block, cg_op_mul,	regProduct, regDiff, regTexColorB);
+							cg_create_inst_binary(block, cg_op_sub,	regDifference, regColorAdjusted, regProduct);
+							cg_create_inst_binary(block, cg_op_lsr,	regColorB, regDifference, regConstant8);
 						}
 
 						// create RGB 565 representation
 						{
-							I32 regConstant5 = nextRegister++;
-							I32 regConstant11 = nextRegister++;
-							I32 regShiftedB = nextRegister++;
-							I32 regShiftedG = nextRegister++;
-							I32 regRG = nextRegister++;
-							regColor565 = nextRegister++;
+							cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-							*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-							*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
-							*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
-							*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
-							*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+							cg_create_inst_binary(block, cg_op_lsl,	regShiftedB, regColorB, regConstant11);
+							cg_create_inst_binary(block, cg_op_lsl,	regShiftedG, regColorG, regConstant5);
+							cg_create_inst_binary(block, cg_op_or,	regRG, regColorR, regShiftedG);
+							cg_create_inst_binary(block, cg_op_or,	regColor565, regRG, regShiftedB);
 						}
 						}
 
@@ -1390,118 +1350,109 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 						//		ClampU8(color.g + texColor.g),
 						//		ClampU8(color.b + texColor.b),
 						//		MulU8(color.a, texColor.a));
-						regColorA = nextRegister++;
-						I32 regConstant10 = nextRegister++;
-						I32 regConstant11 = nextRegister++;
-						I32 regConstant16 = nextRegister++;
-						I32 regConstant8 = nextRegister++;
-						I32 regConstant255 = nextRegister++;
-						I32 regAlphaProduct = nextRegister++;
+						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant10 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant255 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regAlphaProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant10, Constant::createInt(10));
-						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-						*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant10, 10);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant8, 8);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(16));
-						*block +=	BINARY		(mul,	regAlphaProduct, fragmentInfo.regA, regTexColorA);
-						*block +=	BINARY		(lsr,	regColorA, regAlphaProduct, regConstant16);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant16, 16);
+						cg_create_inst_binary(block, cg_op_mul,	regAlphaProduct, fragmentInfo.regA, regTexColorA);
+						cg_create_inst_binary(block, cg_op_lsr,	regColorA, regAlphaProduct, regConstant16);
 
 						// R channel
 						{
-							regColorR = nextRegister++;
-							I32 regScaledR = nextRegister++;
-							I32 regShiftedR = nextRegister++;
-							I32 regSumR = nextRegister++;
-							I32 regNeedsClampingR = nextRegister++;
+							regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regScaledR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regSumR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regNeedsClampingR = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant255, Constant::createInt(0x1f));
-							*block +=	BINARY		(lsr,	regShiftedR, fragmentInfo.regR, regConstant11);
-							*block +=	BINARY		(add,	regSumR, regShiftedR, regTexColorR);
-							*block +=	COMPARE		(cmp,	regNeedsClampingR, regSumR, regConstant255);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant255, 0x1f);
+							cg_create_inst_binary(block, cg_op_lsr,	regShiftedR, fragmentInfo.regR, regConstant11);
+							cg_create_inst_binary(block, cg_op_add,	regSumR, regShiftedR, regTexColorR);
+							cg_create_inst_compare(block, cg_op_cmp,	regNeedsClampingR, regSumR, regConstant255);
 
-							Label * noClampingR = Label::create("noClampingR", LabelBlock);
-							I32 regClampedR = nextRegister++;
+							cg_block_ref_t * noClampingR = cg_block_ref_create(procedure);
+							cg_virtual_reg_t * regClampedR = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BCOND		(ble,	regNeedsClampingR, noClampingR);
-							*block +=	IMMEDIATE	(ldi,	regClampedR, Constant::createInt(0x1f));
+							cg_create_inst_branch_cond(block, cg_op_ble,	regNeedsClampingR, noClampingR);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regClampedR, 0x1f);
 
-							Block& blockClampingR = *new Block(procedure);
-							procedure->blocks.push_back(&blockClampingR);
-							noClampingR->block.block = &blockClampingR;
-							blockClampingR.labels.push_back(noClampingR);
-							block = &blockClampingR;
+							block = cg_block_create(procedure);
+							noClampingR->block = block;
 
-							*block +=	PHI			(phi,	regColorR, REG_LIST(regClampedR, regSumR));
+							cg_create_inst_phi(block, cg_op_phi,	regColorR, cg_create_virtual_reg_list(procedure->module->heap, regClampedR, regSumR, NULL));
 						}
 						// G channel
 						{
-							regColorG = nextRegister++;
-							I32 regScaledG = nextRegister++;
-							I32 regShiftedG = nextRegister++;
-							I32 regSumG = nextRegister++;
-							I32 regNeedsClampingG = nextRegister++;
+							regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regScaledG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regSumG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regNeedsClampingG = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant255, Constant::createInt(0x3f));
-							*block +=	BINARY		(lsr,	regShiftedG, fragmentInfo.regG, regConstant10);
-							*block +=	BINARY		(add,	regSumG, regShiftedG, regTexColorR);
-							*block +=	COMPARE		(cmp,	regNeedsClampingG, regSumG, regConstant255);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant255, 0x3f);
+							cg_create_inst_binary(block, cg_op_lsr,	regShiftedG, fragmentInfo.regG, regConstant10);
+							cg_create_inst_binary(block, cg_op_add,	regSumG, regShiftedG, regTexColorR);
+							cg_create_inst_compare(block, cg_op_cmp,	regNeedsClampingG, regSumG, regConstant255);
 
-							Label * noClampingG = Label::create("noClampingG", LabelBlock);
-							I32 regClampedG = nextRegister++;
+							cg_block_ref_t * noClampingG = cg_block_ref_create(procedure);
+							cg_virtual_reg_t * regClampedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BCOND		(ble,	regNeedsClampingG, noClampingG);
-							*block +=	IMMEDIATE	(ldi,	regClampedG, Constant::createInt(0x3f));
+							cg_create_inst_branch_cond(block, cg_op_ble,	regNeedsClampingG, noClampingG);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regClampedG, 0x3f);
 
-							Block& blockClampingG = *new Block(procedure);
-							procedure->blocks.push_back(&blockClampingG);
-							noClampingG->block.block = &blockClampingG;
-							blockClampingG.labels.push_back(noClampingG);
-							block = &blockClampingG;
+							block = cg_block_create(procedure);
+							noClampingG->block = block;
 
-							*block +=	PHI			(phi,	regColorG, REG_LIST(regClampedG, regSumG));
+							cg_create_inst_phi(block, cg_op_phi,	regColorG, cg_create_virtual_reg_list(procedure->module->heap, regClampedG, regSumG, NULL));
 						}
 						// B channel
 						{
-							regColorB = nextRegister++;
-							I32 regScaledB = nextRegister++;
-							I32 regShiftedB = nextRegister++;
-							I32 regSumB = nextRegister++;
-							I32 regNeedsClampingB = nextRegister++;
+							regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regScaledB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regSumB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regNeedsClampingB = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant255, Constant::createInt(0x1f));
-							*block +=	BINARY		(lsr,	regShiftedB, fragmentInfo.regB, regConstant10);
-							*block +=	BINARY		(add,	regSumB, regShiftedB, regTexColorR);
-							*block +=	COMPARE		(cmp,	regNeedsClampingB, regSumB, regConstant255);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant255, 0x1f);
+							cg_create_inst_binary(block, cg_op_lsr,	regShiftedB, fragmentInfo.regB, regConstant10);
+							cg_create_inst_binary(block, cg_op_add,	regSumB, regShiftedB, regTexColorR);
+							cg_create_inst_compare(block, cg_op_cmp,	regNeedsClampingB, regSumB, regConstant255);
 
-							Label * noClampingB = Label::create("noClampingB", LabelBlock);
-							I32 regClampedB = nextRegister++;
+							cg_block_ref_t * noClampingB = cg_block_ref_create(procedure);
+							cg_virtual_reg_t * regClampedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	BCOND		(ble,	regNeedsClampingB, noClampingB);
-							*block +=	IMMEDIATE	(ldi,	regClampedB, Constant::createInt(0x1f));
+							cg_create_inst_branch_cond(block, cg_op_ble,	regNeedsClampingB, noClampingB);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regClampedB, 0x1f);
 
-							Block& blockClampingB = *new Block(procedure);
-							procedure->blocks.push_back(&blockClampingB);
-							noClampingB->block.block = &blockClampingB;
-							blockClampingB.labels.push_back(noClampingB);
-							block = &blockClampingB;
+							block = cg_block_create(procedure);
+							noClampingB->block = block;
 
-							*block +=	PHI			(phi,	regColorB, REG_LIST(regClampedB, regSumB));
+							cg_create_inst_phi(block, cg_op_phi,	regColorB, cg_create_virtual_reg_list(procedure->module->heap, regClampedB, regSumB, NULL));
 						}
 						// create RGB 565 representation
 						{
-							I32 regConstant5 = nextRegister++;
-							I32 regConstant11 = nextRegister++;
-							I32 regShiftedB = nextRegister++;
-							I32 regShiftedG = nextRegister++;
-							I32 regRG = nextRegister++;
-							regColor565 = nextRegister++;
+							cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-							*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-							*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
-							*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
-							*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
-							*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+							cg_create_inst_binary(block, cg_op_lsl,	regShiftedB, regColorB, regConstant11);
+							cg_create_inst_binary(block, cg_op_lsl,	regShiftedG, regColorG, regConstant5);
+							cg_create_inst_binary(block, cg_op_or,	regRG, regColorR, regShiftedG);
+							cg_create_inst_binary(block, cg_op_or,	regColor565, regRG, regShiftedB);
 						}
 						}
 
@@ -1511,128 +1462,128 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 		}
 	} else {
 		// color = baseColor
-		I32 regConstant16 = nextRegister++;
-		I32 regConstant11 = nextRegister++;
-		I32 regConstant10 = nextRegister++;
-		I32 regConstant8 = nextRegister++;
+		cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regConstant10 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-		*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(16));
-		*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-		*block +=	IMMEDIATE	(ldi,	regConstant10, Constant::createInt(10));
-		*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
+		cg_create_inst_load_immed(block, cg_op_ldi,	regConstant16, 16);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regConstant10, 10);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regConstant8, 8);
 
 		//  needs to be converted to 565 format, alpha to 8 bits
 		{
-			regColorR = nextRegister++;
-			I32 regShifted = nextRegister++;
-			I32 regAdjusted = nextRegister++;
+			regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-			*block +=	BINARY	(lsr,	regShifted, fragmentInfo.regR, regConstant16);
-			*block +=	BINARY	(sub,	regAdjusted, fragmentInfo.regR, regShifted);
-			*block +=	BINARY	(lsr,	regColorR, regAdjusted, regConstant11);
+			cg_create_inst_binary(block, cg_op_lsr,	regShifted, fragmentInfo.regR, regConstant16);
+			cg_create_inst_binary(block, cg_op_sub,	regAdjusted, fragmentInfo.regR, regShifted);
+			cg_create_inst_binary(block, cg_op_lsr,	regColorR, regAdjusted, regConstant11);
 		}
 
 		{
-			regColorG = nextRegister++;
-			I32 regShifted = nextRegister++;
-			I32 regAdjusted = nextRegister++;
+			regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-			*block +=	BINARY	(lsr,	regShifted, fragmentInfo.regG, regConstant16);
-			*block +=	BINARY	(sub,	regAdjusted, fragmentInfo.regG, regShifted);
-			*block +=	BINARY	(lsr,	regColorG, regAdjusted, regConstant10);
+			cg_create_inst_binary(block, cg_op_lsr,	regShifted, fragmentInfo.regG, regConstant16);
+			cg_create_inst_binary(block, cg_op_sub,	regAdjusted, fragmentInfo.regG, regShifted);
+			cg_create_inst_binary(block, cg_op_lsr,	regColorG, regAdjusted, regConstant10);
 		}
 
 		{
-			regColorB = nextRegister++;
-			I32 regShifted = nextRegister++;
-			I32 regAdjusted = nextRegister++;
+			regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-			*block +=	BINARY	(lsr,	regShifted, fragmentInfo.regB, regConstant16);
-			*block +=	BINARY	(sub,	regAdjusted, fragmentInfo.regB, regShifted);
-			*block +=	BINARY	(lsr,	regColorB, regAdjusted, regConstant11);
+			cg_create_inst_binary(block, cg_op_lsr,	regShifted, fragmentInfo.regB, regConstant16);
+			cg_create_inst_binary(block, cg_op_sub,	regAdjusted, fragmentInfo.regB, regShifted);
+			cg_create_inst_binary(block, cg_op_lsr,	regColorB, regAdjusted, regConstant11);
 		}
 		{
-			regColorA = nextRegister++;
-			*block +=	BINARY	(lsr,	regColorA, fragmentInfo.regA, regConstant8);
+			regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			cg_create_inst_binary(block, cg_op_lsr,	regColorA, fragmentInfo.regA, regConstant8);
 		}
 		// create RGB 565 representation
-		I32 regConstant5 = nextRegister++;
-		I32 regShiftedB = nextRegister++;
-		I32 regShiftedG = nextRegister++;
-		I32 regRG = nextRegister++;
-		regColor565 = nextRegister++;
+		cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-		*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-		*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-		*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
-		*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
-		*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
-		*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+		cg_create_inst_binary(block, cg_op_lsl,	regShiftedB, regColorB, regConstant11);
+		cg_create_inst_binary(block, cg_op_lsl,	regShiftedG, regColorG, regConstant5);
+		cg_create_inst_binary(block, cg_op_or,	regRG, regColorR, regShiftedG);
+		cg_create_inst_binary(block, cg_op_or,	regColor565, regRG, regShiftedB);
 	}
 
 	// fog
 	if (m_State->m_FogEnabled) {
 		//color = Color::Blend(color, m_State->m_FogColor, fogDensity);
-		I32 regFogColorR = nextRegister++;
-		I32 regFogColorG = nextRegister++;
-		I32 regFogColorB = nextRegister++;
+		cg_virtual_reg_t * regFogColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regFogColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regFogColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-		*block +=	IMMEDIATE	(ldi,	regFogColorR, Constant::createInt(m_State->m_FogColor.r >> 3), "fog calculation...");
-		*block +=	IMMEDIATE	(ldi,	regFogColorG, Constant::createInt(m_State->m_FogColor.g >> 2));
-		*block +=	IMMEDIATE	(ldi,	regFogColorB, Constant::createInt(m_State->m_FogColor.b >> 3));
+		cg_create_inst_load_immed(block, cg_op_ldi,	regFogColorR, m_State->m_FogColor.r >> 3);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regFogColorG, m_State->m_FogColor.g >> 2);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regFogColorB, m_State->m_FogColor.b >> 3);
 
-		I32 regDeltaR = nextRegister++;
-		I32 regDeltaG = nextRegister++;
-		I32 regDeltaB = nextRegister++;
+		cg_virtual_reg_t * regDeltaR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regDeltaG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regDeltaB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-		*block +=	BINARY		(sub,	regDeltaR, regColorR, regFogColorR);
-		*block +=	BINARY		(sub,	regDeltaG, regColorG, regFogColorG);
-		*block +=	BINARY		(sub,	regDeltaB, regColorB, regFogColorB);
+		cg_create_inst_binary(block, cg_op_sub,	regDeltaR, regColorR, regFogColorR);
+		cg_create_inst_binary(block, cg_op_sub,	regDeltaG, regColorG, regFogColorG);
+		cg_create_inst_binary(block, cg_op_sub,	regDeltaB, regColorB, regFogColorB);
 
-		I32 regProductR = nextRegister++;
-		I32 regProductG = nextRegister++;
-		I32 regProductB = nextRegister++;
+		cg_virtual_reg_t * regProductR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regProductG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regProductB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-		*block +=	BINARY		(mul,	regProductR, regDeltaR, fragmentInfo.regFog);
-		*block +=	BINARY		(mul,	regProductG, regDeltaG, fragmentInfo.regFog);
-		*block +=	BINARY		(mul,	regProductB, regDeltaB, fragmentInfo.regFog);
+		cg_create_inst_binary(block, cg_op_mul,	regProductR, regDeltaR, fragmentInfo.regFog);
+		cg_create_inst_binary(block, cg_op_mul,	regProductG, regDeltaG, fragmentInfo.regFog);
+		cg_create_inst_binary(block, cg_op_mul,	regProductB, regDeltaB, fragmentInfo.regFog);
 
-		I32 regConstant16 = nextRegister++;
-		I32 regShiftedProductR = nextRegister++;
-		I32 regShiftedProductG = nextRegister++;
-		I32 regShiftedProductB = nextRegister++;
+		cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regShiftedProductR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regShiftedProductG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regShiftedProductB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-		*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(16));
-		*block +=	BINARY		(asr,	regShiftedProductR, regProductR, regConstant16);
-		*block +=	BINARY		(asr,	regShiftedProductG, regProductG, regConstant16);
-		*block +=	BINARY		(asr,	regShiftedProductB, regProductB, regConstant16);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regConstant16, 16);
+		cg_create_inst_binary(block, cg_op_asr,	regShiftedProductR, regProductR, regConstant16);
+		cg_create_inst_binary(block, cg_op_asr,	regShiftedProductG, regProductG, regConstant16);
+		cg_create_inst_binary(block, cg_op_asr,	regShiftedProductB, regProductB, regConstant16);
 
-		I32 regNewColorR = nextRegister++;
-		I32 regNewColorG = nextRegister++;
-		I32 regNewColorB = nextRegister++;
+		cg_virtual_reg_t * regNewColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regNewColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regNewColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-		*block +=	BINARY		(add,	regNewColorR, regShiftedProductR, regFogColorR);
-		*block +=	BINARY		(add,	regNewColorG, regShiftedProductG, regFogColorG);
-		*block +=	BINARY		(add,	regNewColorB, regShiftedProductB, regFogColorB, "...end of fog calculation");
+		cg_create_inst_binary(block, cg_op_add,	regNewColorR, regShiftedProductR, regFogColorR);
+		cg_create_inst_binary(block, cg_op_add,	regNewColorG, regShiftedProductG, regFogColorG);
+		cg_create_inst_binary(block, cg_op_add,	regNewColorB, regShiftedProductB, regFogColorB);
 
 		regColorR = regNewColorR;
 		regColorG = regNewColorG;
 		regColorB = regNewColorB;
 
 		// create RGB 565 representation
-		I32 regConstant5 = nextRegister++;
-		I32 regConstant11 = nextRegister++;
-		I32 regShiftedB = nextRegister++;
-		I32 regShiftedG = nextRegister++;
-		I32 regRG = nextRegister++;
-		I32 regNewColor565 = nextRegister++;
+		cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regNewColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-		*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
-		*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
-		*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
-		*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
-		*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
-		*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+		cg_create_inst_binary(block, cg_op_lsl,	regShiftedB, regColorB, regConstant11);
+		cg_create_inst_binary(block, cg_op_lsl,	regShiftedG, regColorG, regConstant5);
+		cg_create_inst_binary(block, cg_op_or,	regRG, regColorR, regShiftedG);
+		cg_create_inst_binary(block, cg_op_or,	regColor565, regRG, regShiftedB);
 
 		regColor565 = regNewColor565;
 	}
@@ -1641,65 +1592,65 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 		//bool alphaTest;
 		//U8 alpha = color.A();
 		//U8 alphaRef = EGL_IntFromFixed(m_State->m_AlphaReference * 255);
-		I32 regAlphaRef = nextRegister++;
-		I32 regAlphaTest = nextRegister++;
+		cg_virtual_reg_t * regAlphaRef = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regAlphaTest = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-		*block +=	IMMEDIATE		(ldi,	regAlphaRef, Constant::createInt(m_State->m_AlphaReference >> 8));
-		*block +=	COMPARE			(cmp,	regAlphaTest, regColorA, regAlphaRef);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regAlphaRef, m_State->m_AlphaReference >> 8);
+		cg_create_inst_compare(block, cg_op_cmp,	regAlphaTest, regColorA, regAlphaRef);
 
-		Opcode failedTest;
+		cg_opcode_t failedTest;
 		
 		switch (m_State->m_AlphaFunc) {
 			default:
 			case RasterizerState::CompFuncNever:	
 				//alphaTest = false;					
-				failedTest = bra;
+				failedTest = cg_op_bra;
 				break;
 
 			case RasterizerState::CompFuncLess:		
 				//alphaTest = alpha < alphaRef;		
-				failedTest = bge;
+				failedTest = cg_op_bge;
 				break;
 
 			case RasterizerState::CompFuncEqual:	
 				//alphaTest = alpha == alphaRef;		
-				failedTest = bne;
+				failedTest = cg_op_bne;
 				break;
 
 			case RasterizerState::CompFuncLEqual:	
 				//alphaTest = alpha <= alphaRef;		
-				failedTest = bgt;
+				failedTest = cg_op_bgt;
 				break;
 
 			case RasterizerState::CompFuncGreater:	
 				//alphaTest = alpha > alphaRef;		
-				failedTest = ble;
+				failedTest = cg_op_ble;
 				break;
 
 			case RasterizerState::CompFuncNotEqual:	
 				//alphaTest = alpha != alphaRef;		
-				failedTest = beq;
+				failedTest = cg_op_beq;
 				break;
 
 			case RasterizerState::CompFuncGEqual:	
 				//alphaTest = alpha >= alphaRef;		
-				failedTest = blt;
+				failedTest = cg_op_blt;
 				break;
 
 			case RasterizerState::CompFuncAlways:	
 				//alphaTest = true;					
-				failedTest = nop;
+				failedTest = cg_op_nop;
 				break;
 		}
 
 		//if (!alphaTest) {
 		//	return;
 		//}
-		if (failedTest != nop) {
-			if (failedTest == bra) {
-				*block +=		BLABEL	(bra,	continuation);
+		if (failedTest != cg_op_nop) {
+			if (failedTest == cg_op_bra) {
+				cg_create_inst_branch_label(block, cg_op_bra,	continuation);
 			} else {
-				*block +=		BCOND	(failedTest, regAlphaTest, continuation);
+				cg_create_inst_branch_cond(block, failedTest, regAlphaTest, continuation);
 			}
 		}
 	}
@@ -1710,74 +1661,74 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 		//U32 stencilRef = m_State->m_StencilReference & m_State->m_StencilMask;
 		//U32 stencilValue = m_Surface->GetStencilBuffer()[offset];
 		//U32 stencil = stencilValue & m_State->m_StencilMask;
-		I32 regStencilRef = nextRegister++;
-		I32 regStencilMask = nextRegister++;
-		I32 regStencilAddr = nextRegister++;
-		I32 regStencilValue = nextRegister++;
-		I32 regStencil = nextRegister++;
-		I32 regStencilTest = nextRegister++;
+		cg_virtual_reg_t * regStencilRef = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regStencilMask = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regStencilAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regStencil = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regStencilTest = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-		*block += IMMEDIATE		(ldi,	regStencilRef, Constant::createInt(m_State->m_StencilReference & m_State->m_StencilMask));
-		*block += IMMEDIATE		(ldi,	regStencilMask, Constant::createInt(m_State->m_StencilMask));
-		*block += BINARY		(add,	regStencilAddr, fragmentInfo.regStencilBuffer, regOffset4);
-		*block += LOAD			(ldw,	regStencilValue, regStencilAddr);
-		*block += BINARY		(and,	regStencil, regStencilValue, regStencilMask);
-		*block += COMPARE		(cmp,	regStencilTest, regStencil, regStencilRef);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regStencilRef, m_State->m_StencilReference & m_State->m_StencilMask);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regStencilMask, m_State->m_StencilMask);
+		cg_create_inst_binary(block, cg_op_add,	regStencilAddr, fragmentInfo.regStencilBuffer, regOffset4);
+		cg_create_inst_load(block, cg_op_ldw,	regStencilValue, regStencilAddr);
+		cg_create_inst_binary(block, cg_op_and,	regStencil, regStencilValue, regStencilMask);
+		cg_create_inst_compare(block, cg_op_cmp,	regStencilTest, regStencil, regStencilRef);
 
-		Opcode passedTest;
+		cg_opcode_t passedTest;
 
 		switch (m_State->m_StencilFunc) {
 			default:
 			case RasterizerState::CompFuncNever:	
 				//stencilTest = false;				
-				passedTest = nop;
+				passedTest = cg_op_nop;
 				break;
 
 			case RasterizerState::CompFuncLess:		
 				//stencilTest = stencil < stencilRef;	
-				passedTest = blt;
+				passedTest = cg_op_blt;
 				break;
 
 			case RasterizerState::CompFuncEqual:	
 				//stencilTest = stencil == stencilRef;
-				passedTest = beq;
+				passedTest = cg_op_beq;
 				break;
 
 			case RasterizerState::CompFuncLEqual:	
 				//stencilTest = stencil <= stencilRef;
-				passedTest = ble;
+				passedTest = cg_op_ble;
 				break;
 
 			case RasterizerState::CompFuncGreater:	
 				//stencilTest = stencil > stencilRef;	
-				passedTest = bgt;
+				passedTest = cg_op_bgt;
 				break;
 
 			case RasterizerState::CompFuncNotEqual:	
 				//stencilTest = stencil != stencilRef;
-				passedTest = bne;
+				passedTest = cg_op_bne;
 				break;
 
 			case RasterizerState::CompFuncGEqual:	
 				//stencilTest = stencil >= stencilRef;
-				passedTest = bge;
+				passedTest = cg_op_bge;
 				break;
 
 			case RasterizerState::CompFuncAlways:	
 				//stencilTest = true;					
-				passedTest = bra;
+				passedTest = cg_op_bra;
 				break;
 		}
 
 		// branch on stencil test
-		Label * labelStencilPassed = Label::create("stencilPassed", LabelBlock);
-		Label * labelStencilBypassed = Label::create("stencilBypassed", LabelBlock);
+		cg_block_ref_t * labelStencilPassed = cg_block_ref_create(procedure);
+		cg_block_ref_t * labelStencilBypassed = cg_block_ref_create(procedure);
 
-		*block	 +=		BCOND		(passedTest,	regStencilTest, labelStencilPassed);
+		cg_create_inst_branch_cond(block, passedTest,	regStencilTest, labelStencilPassed);
 
 		//if (!stencilTest) {
 		{
-			I32 regNewStencilValue;
+			cg_virtual_reg_t * regNewStencilValue;
 
 			switch (m_State->m_StencilFail) {
 				default:
@@ -1787,9 +1738,9 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 
 				case RasterizerState::StencilOpZero: 
 					//stencilValue = 0; 
-					regNewStencilValue = nextRegister++;
+					regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-					*block +=	IMMEDIATE	(ldi, regNewStencilValue, Constant::createInt(0));
+					cg_create_inst_load_immed(block, cg_op_ldi, regNewStencilValue, 0);
 					break;
 
 				case RasterizerState::StencilOpReplace: 
@@ -1802,13 +1753,13 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 					//	stencilValue++; 
 					//}
 					{
-						regNewStencilValue = nextRegister++;
-						I32 regConstant1 = nextRegister++;
-						I32 regFlag = nextRegister++;
+						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regFlag = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
-						*block +=	BINARY		(add,	regNewStencilValue, regFlag, regStencilValue, regConstant1);
-						*block +=	BCOND		(beq,	regFlag, continuation);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant1, 1);
+						cg_create_inst_binary_s(block, cg_op_add,	regNewStencilValue, regFlag, regStencilValue, regConstant1);
+						cg_create_inst_branch_cond(block, cg_op_beq,	regFlag, continuation);
 					}
 					
 					break;
@@ -1818,50 +1769,50 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 					//	stencilValue--; 
 					//}
 					{
-						regNewStencilValue = nextRegister++;
-						I32 regConstant0 = nextRegister++;
-						I32 regConstant1 = nextRegister++;
-						I32 regFlag = nextRegister++;
+						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant0 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						cg_virtual_reg_t * regFlag = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-						*block +=	IMMEDIATE	(ldi,	regConstant0, Constant::createInt(0));
-						*block +=	COMPARE		(cmp,	regFlag, regStencilValue, regConstant0);
-						*block +=	BCOND		(beq,	regFlag, continuation);
-						*block +=	IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
-						*block +=	BINARY		(sub,	regNewStencilValue, regStencilValue, regConstant1);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant0, 0);
+						cg_create_inst_compare(block, cg_op_cmp,	regFlag, regStencilValue, regConstant0);
+						cg_create_inst_branch_cond(block, cg_op_beq,	regFlag, continuation);
+						cg_create_inst_load_immed(block, cg_op_ldi,	regConstant1, 1);
+						cg_create_inst_binary(block, cg_op_sub,	regNewStencilValue, regStencilValue, regConstant1);
 					}
 					
 					break;
 
 				case RasterizerState::StencilOpInvert: 
 					//stencilValue = ~stencilValue; 
-					regNewStencilValue = nextRegister++;
+					regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-					*block +=	UNARY	(not,	regNewStencilValue, regStencilValue);
+					cg_create_inst_unary(block, cg_op_not,	regNewStencilValue, regStencilValue);
 					break;
 			}
 
-			*block +=	STORE		(stw,	regStencilAddr, regNewStencilValue);
-			*block +=	BLABEL		(bra,	continuation);
+			cg_create_inst_store(block, cg_op_stw,	regStencilAddr, regNewStencilValue);
+			cg_create_inst_branch_label(block, cg_op_bra,	continuation);
 		//}
 		}
 
-		Label * labelStencilZTestPassed = Label::create("stencilZTestPassed", LabelBlock);
+		cg_block_ref_t * labelStencilZTestPassed = cg_block_ref_create(procedure);
 
 		// stencil test passed
-		block = procedure->CreateBlock();
-		block->AttachLabel(labelStencilPassed);
+		block = cg_block_create(procedure);
+		labelStencilPassed->block = block;
 
 		//if (!depthTest) {
-			if (branchOnDepthTestPassed == nop) {
+			if (branchOnDepthTestPassed == cg_op_nop) {
 				// nothing
-			} else if (branchOnDepthTestPassed == bra) {
-				currentBlock +=		BLABEL	(bra,	labelStencilZTestPassed);
+			} else if (branchOnDepthTestPassed == cg_op_bra) {
+				cg_create_inst_branch_label(currentBlock, cg_op_bra,	labelStencilZTestPassed);
 			} else {
-				currentBlock +=		BCOND	(branchOnDepthTestPassed, regDepthTest, labelStencilZTestPassed);
+				cg_create_inst_branch_cond(currentBlock, branchOnDepthTestPassed, regDepthTest, labelStencilZTestPassed);
 			}
 
 			{
-				I32 regNewStencilValue;
+				cg_virtual_reg_t * regNewStencilValue;
 
 				switch (m_State->m_StencilZFail) {
 					default:
@@ -1871,9 +1822,9 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 
 					case RasterizerState::StencilOpZero: 
 						//stencilValue = 0; 
-						regNewStencilValue = nextRegister++;
+						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi, regNewStencilValue, Constant::createInt(0));
+						cg_create_inst_load_immed(block, cg_op_ldi, regNewStencilValue, 0);
 						break;
 
 					case RasterizerState::StencilOpReplace: 
@@ -1886,17 +1837,17 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 						//	stencilValue++; 
 						//}
 						{
-							regNewStencilValue = nextRegister++;
-							I32 regConstant1 = nextRegister++;
-							I32 regFlag = nextRegister++;
+							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regFlag = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
-							*block +=	BINARY		(add,	regNewStencilValue, regFlag, regStencilValue, regConstant1);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant1, 1);
+							cg_create_inst_binary_s(block, cg_op_add,	regNewStencilValue, regFlag, regStencilValue, regConstant1);
 
 							if (m_State->m_DepthTestEnabled) {
-								*block +=	BCOND		(beq,	regFlag, continuation);
+								cg_create_inst_branch_cond(block, cg_op_beq,	regFlag, continuation);
 							} else {
-								*block +=	BCOND		(beq,	regFlag, labelStencilBypassed);
+								cg_create_inst_branch_cond(block, cg_op_beq,	regFlag, labelStencilBypassed);
 							}
 						}
 						
@@ -1907,50 +1858,50 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 						//	stencilValue--; 
 						//}
 						{
-							regNewStencilValue = nextRegister++;
-							I32 regConstant0 = nextRegister++;
-							I32 regConstant1 = nextRegister++;
-							I32 regFlag = nextRegister++;
+							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regConstant0 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regFlag = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant0, Constant::createInt(0));
-							*block +=	COMPARE		(cmp,	regFlag, regStencilValue, regConstant0);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant0, 0);
+							cg_create_inst_compare(block, cg_op_cmp,	regFlag, regStencilValue, regConstant0);
 
 							if (m_State->m_DepthTestEnabled) {
-								*block +=	BCOND		(beq,	regFlag, continuation);
+								cg_create_inst_branch_cond(block, cg_op_beq,	regFlag, continuation);
 							} else {
-								*block +=	BCOND		(beq,	regFlag, labelStencilBypassed);
+								cg_create_inst_branch_cond(block, cg_op_beq,	regFlag, labelStencilBypassed);
 							}
 
-							*block +=	IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
-							*block +=	BINARY		(sub,	regNewStencilValue, regStencilValue, regConstant1);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant1, 1);
+							cg_create_inst_binary(block, cg_op_sub,	regNewStencilValue, regStencilValue, regConstant1);
 						}
 						
 						break;
 
 					case RasterizerState::StencilOpInvert: 
 						//stencilValue = ~stencilValue; 
-						regNewStencilValue = nextRegister++;
+						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	UNARY	(not,	regNewStencilValue, regStencilValue);
+						cg_create_inst_unary(block, cg_op_not,	regNewStencilValue, regStencilValue);
 						break;
 				}
 
 				//m_Surface->GetStencilBuffer()[offset] = stencilValue;
-				*block +=	STORE		(stw,	regStencilAddr, regNewStencilValue);
+				cg_create_inst_store(block, cg_op_stw,	regStencilAddr, regNewStencilValue);
 			//}
 			}
 
 			if (m_State->m_DepthTestEnabled) {
 				// return;
-				*block +=	BLABEL		(bra,	continuation);
+				cg_create_inst_branch_label(block, cg_op_bra,	continuation);
 			}
 		//} else {
 		// stencil nad z-test passed
-		block = procedure->CreateBlock();
-		block->AttachLabel(labelStencilZTestPassed);
+		block = cg_block_create(procedure);
+		labelStencilZTestPassed->block = block;
 
 			{
-				I32 regNewStencilValue;
+				cg_virtual_reg_t * regNewStencilValue;
 
 				switch (m_State->m_StencilZPass) {
 					default:
@@ -1960,9 +1911,9 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 
 					case RasterizerState::StencilOpZero: 
 						//stencilValue = 0; 
-						regNewStencilValue = nextRegister++;
+						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	IMMEDIATE	(ldi, regNewStencilValue, Constant::createInt(0));
+						cg_create_inst_load_immed(block, cg_op_ldi, regNewStencilValue, 0);
 						break;
 
 					case RasterizerState::StencilOpReplace: 
@@ -1975,13 +1926,13 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 						//	stencilValue++; 
 						//}
 						{
-							regNewStencilValue = nextRegister++;
-							I32 regConstant1 = nextRegister++;
-							I32 regFlag = nextRegister++;
+							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regFlag = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
-							*block +=	BINARY		(add,	regNewStencilValue, regFlag, regStencilValue, regConstant1);
-							*block +=	BCOND		(beq,	regFlag, labelStencilBypassed);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant1, 1);
+							cg_create_inst_binary_s(block, cg_op_add,	regNewStencilValue, regFlag, regStencilValue, regConstant1);
+							cg_create_inst_branch_cond(block, cg_op_beq,	regFlag, labelStencilBypassed);
 						}
 						
 						break;
@@ -1991,69 +1942,69 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 						//	stencilValue--; 
 						//}
 						{
-							regNewStencilValue = nextRegister++;
-							I32 regConstant0 = nextRegister++;
-							I32 regConstant1 = nextRegister++;
-							I32 regFlag = nextRegister++;
+							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regConstant0 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							cg_virtual_reg_t * regFlag = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-							*block +=	IMMEDIATE	(ldi,	regConstant0, Constant::createInt(0));
-							*block +=	COMPARE		(cmp,	regFlag, regStencilValue, regConstant0);
-							*block +=	BCOND		(beq,	regFlag, labelStencilBypassed);
-							*block +=	IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
-							*block +=	BINARY		(sub,	regNewStencilValue, regStencilValue, regConstant1);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant0, 0);
+							cg_create_inst_compare(block, cg_op_cmp,	regFlag, regStencilValue, regConstant0);
+							cg_create_inst_branch_cond(block, cg_op_beq,	regFlag, labelStencilBypassed);
+							cg_create_inst_load_immed(block, cg_op_ldi,	regConstant1, 1);
+							cg_create_inst_binary(block, cg_op_sub,	regNewStencilValue, regStencilValue, regConstant1);
 						}
 						
 						break;
 
 					case RasterizerState::StencilOpInvert: 
 						//stencilValue = ~stencilValue; 
-						regNewStencilValue = nextRegister++;
+						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-						*block +=	UNARY	(not,	regNewStencilValue, regStencilValue);
+						cg_create_inst_unary(block, cg_op_not,	regNewStencilValue, regStencilValue);
 						break;
 				}
 
 				//m_Surface->GetStencilBuffer()[offset] = stencilValue;
-				*block +=	STORE		(stw,	regStencilAddr, regNewStencilValue);
+				cg_create_inst_store(block, cg_op_stw,	regStencilAddr, regNewStencilValue);
 			//}
 			}
 
 		// stencil test bypassed
-		block = procedure->CreateBlock();
-		block->AttachLabel(labelStencilBypassed);
+		block = cg_block_create(procedure);
+		labelStencilBypassed->block = block;
 	}
 
 	//U16 dstValue = m_Surface->GetColorBuffer()[offset];
 	//U8 dstAlpha = m_Surface->GetAlphaBuffer()[offset];
-	I32 regDstValue = nextRegister++;
-	I32 regDstAlpha = nextRegister++;
-	I32 regColorAddr = nextRegister++;
-	I32 regAlphaAddr = nextRegister++;
-	I32 regDstR = nextRegister++;
-	I32 regDstG = nextRegister++;
-	I32 regDstB = nextRegister++;
+	cg_virtual_reg_t * regDstValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDstAlpha = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regColorAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAlphaAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDstR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDstG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDstB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
 	{
-		I32 regConstant5 = nextRegister++;
-		I32 regConstant11 = nextRegister++;
-		I32 regShifted5 = nextRegister++;
-		I32 regShifted11 = nextRegister++;
-		I32 regMask5 = nextRegister++;
-		I32 regMask6 = nextRegister++;
+		cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regShifted5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regShifted11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regMask5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		cg_virtual_reg_t * regMask6 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-		*block +=	BINARY			(add,	regColorAddr, fragmentInfo.regColorBuffer, regOffset2);
-		*block +=	BINARY			(add,	regAlphaAddr, fragmentInfo.regAlphaBuffer, regOffset);
-		*block +=	LOAD			(ldh,	regDstValue, regColorAddr);
-		*block +=	LOAD			(ldb,	regDstAlpha, regAlphaAddr);
-		*block +=	IMMEDIATE		(ldi,	regConstant5, Constant::createInt(5));
-		*block +=	IMMEDIATE		(ldi,	regConstant11, Constant::createInt(11));
-		*block +=	BINARY			(lsr,	regShifted5, regDstValue, regConstant5);
-		*block +=	BINARY			(lsr,	regShifted11, regDstValue, regConstant11);
-		*block +=	IMMEDIATE		(ldi,	regMask5, Constant::createInt(0x1f));
-		*block +=	IMMEDIATE		(ldi,	regMask6, Constant::createInt(0x3f));
-		*block +=	BINARY			(and,	regDstR, regDstValue, regMask5);
-		*block +=	BINARY			(and,	regDstG, regShifted5, regMask6);
-		*block +=	BINARY			(and,	regDstB, regShifted11, regMask5);
+		cg_create_inst_binary(block, cg_op_add,	regColorAddr, fragmentInfo.regColorBuffer, regOffset2);
+		cg_create_inst_binary(block, cg_op_add,	regAlphaAddr, fragmentInfo.regAlphaBuffer, regOffset);
+		cg_create_inst_load(block, cg_op_ldh,	regDstValue, regColorAddr);
+		cg_create_inst_load(block, cg_op_ldb,	regDstAlpha, regAlphaAddr);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regConstant5, 5);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regConstant11, 11);
+		cg_create_inst_binary(block, cg_op_lsr,	regShifted5, regDstValue, regConstant5);
+		cg_create_inst_binary(block, cg_op_lsr,	regShifted11, regDstValue, regConstant11);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regMask5, 0x1f);
+		cg_create_inst_load_immed(block, cg_op_ldi,	regMask6, 0x3f);
+		cg_create_inst_binary(block, cg_op_and,	regDstR, regDstValue, regMask5);
+		cg_create_inst_binary(block, cg_op_and,	regDstG, regShifted5, regMask6);
+		cg_create_inst_binary(block, cg_op_and,	regDstB, regShifted11, regMask5);
 	}
 
 	// Blending
@@ -2147,7 +2098,7 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 	// Masking and write to framebuffer
 	if (m_State->m_MaskDepth) {
 		//m_Surface->GetDepthBuffer()[offset] = depth;
-		*block +=	STORE		(stw,	regZBufferAddr, fragmentInfo.regDepth);
+		cg_create_inst_store(block, cg_op_stw,	regZBufferAddr, fragmentInfo.regDepth);
 	}
 
 	if (m_State->m_LogicOpEnabled) {
@@ -2235,37 +2186,37 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 		//	color.Mask(m_State->m_MaskRed, m_State->m_MaskGreen, m_State->m_MaskBlue, m_State->m_MaskAlpha);
 		if (m_State->m_MaskRed & m_State->m_MaskGreen & m_State->m_MaskBlue) {
 			//m_Surface->GetColorBuffer()[offset] = maskedColor.ConvertTo565();
-			*block +=	STORE	(sth, regColorAddr, regColor565);
+			cg_create_inst_store(block, cg_op_sth, regColorAddr, regColor565);
 		} else {
 			//m_Surface->GetColorBuffer()[offset] = maskedColor.ConvertTo565();
-			I32 regSrcMask = nextRegister++;
-			I32 regDstMask = nextRegister++;
-			I32 regMaskedSrc = nextRegister++;
-			I32 regMaskedDst = nextRegister++;
-			I32 regCombined = nextRegister++;
+			cg_virtual_reg_t * regSrcMask = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			cg_virtual_reg_t * regDstMask = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			cg_virtual_reg_t * regMaskedSrc = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			cg_virtual_reg_t * regMaskedDst = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			cg_virtual_reg_t * regCombined = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-			I32 mask = (m_State->m_MaskRed ? 0x001f : 0) |
+			U32 mask = (m_State->m_MaskRed ? 0x001f : 0) |
 				(m_State->m_MaskGreen ? 0x07e0 : 0) |
 				(m_State->m_MaskBlue ? 0xF800 : 0);
-			*block +=	IMMEDIATE	(ldi,	regSrcMask, Constant::createInt(mask));
-			*block +=	IMMEDIATE	(ldi,	regDstMask, Constant::createInt(~mask));
-			*block +=	BINARY		(and,	regMaskedSrc, regColor565, regSrcMask);
-			*block +=	BINARY		(and,	regMaskedDst, regDstValue, regDstMask);
-			*block +=	BINARY		(or,	regCombined, regMaskedSrc, regMaskedDst);
-			*block +=	STORE		(sth,	regColorAddr, regCombined);
+			cg_create_inst_load_immed(block, cg_op_ldi,	regSrcMask, mask);
+			cg_create_inst_load_immed(block, cg_op_ldi,	regDstMask, ~mask);
+			cg_create_inst_binary(block, cg_op_and,	regMaskedSrc, regColor565, regSrcMask);
+			cg_create_inst_binary(block, cg_op_and,	regMaskedDst, regDstValue, regDstMask);
+			cg_create_inst_binary(block, cg_op_or,	regCombined, regMaskedSrc, regMaskedDst);
+			cg_create_inst_store(block, cg_op_sth,	regColorAddr, regCombined);
 		}
 
 
 		if (m_State->m_MaskAlpha) {
 			//m_Surface->GetAlphaBuffer()[offset] = maskedColor.A();
-			I32 regConstant8 = nextRegister++;
-			I32 regShiftedA = nextRegister++;
-			I32 regAdjustedA = nextRegister++;
+			cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			cg_virtual_reg_t * regShiftedA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			cg_virtual_reg_t * regAdjustedA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-			*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
-			*block +=	BINARY		(lsr,	regShiftedA, regColorA, regConstant8);
-			*block +=	BINARY		(sub,	regAdjustedA, regColorA, regShiftedA);
-			*block +=	STORE		(stb,	regAlphaAddr, regAdjustedA);
+			cg_create_inst_load_immed(block, cg_op_ldi,	regConstant8, 8);
+			cg_create_inst_binary(block, cg_op_lsr,	regShiftedA, regColorA, regConstant8);
+			cg_create_inst_binary(block, cg_op_sub,	regAdjustedA, regColorA, regShiftedA);
+			cg_create_inst_store(block, cg_op_stb,	regAlphaAddr, regAdjustedA);
 		}
 	}
 }
@@ -2292,9 +2243,11 @@ void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlo
 //	texture->GetData()
 void CodeGenerator :: GenerateRasterScanLine() {
 
-	Module * module = new Module("Scanline");
+	cg_heap_t * heap = cg_heap_create(4096);
+	cg_module_t * module = cg_module_create(heap);
+
 	m_Module = module;
-	I32 & nextRegister = module->registerCount;
+	cg_proc_t * procedure = cg_proc_create(module);
 
 	// The signature of the generated function is:
 	//	(const RasterInfo * info, const EdgePos& start, const EdgePos& end);
@@ -2302,212 +2255,206 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	// adjusted to point to current scanline in memory
 	// In the edge buffers, z, tu and tv are actually divided by w
 
-	I32 regInfo = nextRegister++;		// virtual register containing info structure pointer
-	I32 regStart = nextRegister++;		// virtual register containing start edge buffer pointer
-	I32 regEnd = nextRegister++;		// virtual register containing end edge buffer pointer
+	cg_virtual_reg_t * regInfo = cg_virtual_reg_create(procedure, cg_reg_type_general);		// virtual register containing info structure pointer
+	cg_virtual_reg_t * regStart = cg_virtual_reg_create(procedure, cg_reg_type_general);		// virtual register containing start edge buffer pointer
+	cg_virtual_reg_t * regEnd = cg_virtual_reg_create(procedure, cg_reg_type_general);		// virtual register containing end edge buffer pointer
 
-	Label * label0 = Label::create("RasterScanline", LabelProcedure);
-	Procedure * procedure = new Procedure(label0, module, nextRegister, 0);
-	label0->procedure.procedure = procedure;
-	module->procedures.push_back(procedure);
-
-	Block & block0 = *new Block(procedure);
-	procedure->blocks.push_back(&block0);
+	cg_block_t * block0 = cg_block_create(procedure);
 
 	// Create instructions to calculate addresses of individual fields of
 	// edge buffer input arguments
 
 	// texture data, width, height, exponent
-	I32 regTextureData =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_TEXTURE_DATA, "load texture data addr.");
-	I32 regTextureWidth =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_TEXTURE_WIDTH, "load texture width");
-	I32 regTextureHeight =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_TEXTURE_HEIGHT, "load texture height");
-	I32 regTextureExponent =	LOAD_DATA(block0, nextRegister, regInfo, OFFSET_TEXTURE_EXPONENT, "load texture exponent");
+	cg_virtual_reg_t * regTextureData =		LOAD_DATA(block0, regInfo, OFFSET_TEXTURE_DATA);
+	cg_virtual_reg_t * regTextureWidth =		LOAD_DATA(block0, regInfo, OFFSET_TEXTURE_WIDTH);
+	cg_virtual_reg_t * regTextureHeight =		LOAD_DATA(block0, regInfo, OFFSET_TEXTURE_HEIGHT);
+	cg_virtual_reg_t * regTextureExponent =	LOAD_DATA(block0, regInfo, OFFSET_TEXTURE_EXPONENT);
 
 
 	// surface color buffer, depth buffer, alpha buffer, stencil buffer
-	I32 regColorBuffer =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_COLOR_BUFFER, "load color buffer addr.");
-	I32 regDepthBuffer =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_DEPTH_BUFFER, "load depth buffer addr.");
-	I32 regAlphaBuffer =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_ALPHA_BUFFER, "load alpha buffer addr.");
-	I32 regStencilBuffer =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_STENCIL_BUFFER, "load stencil buffer addr.");
-	I32 regSurfaceWidth =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_WIDTH, "load surface width");
+	cg_virtual_reg_t * regColorBuffer =		LOAD_DATA(block0, regInfo, OFFSET_SURFACE_COLOR_BUFFER);
+	cg_virtual_reg_t * regDepthBuffer =		LOAD_DATA(block0, regInfo, OFFSET_SURFACE_DEPTH_BUFFER);
+	cg_virtual_reg_t * regAlphaBuffer =		LOAD_DATA(block0, regInfo, OFFSET_SURFACE_ALPHA_BUFFER);
+	cg_virtual_reg_t * regStencilBuffer =		LOAD_DATA(block0, regInfo, OFFSET_SURFACE_STENCIL_BUFFER);
+	cg_virtual_reg_t * regSurfaceWidth =		LOAD_DATA(block0, regInfo, OFFSET_SURFACE_WIDTH);
 
 	// x coordinate
-	I32 regOffsetWindowX = nextRegister++;
-	I32 regAddrStartWindowX = nextRegister++;
-	I32 regAddrEndWindowX = nextRegister++;
+	cg_virtual_reg_t * regOffsetWindowX = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrStartWindowX = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrEndWindowX = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 += 		IMMEDIATE	(ldi,	regOffsetWindowX, Constant::createInt(OFFSET_EDGE_BUFFER_WINDOW_X));
-	block0 +=		BINARY		(add,	regAddrStartWindowX, regStart, regOffsetWindowX);
-	block0 +=		BINARY		(add,	regAddrEndWindowX, regEnd, regOffsetWindowX);
+	cg_create_inst_load_immed(block0, cg_op_ldi,	regOffsetWindowX, OFFSET_EDGE_BUFFER_WINDOW_X);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrStartWindowX, regStart, regOffsetWindowX);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrEndWindowX, regEnd, regOffsetWindowX);
 
 	// z coordinate
-	I32 regOffsetWindowZ = nextRegister++;
-	I32 regAddrStartWindowZ = nextRegister++;
-	I32 regAddrEndWindowZ = nextRegister++;
+	cg_virtual_reg_t * regOffsetWindowZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrStartWindowZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrEndWindowZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=		IMMEDIATE	(ldi,	regOffsetWindowZ, Constant::createInt(OFFSET_EDGE_BUFFER_WINDOW_Z));
-	block0 +=		BINARY		(add,	regAddrStartWindowZ, regStart, regOffsetWindowZ);
-	block0 +=		BINARY		(add,	regAddrEndWindowZ, regEnd, regOffsetWindowZ);
+	cg_create_inst_load_immed(block0, cg_op_ldi,	regOffsetWindowZ, OFFSET_EDGE_BUFFER_WINDOW_Z);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrStartWindowZ, regStart, regOffsetWindowZ);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrEndWindowZ, regEnd, regOffsetWindowZ);
 
 	// u texture coordinate
-	I32 regOffsetTextureU = nextRegister++;
-	I32 regAddrStartTextureU = nextRegister++;
-	I32 regAddrEndTextureU = nextRegister++;
+	cg_virtual_reg_t * regOffsetTextureU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrStartTextureU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrEndTextureU = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=		IMMEDIATE	(ldi,	regOffsetTextureU, Constant::createInt(OFFSET_EDGE_BUFFER_TEX_TU));
-	block0 +=		BINARY		(add,	regAddrStartTextureU, regStart, regOffsetTextureU);
-	block0 +=		BINARY		(add,	regAddrEndTextureU, regEnd, regOffsetTextureU);
+	cg_create_inst_load_immed(block0, cg_op_ldi,	regOffsetTextureU, OFFSET_EDGE_BUFFER_TEX_TU);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrStartTextureU, regStart, regOffsetTextureU);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrEndTextureU, regEnd, regOffsetTextureU);
 
 	// v texture coordinate
-	I32 regOffsetTextureV = nextRegister++;
-	I32 regAddrStartTextureV = nextRegister++;
-	I32 regAddrEndTextureV = nextRegister++;
+	cg_virtual_reg_t * regOffsetTextureV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrStartTextureV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrEndTextureV = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=		IMMEDIATE	(ldi,	regOffsetTextureV, Constant::createInt(OFFSET_EDGE_BUFFER_TEX_TV));
-	block0 +=		BINARY		(add,	regAddrStartTextureV, regStart, regOffsetTextureV);
-	block0 +=		BINARY		(add,	regAddrEndTextureV, regEnd, regOffsetTextureV);
+	cg_create_inst_load_immed(block0, cg_op_ldi,	regOffsetTextureV, OFFSET_EDGE_BUFFER_TEX_TV);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrStartTextureV, regStart, regOffsetTextureV);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrEndTextureV, regEnd, regOffsetTextureV);
 
 	// r color component
-	I32 regOffsetColorR = nextRegister++;
-	I32 regAddrStartColorR = nextRegister++;
-	I32 regAddrEndColorR = nextRegister++;
+	cg_virtual_reg_t * regOffsetColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrStartColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrEndColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=		IMMEDIATE	(ldi,	regOffsetColorR, Constant::createInt(OFFSET_EDGE_BUFFER_COLOR_R));
-	block0 +=		BINARY		(add,	regAddrStartColorR, regStart, regOffsetColorR);
-	block0 +=		BINARY		(add,	regAddrEndColorR, regEnd, regOffsetColorR);
+	cg_create_inst_load_immed(block0, cg_op_ldi,	regOffsetColorR, OFFSET_EDGE_BUFFER_COLOR_R);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrStartColorR, regStart, regOffsetColorR);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrEndColorR, regEnd, regOffsetColorR);
 
 	// g color component
-	I32 regOffsetColorG = nextRegister++;
-	I32 regAddrStartColorG = nextRegister++;
-	I32 regAddrEndColorG = nextRegister++;
+	cg_virtual_reg_t * regOffsetColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrStartColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrEndColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=		IMMEDIATE	(ldi,	regOffsetColorG, Constant::createInt(OFFSET_EDGE_BUFFER_COLOR_G));
-	block0 +=		BINARY		(add,	regAddrStartColorG, regStart, regOffsetColorG);
-	block0 +=		BINARY		(add,	regAddrEndColorG, regEnd, regOffsetColorG);
+	cg_create_inst_load_immed(block0, cg_op_ldi,	regOffsetColorG, OFFSET_EDGE_BUFFER_COLOR_G);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrStartColorG, regStart, regOffsetColorG);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrEndColorG, regEnd, regOffsetColorG);
 
 	// b color component
-	I32 regOffsetColorB = nextRegister++;
-	I32 regAddrStartColorB = nextRegister++;
-	I32 regAddrEndColorB = nextRegister++;
+	cg_virtual_reg_t * regOffsetColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrStartColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrEndColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	IMMEDIATE		(ldi,	regOffsetColorB, Constant::createInt(OFFSET_EDGE_BUFFER_COLOR_B));
-	block0 +=	BINARY			(add,	regAddrStartColorB, regStart, regOffsetColorB);
-	block0 +=	BINARY			(add,	regAddrEndColorB, regEnd, regOffsetColorB);
+	cg_create_inst_load_immed(block0, cg_op_ldi,	regOffsetColorB, OFFSET_EDGE_BUFFER_COLOR_B);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrStartColorB, regStart, regOffsetColorB);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrEndColorB, regEnd, regOffsetColorB);
 
 	// a color component
-	I32 regOffsetColorA = nextRegister++;
-	I32 regAddrStartColorA = nextRegister++;
-	I32 regAddrEndColorA = nextRegister++;
+	cg_virtual_reg_t * regOffsetColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrStartColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrEndColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	IMMEDIATE		(ldi,	regOffsetColorA, Constant::createInt(OFFSET_EDGE_BUFFER_COLOR_A));
-	block0 +=	BINARY			(add,	regAddrStartColorA, regStart, regOffsetColorA);
-	block0 +=	BINARY			(add,	regAddrEndColorA, regEnd, regOffsetColorA);
+	cg_create_inst_load_immed(block0, cg_op_ldi,	regOffsetColorA, OFFSET_EDGE_BUFFER_COLOR_A);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrStartColorA, regStart, regOffsetColorA);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrEndColorA, regEnd, regOffsetColorA);
 
 	// fog density
-	I32 regOffsetFog = nextRegister++;
-	I32 regAddrStartFog = nextRegister++;
-	I32 regAddrEndFog = nextRegister++;
+	cg_virtual_reg_t * regOffsetFog = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrStartFog = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regAddrEndFog = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	IMMEDIATE		(ldi,	regOffsetFog, Constant::createInt(OFFSET_EDGE_BUFFER_FOG));
-	block0 +=	BINARY			(add,	regAddrStartFog, regStart, regOffsetFog);
-	block0 +=	BINARY			(add,	regAddrEndFog, regEnd, regOffsetFog);
+	cg_create_inst_load_immed(block0, cg_op_ldi,	regOffsetFog, OFFSET_EDGE_BUFFER_FOG);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrStartFog, regStart, regOffsetFog);
+	cg_create_inst_binary(block0, cg_op_add,	regAddrEndFog, regEnd, regOffsetFog);
 
 	//EGL_Fixed invSpan = EGL_Inverse(end.m_WindowCoords.x - start.m_WindowCoords.x);
-	I32 regEndWindowX = nextRegister++;
-	I32 regStartWindowX = nextRegister++;
-	I32 regDiffX = nextRegister++;
-	I32 regInvSpan = nextRegister++;
+	cg_virtual_reg_t * regEndWindowX = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regStartWindowX = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDiffX = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regInvSpan = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	LOAD			(ldw,	regEndWindowX, regAddrEndWindowX, "load x end");
-	block0 +=	LOAD			(ldw,	regStartWindowX, regAddrStartWindowX, "load x start");
-	block0 +=	BINARY			(sub,	regDiffX, regEndWindowX, regStartWindowX);
-	block0 +=	UNARY			(finv,	regInvSpan, regDiffX);
+	cg_create_inst_load(block0, cg_op_ldw,	regEndWindowX, regAddrEndWindowX);
+	cg_create_inst_load(block0, cg_op_ldw,	regStartWindowX, regAddrStartWindowX);
+	cg_create_inst_binary(block0, cg_op_sub,	regDiffX, regEndWindowX, regStartWindowX);
+	cg_create_inst_unary(block0, cg_op_finv,	regInvSpan, regDiffX);
 
 	//FractionalColor baseColor = start.m_Color;
-	I32 regStartColorR = nextRegister++;
-	I32 regStartColorG = nextRegister++;
-	I32 regStartColorB = nextRegister++;
-	I32 regStartColorA = nextRegister++;
+	cg_virtual_reg_t * regStartColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regStartColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regStartColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regStartColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	LOAD			(ldw,	regStartColorR, regAddrStartColorR, "load r start");
-	block0 +=	LOAD			(ldw,	regStartColorG, regAddrStartColorG, "load g start");
-	block0 +=	LOAD			(ldw,	regStartColorB, regAddrStartColorB, "load b start");
-	block0 +=	LOAD			(ldw,	regStartColorA, regAddrStartColorA, "load a start");
+	cg_create_inst_load(block0, cg_op_ldw,	regStartColorR, regAddrStartColorR);
+	cg_create_inst_load(block0, cg_op_ldw,	regStartColorG, regAddrStartColorG);
+	cg_create_inst_load(block0, cg_op_ldw,	regStartColorB, regAddrStartColorB);
+	cg_create_inst_load(block0, cg_op_ldw,	regStartColorA, regAddrStartColorA);
 
 	//FractionalColor colorIncrement = (end.m_Color - start.m_Color) * invSpan;
-	I32 regEndColorR = nextRegister++;
-	I32 regEndColorG = nextRegister++;
-	I32 regEndColorB = nextRegister++;
-	I32 regEndColorA = nextRegister++;
+	cg_virtual_reg_t * regEndColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regEndColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regEndColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regEndColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	LOAD			(ldw,	regEndColorR, regAddrEndColorR, "load r end");
-	block0 +=	LOAD			(ldw,	regEndColorG, regAddrEndColorG, "load g end");
-	block0 +=	LOAD			(ldw,	regEndColorB, regAddrEndColorB, "load b end");
-	block0 +=	LOAD			(ldw,	regEndColorA, regAddrEndColorA, "load a end");
+	cg_create_inst_load(block0, cg_op_ldw,	regEndColorR, regAddrEndColorR);
+	cg_create_inst_load(block0, cg_op_ldw,	regEndColorG, regAddrEndColorG);
+	cg_create_inst_load(block0, cg_op_ldw,	regEndColorB, regAddrEndColorB);
+	cg_create_inst_load(block0, cg_op_ldw,	regEndColorA, regAddrEndColorA);
 
-	I32 regDiffColorR = nextRegister++;
-	I32 regDiffColorG = nextRegister++;
-	I32 regDiffColorB = nextRegister++;
-	I32 regDiffColorA = nextRegister++;
+	cg_virtual_reg_t * regDiffColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDiffColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDiffColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDiffColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	BINARY			(sub,	regDiffColorR, regEndColorR, regStartColorR);
-	block0 +=	BINARY			(sub,	regDiffColorG, regEndColorG, regStartColorG);
-	block0 +=	BINARY			(sub,	regDiffColorB, regEndColorB, regStartColorB);
-	block0 +=	BINARY			(sub,	regDiffColorA, regEndColorA, regStartColorA);
+	cg_create_inst_binary(block0, cg_op_sub,	regDiffColorR, regEndColorR, regStartColorR);
+	cg_create_inst_binary(block0, cg_op_sub,	regDiffColorG, regEndColorG, regStartColorG);
+	cg_create_inst_binary(block0, cg_op_sub,	regDiffColorB, regEndColorB, regStartColorB);
+	cg_create_inst_binary(block0, cg_op_sub,	regDiffColorA, regEndColorA, regStartColorA);
 
-	I32 regColorIncrementR = nextRegister++;
-	I32 regColorIncrementG = nextRegister++;
-	I32 regColorIncrementB = nextRegister++;
-	I32 regColorIncrementA = nextRegister++;
+	cg_virtual_reg_t * regColorIncrementR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regColorIncrementG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regColorIncrementB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regColorIncrementA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	BINARY			(fmul,	regColorIncrementR, regDiffColorR, regInvSpan, "delta R");
-	block0 +=	BINARY			(fmul,	regColorIncrementG, regDiffColorG, regInvSpan, "delta G");
-	block0 +=	BINARY			(fmul,	regColorIncrementB, regDiffColorB, regInvSpan, "delta B");
-	block0 +=	BINARY			(fmul,	regColorIncrementA, regDiffColorA, regInvSpan, "delta A");
+	cg_create_inst_binary(block0, cg_op_fmul,	regColorIncrementR, regDiffColorR, regInvSpan);
+	cg_create_inst_binary(block0, cg_op_fmul,	regColorIncrementG, regDiffColorG, regInvSpan);
+	cg_create_inst_binary(block0, cg_op_fmul,	regColorIncrementB, regDiffColorB, regInvSpan);
+	cg_create_inst_binary(block0, cg_op_fmul,	regColorIncrementA, regDiffColorA, regInvSpan);
 
 	//EGL_Fixed deltaInvZ = EGL_Mul(end.m_WindowCoords.z - start.m_WindowCoords.z, invSpan);
-	I32 regEndWindowZ = nextRegister++;
-	I32 regStartWindowZ = nextRegister++;
-	I32 regDiffInvZ = nextRegister++;
-	I32 regDeltaInvZ = nextRegister++;
+	cg_virtual_reg_t * regEndWindowZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regStartWindowZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDiffInvZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDeltaInvZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	LOAD			(ldw,	regEndWindowZ, regAddrEndWindowZ, "load inv. z end");
-	block0 +=	LOAD			(ldw,	regStartWindowZ, regAddrStartWindowZ, "load inv. z start");
-	block0 +=	BINARY			(sub,	regDiffInvZ, regEndWindowZ, regStartWindowZ);
-	block0 +=	BINARY			(fmul,	regDeltaInvZ, regDiffInvZ, regInvSpan);
+	cg_create_inst_load(block0, cg_op_ldw,	regEndWindowZ, regAddrEndWindowZ);
+	cg_create_inst_load(block0, cg_op_ldw,	regStartWindowZ, regAddrStartWindowZ);
+	cg_create_inst_binary(block0, cg_op_sub,	regDiffInvZ, regEndWindowZ, regStartWindowZ);
+	cg_create_inst_binary(block0, cg_op_fmul,	regDeltaInvZ, regDiffInvZ, regInvSpan);
 
 	//EGL_Fixed deltaInvU = EGL_Mul(end.m_TextureCoords.tu - start.m_TextureCoords.tu, invSpan);
-	I32 regEndTextureU = nextRegister++;
-	I32 regStartTextureU = nextRegister++;
-	I32 regDiffInvU = nextRegister++;
-	I32 regDeltaInvU = nextRegister++;
+	cg_virtual_reg_t * regEndTextureU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regStartTextureU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDiffInvU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDeltaInvU = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	LOAD			(ldw,	regEndTextureU, regAddrEndTextureU, "load u/z end");
-	block0 +=	LOAD			(ldw,	regStartTextureU, regAddrStartTextureU, "load u/z start");
-	block0 +=	BINARY			(sub,	regDiffInvU, regEndTextureU, regStartTextureU);
-	block0 +=	BINARY			(fmul,	regDeltaInvU, regDiffInvU, regInvSpan, "delta u/z");
+	cg_create_inst_load(block0, cg_op_ldw,	regEndTextureU, regAddrEndTextureU);
+	cg_create_inst_load(block0, cg_op_ldw,	regStartTextureU, regAddrStartTextureU);
+	cg_create_inst_binary(block0, cg_op_sub,	regDiffInvU, regEndTextureU, regStartTextureU);
+	cg_create_inst_binary(block0, cg_op_fmul,	regDeltaInvU, regDiffInvU, regInvSpan);
 
 	//EGL_Fixed deltaInvV = EGL_Mul(end.m_TextureCoords.tv - start.m_TextureCoords.tv, invSpan);
-	I32 regEndTextureV = nextRegister++;
-	I32 regStartTextureV = nextRegister++;
-	I32 regDiffInvV = nextRegister++;
-	I32 regDeltaInvV = nextRegister++;
+	cg_virtual_reg_t * regEndTextureV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regStartTextureV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDiffInvV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDeltaInvV = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	LOAD			(ldw,	regEndTextureV, regAddrEndTextureV, "load v/z end");
-	block0 +=	LOAD			(ldw,	regStartTextureV, regAddrStartTextureV, "load v/z start");
-	block0 +=	BINARY			(sub,	regDiffInvV, regEndTextureV, regStartTextureV);
-	block0 +=	BINARY			(fmul,	regDeltaInvV, regDiffInvV, regInvSpan, "delta v/z");
+	cg_create_inst_load(block0, cg_op_ldw,	regEndTextureV, regAddrEndTextureV);
+	cg_create_inst_load(block0, cg_op_ldw,	regStartTextureV, regAddrStartTextureV);
+	cg_create_inst_binary(block0, cg_op_sub,	regDiffInvV, regEndTextureV, regStartTextureV);
+	cg_create_inst_binary(block0, cg_op_fmul,	regDeltaInvV, regDiffInvV, regInvSpan);
 
 	//EGL_Fixed deltaFog = EGL_Mul(end.m_FogDensity - start.m_FogDensity, invSpan);
-	I32 regEndFog = nextRegister++;
-	I32 regStartFog = nextRegister++;
-	I32 regDiffFog = nextRegister++;
-	I32 regDeltaFog = nextRegister++;
+	cg_virtual_reg_t * regEndFog = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regStartFog = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDiffFog = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDeltaFog = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	LOAD			(ldw,	regEndFog, regAddrEndFog, "load end fog");
-	block0 +=	LOAD			(ldw,	regStartFog, regAddrStartFog, "load start fog");
-	block0 +=	BINARY			(sub,	regDiffFog, regEndFog, regStartFog);
-	block0 +=	BINARY			(fmul,	regDeltaFog, regDiffFog, regInvSpan, "delta fog");
+	cg_create_inst_load(block0, cg_op_ldw,	regEndFog, regAddrEndFog);
+	cg_create_inst_load(block0, cg_op_ldw,	regStartFog, regAddrStartFog);
+	cg_create_inst_binary(block0, cg_op_sub,	regDiffFog, regEndFog, regStartFog);
+	cg_create_inst_binary(block0, cg_op_fmul,	regDeltaFog, regDiffFog, regInvSpan);
 
 	//EGL_Fixed invTu = start.m_TextureCoords.tu;
 	//EGL_Fixed invTv = start.m_TextureCoords.tv;
@@ -2517,173 +2464,169 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	//EGL_Fixed z = EGL_Inverse(invZ);
 	//EGL_Fixed tu = EGL_Mul(invTu, z);
 	//EGL_Fixed tv = EGL_Mul(invTv, z);
-	I32 regZ = nextRegister++;
-	I32 regU = nextRegister++;
-	I32 regV = nextRegister++;
+	cg_virtual_reg_t * regZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regV = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	UNARY			(finv,	regZ, regStartWindowZ);
-	block0 +=	BINARY			(fmul,	regU, regStartTextureU, regZ);
-	block0 +=	BINARY			(fmul,	regV, regStartTextureV, regZ);
+	cg_create_inst_unary(block0, cg_op_finv,	regZ, regStartWindowZ);
+	cg_create_inst_binary(block0, cg_op_fmul,	regU, regStartTextureU, regZ);
+	cg_create_inst_binary(block0, cg_op_fmul,	regV, regStartTextureV, regZ);
 
-	//I32 x = EGL_IntFromFixed(start.m_WindowCoords.x);
-	//I32 xEnd = EGL_IntFromFixed(end.m_WindowCoords.x);
-	I32 regX = nextRegister++;
-	I32 regXEnd = nextRegister++;
+	//cg_virtual_reg_t * x = EGL_IntFromFixed(start.m_WindowCoords.x);
+	//cg_virtual_reg_t * xEnd = EGL_IntFromFixed(end.m_WindowCoords.x);
+	cg_virtual_reg_t * regX = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regXEnd = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	UNARY			(trunc,	regX, regStartWindowX);
-	block0 +=	UNARY			(trunc,	regXEnd, regEndWindowX);
+	cg_create_inst_unary(block0, cg_op_trunc,	regX, regStartWindowX);
+	cg_create_inst_unary(block0, cg_op_trunc,	regXEnd, regEndWindowX);
 
-	//I32 xLinEnd = x + ((xEnd - x) & ~(LINEAR_SPAN - 1));
-	I32 regSpanMask = nextRegister++;
-	I32 regMaskedSpan = nextRegister++;
-	I32 regXLinEnd = nextRegister++;
-	I32 regCompare0 = nextRegister++;
-	I32 regIntDiffX = nextRegister++;
+	//cg_virtual_reg_t * xLinEnd = x + ((xEnd - x) & ~(LINEAR_SPAN - 1));
+	cg_virtual_reg_t * regSpanMask = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regMaskedSpan = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regXLinEnd = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regCompare0 = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+	cg_virtual_reg_t * regIntDiffX = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block0 +=	IMMEDIATE		(ldi,	regSpanMask, Constant::createInt(~(LINEAR_SPAN - 1)));
-	block0 +=	UNARY			(trunc,	regIntDiffX, regDiffX);
-	block0 +=	BINARY			(and,	regMaskedSpan, regCompare0, regIntDiffX, regSpanMask);
-	block0 +=	BINARY			(add,	regXLinEnd, regX, regMaskedSpan);
+	cg_create_inst_load_immed(block0, cg_op_ldi,	regSpanMask, ~(LINEAR_SPAN - 1));
+	cg_create_inst_unary(block0, cg_op_trunc,	regIntDiffX, regDiffX);
+	cg_create_inst_binary_s(block0, cg_op_and,	regMaskedSpan, regCompare0, regIntDiffX, regSpanMask);
+	cg_create_inst_binary(block0, cg_op_add,	regXLinEnd, regX, regMaskedSpan);
 
 	//for (; x < xLinEnd;) {
 
-	Label * endLoop0 = Label::create("endLoop0", LabelBlock);
+	cg_block_ref_t * endLoop0 = cg_block_ref_create(procedure);
 
-	block0 +=	BCOND			(beq,	regCompare0, endLoop0);
+	cg_create_inst_branch_cond(block0, cg_op_beq,	regCompare0, endLoop0);
 
-	Label * beginLoop0 = Label::create("beginLoop0", LabelBlock);
-	Block& block1 = *new Block(procedure);
-	procedure->blocks.push_back(&block1);
-	beginLoop0->block.block = &block1;
-	block1.labels.push_back(beginLoop0);
+	cg_block_ref_t * beginLoop0 = cg_block_ref_create(procedure);
+	cg_block_t * block1 = cg_block_create(procedure);
+	beginLoop0->block = block1;
 
 	// Here we define all the loop registers and phi mappings
-	I32 regLoop0ZEntry = nextRegister++;
-	I32 regLoop0Z = nextRegister++;
-	I32 regLoop1Z = nextRegister++;
+	cg_virtual_reg_t * regLoop0ZEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop0Z = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1Z = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block1 +=	PHI				(phi, regLoop0ZEntry, REG_LIST(regZ, regLoop0Z, regLoop1Z));
+	cg_create_inst_phi(block1, cg_op_phi, regLoop0ZEntry, cg_create_virtual_reg_list(procedure->module->heap, regZ, regLoop0Z, regLoop1Z, NULL));
 
-	I32 regLoop0UEntry = nextRegister++;
-	I32 regLoop0U = nextRegister++;
-	I32 regLoop1U = nextRegister++;
+	cg_virtual_reg_t * regLoop0UEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop0U = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1U = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block1 +=	PHI				(phi, regLoop0UEntry, REG_LIST(regU, regLoop0U, regLoop1U));
+	cg_create_inst_phi(block1, cg_op_phi, regLoop0UEntry, cg_create_virtual_reg_list(procedure->module->heap, regU, regLoop0U, regLoop1U, NULL));
 
-	I32 regLoop0VEntry = nextRegister++;
-	I32 regLoop0V = nextRegister++;
-	I32 regLoop1V = nextRegister++;
+	cg_virtual_reg_t * regLoop0VEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop0V = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1V = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block1 +=	PHI				(phi, regLoop0VEntry, REG_LIST(regV, regLoop0V, regLoop1V));
+	cg_create_inst_phi(block1, cg_op_phi, regLoop0VEntry, cg_create_virtual_reg_list(procedure->module->heap, regV, regLoop0V, regLoop1V, NULL));
 
-	I32 regLoop0InvZEntry = nextRegister++;
-	I32 regLoop0InvZ = nextRegister++;
+	cg_virtual_reg_t * regLoop0InvZEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop0InvZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block1 +=	PHI				(phi, regLoop0InvZEntry, REG_LIST(regStartWindowZ, regLoop0InvZ));
+	cg_create_inst_phi(block1, cg_op_phi, regLoop0InvZEntry, cg_create_virtual_reg_list(procedure->module->heap, regStartWindowZ, regLoop0InvZ, NULL));
 
-	I32 regLoop0InvUEntry = nextRegister++;
-	I32 regLoop0InvU = nextRegister++;
+	cg_virtual_reg_t * regLoop0InvUEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop0InvU = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block1 +=	PHI				(phi, regLoop0InvUEntry, REG_LIST(regStartTextureU, regLoop0InvU));
+	cg_create_inst_phi(block1, cg_op_phi, regLoop0InvUEntry, cg_create_virtual_reg_list(procedure->module->heap, regStartTextureU, regLoop0InvU, NULL));
 
-	I32 regLoop0InvVEntry = nextRegister++;
-	I32 regLoop0InvV = nextRegister++;
+	cg_virtual_reg_t * regLoop0InvVEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop0InvV = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block1 +=	PHI				(phi, regLoop0InvVEntry, REG_LIST(regStartTextureV, regLoop0InvV));
+	cg_create_inst_phi(block1, cg_op_phi, regLoop0InvVEntry, cg_create_virtual_reg_list(procedure->module->heap, regStartTextureV, regLoop0InvV, NULL));
 
 		//invZ += deltaInvZ << LOG_LINEAR_SPAN;
 		//invTu += deltaInvU << LOG_LINEAR_SPAN;
 		//invTv += deltaInvV << LOG_LINEAR_SPAN;
-	I32 regLinearSpan = nextRegister++;
-	I32 regConstant1 = nextRegister++;
-	I32 regDeltaInvZTimesLinearSpan = nextRegister++;
-	I32 regDeltaInvUTimesLinearSpan = nextRegister++;
-	I32 regDeltaInvVTimesLinearSpan = nextRegister++;
+	cg_virtual_reg_t * regLinearSpan = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDeltaInvZTimesLinearSpan = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDeltaInvUTimesLinearSpan = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regDeltaInvVTimesLinearSpan = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block1 +=		IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
-	block1 +=		IMMEDIATE	(ldi,	regLinearSpan, Constant::createInt(LINEAR_SPAN));
-	block1 +=		BINARY		(fmul,	regDeltaInvZTimesLinearSpan, regDeltaInvZ, regLinearSpan);	
-	block1 +=		BINARY		(fadd,	regLoop0InvZ, regLoop0InvZEntry, regDeltaInvZTimesLinearSpan);
-	block1 +=		BINARY		(fmul,	regDeltaInvUTimesLinearSpan, regDeltaInvU, regLinearSpan);	
-	block1 +=		BINARY		(fadd,	regLoop0InvU, regLoop0InvUEntry, regDeltaInvUTimesLinearSpan);
-	block1 +=		BINARY		(fmul,	regDeltaInvVTimesLinearSpan, regDeltaInvV, regLinearSpan);	
-	block1 +=		BINARY		(fadd,	regLoop0InvV, regLoop0InvVEntry, regDeltaInvVTimesLinearSpan);
+	cg_create_inst_load_immed(block1, cg_op_ldi,	regConstant1, 1);
+	cg_create_inst_load_immed(block1, cg_op_ldi,	regLinearSpan, LINEAR_SPAN);
+	cg_create_inst_binary(block1, cg_op_fmul,	regDeltaInvZTimesLinearSpan, regDeltaInvZ, regLinearSpan);	
+	cg_create_inst_binary(block1, cg_op_fadd,	regLoop0InvZ, regLoop0InvZEntry, regDeltaInvZTimesLinearSpan);
+	cg_create_inst_binary(block1, cg_op_fmul,	regDeltaInvUTimesLinearSpan, regDeltaInvU, regLinearSpan);	
+	cg_create_inst_binary(block1, cg_op_fadd,	regLoop0InvU, regLoop0InvUEntry, regDeltaInvUTimesLinearSpan);
+	cg_create_inst_binary(block1, cg_op_fmul,	regDeltaInvVTimesLinearSpan, regDeltaInvV, regLinearSpan);	
+	cg_create_inst_binary(block1, cg_op_fadd,	regLoop0InvV, regLoop0InvVEntry, regDeltaInvVTimesLinearSpan);
 
 		//EGL_Fixed endZ = EGL_Inverse(invZ);
 		//EGL_Fixed endTu = EGL_Mul(invTu, endZ);
 		//EGL_Fixed endTv = EGL_Mul(invTv, endZ);
 
-	I32 regLoop0EndZ = nextRegister++;
-	I32 regLoop0EndU = nextRegister++;
-	I32 regLoop0EndV = nextRegister++;
+	cg_virtual_reg_t * regLoop0EndZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop0EndU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop0EndV = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block1 +=		UNARY		(finv,	regLoop0EndZ, regLoop0InvZ);
-	block1 +=		BINARY		(fmul,	regLoop0EndU, regLoop0InvU, regLoop0EndZ);
-	block1 +=		BINARY		(fmul,	regLoop0EndV, regLoop0InvV, regLoop0EndZ);
+	cg_create_inst_unary(block1, cg_op_finv,	regLoop0EndZ, regLoop0InvZ);
+	cg_create_inst_binary(block1, cg_op_fmul,	regLoop0EndU, regLoop0InvU, regLoop0EndZ);
+	cg_create_inst_binary(block1, cg_op_fmul,	regLoop0EndV, regLoop0InvV, regLoop0EndZ);
 
 		//EGL_Fixed deltaZ = (endZ - z) >> LOG_LINEAR_SPAN;
 		//EGL_Fixed deltaTu = (endTu - tu) >> LOG_LINEAR_SPAN; 
 		//EGL_Fixed deltaTv = (endTv - tv) >> LOG_LINEAR_SPAN;
 
-	I32 regLoop0DiffZ = nextRegister++;
-	I32 regLoop0ScaledDiffZ = nextRegister++;
-	I32 regLoop0DiffU = nextRegister++;
-	I32 regLoop0ScaledDiffU = nextRegister++;
-	I32 regLoop0DiffV = nextRegister++;
-	I32 regLoop0ScaledDiffV = nextRegister++;
+	cg_virtual_reg_t * regLoop0DiffZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop0ScaledDiffZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop0DiffU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop0ScaledDiffU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop0DiffV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop0ScaledDiffV = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block1 +=		BINARY		(fsub,	regLoop0DiffZ, regLoop0EndZ, regLoop0Z); // Entry?
-	block1 +=		BINARY		(fdiv,	regLoop0ScaledDiffZ, regLoop0DiffZ, regLinearSpan);
-	block1 +=		BINARY		(fsub,	regLoop0DiffU, regLoop0EndU, regLoop0U); // Entry?
-	block1 +=		BINARY		(fdiv,	regLoop0ScaledDiffU, regLoop0DiffU, regLinearSpan);
-	block1 +=		BINARY		(fsub,	regLoop0DiffV, regLoop0EndV, regLoop0V); // Entry?
-	block1 +=		BINARY		(fdiv,	regLoop0ScaledDiffV, regLoop0DiffV, regLinearSpan);
+	cg_create_inst_binary(block1, cg_op_fsub,	regLoop0DiffZ, regLoop0EndZ, regLoop0Z); // Entry?
+	cg_create_inst_binary(block1, cg_op_fdiv,	regLoop0ScaledDiffZ, regLoop0DiffZ, regLinearSpan);
+	cg_create_inst_binary(block1, cg_op_fsub,	regLoop0DiffU, regLoop0EndU, regLoop0U); // Entry?
+	cg_create_inst_binary(block1, cg_op_fdiv,	regLoop0ScaledDiffU, regLoop0DiffU, regLinearSpan);
+	cg_create_inst_binary(block1, cg_op_fsub,	regLoop0DiffV, regLoop0EndV, regLoop0V); // Entry?
+	cg_create_inst_binary(block1, cg_op_fdiv,	regLoop0ScaledDiffV, regLoop0DiffV, regLinearSpan);
 
 	// also not to include phi projection for z coming from inner loop
 
 		//int count = LINEAR_SPAN; 
 
-	Label * beginLoop1 = Label::create("beginLoop1", LabelBlock);
-	Label * endLoop1 = Label::create("endLoop1", LabelBlock);
-	Label * postFragmentLoop1 = Label::create("postFragmentLoop1", LabelBlock);
+	cg_block_ref_t * beginLoop1 = cg_block_ref_create(procedure);
+	cg_block_ref_t * endLoop1 = cg_block_ref_create(procedure);
+	cg_block_ref_t * postFragmentLoop1 = cg_block_ref_create(procedure);
 
-	Block& block2 = *new Block(procedure);
-	procedure->blocks.push_back(&block2);
-	block2.labels.push_back(beginLoop1);
-	beginLoop1->block.block = &block2;
+	cg_block_t * block2 = cg_block_create(procedure);
+	beginLoop1->block = block2;
 
 		//do {
 
 	// phi for count, x, z, tu, tv, fog, r, g, b, a
 
-	I32 regLoop1CountEntry = nextRegister++;
-	I32 regLoop1Count = nextRegister++;
-	I32 regLoop1XEntry = nextRegister++;
-	I32 regLoop1X = nextRegister++;
-	I32 regLoop1ZEntry = nextRegister++;
-	I32 regLoop1UEntry = nextRegister++;
-	I32 regLoop1VEntry = nextRegister++;
-	I32 regLoop1FogEntry = nextRegister++;
-	I32 regLoop1Fog = nextRegister++;
-	I32 regLoop1REntry = nextRegister++;
-	I32 regLoop1R = nextRegister++;
-	I32 regLoop1GEntry = nextRegister++;
-	I32 regLoop1G = nextRegister++;
-	I32 regLoop1BEntry = nextRegister++;
-	I32 regLoop1B = nextRegister++;
-	I32 regLoop1AEntry = nextRegister++;
-	I32 regLoop1A = nextRegister++;
+	cg_virtual_reg_t * regLoop1CountEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1Count = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1XEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1X = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1ZEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1UEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1VEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1FogEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1Fog = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1REntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1R = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1GEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1G = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1BEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1B = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1AEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop1A = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block2 +=		PHI			(phi,	regLoop1CountEntry, REG_LIST(regLoop1Count, regLinearSpan));
-	block2 +=		PHI			(phi,	regLoop1XEntry, REG_LIST(regLoop1X, regX));
-	block2 +=		PHI			(phi,	regLoop1ZEntry, REG_LIST(regLoop1Z, regZ));
-	block2 +=		PHI			(phi,	regLoop1UEntry, REG_LIST(regLoop1U, regU));
-	block2 +=		PHI			(phi,	regLoop1VEntry, REG_LIST(regLoop1V, regV));
-	block2 +=		PHI			(phi,	regLoop1FogEntry, REG_LIST(regLoop1Fog, regStartFog));
-	block2 +=		PHI			(phi,	regLoop1REntry, REG_LIST(regLoop1R, regStartColorR));
-	block2 +=		PHI			(phi,	regLoop1GEntry, REG_LIST(regLoop1G, regStartColorG));
-	block2 +=		PHI			(phi,	regLoop1BEntry, REG_LIST(regLoop1B, regStartColorB));
-	block2 +=		PHI			(phi,	regLoop1AEntry, REG_LIST(regLoop1A, regStartColorA));
+	cg_create_inst_phi(block2, cg_op_phi,	regLoop1CountEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Count, regLinearSpan, NULL));
+	cg_create_inst_phi(block2, cg_op_phi,	regLoop1XEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1X, regX, NULL));
+	cg_create_inst_phi(block2, cg_op_phi,	regLoop1ZEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Z, regZ, NULL));
+	cg_create_inst_phi(block2, cg_op_phi,	regLoop1UEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1U, regU, NULL));
+	cg_create_inst_phi(block2, cg_op_phi,	regLoop1VEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1V, regV, NULL));
+	cg_create_inst_phi(block2, cg_op_phi,	regLoop1FogEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Fog, regStartFog, NULL));
+	cg_create_inst_phi(block2, cg_op_phi,	regLoop1REntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1R, regStartColorR, NULL));
+	cg_create_inst_phi(block2, cg_op_phi,	regLoop1GEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1G, regStartColorG, NULL));
+	cg_create_inst_phi(block2, cg_op_phi,	regLoop1BEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1B, regStartColorB, NULL));
+	cg_create_inst_phi(block2, cg_op_phi,	regLoop1AEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1A, regStartColorA, NULL));
 		
 	FragmentGenerationInfo info;
 	info.regX = regLoop1XEntry;
@@ -2708,138 +2651,132 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	info.regStencilBuffer = regStencilBuffer;
 	info.regSurfaceWidth = regSurfaceWidth;
 
-	GenerateFragment(procedure, block2, postFragmentLoop1, nextRegister, info); 
+	GenerateFragment(procedure, block2, postFragmentLoop1, info); 
 
-	Block& block3 = *new Block(procedure);
-	procedure->blocks.push_back(&block3);
-	block3.labels.push_back(postFragmentLoop1);
-	postFragmentLoop1->block.block = &block3;
+	cg_block_t * block3 = cg_block_create(procedure);
+	postFragmentLoop1->block = block3;
 
 			//baseColor += colorIncrement;
-	block3 +=		BINARY		(fadd, regLoop1R, regLoop1REntry, regColorIncrementR);
-	block3 +=		BINARY		(fadd, regLoop1G, regLoop1REntry, regColorIncrementG);
-	block3 +=		BINARY		(fadd, regLoop1B, regLoop1REntry, regColorIncrementB);
-	block3 +=		BINARY		(fadd, regLoop1A, regLoop1REntry, regColorIncrementA);
+	cg_create_inst_binary(block3, cg_op_fadd, regLoop1R, regLoop1REntry, regColorIncrementR);
+	cg_create_inst_binary(block3, cg_op_fadd, regLoop1G, regLoop1REntry, regColorIncrementG);
+	cg_create_inst_binary(block3, cg_op_fadd, regLoop1B, regLoop1REntry, regColorIncrementB);
+	cg_create_inst_binary(block3, cg_op_fadd, regLoop1A, regLoop1REntry, regColorIncrementA);
 
 			//fogDensity += deltaFog;
 			//z += deltaZ;
 			//tu += deltaTu;
 			//tv += deltaTv;
-	block3 +=		BINARY		(fadd, regLoop1Fog, regLoop1FogEntry, regDeltaFog);
-	block3 +=		BINARY		(fadd, regLoop1Z, regLoop1ZEntry, regLoop0ScaledDiffZ);
-	block3 +=		BINARY		(fadd, regLoop1U, regLoop1UEntry, regLoop0ScaledDiffU);
-	block3 +=		BINARY		(fadd, regLoop1V, regLoop1VEntry, regLoop0ScaledDiffV);
+	cg_create_inst_binary(block3, cg_op_fadd, regLoop1Fog, regLoop1FogEntry, regDeltaFog);
+	cg_create_inst_binary(block3, cg_op_fadd, regLoop1Z, regLoop1ZEntry, regLoop0ScaledDiffZ);
+	cg_create_inst_binary(block3, cg_op_fadd, regLoop1U, regLoop1UEntry, regLoop0ScaledDiffU);
+	cg_create_inst_binary(block3, cg_op_fadd, regLoop1V, regLoop1VEntry, regLoop0ScaledDiffV);
 
 			//++x;
-	block3 +=		BINARY	(add, regLoop1X, regLoop1XEntry, regConstant1);
+	cg_create_inst_binary(block3, cg_op_add, regLoop1X, regLoop1XEntry, regConstant1);
 
 		//} while (--count);
-	I32 regLoop1Condition = nextRegister++;
+	cg_virtual_reg_t * regLoop1Condition = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-	block3 +=		BINARY		(sub,	regLoop1Count, regLoop1Condition, regLoop1CountEntry, regConstant1);
-	block3 +=		BCOND		(bne,	regLoop1Condition, beginLoop1);
+	cg_create_inst_binary_s(block3, cg_op_sub,	regLoop1Count, regLoop1Condition, regLoop1CountEntry, regConstant1);
+	cg_create_inst_branch_cond(block3, cg_op_bne,	regLoop1Condition, beginLoop1);
 	//}
 
-	I32 regLoop0Condition = nextRegister++;
-	block3 +=		COMPARE		(cmp,	regLoop0Condition, regLoop1X, regXLinEnd);
-	block3 +=		BCOND		(bne,	regLoop0Condition, beginLoop0);
+	cg_virtual_reg_t * regLoop0Condition = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+	cg_create_inst_compare(block3, cg_op_cmp,	regLoop0Condition, regLoop1X, regXLinEnd);
+	cg_create_inst_branch_cond(block3, cg_op_bne,	regLoop0Condition, beginLoop0);
 
 	//if (x != xEnd) {
-	Block& block4 = *new Block(procedure);
-	procedure->blocks.push_back(&block4);
-	endLoop0->block.block = &block4;
-	block4.labels.push_back(endLoop0);
+	cg_block_t * block4 = cg_block_create(procedure);
+	endLoop0->block = block4;
 
-	Label * beginLoop2 = Label::create("beginLoop2", LabelBlock);
-	Label * endLoop2 = Label::create("endLoop2", LabelBlock);
-	Label * postFragmentLoop2 = Label::create("postFragmentLoop2", LabelBlock);
+	cg_block_ref_t * beginLoop2 = cg_block_ref_create(procedure);
+	cg_block_ref_t * endLoop2 = cg_block_ref_create(procedure);
+	cg_block_ref_t * postFragmentLoop2 = cg_block_ref_create(procedure);
 
-	I32 regBlock4X = nextRegister++;
-	I32 regBlock4Z = nextRegister++;
-	I32 regBlock4U = nextRegister++;
-	I32 regBlock4V = nextRegister++;
-	I32 regBlock4DiffX = nextRegister++;
-	I32 regBlock4Condition = nextRegister++;
+	cg_virtual_reg_t * regBlock4X = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regBlock4Z = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regBlock4U = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regBlock4V = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regBlock4DiffX = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regBlock4Condition = cg_virtual_reg_create(procedure, cg_reg_type_flags);
 
-	block4 +=		PHI			(phi,	regBlock4X, REG_LIST(regX, regLoop1X));
-	block4 +=		PHI			(phi,	regBlock4Z, REG_LIST(regLoop1Z, regZ));
-	block4 +=		PHI			(phi,	regBlock4U, REG_LIST(regLoop1U, regU));
-	block4 +=		PHI			(phi,	regBlock4V, REG_LIST(regLoop1V, regV));
-	block4 +=		BINARY		(sub,	regBlock4DiffX, regBlock4Condition, regXEnd, regBlock4X);
-	block4 +=		BCOND		(beq,	regBlock4Condition, endLoop2);
+	cg_create_inst_phi(block4, cg_op_phi,	regBlock4X, cg_create_virtual_reg_list(procedure->module->heap, regX, regLoop1X, NULL));
+	cg_create_inst_phi(block4, cg_op_phi,	regBlock4Z, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Z, regZ, NULL));
+	cg_create_inst_phi(block4, cg_op_phi,	regBlock4U, cg_create_virtual_reg_list(procedure->module->heap, regLoop1U, regU, NULL));
+	cg_create_inst_phi(block4, cg_op_phi,	regBlock4V, cg_create_virtual_reg_list(procedure->module->heap, regLoop1V, regV, NULL));
+	cg_create_inst_binary_s(block4, cg_op_sub,	regBlock4DiffX, regBlock4Condition, regXEnd, regBlock4X);
+	cg_create_inst_branch_cond(block4, cg_op_beq,	regBlock4Condition, endLoop2);
 
 		//EGL_Fixed endZ = EGL_Inverse(end.m_WindowCoords.z);
 		//EGL_Fixed endTu = EGL_Mul(end.m_TextureCoords.tu, endZ);
 		//EGL_Fixed endTv = EGL_Mul(end.m_TextureCoords.tv, endZ);
-	I32 regEndZ = nextRegister++;
-	I32 regEndU = nextRegister++;
-	I32 regEndV = nextRegister++;
+	cg_virtual_reg_t * regEndZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regEndU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regEndV = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block4 +=		UNARY		(finv,	regEndZ, regEndWindowZ);
-	block4 +=		BINARY		(fmul,	regEndU, regEndZ, regEndTextureU);
-	block4 +=		BINARY		(fmul,	regEndV, regEndZ, regEndTextureV);
+	cg_create_inst_unary(block4, cg_op_finv,	regEndZ, regEndWindowZ);
+	cg_create_inst_binary(block4, cg_op_fmul,	regEndU, regEndZ, regEndTextureU);
+	cg_create_inst_binary(block4, cg_op_fmul,	regEndV, regEndZ, regEndTextureV);
 
 		//invSpan = EGL_Inverse(EGL_FixedFromInt(xEnd - x));
-	I32 regFixedBlock4DiffX = nextRegister++;
-	I32 regBlock4InvSpan = nextRegister++;
+	cg_virtual_reg_t * regFixedBlock4DiffX = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regBlock4InvSpan = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block4 +=		UNARY		(fcnv,	regFixedBlock4DiffX, regBlock4DiffX);
-	block4 +=		UNARY		(finv,	regBlock4InvSpan, regFixedBlock4DiffX);
+	cg_create_inst_unary(block4, cg_op_fcnv,	regFixedBlock4DiffX, regBlock4DiffX);
+	cg_create_inst_unary(block4, cg_op_finv,	regBlock4InvSpan, regFixedBlock4DiffX);
 
 		//EGL_Fixed deltaZ = EGL_Mul(endZ - z, invSpan);
 		//EGL_Fixed deltaTu = EGL_Mul(endTu - tu, invSpan);
 		//EGL_Fixed deltaTv = EGL_Mul(endTv - tv, invSpan);
-	I32 regBlock4DiffZ = nextRegister++;
-	I32 regBlock4DiffU = nextRegister++;
-	I32 regBlock4DiffV = nextRegister++;
-	I32 regLoop2ScaledDiffZ = nextRegister++;
-	I32 regLoop2ScaledDiffU = nextRegister++;
-	I32 regLoop2ScaledDiffV = nextRegister++;
+	cg_virtual_reg_t * regBlock4DiffZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regBlock4DiffU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regBlock4DiffV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2ScaledDiffZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2ScaledDiffU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2ScaledDiffV = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-	block4 +=		BINARY		(fsub,	regBlock4DiffZ, regEndZ, regBlock4Z);
-	block4 +=		BINARY		(fmul,	regLoop2ScaledDiffZ, regBlock4DiffZ, regBlock4InvSpan);
-	block4 +=		BINARY		(fsub,	regBlock4DiffU, regEndU, regBlock4U);
-	block4 +=		BINARY		(fmul,	regLoop2ScaledDiffU, regBlock4DiffU, regBlock4InvSpan);
-	block4 +=		BINARY		(fsub,	regBlock4DiffV, regEndV, regBlock4V);
-	block4 +=		BINARY		(fmul,	regLoop2ScaledDiffV, regBlock4DiffV, regBlock4InvSpan);
+	cg_create_inst_binary(block4, cg_op_fsub,	regBlock4DiffZ, regEndZ, regBlock4Z);
+	cg_create_inst_binary(block4, cg_op_fmul,	regLoop2ScaledDiffZ, regBlock4DiffZ, regBlock4InvSpan);
+	cg_create_inst_binary(block4, cg_op_fsub,	regBlock4DiffU, regEndU, regBlock4U);
+	cg_create_inst_binary(block4, cg_op_fmul,	regLoop2ScaledDiffU, regBlock4DiffU, regBlock4InvSpan);
+	cg_create_inst_binary(block4, cg_op_fsub,	regBlock4DiffV, regEndV, regBlock4V);
+	cg_create_inst_binary(block4, cg_op_fmul,	regLoop2ScaledDiffV, regBlock4DiffV, regBlock4InvSpan);
 
 		//for (; x < xEnd; ++x) {
-	Block& block5 = *new Block(procedure);
-	procedure->blocks.push_back(&block5);
-	beginLoop2->block.block = &block5;
-	block5.labels.push_back(beginLoop2);
+	cg_block_t * block5 = cg_block_create(procedure);
+	beginLoop2->block = block5;
 
 	// phi for x, z, tu, tv, fog, r, g, b, a
 
-	I32 regLoop2XEntry = nextRegister++;
-	I32 regLoop2X = nextRegister++;
-	I32 regLoop2ZEntry = nextRegister++;
-	I32 regLoop2Z = nextRegister++;
-	I32 regLoop2UEntry = nextRegister++;
-	I32 regLoop2U = nextRegister++;
-	I32 regLoop2VEntry = nextRegister++;
-	I32 regLoop2V = nextRegister++;
-	I32 regLoop2FogEntry = nextRegister++;
-	I32 regLoop2Fog = nextRegister++;
-	I32 regLoop2REntry = nextRegister++;
-	I32 regLoop2R = nextRegister++;
-	I32 regLoop2GEntry = nextRegister++;
-	I32 regLoop2G = nextRegister++;
-	I32 regLoop2BEntry = nextRegister++;
-	I32 regLoop2B = nextRegister++;
-	I32 regLoop2AEntry = nextRegister++;
-	I32 regLoop2A = nextRegister++;
+	cg_virtual_reg_t * regLoop2XEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2X = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2ZEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2Z = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2UEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2U = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2VEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2V = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2FogEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2Fog = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2REntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2R = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2GEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2G = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2BEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2B = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2AEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_virtual_reg_t * regLoop2A = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
 
-	block5 +=		PHI			(phi,	regLoop2XEntry, REG_LIST(regLoop2X, regBlock4X));
-	block5 +=		PHI			(phi,	regLoop2ZEntry, REG_LIST(regLoop2Z, regBlock4Z));
-	block5 +=		PHI			(phi,	regLoop2UEntry, REG_LIST(regLoop2U, regBlock4U));
-	block5 +=		PHI			(phi,	regLoop2VEntry, REG_LIST(regLoop2V, regBlock4V));
-	block5 +=		PHI			(phi,	regLoop2FogEntry, REG_LIST(regLoop2Fog, regLoop1Fog, regStartFog));
-	block5 +=		PHI			(phi,	regLoop2REntry, REG_LIST(regLoop2R, regLoop1R, regStartColorR));
-	block5 +=		PHI			(phi,	regLoop2GEntry, REG_LIST(regLoop2G, regLoop1G, regStartColorG));
-	block5 +=		PHI			(phi,	regLoop2BEntry, REG_LIST(regLoop2B, regLoop1B, regStartColorB));
-	block5 +=		PHI			(phi,	regLoop2AEntry, REG_LIST(regLoop2A, regLoop1A, regStartColorA));
+	cg_create_inst_phi(block5, cg_op_phi,	regLoop2XEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2X, regBlock4X, NULL));
+	cg_create_inst_phi(block5, cg_op_phi,	regLoop2ZEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2Z, regBlock4Z, NULL));
+	cg_create_inst_phi(block5, cg_op_phi,	regLoop2UEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2U, regBlock4U, NULL));
+	cg_create_inst_phi(block5, cg_op_phi,	regLoop2VEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2V, regBlock4V, NULL));
+	cg_create_inst_phi(block5, cg_op_phi,	regLoop2FogEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2Fog, regLoop1Fog, regStartFog, NULL));
+	cg_create_inst_phi(block5, cg_op_phi,	regLoop2REntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2R, regLoop1R, regStartColorR, NULL));
+	cg_create_inst_phi(block5, cg_op_phi,	regLoop2GEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2G, regLoop1G, regStartColorG, NULL));
+	cg_create_inst_phi(block5, cg_op_phi,	regLoop2BEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2B, regLoop1B, regStartColorB, NULL));
+	cg_create_inst_phi(block5, cg_op_phi,	regLoop2AEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2A, regLoop1A, regStartColorA, NULL));
 
 	FragmentGenerationInfo info2;
 	info2.regX = regLoop2XEntry;
@@ -2864,64 +2801,47 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	info2.regStencilBuffer = regStencilBuffer;
 	info2.regSurfaceWidth = regSurfaceWidth;
 
-	GenerateFragment(procedure, block5, postFragmentLoop2, nextRegister, info2); 
+	GenerateFragment(procedure, block5, postFragmentLoop2, info2); 
 
-	Block& block6 = *new Block(procedure);
-	procedure->blocks.push_back(&block6);
-	postFragmentLoop2->block.block = &block6;
-	block6.labels.push_back(postFragmentLoop2);
+	cg_block_t * block6 = cg_block_create(procedure);
+	postFragmentLoop2->block = block6;
 
 			//baseColor += colorIncrement;
-	block6 +=		BINARY		(fadd,	regLoop2R, regLoop2REntry, regColorIncrementR);
-	block6 +=		BINARY		(fadd,	regLoop2G, regLoop2REntry, regColorIncrementG);
-	block6 +=		BINARY		(fadd,	regLoop2B, regLoop2REntry, regColorIncrementB);
-	block6 +=		BINARY		(fadd,	regLoop2A, regLoop2REntry, regColorIncrementA);
+	cg_create_inst_binary(block6, cg_op_fadd,	regLoop2R, regLoop2REntry, regColorIncrementR);
+	cg_create_inst_binary(block6, cg_op_fadd,	regLoop2G, regLoop2REntry, regColorIncrementG);
+	cg_create_inst_binary(block6, cg_op_fadd,	regLoop2B, regLoop2REntry, regColorIncrementB);
+	cg_create_inst_binary(block6, cg_op_fadd,	regLoop2A, regLoop2REntry, regColorIncrementA);
 
 			//fogDensity += deltaFog;
 			//z += deltaZ;
 			//tu += deltaTu;
 			//tv += deltaTv;
-	block6 +=		BINARY		(fadd,	regLoop2Fog, regLoop2FogEntry, regDeltaFog);
-	block6 +=		BINARY		(fadd,	regLoop2Z, regLoop2ZEntry, regLoop2ScaledDiffZ);
-	block6 +=		BINARY		(fadd,	regLoop2U, regLoop2UEntry, regLoop2ScaledDiffU);
-	block6 +=		BINARY		(fadd,	regLoop2V, regLoop2VEntry, regLoop2ScaledDiffV);
+	cg_create_inst_binary(block6, cg_op_fadd,	regLoop2Fog, regLoop2FogEntry, regDeltaFog);
+	cg_create_inst_binary(block6, cg_op_fadd,	regLoop2Z, regLoop2ZEntry, regLoop2ScaledDiffZ);
+	cg_create_inst_binary(block6, cg_op_fadd,	regLoop2U, regLoop2UEntry, regLoop2ScaledDiffU);
+	cg_create_inst_binary(block6, cg_op_fadd,	regLoop2V, regLoop2VEntry, regLoop2ScaledDiffV);
 
 			//++x;
-	block6 +=		BINARY		(add,	regLoop2X, regLoop2XEntry, regConstant1);
+	cg_create_inst_binary(block6, cg_op_add,	regLoop2X, regLoop2XEntry, regConstant1);
 
-	I32 regCondLoopEnd = nextRegister++;
-	block6 +=		BINARY		(cmp,	regCondLoopEnd, regLoop2X, regXEnd);
-	block6 +=		BCOND		(blt,	regCondLoopEnd, beginLoop2);
+	cg_virtual_reg_t * regCondLoopEnd = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	cg_create_inst_binary(block6, cg_op_cmp,	regCondLoopEnd, regLoop2X, regXEnd);
+	cg_create_inst_branch_cond(block6, cg_op_blt,	regCondLoopEnd, beginLoop2);
 
 		//}
 
 	//}
-	Block& block7 = *new Block(procedure);
-	procedure->blocks.push_back(&block7);
-	endLoop2->block.block = &block7;
-	block7.labels.push_back(endLoop2);
+	cg_block_t * block7 = cg_block_create(procedure);
+	endLoop2->block = block7;
 
-	block7 +=		RET			(ret);
+	cg_create_inst_ret(block7, cg_op_ret);
 
 }
 
 void CodeGenerator :: CompileRasterScanLine() {
 	GenerateRasterScanLine();
 
-	DumpModule("dump0.lst", m_Module);
 
-	RemoveUnusedCode(m_Module);
-
-	DumpModule("dump1.lst", m_Module);
-
-	RegisterDefinitionMap * definitions = FindDefinitions(m_Module);
-	SelectAddressingModes(m_Module, definitions);
-	RemoveUnusedCode(m_Module);
-	PerformDataFlowAnalysis(m_Module);
-
-	// allocation of memory and and registers
-
-	DumpModule("dump2.lst", m_Module);
 
 
 #ifdef WINCE

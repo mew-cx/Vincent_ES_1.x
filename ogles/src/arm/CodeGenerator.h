@@ -53,7 +53,10 @@
 
 
 extern "C" {
-	struct cg_module_t;
+	typedef struct cg_module_t cg_module_t;
+	typedef struct cg_proc_t cg_proc_t;
+	typedef struct cg_block_t cg_block_t;
+	typedef struct cg_block_ref_t cg_block_ref_t;
 }
 
 
@@ -62,8 +65,6 @@ namespace EGL {
 	struct FragmentGenerationInfo;
 
 	class MultiTexture;
-
-	typedef std::map<int, triVM::InstructionBaseType *> RegisterDefinitionMap;
 
 	class CodeGenerator {
 
@@ -81,22 +82,8 @@ namespace EGL {
 
 	private:
 		void GenerateRasterScanLine();
-		void GenerateFragment(triVM::Procedure * procedure, triVM::Block & currentBlock,
-			triVM::Label * continuation, I32 & nextRegister,
-			FragmentGenerationInfo & fragmentInfo);
-
-		// to do: make all code generation functions members of this class
-		// code generation should be done into a CodeSegment
-		void RemoveUnusedCode(triVM::Module * module);
-
-		RegisterDefinitionMap * FindDefinitions(triVM::Module * module);
-		void SelectAddressingModes(triVM::Module * module, RegisterDefinitionMap * defs);
-		void DumpModule(FILE * out, EGL::triVM::Module * module);
-		void DumpModule(const char * filename, EGL::triVM::Module * module);
-		void PerformDataFlowAnalysis(triVM::Module * module);
-		void AllocateGlobalRegisters(triVM::Module * module);
-		void EmitCode(triVM::Module * module);
-
+		void GenerateFragment(cg_proc_t * procedure, cg_block_t * currentBlock,
+			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo);
 
 	private:
 		RasterizerState *	m_State;

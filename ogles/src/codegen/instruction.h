@@ -47,6 +47,7 @@ typedef union cg_inst_t cg_inst_t;
 typedef struct cg_block_t cg_block_t;
 typedef struct cg_proc_t cg_proc_t;
 typedef struct cg_virtual_reg_t cg_virtual_reg_t;
+typedef struct cg_block_ref_t cg_block_ref_t;
 
 
 struct cg_label_t;
@@ -251,7 +252,7 @@ cg_inst_phi_t;
 typedef struct cg_branch_t
 {
 	cg_inst_base_t		base;
-	cg_block_t *		target;
+	cg_block_ref_t *	target;
 	cg_virtual_reg_t *  cond;
 }
 cg_inst_branch_t;
@@ -293,6 +294,12 @@ struct cg_block_t
 	struct cg_bitset_t *	live_out;		/* set of regs live on leaving  */
 	cg_block_list_t *		pred;			/* list of predecessor blocks	*/
 	cg_block_list_t *		succ;			/* list of successor blocks		*/
+};
+
+
+struct cg_block_ref_t
+{
+	cg_block_t *			block;
 };
 
 
@@ -436,12 +443,12 @@ cg_inst_t * cg_create_inst_load_immed(cg_block_t * block,
 
 cg_inst_t * cg_create_inst_branch_label(cg_block_t * block, 
 										cg_opcode_t op, 
-										cg_block_t * target);
+										cg_block_ref_t * target);
 
 cg_inst_t * cg_create_inst_branch_cond(cg_block_t * block, 
 									   cg_opcode_t op, 
 									   cg_virtual_reg_t * flags, 
-									   cg_block_t * target);
+									   cg_block_ref_t * target);
 
 cg_inst_t * cg_create_inst_phi(cg_block_t * block, 
 							   cg_opcode_t op, 
@@ -465,6 +472,8 @@ cg_inst_t * cg_create_inst_ret(cg_block_t * block,
 cg_inst_t * cg_create_inst_ret_value(cg_block_t * block, 
 									 cg_opcode_t op, 
 									 cg_virtual_reg_t * value);
+
+cg_block_ref_t * cg_block_ref_create(cg_proc_t * proc);
 
 
 /****************************************************************************/

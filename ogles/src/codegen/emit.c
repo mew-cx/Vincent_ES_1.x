@@ -379,6 +379,27 @@ static void kill_argument_registers(cg_codegen_t * gen)
 }
 
 
+static void kill_flags(cg_codegen_t * gen)
+{
+	if (gen->flags.virtual_reg != NULL &&
+		gen->flags.virtual_reg->physical_reg == &gen->flags)
+	{
+		cg_virtual_reg_t * reg = gen->flags.virtual_reg;
+
+		 int used = CG_BITSET_TEST(gen->current_block->live_out, reg->reg_no) ||
+			gen->use_chains[reg->reg_no];
+
+		if (used) 
+		{
+			cg_physical_reg_t * physical_reg = allocate_reg(gen, reg, 0);
+			assign_reg(gen, physical_reg, reg);
+			save_flags(gen, physical_reg);
+			physical_reg->dirty = physical_reg->defined = 1;
+		}
+	}
+}
+
+
 static void call_load_register_args(cg_codegen_t * gen, cg_virtual_reg_list_t * begin_args, cg_inst_t * inst)
 {
 	ARMReg regno;
@@ -390,6 +411,7 @@ static void call_load_register_args(cg_codegen_t * gen, cg_virtual_reg_list_t * 
 		load_register_arg(gen, args->reg, regno, inst);
 	}
 
+	kill_flags(gen);
 	kill_argument_registers(gen);
 }
 
@@ -1131,7 +1153,7 @@ static void emit_branch(cg_codegen_t * gen, cg_inst_branch_t * inst)
 	{
 		case cg_inst_branch_label:
 			assert(inst->base.opcode == cg_op_bra);
-			branch(gen, inst->target->label);
+			branch(gen, inst->target->block->label);
 			return;
 			
 		case cg_inst_branch_cond:
@@ -1150,7 +1172,7 @@ static void emit_branch(cg_codegen_t * gen, cg_inst_branch_t * inst)
 					assert(0);
 			}
 			
-			branch_cond(gen, inst->target->label, cond);
+			branch_cond(gen, inst->target->block->label, cond);
 			
 		default:
 			assert(0);
@@ -1533,14 +1555,20 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 			/****************************************************************/
 			update_flags = 1;
 
-			if (gen->flags.virtual_reg != NULL &&
-				(gen->flags.virtual_reg->use != NULL || 
-				 CG_BITSET_TEST(inst->base.block->live_out, gen->flags.virtual_reg->reg_no)))
+			if (gen->flags.virtual_reg != NULL)
 			{
-				physical_reg = allocate_reg(gen, gen->flags.virtual_reg, 0);
-				assign_reg(gen, physical_reg, gen->flags.virtual_reg);
-				save_flags(gen, physical_reg);
-				physical_reg->dirty = physical_reg->defined = 1;
+				cg_virtual_reg_t * old_reg = gen->flags.virtual_reg;
+
+				int used = CG_BITSET_TEST(gen->current_block->live_out, old_reg->reg_no) ||
+					gen->use_chains[old_reg->reg_no];
+
+				if (used) 
+				{
+					physical_reg = allocate_reg(gen, gen->flags.virtual_reg, 0);
+					assign_reg(gen, physical_reg, gen->flags.virtual_reg);
+					save_flags(gen, physical_reg);
+					physical_reg->dirty = physical_reg->defined = 1;
+				}
 			}
 
 			gen->flags.virtual_reg = reg;
@@ -1580,6 +1608,7 @@ void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 				cg_physical_reg_t * physical_reg;
 
 				load_register_arg(gen, inst->unary.operand.source, ARMREG_A1, inst);
+				kill_flags(gen);
 				kill_argument_registers(gen);
 				ARM_SUB_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, 4);
 				ARM_MOV_REG_REG(gen->cseg, ARMREG_A2, ARMREG_SP);
@@ -1600,6 +1629,7 @@ void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 
 				load_register_arg(gen, inst->binary.source, ARMREG_A1, inst);
 				load_register_arg(gen, inst->binary.operand.source, ARMREG_A2, inst);
+				kill_flags(gen);
 				kill_argument_registers(gen);
 				ARM_SUB_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, 4);
 				ARM_MOV_REG_REG(gen->cseg, ARMREG_A3, ARMREG_SP);
@@ -1620,6 +1650,7 @@ void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 				cg_physical_reg_t * physical_reg;
 
 				load_register_arg(gen, inst->unary.operand.source, ARMREG_A1, inst);
+				kill_flags(gen);
 				kill_argument_registers(gen);
 				ARM_SUB_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, 4);
 				ARM_MOV_REG_REG(gen->cseg, ARMREG_A2, ARMREG_SP);
@@ -1641,6 +1672,7 @@ void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 
 				load_register_arg(gen, inst->binary.source, ARMREG_A2, inst);
 				load_register_arg(gen, inst->binary.operand.source, ARMREG_A3, inst);
+				kill_flags(gen);
 				kill_argument_registers(gen);
 				ARM_SUB_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, sizeof(div_t));
 				ARM_MOV_REG_REG(gen->cseg, ARMREG_A1, ARMREG_SP);
@@ -1661,6 +1693,7 @@ void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 
 				load_register_arg(gen, inst->binary.source, ARMREG_A2, inst);
 				load_register_arg(gen, inst->binary.operand.source, ARMREG_A3, inst);
+				kill_flags(gen);
 				kill_argument_registers(gen);
 				ARM_SUB_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, sizeof(div_t));
 				ARM_MOV_REG_REG(gen->cseg, ARMREG_A1, ARMREG_SP);
