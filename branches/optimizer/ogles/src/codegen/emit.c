@@ -28,6 +28,7 @@
 /****************************************************************************/
 
 
+#include <limits.h>
 #include "emit.h"
 #include "bitset.h"
 #include "heap.h"
@@ -303,6 +304,7 @@ struct cg_codegen_t
 	size_t					literal_pool_size;
 	size_t					locals_size_offset;
 	cg_inst_list_t **		use_chains;			
+	cg_inst_t *				current_inst;
 };
 
 
@@ -1699,7 +1701,7 @@ static void dispatch_inst(cg_codegen_t * gen, cg_inst_t * inst, int update_flags
 
 
 static cg_physical_reg_t * spill_candidate(cg_codegen_t * gen, 
-										cg_virtual_reg_t * reg, U32 mask)
+										   cg_virtual_reg_t * reg, U32 mask)
 	/************************************************************************/
 	/* Determine a spill candidate because we need a register for the given */
 	/* virtual register														*/
@@ -1708,15 +1710,47 @@ static cg_physical_reg_t * spill_candidate(cg_codegen_t * gen,
 	// pick the register whose next use is most far away
 	// if possible, select a register that is not dirty
 	
+	cg_physical_reg_t * candidate = 0;
+	int max_sequence = 0;
+	cg_inst_list_t * list;
+
 	cg_physical_reg_t * physical_reg = gen->used_regs.tail;
-	
-	while (physical_reg != 0 && 
-		   !((1u << physical_reg->regno) & mask)) 
+
+	for (; physical_reg != 0; physical_reg = physical_reg->prev) 
 	{
-		physical_reg = physical_reg->prev;
+		int sequence;
+
+		if (!((1u << physical_reg->regno) & mask)) 
+		{
+			continue;
+		}
+
+		if (physical_reg->virtual_reg == 0 ||
+			!gen->use_chains[physical_reg->virtual_reg->reg_no]) 
+		{
+			return physical_reg;
+		}
+
+		sequence = INT_MAX;
+
+		for (list = gen->use_chains[physical_reg->virtual_reg->reg_no];
+			 list != (cg_inst_list_t *) 0; list = list->next)
+		{
+			if (list->inst == gen->current_inst)
+				continue;
+
+			if (list->inst->base.sequence < sequence) 
+				sequence = list->inst->base.sequence;
+		}
+
+		if (sequence != INT_MAX && (!candidate || max_sequence < sequence)) 
+		{
+			max_sequence = sequence;
+			candidate = physical_reg;
+		}
 	}
 	
-	return physical_reg;
+	return candidate;
 }
 
 
@@ -2142,6 +2176,8 @@ next_iter:
 
 void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 {
+	gen->current_inst = inst;
+
 	switch (inst->base.opcode)
 	{
 		case cg_op_finv:
@@ -2423,6 +2459,7 @@ static void init_use_chains(cg_codegen_t * gen, cg_block_t * block)
 void cg_codegen_emit_block(cg_codegen_t * gen, cg_block_t * block, int reinit)
 {
 	cg_inst_t * inst;
+	int number = 0;
 	
 	gen->current_block = block;
 	cg_codegen_define(gen, block->label);
@@ -2432,6 +2469,17 @@ void cg_codegen_emit_block(cg_codegen_t * gen, cg_block_t * block, int reinit)
 		begin_block(gen);
 
 	allocate_globals(gen);
+
+	/************************************************************************/
+	/* Assign sequence numbers to instructions								*/
+	/************************************************************************/
+
+	for (inst = block->insts.head; 
+		 inst != (cg_inst_t *) 0; 
+		 inst = inst->base.next)
+	{
+		inst->base.sequence = number++;
+	}
 
 	/************************************************************************/
 	/* Process and skip any phi mappings at beginning of block				*/
