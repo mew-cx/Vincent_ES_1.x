@@ -45,8 +45,6 @@
 #include "Texture.h"
 #include "trivm.h"
 
-#include <fstream>
-
 using namespace EGL;
 using namespace triVM;
 
@@ -2900,15 +2898,15 @@ void Rasterizer :: GenerateRasterScanLine() {
 
 	block7 +=		RET			(ret,	new RegisterList());
 
-	std::ofstream out0("dump0.lst");
-	out0 << *module;
-	out0.close();
+	FILE * out0 = fopen("dump0.lst", "w");
+	DumpModule(out0, module);
+	fclose(out0);
 
 	RemoveUnusedCode(module);
 
-	std::ofstream out1("dump1.lst");
-	out1 << *module;
-	out1.close();
+	FILE * out1 = fopen("dump1.lst", "w");
+	DumpModule(out1, module);
+	fclose(out1);
 
 
 }
