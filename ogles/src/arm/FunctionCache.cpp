@@ -68,13 +68,14 @@ FunctionCache :: FunctionCache(size_t totalSize, float percentageKeep) {
 	m_MostRecentlyUsed = 0;
 	m_LeastRecentlyUsed = 0;
 
-	m_Functions = new FunctionInfo[m_MaxFunctions];
+	m_Functions = (FunctionInfo *) malloc(sizeof(FunctionInfo)  * m_MaxFunctions);
+	memset(m_Functions, 0, sizeof(FunctionInfo)  * m_MaxFunctions);
 	m_Code = reinterpret_cast<U8 *>(VirtualAlloc(0, totalSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE));
 }
 
 
 FunctionCache :: ~FunctionCache() {
-	delete[] m_Functions;
+	free(m_Functions);
 	VirtualFree(m_Code, m_Total, MEM_DECOMMIT);
 }
 
