@@ -23,6 +23,7 @@ In addition, a couple of defects that showed up in those examples have been addr
 1001356 - Polyoff example shows stippling
 1008798 - Clipping issue invovling points at infinity
 1001825 - Mesh created by ugWireSphere/ugSolidSphere is iffy
+1001882	- eglGetError return value
 
 
 Version 0.80

@@ -31,6 +31,8 @@ typedef HDC		NativeDisplayType;
 typedef HWND	NativeWindowType;
 typedef HBITMAP NativePixmapType;
 
+#define EGL_DEFAULT_DISPLAY GetDC(0)
+
 #elif defined(__SYMBIAN32__)
 
 #include <e32def.h>
@@ -42,6 +44,8 @@ class CFbsBitmap;
 typedef CWindowGc *		NativeDisplayType;
 typedef RWindow *		NativeWindowType;
 typedef CFbsBitmap * 	NativePixmapType;
+
+#define EGL_DEFAULT_DISPLAY ((NativeDisplayType) 0)
 
 #else
 
@@ -80,7 +84,6 @@ typedef void *			EGLDisplay;
 /*
 ** EGL and native handle values
 */
-#define EGL_DEFAULT_DISPLAY ((NativeDisplayType)0)
 #define EGL_NO_CONTEXT ((EGLContext)0)
 #define EGL_NO_DISPLAY ((EGLDisplay)0)
 #define EGL_NO_SURFACE ((EGLSurface)0)

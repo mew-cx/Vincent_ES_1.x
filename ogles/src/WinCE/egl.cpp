@@ -88,14 +88,20 @@ GLAPI EGLBoolean APIENTRY eglInitialize (EGLDisplay dpy, EGLint *major, EGLint *
 		*minor = EGL_VERSION_MINOR;
 	}
 
+	eglRecordError(EGL_SUCCESS);
+
 	return TRUE;
 }
 
 GLAPI EGLBoolean APIENTRY eglTerminate (EGLDisplay dpy) {
+	eglRecordError(EGL_SUCCESS);
 	return EGL_TRUE;
 }
 
 GLAPI const char * APIENTRY eglQueryString (EGLDisplay dpy, EGLint name) {
+
+	eglRecordError(EGL_SUCCESS);
+
 	switch (name) {
 	case EGL_VENDOR:
 		return EGL_CONFIG_VENDOR;
@@ -124,6 +130,8 @@ static const struct {
 
 GLAPI void (* APIENTRY eglGetProcAddress (const char *procname))() {
 
+	eglRecordError(EGL_SUCCESS);
+
 	if (!procname) {
 		return 0;
 	}
@@ -140,15 +148,18 @@ GLAPI void (* APIENTRY eglGetProcAddress (const char *procname))() {
 
 
 GLAPI EGLBoolean APIENTRY eglGetConfigs (EGLDisplay dpy, EGLConfig *configs, EGLint config_size, EGLint *num_config) {
+	eglRecordError(EGL_SUCCESS);
 	return Config::GetConfigs(configs, config_size, num_config);
 }
 
 GLAPI EGLBoolean APIENTRY eglChooseConfig (EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config) {
+	eglRecordError(EGL_SUCCESS);
 	return Config::ChooseConfig(attrib_list, configs, config_size, num_config);
 }
 
 GLAPI EGLBoolean APIENTRY eglGetConfigAttrib (EGLDisplay dpy, EGLConfig config, EGLint attribute, EGLint *value) {
 	*value = config->GetConfigAttrib(attribute);
+	eglRecordError(EGL_SUCCESS);
 	return EGL_TRUE;
 }
 
@@ -156,17 +167,23 @@ GLAPI EGLBoolean APIENTRY eglGetConfigAttrib (EGLDisplay dpy, EGLConfig config, 
 GLAPI EGLSurface APIENTRY eglCreateWindowSurface (EGLDisplay dpy, EGLConfig config, NativeWindowType window, const EGLint *attrib_list) {
 	RECT rect;
 
-	GetClientRect(window, &rect);
+	if (!GetClientRect(window, &rect)) {
+		eglRecordError(EGL_BAD_NATIVE_WINDOW);
+		return EGL_NO_SURFACE;
+	}
 	
 	Config surfaceConfig(*config);
 	surfaceConfig.SetConfigAttrib(EGL_SURFACE_TYPE, EGL_WINDOW_BIT);
 	surfaceConfig.SetConfigAttrib(EGL_WIDTH, rect.right - rect.left);
 	surfaceConfig.SetConfigAttrib(EGL_HEIGHT, rect.bottom - rect.top);
+
+	eglRecordError(EGL_SUCCESS);
 	return new EGL::Surface(surfaceConfig, GetWindowDC(window));
 }
 
 GLAPI EGLSurface APIENTRY eglCreatePixmapSurface (EGLDisplay dpy, EGLConfig config, NativePixmapType pixmap, const EGLint *attrib_list) {
 	// Cannot support rendering to arbitrary native surfaces; use pbuffer surface and eglCopySurfaces instead
+	eglRecordError(EGL_BAD_MATCH);
 	return EGL_NO_SURFACE;
 }
 
@@ -179,25 +196,30 @@ GLAPI EGLSurface APIENTRY eglCreatePbufferSurface (EGLDisplay dpy, EGLConfig con
 
 	Config surfaceConfig(*config, attrib_list, validAttributes);
 	surfaceConfig.SetConfigAttrib(EGL_SURFACE_TYPE, EGL_PBUFFER_BIT);
+	eglRecordError(EGL_SUCCESS);
 	return new EGL::Surface(surfaceConfig, GetNativeDisplay(dpy));
 }
 
 GLAPI EGLBoolean APIENTRY eglDestroySurface (EGLDisplay dpy, EGLSurface surface) {
 	surface->Dispose();
+	eglRecordError(EGL_SUCCESS);
 	return EGL_TRUE;
 }
 
 GLAPI EGLBoolean APIENTRY eglQuerySurface (EGLDisplay dpy, EGLSurface surface, EGLint attribute, EGLint *value) {
 	*value = surface->GetConfig()->GetConfigAttrib(attribute);
+	eglRecordError(EGL_SUCCESS);
 	return EGL_TRUE;
 }
 
 GLAPI EGLContext APIENTRY eglCreateContext (EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list) {
+	eglRecordError(EGL_SUCCESS);
 	return new Context(*config);
 }
 
 GLAPI EGLBoolean APIENTRY eglDestroyContext (EGLDisplay dpy, EGLContext ctx) {
 	ctx->Dispose();
+	eglRecordError(EGL_SUCCESS);
 	return EGL_TRUE;
 }
 
@@ -210,16 +232,19 @@ GLAPI EGLBoolean APIENTRY eglMakeCurrent (EGLDisplay dpy, EGLSurface draw, EGLSu
 		ctx->SetReadSurface(read);
 	}
 
+	eglRecordError(EGL_SUCCESS);
 	return EGL_TRUE;
 
 }
 
 GLAPI EGLContext APIENTRY eglGetCurrentContext (void) {
+	eglRecordError(EGL_SUCCESS);
 	return Context::GetCurrentContext();
 }
 
 GLAPI EGLSurface APIENTRY eglGetCurrentSurface (EGLint readdraw) {
 	EGLContext currentContext = eglGetCurrentContext();
+	eglRecordError(EGL_SUCCESS);
 
 	if (currentContext != 0) {
 		switch (readdraw) {
@@ -238,19 +263,23 @@ GLAPI EGLSurface APIENTRY eglGetCurrentSurface (EGLint readdraw) {
 }
 
 GLAPI EGLDisplay APIENTRY eglGetCurrentDisplay (void) {
+	eglRecordError(EGL_SUCCESS);
 	return 0;
 }
 
 GLAPI EGLBoolean APIENTRY eglQueryContext (EGLDisplay dpy, EGLContext ctx, EGLint attribute, EGLint *value) {
 	*value = ctx->GetConfig()->GetConfigAttrib(attribute);
+	eglRecordError(EGL_SUCCESS);
 	return EGL_TRUE;
 }
 
 GLAPI EGLBoolean APIENTRY eglWaitGL (void) {
+	eglRecordError(EGL_SUCCESS);
 	return EGL_TRUE;
 }
 
 GLAPI EGLBoolean APIENTRY eglWaitNative (EGLint engine) {
+	eglRecordError(EGL_SUCCESS);
 	return EGL_TRUE;
 }
 
@@ -273,6 +302,7 @@ GLAPI EGLBoolean APIENTRY eglSwapBuffers (EGLDisplay dpy, EGLSurface draw) {
 		DeleteDC(memoryDC);
 	}
 
+	eglRecordError(EGL_SUCCESS);
 	return EGL_TRUE;
 }
 
@@ -304,6 +334,7 @@ GLAPI EGLBoolean APIENTRY eglCopyBuffers (EGLDisplay dpy, EGLSurface surface, Na
 
 	DeleteDC(targetDC);
 
+	eglRecordError(EGL_SUCCESS);
 	return EGL_TRUE;
 }
 
