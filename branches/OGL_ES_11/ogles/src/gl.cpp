@@ -612,57 +612,9 @@ GLAPI void APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height)
 /*****************************************************************************************/
 /*                                 OES extension functions                               */
 /*****************************************************************************************/
-/* OES_matrix_palette */
-GLAPI void APIENTRY glCurrentPaletteMatrixOES(GLint index) {
-	CONTEXT_EXEC(CurrentPaletteMatrix(index));
-}
-
-GLAPI void APIENTRY glLoadPaletteFromModelViewMatrixOES(void) {
-	CONTEXT_EXEC(LoadPaletteFromModelViewMatrix());
-}
-
-GLAPI void APIENTRY glMatrixIndexPointerOES(GLint size, GLenum type, GLsizei stride, GLvoid *pointer) {
-	CONTEXT_EXEC(MatrixIndexPointer(size, type, stride, pointer));
-}
-
-GLAPI void APIENTRY glWeightPointerOES(GLint size, GLenum type, GLsizei stride, GLvoid *pointer) {
-	CONTEXT_EXEC(WeightPointer(size, type, stride, pointer));
-}
 
 /* OES_point_size_array */
 GLAPI void APIENTRY glPointSizePointerOES(GLenum type, GLsizei stride, const GLvoid *pointer) {
 	CONTEXT_EXEC(PointSizePointer(type, stride, pointer));
 }
 
-/* OES_draw_texture */
-GLAPI void APIENTRY glDrawTexsOES(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height) {
-	CONTEXT_EXEC(DrawTexs(x, y, z, width, height));
-}
-
-GLAPI void APIENTRY glDrawTexiOES(GLint x, GLint y, GLint z, GLint width, GLint height) {
-	CONTEXT_EXEC(DrawTexi(x, y, z, width, height));
-}
-
-GLAPI void APIENTRY glDrawTexfOES(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height) {
-	CONTEXT_EXEC(DrawTexf(x, y, z, width, height));
-}
-
-GLAPI void APIENTRY glDrawTexxOES(GLfixed x, GLfixed y, GLfixed z, GLfixed width, GLfixed height) {
-	CONTEXT_EXEC(DrawTexx(x, y, z, width, height));
-}
-
-GLAPI void APIENTRY glDrawTexsvOES(GLshort *coords) {
-	CONTEXT_EXEC(DrawTexsv(coords));
-}
-
-GLAPI void APIENTRY glDrawTexivOES(GLint *coords) {
-	CONTEXT_EXEC(DrawTexiv(coords));
-}
-
-GLAPI void APIENTRY glDrawTexfvOES(GLfloat *coords) {
-	CONTEXT_EXEC(DrawTexfv(coords));
-}
-
-GLAPI void APIENTRY glDrawTexxvOES(GLfixed *coords) {
-	CONTEXT_EXEC(DrawTexxv(coords));
-}
