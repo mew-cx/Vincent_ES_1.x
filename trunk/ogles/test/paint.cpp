@@ -1403,6 +1403,7 @@ extern "C" void PaintProc(HWND hWnd) {
 	GLfixed fogColor[] = { EGL_ONE/10, EGL_ONE/10, 0, 0 };
 	glFogxv(GL_FOG_COLOR, fogColor);
 	glFogx(GL_FOG_MODE, GL_LINEAR);
+	glFogx(GL_FOG_END, EGL_FixedFromInt(600)); 
 	glDisable(GL_FOG);
 	//glEnable(GL_FOG);
 
@@ -1416,7 +1417,7 @@ extern "C" void PaintProc(HWND hWnd) {
 	//glDisable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	//glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 

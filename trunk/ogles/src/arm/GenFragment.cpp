@@ -950,17 +950,17 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		ASR		(regShiftedProductG, regProductG, regConstant16);
 		ASR		(regShiftedProductB, regProductB, regConstant16);
 
-		DECL_REG	(regNewColorR);
-		DECL_REG	(regNewColorG);
-		DECL_REG	(regNewColorB);
+		//DECL_REG	(regNewColorR);
+		//DECL_REG	(regNewColorG);
+		//DECL_REG	(regNewColorB);
 
-		ADD		(regNewColorR, regShiftedProductR, regFogColorR);
-		ADD		(regNewColorG, regShiftedProductG, regFogColorG);
-		ADD		(regNewColorB, regShiftedProductB, regFogColorB);
+		//ADD		(regNewColorR, regShiftedProductR, regFogColorR);
+		//ADD		(regNewColorG, regShiftedProductG, regFogColorG);
+		//ADD		(regNewColorB, regShiftedProductB, regFogColorB);
 
-		regColorR = regNewColorR;
-		regColorG = regNewColorG;
-		regColorB = regNewColorB;
+		regColorR = AddSaturate255(block, regShiftedProductR, regFogColorR);
+		regColorG = AddSaturate255(block, regShiftedProductG, regFogColorG);
+		regColorB = AddSaturate255(block, regShiftedProductB, regFogColorB);
 
 		// create RGB 565 representation
 		regColor565 = Color565FromRGB(block, regColorR,	regColorG, regColorB);

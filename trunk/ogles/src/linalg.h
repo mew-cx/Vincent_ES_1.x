@@ -734,6 +734,30 @@ namespace EGL {
 		}
 
 
+		inline void Multiply(const Vec4D& vector, Vec4D& result) const {
+			result = Vec4D(
+				EGL_Mul(vector.x(), Element(0, 0)) +
+				EGL_Mul(vector.y(), Element(0, 1)) +
+				EGL_Mul(vector.z(), Element(0, 2)) +
+				EGL_Mul(vector.w(), Element(0, 3)),
+
+				EGL_Mul(vector.x(), Element(1, 0)) +
+				EGL_Mul(vector.y(), Element(1, 1)) +
+				EGL_Mul(vector.z(), Element(1, 2)) +
+				EGL_Mul(vector.w(), Element(1, 3)),
+
+				EGL_Mul(vector.x(), Element(2, 0)) +
+				EGL_Mul(vector.y(), Element(2, 1)) +
+				EGL_Mul(vector.z(), Element(2, 2)) +
+				EGL_Mul(vector.w(), Element(2, 3)),
+
+				EGL_Mul(vector.x(), Element(3, 0)) +
+				EGL_Mul(vector.y(), Element(3, 1)) +
+				EGL_Mul(vector.z(), Element(3, 2)) +
+				EGL_Mul(vector.w(), Element(3, 3)));
+		}
+
+
 		// ----------------------------------------------------------------------
 		// Calculate the matrix for which the upper left 3x3 matrix is the 
 		// inverse of the upper left 3x3 matrix of the receiver canconically
