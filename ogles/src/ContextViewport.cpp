@@ -39,6 +39,7 @@
 
 #include "stdafx.h"
 #include "Context.h"
+#include "Surface.h"
 #include "fixed.h"
 
 
@@ -51,30 +52,28 @@ using namespace EGL;
 
 
 void Context :: Viewport(GLint x, GLint y, GLsizei width, GLsizei height) { 
-	// TODO: clamp to frame buffer limitations
-	m_ViewportX = x;
-	m_ViewportY = y;
 
 	if (width > m_Config.m_Width) {
-		m_ViewportWidth = m_Config.m_Width;
-	} else {
-		m_ViewportWidth = width;
+		width = m_Config.m_Width;
 	}
 
 	if (height > m_Config.m_Height) {
-		m_ViewportHeight = m_Config.m_Height;
-	} else {
-		m_ViewportHeight = height;
+		height = m_Config.m_Height;
 	}
+
+	m_Viewport = Rect(x, y, width, height);
 
 	m_ViewportOrigin = Vec3D(EGL_FixedFromInt(x + (width / 2)), EGL_FixedFromInt(y + (height / 2)), m_ViewportOrigin.z());
 	m_ViewportScale = Vec3D(EGL_FixedFromInt(width / 2), EGL_FixedFromInt(height / 2), m_ViewportScale.z());
+
+	UpdateScissorTest();
 }
 
 
 void Context :: Scissor(GLint x, GLint y, GLsizei width, GLsizei height) { 
 
-	GetRasterizerState()->SetScissor(x, y, width, height);
+	m_Scissor = Rect(x, y, width, height);
+	UpdateScissorTest();
 }
 
 void Context :: DepthRangex(GLclampx zNear, GLclampx zFar) { 
@@ -84,5 +83,44 @@ void Context :: DepthRangex(GLclampx zNear, GLclampx zFar) {
 
 	m_DepthRangeBase = (zNear + zFar) / 2;
 	m_DepthRangeFactor = (zFar - zNear) / 2;
+}
+
+
+// --------------------------------------------------------------------------
+// Update the stencil test settings based on 
+//	- the current viewport size
+//	- the current drawing surface dimensions
+//	- the actual scissor test settings
+// --------------------------------------------------------------------------
+void Context :: UpdateScissorTest() {
+
+	// we do not need any scissoring within the rasterizer as long as the viewport
+	// rectangle is contained inside the surface area and (if the scissor test
+	// is enabled) the scissor rectangle. Otherwise, determine the size
+	// of the surface area (& optionally intersected with the scissor rectangle)
+	// and enable scissoring in the rasterizer accordingly.
+
+	if (m_DrawSurface == 0)
+		return;
+
+	if (m_ScissorTestEnabled) {
+		Rect rect = Rect::Intersect(m_DrawSurface->GetRect(), m_Scissor);
+
+		if (rect.Contains(m_Viewport)) {
+			m_RasterizerState.EnableScissorTest(false);
+		} else {
+			m_RasterizerState.SetScissor(rect.x, rect.y, rect.width, rect.height);
+			m_RasterizerState.EnableScissorTest(true);
+		}
+	} else {
+		const Rect& rect = m_DrawSurface->GetRect();
+
+		if (rect.Contains(m_Viewport)) {
+			m_RasterizerState.EnableScissorTest(false);
+		} else {
+			m_RasterizerState.SetScissor(rect.x, rect.y, rect.width, rect.height);
+			m_RasterizerState.EnableScissorTest(true);
+		}
+	}
 }
 
