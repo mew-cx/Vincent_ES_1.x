@@ -5,7 +5,7 @@
 // The rasterizer converts transformed and lit primitives and creates a 
 // raster image in the current rendering surface.
 //
-// This files contains the traingle rasterization code, which was
+// This files contains the triangle rasterization code, which was
 // previously in the Rasterizer.cpp source file.
 //
 // --------------------------------------------------------------------------
@@ -145,12 +145,16 @@ namespace {
 // ---------------------------------------------------------------------------
 // Prepare rasterizer object for triangles
 // ---------------------------------------------------------------------------
+
 void Rasterizer :: PrepareTriangle() {
 	if (m_State->m_TextureEnabled) {
 		SetTexture(m_Texture);
 	}
 
-	m_ScanlineFunction = m_FunctionCache->GetFunction(*m_State);
+	m_ScanlineFunction = 
+		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeScanline, 
+									 *m_State);
+
 	m_MipMapLevel = 0;
 }
 
@@ -188,11 +192,20 @@ inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const Ed
 	EGL_Fixed deltaInvU = delta.m_TextureCoords.tu;
 	EGL_Fixed deltaInvV = delta.m_TextureCoords.tv;
 
+	EGL_Fixed deltaInvDu = delta.m_TextureCoords.dtudy;
+	EGL_Fixed deltaInvDv = delta.m_TextureCoords.dtvdy;
+
 	EGL_Fixed deltaFog = delta.m_FogDensity;
 	EGL_Fixed deltaDepth = delta.m_WindowCoords.depth;
 
 	EGL_Fixed invTu = start.m_TextureCoords.tu;
+	EGL_Fixed dTuDxOverInvZ2 = start.m_TextureCoords.dtudx;
+	EGL_Fixed dTuDyOverInvZ2 = start.m_TextureCoords.dtudy;
+
 	EGL_Fixed invTv = start.m_TextureCoords.tv;
+	EGL_Fixed dTvDxOverInvZ2 = start.m_TextureCoords.dtvdx;
+	EGL_Fixed dTvDyOverInvZ2 = start.m_TextureCoords.dtvdy;
+
 	EGL_Fixed invZ = start.m_WindowCoords.invZ;
 
 	EGL_Fixed fogDensity = start.m_FogDensity;
@@ -206,6 +219,26 @@ inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const Ed
 	EGL_Fixed depth = start.m_WindowCoords.depth;
 
 	for (; x < xLinEnd;) {
+
+		// to get started, do mipmap selection at beginning of span
+
+		if (m_UseMipmap) {
+			EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
+			EGL_Fixed maxDu = EGL_Mul(EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)), m_Texture->GetTexture(0)->GetWidth());
+			EGL_Fixed maxDv = EGL_Mul(EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)), m_Texture->GetTexture(0)->GetHeight());
+
+			//EGL_Fixed maxD = EGL_Max(maxDu, maxDv);
+			EGL_Fixed maxD = maxDu + maxDv;
+			//I64 rho64 = ((I64) EGL_Mul(z2, EGL_FixedFromFloat(1/sqrt(2.0f)) + 1)) * ((I64) maxD);
+			I64 rho64 = ((I64) z2) * ((I64) maxD);
+
+			// we start with nearest/minification only selection; will add LINEAR later
+
+			m_MipMapLevel = EGL_Min(EGL_Max(0, Log2((I32) (rho64 >> 16))), m_MaxMipmapLevel);
+
+			dTuDyOverInvZ2 += deltaInvDu << LOG_LINEAR_SPAN;
+			dTvDyOverInvZ2 += deltaInvDv << LOG_LINEAR_SPAN;
+		}
 
 		invZ += deltaInvZ << LOG_LINEAR_SPAN;
 		invTu += deltaInvU << LOG_LINEAR_SPAN;
@@ -237,6 +270,21 @@ inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const Ed
 	if (x != xEnd) {
 
 		I32 deltaX = xEnd - x;
+
+		if (m_UseMipmap) {
+			EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
+			EGL_Fixed maxDu = EGL_Mul(EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)), m_Texture->GetTexture(0)->GetWidth());
+			EGL_Fixed maxDv = EGL_Mul(EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)), m_Texture->GetTexture(0)->GetHeight());
+
+			//EGL_Fixed maxD = EGL_Max(maxDu, maxDv);
+			EGL_Fixed maxD = maxDu + maxDv;
+			//I64 rho64 = ((I64) EGL_Mul(z2, EGL_FixedFromFloat(1/sqrt(2.0f)) + 1)) * ((I64) maxD);
+			I64 rho64 = ((I64) z2) * ((I64) maxD);
+
+			// we start with nearest/minification only selection; will add LINEAR later
+
+			m_MipMapLevel = EGL_Min(EGL_Max(0, Log2((I32) (rho64 >> 16))), m_MaxMipmapLevel);
+		}
 
 		EGL_Fixed endZ = EGL_Inverse(invZ + deltaX * deltaInvZ);
 		EGL_Fixed endTu = EGL_Mul(invTu + deltaX * deltaInvU, endZ);
@@ -299,6 +347,31 @@ namespace {
 			tvOverZ		+ EGL_Mul(grad.dx.m_TextureCoords.tv, xPreStep)		
 						+ EGL_Mul(grad.dy.m_TextureCoords.tv, yPreStep);
 
+		// ------------------------------------------------------------------
+		// Determine partial derivatives of texture functions, 
+		// see eq. (2) and (3) in
+		// J. P. Ewins et al (1998), 
+		// "MIP-Map Level Selection for Texture Mapping",
+		// IEEE Transactions on Visualization and Computer Graphics, 
+		// Vol 4, No. 4
+		// ------------------------------------------------------------------
+
+		start.m_TextureCoords.dtudx = 
+			Det2x2(grad.dx.m_TextureCoords.tu, tuOverZ, grad.dx.m_WindowCoords.invZ, invZ) 
+						+ EGL_Mul(grad.dy.m_TextureCoords.dtudx, yPreStep);
+
+		start.m_TextureCoords.dtudy = 
+			Det2x2(grad.dx.m_TextureCoords.tv, tvOverZ, grad.dx.m_WindowCoords.invZ, invZ)
+						+ EGL_Mul(grad.dx.m_TextureCoords.dtudy, xPreStep);
+
+		start.m_TextureCoords.dtvdx = 
+			Det2x2(grad.dy.m_TextureCoords.tu, tuOverZ, grad.dy.m_WindowCoords.invZ, invZ)
+						+ EGL_Mul(grad.dy.m_TextureCoords.dtvdx, yPreStep);
+
+		start.m_TextureCoords.dtvdy = 
+			Det2x2(grad.dy.m_TextureCoords.tv, tvOverZ, grad.dy.m_WindowCoords.invZ, invZ)
+						+ EGL_Mul(grad.dx.m_TextureCoords.dtvdy, xPreStep);
+
 		start.m_FogDensity = 
 			fog			+ EGL_Mul(grad.dx.m_FogDensity, xPreStep)			
 						+ EGL_Mul(grad.dy.m_FogDensity, yPreStep);
@@ -321,6 +394,10 @@ namespace {
 		deltaSmall.m_WindowCoords.invZ	= gradients.dx.m_WindowCoords.invZ * dXdYStepInt	+ gradients.dy.m_WindowCoords.invZ; 
 		deltaSmall.m_TextureCoords.tu	= gradients.dx.m_TextureCoords.tu * dXdYStepInt		+ gradients.dy.m_TextureCoords.tu;
 		deltaSmall.m_TextureCoords.tv	= gradients.dx.m_TextureCoords.tv * dXdYStepInt		+ gradients.dy.m_TextureCoords.tv;
+		deltaSmall.m_TextureCoords.dtudx=													  gradients.dy.m_TextureCoords.dtudx;; 
+		deltaSmall.m_TextureCoords.dtudy= gradients.dx.m_TextureCoords.dtudy * dXdYStepInt;
+		deltaSmall.m_TextureCoords.dtvdx=													  gradients.dy.m_TextureCoords.dtvdx;
+		deltaSmall.m_TextureCoords.dtvdy= gradients.dx.m_TextureCoords.dtvdy * dXdYStepInt;
 
 		deltaSmall.m_FogDensity			= gradients.dx.m_FogDensity * dXdYStepInt	+ gradients.dy.m_FogDensity;
 
@@ -337,6 +414,10 @@ namespace {
 			deltaBig.m_WindowCoords.invZ	= deltaSmall.m_WindowCoords.invZ	+ gradients.dx.m_WindowCoords.invZ; 
 			deltaBig.m_TextureCoords.tu		= deltaSmall.m_TextureCoords.tu		+ gradients.dx.m_TextureCoords.tu;
 			deltaBig.m_TextureCoords.tv		= deltaSmall.m_TextureCoords.tv		+ gradients.dx.m_TextureCoords.tv;
+			deltaBig.m_TextureCoords.dtudx	= deltaSmall.m_TextureCoords.dtudx;
+			deltaBig.m_TextureCoords.dtudy	= deltaSmall.m_TextureCoords.dtudy	+ gradients.dx.m_TextureCoords.dtudy;
+			deltaBig.m_TextureCoords.dtvdx	= deltaSmall.m_TextureCoords.dtvdx;
+			deltaBig.m_TextureCoords.dtvdy	= deltaSmall.m_TextureCoords.dtvdy	+ gradients.dx.m_TextureCoords.dtvdy;
 
 			deltaBig.m_FogDensity			= deltaSmall.m_FogDensity			+ gradients.dx.m_FogDensity;
 		} else {
@@ -350,6 +431,10 @@ namespace {
 			deltaBig.m_WindowCoords.invZ	= deltaSmall.m_WindowCoords.invZ	- gradients.dx.m_WindowCoords.invZ; 
 			deltaBig.m_TextureCoords.tu		= deltaSmall.m_TextureCoords.tu		- gradients.dx.m_TextureCoords.tu;
 			deltaBig.m_TextureCoords.tv		= deltaSmall.m_TextureCoords.tv		- gradients.dx.m_TextureCoords.tv;
+			deltaBig.m_TextureCoords.dtudx	= deltaSmall.m_TextureCoords.dtudx;
+			deltaBig.m_TextureCoords.dtudy	= deltaSmall.m_TextureCoords.dtudy	- gradients.dx.m_TextureCoords.dtudy;
+			deltaBig.m_TextureCoords.dtvdx	= deltaSmall.m_TextureCoords.dtvdx;
+			deltaBig.m_TextureCoords.dtvdy	= deltaSmall.m_TextureCoords.dtvdy	+ gradients.dx.m_TextureCoords.dtvdy;
 
 			deltaBig.m_FogDensity			= deltaSmall.m_FogDensity			- gradients.dx.m_FogDensity;
 		}
@@ -364,6 +449,10 @@ namespace {
 			start.m_WindowCoords.invZ	+= deltaBig.m_WindowCoords.invZ;		\
 			start.m_TextureCoords.tu	+= deltaBig.m_TextureCoords.tu;			\
 			start.m_TextureCoords.tv	+= deltaBig.m_TextureCoords.tv;			\
+			start.m_TextureCoords.dtudx	+= deltaBig.m_TextureCoords.dtudx;		\
+			start.m_TextureCoords.dtudy	+= deltaBig.m_TextureCoords.dtudy;		\
+			start.m_TextureCoords.dtvdx	+= deltaBig.m_TextureCoords.dtvdx;		\
+			start.m_TextureCoords.dtvdy	+= deltaBig.m_TextureCoords.dtvdy;		\
 			start.m_FogDensity			+= deltaBig.m_FogDensity;				\
 			start.m_WindowCoords.depth	+= deltaBig.m_WindowCoords.depth;		\
 		} else {																\
@@ -372,6 +461,10 @@ namespace {
 			start.m_WindowCoords.invZ	+= deltaSmall.m_WindowCoords.invZ;		\
 			start.m_TextureCoords.tu	+= deltaSmall.m_TextureCoords.tu;		\
 			start.m_TextureCoords.tv	+= deltaSmall.m_TextureCoords.tv;		\
+			start.m_TextureCoords.dtudx	+= deltaSmall.m_TextureCoords.dtudx;	\
+			start.m_TextureCoords.dtudy	+= deltaSmall.m_TextureCoords.dtudy;	\
+			start.m_TextureCoords.dtvdx	+= deltaSmall.m_TextureCoords.dtvdx;	\
+			start.m_TextureCoords.dtvdy	+= deltaSmall.m_TextureCoords.dtvdy;	\
 			start.m_FogDensity			+= deltaSmall.m_FogDensity;				\
 			start.m_WindowCoords.depth	+= deltaSmall.m_WindowCoords.depth;		\
 		}																		\
@@ -466,6 +559,36 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		SOLVE_PARAM_XY(m_TextureCoords.tu, tuOverZ1, tuOverZ2, tuOverZ3, invDenominator);
 		SOLVE_PARAM_XY(m_TextureCoords.tv, tvOverZ1, tvOverZ2, tvOverZ3, invDenominator);
+
+		// ------------------------------------------------------------------
+		// Determine partial derivatives of texture functions, 
+		// see eq. (2) and (3) in
+		// J. P. Ewins et al (1998), 
+		// "MIP-Map Level Selection for Texture Mapping",
+		// IEEE Transactions on Visualization and Computer Graphics, 
+		// Vol 4, No. 4
+		// ------------------------------------------------------------------
+
+		EGL_Fixed A = grad.dx.m_TextureCoords.tu;
+		EGL_Fixed B = grad.dy.m_TextureCoords.tu;
+		EGL_Fixed D = grad.dx.m_WindowCoords.invZ;
+		EGL_Fixed E = grad.dy.m_WindowCoords.invZ;
+		EGL_Fixed F = pos1.m_WindowCoords.invZ;
+		EGL_Fixed G = grad.dx.m_TextureCoords.tv;
+		EGL_Fixed H = grad.dy.m_TextureCoords.tv;
+
+		EGL_Fixed K1 = Det2x2(A, B, D, E);
+		EGL_Fixed K2 = Det2x2(G, H, D, E);
+
+		grad.dy.m_TextureCoords.dtudx = K1;
+		grad.dy.m_TextureCoords.dtudy = 0;
+		grad.dy.m_TextureCoords.dtvdx = K2;
+		grad.dy.m_TextureCoords.dtvdy = 0;
+
+		grad.dx.m_TextureCoords.dtudx = 0;
+		grad.dx.m_TextureCoords.dtudy = -K1;
+		grad.dx.m_TextureCoords.dtvdx = 0;
+		grad.dx.m_TextureCoords.dtvdy = -K2;
 	}
 
 	// ----------------------------------------------------------------------
@@ -473,34 +596,6 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	// J. P. Ewins et al (1998), "MIP-Map Level Selection for Texture Mapping",
 	// IEEE Transactions on Visualization and Computer Graphics, Vol 4, No. 4
 	// ----------------------------------------------------------------------
-
-	EGL_Fixed A = grad.dx.m_TextureCoords.tu;
-	EGL_Fixed B = grad.dy.m_TextureCoords.tu;
-	EGL_Fixed C = tuOverZ1;
-	EGL_Fixed D = grad.dx.m_WindowCoords.invZ;
-	EGL_Fixed E = grad.dy.m_WindowCoords.invZ;
-	EGL_Fixed F = pos1.m_WindowCoords.invZ;
-	EGL_Fixed G = grad.dx.m_TextureCoords.tv;
-	EGL_Fixed H = grad.dy.m_TextureCoords.tv;
-	EGL_Fixed I = tvOverZ1;
-
-	EGL_Fixed K1 = Det2x2NoShift(A, B, D, E);
-	EGL_Fixed K2 = Det2x2NoShift(G, H, D, E);
-	EGL_Fixed K3 = Det2x2NoShift(A, C, D, F);
-	EGL_Fixed K4 = Det2x2NoShift(G, I, D, F);
-	EGL_Fixed K5 = Det2x2NoShift(B, C, E, F);
-	EGL_Fixed K6 = Det2x2NoShift(I, I, E, F);
-
-	// We fill out the full matrix just to keep the data structure clean
-	grad.dx.m_TextureCoords.dtudx = 0;
-	grad.dx.m_TextureCoords.dtvdx = 0;
-	grad.dx.m_TextureCoords.dtudy = -K1;
-	grad.dx.m_TextureCoords.dtvdy = -K2;
-
-	grad.dy.m_TextureCoords.dtudx = K1;
-	grad.dy.m_TextureCoords.dtvdx = K2;
-	grad.dy.m_TextureCoords.dtudy = 0;
-	grad.dy.m_TextureCoords.dtvdy = 0;
 
 	// Share the gradient in x direction for scanline function
 
@@ -544,43 +639,6 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	// determine the appropriate mipmapping level
 	// ----------------------------------------------------------------------
 
-	if (m_State->m_TextureEnabled) {
-		if (m_Texture->IsMipMap()) {
-
-			int logWidth = Log2(m_Texture->GetTexture(0)->GetWidth());
-			int logHeight = Log2(m_Texture->GetTexture(0)->GetHeight());
-			int maxLevel = (logWidth > logHeight) ? logWidth : logHeight;
-
-			if (invDenominator) {
-
-				EGL_Fixed textureArea = 
-					Det2x2(
-						(pos2.m_TextureCoords.tu - pos1.m_TextureCoords.tu) << logWidth, 
-						(pos2.m_TextureCoords.tv - pos1.m_TextureCoords.tv) << logHeight,
-						(pos3.m_TextureCoords.tu - pos1.m_TextureCoords.tu) << logWidth,
-						(pos3.m_TextureCoords.tv - pos1.m_TextureCoords.tv) << logHeight);
-				
-				EGL_Fixed ratio = EGL_Mul(textureArea, invDenominator) >> EGL_PRECISION;
-				
-				int logRatio = Log2(ratio);
-
-				if (logRatio <= 0) {
-					m_MipMapLevel = 0;
-				} else {
-					m_MipMapLevel = logRatio / 2;
-
-					if (m_MipMapLevel > maxLevel) {
-						m_MipMapLevel = maxLevel;
-					}
-				}
-			} else {
-				m_MipMapLevel = maxLevel;
-			}
-		} else {
-			m_MipMapLevel = 0;
-		}
-	}
-	
 	EGL_Fixed invZ1 = pos1.m_WindowCoords.invZ;
 	EGL_Fixed invZ2 = pos2.m_WindowCoords.invZ;
 	EGL_Fixed invZ3 = pos3.m_WindowCoords.invZ;
@@ -606,7 +664,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	EGL_Fixed yRounded3 = EGL_NearestInt(pos3.m_WindowCoords.y);
 	I32 y3 = EGL_IntFromFixed(yRounded3);
 
-	RasterInfo rasterInfo(m_Surface, y);
+	m_RasterInfo.Init(m_Surface, y);
 
 	I32 yScissorStart = m_State->m_ScissorY;
 	I32 yScissorEnd = yScissorStart + m_State->m_ScissorHeight;
@@ -619,11 +677,11 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 	if (texture)
 	{
-		rasterInfo.TextureLogWidth			= texture->GetLogWidth();
-		rasterInfo.TextureLogHeight			= texture->GetLogHeight();
-		rasterInfo.TextureLogBytesPerPixel	= texture->GetLogBytesPerPixel();
-		rasterInfo.TextureExponent			= texture->GetExponent();
-		rasterInfo.TextureData				= texture->GetData();
+		m_RasterInfo.TextureLogWidth			= texture->GetLogWidth();
+		m_RasterInfo.TextureLogHeight			= texture->GetLogHeight();
+		m_RasterInfo.TextureLogBytesPerPixel	= texture->GetLogBytesPerPixel();
+		m_RasterInfo.TextureExponent			= texture->GetExponent();
+		m_RasterInfo.TextureData				= texture->GetData();
 	}
 
 	// ----------------------------------------------------------------------
@@ -711,9 +769,9 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			for (; y < y3; ++y) {
 
 				if (!m_State->m_ScissorTestEnabled || (y >= yScissorStart && y < yScissorEnd))
-					RasterScanLine(rasterInfo, start, delta);												
+					RasterScanLine(m_RasterInfo, start, delta);												
 
-				ScanlineDelta(rasterInfo, start, delta, delta3Small, delta3Big,
+				ScanlineDelta(m_RasterInfo, start, delta, delta3Small, delta3Big,
 							  xError, xStepError, dXdY23);
 			}
 
@@ -779,9 +837,9 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 			for (; y < y3; ++y) {
 				if (!m_State->m_ScissorTestEnabled || (y >= yScissorStart && y < yScissorEnd))
-					RasterScanLine(rasterInfo, start, delta);												
+					RasterScanLine(m_RasterInfo, start, delta);												
 
-				ScanlineDelta(rasterInfo, start, delta, delta23Small, delta23Big,
+				ScanlineDelta(m_RasterInfo, start, delta, delta23Small, delta23Big,
 							  xError, xStepError, dXdY3);
 			}
 
@@ -859,9 +917,9 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		for (; y < y2; ++y) {
 			if (!m_State->m_ScissorTestEnabled || (y >= yScissorStart && y < yScissorEnd))
-				RasterScanLine(rasterInfo, start, delta);												
+				RasterScanLine(m_RasterInfo, start, delta);												
 
-			ScanlineDelta(rasterInfo, start, delta, delta2Small, delta2Big,
+			ScanlineDelta(m_RasterInfo, start, delta, delta2Small, delta2Big,
 						  xError, xStepError, dXdY3);
 		}
 
@@ -921,9 +979,9 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		for (; y < y3; ++y) {
 			if (!m_State->m_ScissorTestEnabled || (y >= yScissorStart && y < yScissorEnd))
-				RasterScanLine(rasterInfo, start, delta);												
+				RasterScanLine(m_RasterInfo, start, delta);												
 
-			ScanlineDelta(rasterInfo, start, delta, delta23Small, delta23Big,
+			ScanlineDelta(m_RasterInfo, start, delta, delta23Small, delta23Big,
 						  xError, xStepError, dXdY3);
 		}
 
@@ -984,9 +1042,9 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		for (; y < y2; ++y) {
 			if (!m_State->m_ScissorTestEnabled || (y >= yScissorStart && y < yScissorEnd))
-				RasterScanLine(rasterInfo, start, delta);												
+				RasterScanLine(m_RasterInfo, start, delta);												
 
-			ScanlineDelta(rasterInfo, start, delta, delta3Small, delta3Big,
+			ScanlineDelta(m_RasterInfo, start, delta, delta3Small, delta3Big,
 						  xError, xStepError, dXdY2);
 		}
 
@@ -1012,9 +1070,9 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		for (; y < y3; ++y) {
 			if (!m_State->m_ScissorTestEnabled || (y >= yScissorStart && y < yScissorEnd))
-				RasterScanLine(rasterInfo, start, delta);												
+				RasterScanLine(m_RasterInfo, start, delta);												
 
-			ScanlineDelta(rasterInfo, start, delta, delta3Small, delta3Big,
+			ScanlineDelta(m_RasterInfo, start, delta, delta3Small, delta3Big,
 						  xError, xStepError, dXdY23);
 		}
 	}

@@ -108,6 +108,11 @@ void Rasterizer :: SetTexture(MultiTexture * texture) {
 		m_State->SetMinFilterMode(m_Texture->GetMinFilterMode());
 		m_State->SetMagFilterMode(m_Texture->GetMagFilterMode());
 		m_State->SetInternalFormat(m_Texture->GetInternalFormat());
+
+		m_UseMipmap = m_Texture->IsMipMap() && m_Texture->IsComplete();
+		m_MaxMipmapLevel = EGL_Max(m_Texture->GetTexture(0)->GetLogWidth(), m_Texture->GetTexture(0)->GetLogHeight());
+	} else {
+		m_UseMipmap = false;
 	}
 }
 
@@ -129,21 +134,21 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 		}
 	}
 
-	RasterInfo rasterInfo(m_Surface, y);
+	m_RasterInfo.Init(m_Surface, y);
 
 	// texture info
 	Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
 
 	if (texture)
 	{
-		rasterInfo.TextureLogWidth = texture->GetLogWidth();
-		rasterInfo.TextureLogHeight = texture->GetLogHeight();
-		rasterInfo.TextureLogBytesPerPixel = texture->GetLogBytesPerPixel();
-		rasterInfo.TextureExponent = texture->GetExponent();
-		rasterInfo.TextureData = texture->GetData();
+		m_RasterInfo.TextureLogWidth = texture->GetLogWidth();
+		m_RasterInfo.TextureLogHeight = texture->GetLogHeight();
+		m_RasterInfo.TextureLogBytesPerPixel = texture->GetLogBytesPerPixel();
+		m_RasterInfo.TextureExponent = texture->GetExponent();
+		m_RasterInfo.TextureData = texture->GetData();
 	}
 
-	Fragment(&rasterInfo, x, depth, tu, tv, baseColor, fogDensity);
+	Fragment(&m_RasterInfo, x, depth, tu, tv, baseColor, fogDensity);
 }
 
 

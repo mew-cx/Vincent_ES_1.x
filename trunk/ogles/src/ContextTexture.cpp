@@ -1520,7 +1520,7 @@ void Context :: UpdateMipmaps(void) {
 	U32 logSquareBound = logWidth < logHeight ? logWidth : logHeight;
 	U32 level;
 
-	for (level = 1; level < logSquareBound; ++level) {
+	for (level = 1; level <= logSquareBound; ++level) {
 		Texture * outer = multiTexture->GetTexture(level - 1);
 		Texture * inner = multiTexture->GetTexture(level);
 			
