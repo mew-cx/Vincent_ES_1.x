@@ -1512,7 +1512,7 @@ static void inst_dump(cg_inst_t * inst, FILE * out)
 		if (inst->unary.dest_flags)
 		{
 			fprintf(out, "\t%s\t(r%d, r%d), r%d\n", opcodes[inst->base.opcode],
-				inst->unary.dest_value->reg_no, inst->unary.dest_flags->reg_no, inst->unary.operand.source);
+				inst->unary.dest_value->reg_no, inst->unary.dest_flags->reg_no, inst->unary.operand.source->reg_no);
 		}
 		else
 		{

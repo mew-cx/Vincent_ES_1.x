@@ -9,4 +9,5 @@ SOURCE heap.c
 SOURCE instruction.c
 SOURCE segment.c
 USERINCLUDE ..\..\src\codegen
+SYSTEMINCLUDE \epoc32\include\libc
 SYSTEMINCLUDE \epoc32\include
