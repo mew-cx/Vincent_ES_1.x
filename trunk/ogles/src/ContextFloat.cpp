@@ -381,24 +381,185 @@ void Context :: GetClipPlanef(GLenum plane, GLfloat eqn[4]) {
 	eqn[3] = EGL_FloatFromFixed(m_ClipPlanes[index].w());
 }
 
+
+namespace {
+	void CopyFixed(const GLfixed * in, GLfloat * out, size_t size) {
+		while (size--) {
+			*out++ = EGL_FloatFromFixed(*in++);
+		}
+	}
+}
+
+
 void Context :: GetFloatv(GLenum pname, GLfloat *params) {
-	assert(0);
+
+	GLfixed buffer[16];
+
+	switch (pname) {
+	case GL_CURRENT_COLOR:
+	case GL_FOG_DENSITY:
+	case GL_FOG_START:
+	case GL_FOG_END:
+	case GL_POLYGON_OFFSET_UNITS:
+	case GL_POLYGON_OFFSET_FACTOR:
+	case GL_SAMPLE_COVERAGE_VALUE:
+	case GL_POINT_SIZE_MIN:
+	case GL_POINT_SIZE_MAX:
+	case GL_POINT_FADE_THRESHOLD_SIZE:
+		if (GetFixedv(pname, buffer)) {
+			CopyFixed(buffer, params, 1);
+		}
+
+		break;
+
+	case GL_ALIASED_LINE_WIDTH_RANGE:
+	case GL_ALIASED_POINT_SIZE_RANGE:
+	case GL_SMOOTH_LINE_WIDTH_RANGE:
+	case GL_SMOOTH_POINT_SIZE_RANGE:
+	case GL_DEPTH_RANGE:
+		if (GetFixedv(pname, buffer)) {
+			CopyFixed(buffer, params, 2);
+		}
+
+		break;
+
+	case GL_CURRENT_NORMAL:
+	case GL_POINT_DISTANCE_ATTENUATION:
+		if (GetFixedv(pname, buffer)) {
+			CopyFixed(buffer, params, 3);
+		}
+
+		break;
+
+	case GL_CURRENT_TEXTURE_COORDS:
+	case GL_FOG_COLOR:
+	case GL_LIGHT_MODEL_AMBIENT:
+	case GL_COLOR_CLEAR_VALUE:
+		if (GetFixedv(pname, buffer)) {
+			CopyFixed(buffer, params, 4);
+		}
+
+		break;
+
+	case GL_MODELVIEW_MATRIX:
+	case GL_PROJECTION_MATRIX:
+	case GL_TEXTURE_MATRIX:
+		if (GetFixedv(pname, buffer)) {
+			CopyFixed(buffer, params, 16);
+		}
+
+		break;
+	}
+
 }
 
 void Context :: GetLightfv(GLenum light, GLenum pname, GLfloat *params) {
-	assert(0);
+
+	GLfixed buffer[16];
+
+	switch (pname) {
+	case GL_AMBIENT:
+	case GL_DIFFUSE:
+	case GL_SPECULAR:
+	case GL_POSITION:
+		if (GetLightxv(light, pname, buffer)) {
+			CopyFixed(buffer, params, 4);
+		}
+
+		break;
+
+	case GL_SPOT_DIRECTION:
+		if (GetLightxv(light, pname, buffer)) {
+			CopyFixed(buffer, params, 3);
+		}
+
+		break;
+
+	case GL_SPOT_EXPONENT:
+	case GL_SPOT_CUTOFF:
+	case GL_CONSTANT_ATTENUATION:
+	case GL_LINEAR_ATTENUATION:
+	case GL_QUADRATIC_ATTENUATION:
+		if (GetLightxv(light, pname, buffer)) {
+			CopyFixed(buffer, params, 1);
+		}
+
+		break;
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
 }
 
 void Context :: GetMaterialfv(GLenum face, GLenum pname, GLfloat *params) {
-	assert(0);
+
+	GLfixed buffer[16];
+
+	switch (pname) {
+	case GL_AMBIENT:
+	case GL_DIFFUSE:
+	case GL_SPECULAR:
+	case GL_EMISSION:
+		if (GetMaterialxv(face, pname, buffer)) {
+			CopyFixed(buffer, params, 4);
+		}
+
+		break;
+
+	case GL_SHININESS:
+		if (GetMaterialxv(face, pname, buffer)) {
+			CopyFixed(buffer, params, 1);
+		}
+
+		break;
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
 }
 
 void Context :: GetTexEnvfv(GLenum env, GLenum pname, GLfloat *params) {
-	assert(0);
+
+	GLfixed buffer[16];
+
+	if (env != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	switch (pname) {
+	case GL_TEXTURE_ENV_COLOR:
+		if (GetTexEnvxv(env, pname, buffer)) {
+			CopyFixed(buffer, params, 4);
+		}
+
+		break;
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		break;
+	}
 }
 
 void Context :: GetTexParameterfv(GLenum target, GLenum pname, GLfloat *params) {
 
+	if (target != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+#if 0
+	switch (pname) {
+
+	default:
+#endif
+		RecordError(GL_INVALID_ENUM);
+#if 0
+		break;
+	}
+#endif
 }
 
 void Context :: PointParameterf(GLenum pname, GLfloat param) {

@@ -326,6 +326,17 @@ namespace EGL {
 			return m_Objects[index].GetPointer();
 		}
 
+		size_t GetIndex(const ELEMENT * element) const {
+			for (size_t index = 0; index < m_AllocatedObjects; ++index) {
+				if (m_Objects[index].IsPointer() &&
+					m_Objects[index].GetPointer() == element) {
+					return index;
+				}
+			}
+
+			return ~0;
+		}
+
 		bool IsObject(size_t index) {
 
 			return index < m_AllocatedObjects && m_Objects[index].IsPointer();

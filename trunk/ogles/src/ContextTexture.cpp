@@ -42,6 +42,7 @@
 #include "Color.h"
 #include "Surface.h"
 #include "fixed.h"
+#include "Utils.h"
 
 
 using namespace EGL;
@@ -2087,6 +2088,18 @@ void Context :: GetTexEnviv(GLenum env, GLenum pname, GLint *params) {
 
 	switch (pname) {
 	case GL_TEXTURE_ENV_MODE:
+		{
+			switch (m_RasterizerState.GetTextureMode()) {
+			case RasterizerState::TextureModeModulate:	params[0] = GL_MODULATE;	break;
+			case RasterizerState::TextureModeReplace:	params[0] = GL_REPLACE;		break;
+			case RasterizerState::TextureModeDecal:		params[0] = GL_DECAL;		break;
+			case RasterizerState::TextureModeBlend:		params[0] = GL_BLEND;		break;
+			case RasterizerState::TextureModeAdd:		params[0] = GL_ADD;			break;
+			}
+		}
+
+		break;
+
 	case GL_COMBINE_RGB:
 	case GL_COMBINE_ALPHA:
 	case GL_SRC0_RGB:
@@ -2110,20 +2123,24 @@ void Context :: GetTexEnviv(GLenum env, GLenum pname, GLint *params) {
 	}
 }
 
-void Context :: GetTexEnvxv(GLenum env, GLenum pname, GLfixed *params) {
+bool Context :: GetTexEnvxv(GLenum env, GLenum pname, GLfixed *params) {
 
 	if (env != GL_TEXTURE_2D) {
 		RecordError(GL_INVALID_ENUM);
-		return;
+		return false;
 	}
 
 	switch (pname) {
 	case GL_TEXTURE_ENV_COLOR:
+		CopyColor(m_RasterizerState.GetTexEnvColor(), params);
+		break;
 
 	default:
 		RecordError(GL_INVALID_ENUM);
-		break;
+		return false;
 	}
+
+	return true;
 }
 
 void Context :: GetTexParameteriv(GLenum target, GLenum pname, GLint *params) {
@@ -2133,18 +2150,68 @@ void Context :: GetTexParameteriv(GLenum target, GLenum pname, GLint *params) {
 		return;
 	}
 
+	MultiTexture * multiTexture = GetCurrentTexture();
+
 	switch (pname) {
-	case GL_TEXTURE_MIN_FILTER:
-	case GL_TEXTURE_MAG_FILTER:
-	case GL_TEXTURE_WRAP_S:
-	case GL_TEXTURE_WRAP_T:
 	case GL_GENERATE_MIPMAP:
+		params[0] = m_GenerateMipmaps != 0;
+		break;
+
+	case GL_TEXTURE_MAG_FILTER:
+		if (multiTexture->GetMagFilterMode() == RasterizerState::FilterModeNearest) {
+			params[0] = GL_NEAREST;
+		} else {
+			params[0] = GL_LINEAR;
+		}
+
+		break;
+
+	case GL_TEXTURE_MIN_FILTER:
+		if (multiTexture->GetMinFilterMode() == RasterizerState::FilterModeNearest) {
+			if (multiTexture->GetMipmapFilterMode() == RasterizerState::FilterModeNone) {
+				params[0] = GL_NEAREST;
+			} else if (multiTexture->GetMipmapFilterMode() == RasterizerState::FilterModeNearest) {
+				params[0] = GL_NEAREST_MIPMAP_NEAREST;
+			} else {
+				params[0] = GL_NEAREST_MIPMAP_LINEAR;
+			}
+		} else {
+			if (multiTexture->GetMipmapFilterMode() == RasterizerState::FilterModeNone) {
+				params[0] = GL_LINEAR;
+			} else if (multiTexture->GetMipmapFilterMode() == RasterizerState::FilterModeNearest) {
+				params[0] = GL_LINEAR_MIPMAP_NEAREST;
+			} else {
+				params[0] = GL_LINEAR_MIPMAP_LINEAR;
+			}
+		}
+
+		break;
+
+	case GL_TEXTURE_WRAP_S:
+		if (multiTexture->GetWrappingModeS() == RasterizerState::WrappingModeClampToEdge) {
+			params[0] = GL_CLAMP_TO_EDGE;
+		} else {
+			params[0] = GL_REPEAT;
+		}
+
+		break;
+
+	case GL_TEXTURE_WRAP_T:
+		if (multiTexture->GetWrappingModeT() == RasterizerState::WrappingModeClampToEdge) {
+			params[0] = GL_CLAMP_TO_EDGE;
+		} else {
+			params[0] = GL_REPEAT;
+		}
+
+		break;
 
 	default:
 		RecordError(GL_INVALID_ENUM);
-		break;
+		return;
 	}
+
 }
+
 
 void Context :: GetTexParameterxv(GLenum target, GLenum pname, GLfixed *params) {
 

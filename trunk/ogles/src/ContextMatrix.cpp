@@ -53,26 +53,28 @@ void Context :: MatrixMode(GLenum mode) {
 	case GL_MODELVIEW:
 		m_CurrentMatrixStack = &m_ModelViewMatrixStack;
 		m_MatrixModePaletteEnabled = false;
-		return;
+		break;
 
 	case GL_PROJECTION:
 		m_CurrentMatrixStack = &m_ProjectionMatrixStack;
 		m_MatrixModePaletteEnabled = false;
-		return;
+		break;
 
 	case GL_TEXTURE:
 		m_CurrentMatrixStack = &m_TextureMatrixStack;
 		m_MatrixModePaletteEnabled = false;
-		return;
+		break;
 
 	case GL_MATRIX_PALETTE_OES:
 		m_MatrixModePaletteEnabled = true;
-		return;
+		break;
 
 	default:
 		RecordError(GL_INVALID_ENUM);
 		return;
 	}
+
+	m_MatrixMode = mode;
 }
 
 void Context :: RebuildMatrices(void) {

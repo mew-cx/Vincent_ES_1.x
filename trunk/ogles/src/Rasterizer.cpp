@@ -177,7 +177,10 @@ RasterizerState * Rasterizer :: GetState() const {
 
 void Rasterizer :: SetTexture(MultiTexture * texture) {
 	m_Texture = texture;
+}
 
+
+void Rasterizer :: PrepareTexture() {
 	if (m_Texture && m_State) {
 		m_State->SetWrappingModeS(m_Texture->GetWrappingModeS());
 		m_State->SetWrappingModeT(m_Texture->GetWrappingModeT());
@@ -943,7 +946,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 void Rasterizer :: PreparePoint() {
 
 	if (m_State->m_Texture.Enabled) {
-		SetTexture(m_Texture);
+		PrepareTexture();
 	}
 
 	m_PointFunction = (PointFunction *)
@@ -957,7 +960,7 @@ void Rasterizer :: PreparePoint() {
 
 void Rasterizer :: PrepareLine() {
 	if (m_State->m_Texture.Enabled) {
-		SetTexture(m_Texture);
+		PrepareTexture();
 	}
 
 	m_LineFunction = (LineFunction *)

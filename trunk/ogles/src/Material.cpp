@@ -71,8 +71,8 @@ void Material :: SetSpecularColor(const FractionalColor & color) {
 }
 
 
-void Material :: SetEmisiveColor(const FractionalColor & color) {
-	m_EmisiveColor = color;
+void Material :: SetEmissiveColor(const FractionalColor & color) {
+	m_EmissiveColor = color;
 }
 
 

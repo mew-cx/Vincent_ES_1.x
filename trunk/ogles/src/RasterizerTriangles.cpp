@@ -166,7 +166,7 @@ namespace {
 
 void Rasterizer :: PrepareTriangle() {
 	if (m_State->m_Texture.Enabled) {
-		SetTexture(m_Texture);
+		PrepareTexture();
 	}
 
 	m_ScanlineFunction = (ScanlineFunction *)

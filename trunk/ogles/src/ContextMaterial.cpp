@@ -40,6 +40,7 @@
 #include "stdafx.h"
 #include "Context.h"
 #include "RasterizerState.h"
+#include "Utils.h"
 
 using namespace EGL;
 
@@ -101,7 +102,7 @@ void Context :: Materialxv(GLenum face, GLenum pname, const GLfixed *params) {
 		break;
 
 	case GL_EMISSION:
-		material->SetEmisiveColor(FractionalColor::Clamp(params));
+		material->SetEmissiveColor(FractionalColor::Clamp(params));
 		break;
 
 	default:
@@ -110,22 +111,38 @@ void Context :: Materialxv(GLenum face, GLenum pname, const GLfixed *params) {
 	}
 }
 
-void Context :: GetMaterialxv(GLenum face, GLenum pname, GLfixed *params) {
+bool Context :: GetMaterialxv(GLenum face, GLenum pname, GLfixed *params) {
 	if (face != GL_FRONT_AND_BACK) {
 		RecordError(GL_INVALID_ENUM);
-		return;
+		return false;
 	}
 
 	switch (pname) {
 	case GL_AMBIENT:
+		CopyColor(m_FrontMaterial.GetAmbientColor(), params);
+		break;
+
 	case GL_DIFFUSE:
+		CopyColor(m_FrontMaterial.GetDiffuseColor(), params);
+		break;
+
 	case GL_SPECULAR:
+		CopyColor(m_FrontMaterial.GetSpecularColor(), params);
+		break;
+
 	case GL_EMISSION:
+		CopyColor(m_FrontMaterial.GetEmissiveColor(), params);
+		break;
+
 	case GL_SHININESS:
+		params[0] = m_FrontMaterial.GetSpecularExponent();
+		break;
 
 	default:
 		RecordError(GL_INVALID_ENUM);
-		return;
+		return false;
 	}
+
+	return true;
 }
 

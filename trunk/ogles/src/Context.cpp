@@ -39,6 +39,7 @@
 #include "Context.h"
 #include "Surface.h"
 #include "Rasterizer.h"
+#include "Utils.h"
 
 
 using namespace EGL;
@@ -61,6 +62,7 @@ Context :: Context(const Config & config)
 	m_ProjectionMatrixStack(2),
 	m_TextureMatrixStack(2),
 	m_CurrentMatrixStack(&m_ModelViewMatrixStack),
+	m_MatrixMode(GL_MODELVIEW),
 	m_Scissor(0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
 	m_Viewport(0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
 	m_CurrentPaletteMatrix(0),
@@ -123,7 +125,14 @@ Context :: Context(const Config & config)
 	m_PixelStoreUnpackAlignment(4),
 
 	// SGIS_generate_mipmap extension
-	m_GenerateMipmaps(false)
+	m_GenerateMipmaps(false),
+
+	// hints
+	m_PerspectiveCorrectionHint(GL_DONT_CARE),
+	m_PointSmoothHint(GL_DONT_CARE),
+	m_LineSmoothHint(GL_DONT_CARE),
+	m_FogHint(GL_DONT_CARE),
+	m_GenerateMipmapHint(GL_DONT_CARE)
 {
 	DepthRangex(VIEWPORT_NEAR, VIEWPORT_FAR);
 	ClearDepthx(EGL_ONE);
@@ -400,7 +409,7 @@ void Context :: Toggle(GLenum cap, bool value) {
 		{
 			size_t plane = cap - GL_CLIP_PLANE0;
 			U32 mask = ~(1u << plane);
-			U32 bit = cap ? (1u << plane) : 0;
+			U32 bit = value ? (1u << plane) : 0;
 
 			m_ClipPlaneEnabled = (m_ClipPlaneEnabled & mask) | bit;
 		}
@@ -451,11 +460,31 @@ void Context :: Enable(GLenum cap) {
 }
 
 void Context :: Hint(GLenum target, GLenum mode) { 
+
+	if (mode != GL_DONT_CARE && mode != GL_FASTEST && mode != GL_NICEST) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
 	switch (target) {
 	case GL_FOG_HINT:
+		m_FogHint = mode;
+		break;
+
 	case GL_LINE_SMOOTH_HINT:
+		m_LineSmoothHint = mode;
+		break;
+
 	case GL_PERSPECTIVE_CORRECTION_HINT:
+		m_PerspectiveCorrectionHint = mode;
+		break;
+
 	case GL_POINT_SMOOTH_HINT:
+		m_PointSmoothHint = mode;
+		break;
+
+	case GL_GENERATE_MIPMAP_HINT:
+		m_GenerateMipmapHint = mode;
 		break;
 
 	default:
@@ -488,6 +517,90 @@ namespace {
 		GL_PALETTE8_RGBA4_OES,
 		GL_PALETTE8_RGB5_A1_OES
     };
+
+	void CopyRect(const Rect & rect, GLint * params) {
+		params[0] = rect.x;
+		params[1] = rect.y;
+		params[2] = rect.width;
+		params[3] = rect.height;
+	}
+
+	GLenum EnumFromComparisonFunc(RasterizerState::ComparisonFunc func) {
+		switch (func) {
+			case RasterizerState::CompFuncNever:	return GL_NEVER;
+			case RasterizerState::CompFuncLess:		return GL_LESS;
+			case RasterizerState::CompFuncLEqual:	return GL_LEQUAL;
+			case RasterizerState::CompFuncGreater:	return GL_GREATER;
+			case RasterizerState::CompFuncGEqual:	return GL_GEQUAL;
+			case RasterizerState::CompFuncEqual:	return GL_EQUAL;
+			case RasterizerState::CompFuncNotEqual:	return GL_NOTEQUAL;
+			case RasterizerState::CompFuncAlways:	return GL_ALWAYS;
+			default:								return 0;
+		}
+	}
+
+	GLenum EnumFromStencilOp(RasterizerState::StencilOp op) {
+		switch (op) {
+		case RasterizerState::StencilOpKeep:	return GL_KEEP;
+		case RasterizerState::StencilOpZero:	return GL_ZERO;
+		case RasterizerState::StencilOpReplace:	return GL_REPLACE;
+		case RasterizerState::StencilOpIncr:	return GL_INCR;
+		case RasterizerState::StencilOpDecr:	return GL_DECR;
+		case RasterizerState::StencilOpInvert:	return GL_INVERT;
+		default:								return 0;
+		}
+	}
+
+	GLenum EnumFromLogicOp(RasterizerState::LogicOp op) {
+		switch (op) {
+		case RasterizerState::LogicOpClear:			return GL_CLEAR;
+		case RasterizerState::LogicOpAnd:			return GL_AND;
+		case RasterizerState::LogicOpAndReverse:	return GL_AND_REVERSE;
+		case RasterizerState::LogicOpCopy:			return GL_COPY;
+		case RasterizerState::LogicOpAndInverted:	return GL_AND_INVERTED;
+		case RasterizerState::LogicOpNoop:			return GL_NOOP;
+		case RasterizerState::LogicOpXor:			return GL_XOR;
+		case RasterizerState::LogicOpOr:			return GL_OR;
+		case RasterizerState::LogicOpNor:			return GL_NOR;
+		case RasterizerState::LogicOpEquiv:			return GL_EQUIV;
+		case RasterizerState::LogicOpInvert:		return GL_INVERT;
+		case RasterizerState::LogicOpOrReverse:		return GL_OR_REVERSE;
+		case RasterizerState::LogicOpCopyInverted:	return GL_COPY_INVERTED;
+		case RasterizerState::LogicOpOrInverted:	return GL_OR_INVERTED;
+		case RasterizerState::LogicOpNand:			return GL_NAND;
+		case RasterizerState::LogicOpSet:			return GL_SET;
+		default:									return 0;
+		}
+	}
+
+	GLenum EnumFromBlendFuncSrc(RasterizerState::BlendFuncSrc sfactor) {
+		switch (sfactor) {
+		case RasterizerState::BlendFuncSrcZero:				return GL_ZERO;
+		case RasterizerState::BlendFuncSrcOne:				return GL_ONE;
+		case RasterizerState::BlendFuncSrcDstColor:			return GL_DST_COLOR;
+		case RasterizerState::BlendFuncSrcOneMinusDstColor:	return GL_ONE_MINUS_DST_COLOR;
+		case RasterizerState::BlendFuncSrcSrcAlpha:			return GL_SRC_ALPHA;
+		case RasterizerState::BlendFuncSrcOneMinusSrcAlpha:	return GL_ONE_MINUS_SRC_ALPHA;
+		case RasterizerState::BlendFuncSrcDstAlpha:			return GL_DST_ALPHA;
+		case RasterizerState::BlendFuncSrcOneMinusDstAlpha:	return GL_ONE_MINUS_DST_ALPHA;
+		case RasterizerState::BlendFuncSrcSrcAlphaSaturate:	return GL_SRC_ALPHA_SATURATE;
+		default:											return 0;
+		}
+	}
+
+	GLenum EnumFromBlendFuncDst(RasterizerState::BlendFuncDst dfactor) {
+		switch (dfactor) {
+		case RasterizerState::BlendFuncDstZero:				return GL_ZERO;
+		case RasterizerState::BlendFuncDstSrcColor:			return GL_SRC_COLOR;
+		case RasterizerState::BlendFuncDstOneMinusSrcColor:	return GL_ONE_MINUS_SRC_COLOR;
+		case RasterizerState::BlendFuncDstSrcAlpha:			return GL_SRC_ALPHA;
+		case RasterizerState::BlendFuncDstOneMinusSrcAlpha:	return GL_ONE_MINUS_SRC_ALPHA;
+		case RasterizerState::BlendFuncDstDstAlpha:			return GL_DST_ALPHA;
+		case RasterizerState::BlendFuncDstOneMinusDstAlpha:	return GL_ONE_MINUS_DST_ALPHA;
+		case RasterizerState::BlendFuncDstOne:				return GL_ONE;
+		default:											return 0;
+		}
+	}
 }
 
 
@@ -661,66 +774,222 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		params[0] = m_PointSizeArray.stride;
 		break;
 
-		/* TO DO */
-	case GL_SAMPLE_BUFFERS:
-	case GL_SAMPLES:
-
-	case GL_CURRENT_COLOR:
-	case GL_CLIENT_ACTIVE_TEXTURE:
-
-
 	case GL_VERTEX_ARRAY_BUFFER_BINDING:
+		params[0] = m_VertexArray.boundBuffer;
+		break;
+
 	case GL_NORMAL_ARRAY_BUFFER_BINDING:
+		params[0] = m_NormalArray.boundBuffer;
+		break;
+
 	case GL_COLOR_ARRAY_BUFFER_BINDING:
+		params[0] = m_ColorArray.boundBuffer;
+		break;
+
 	case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING:
+		params[0] = m_TexCoordArray.boundBuffer;
+		break;
+
 	case GL_ELEMENT_ARRAY_BUFFER_BINDING:
+		params[0] = m_CurrentElementArrayBuffer;
+		break;
+
 	case GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES:
+		params[0] = m_PointSizeArray.boundBuffer;
+		break;
+
 	case GL_MATRIX_INDEX_ARRAY_BUFFER_BINDING_OES:
+		params[0] = m_MatrixIndexArray.boundBuffer;
+		break;
+
 	case GL_WEIGHT_ARRAY_BUFFER_BINDING_OES:
+		params[0] = m_WeightArray.boundBuffer;
+		break;
 
-	case GL_VIEWPORT:
-	case GL_MATRIX_MODE:
-	case GL_FOG_MODE:
-	case GL_SHADE_MODEL:
-
-	case GL_CULL_FACE_MODE:
-	case GL_FRONT_FACE:
-
-	case GL_TEXTURE_BINDING_2D:
-
-	case GL_ACTIVE_TEXTURE:
-
-	case GL_STENCIL_WRITEMASK:
-	case GL_DEPTH_CLEAR_VALUE:
-	case GL_STENCIL_CLEAR_VALUE:
-
-	case GL_SCISSOR_BOX:
-	case GL_ALPHA_TEST_FUNC:
-	case GL_ALPHA_TEST_REF:
-	case GL_STENCIL_FUNC:
-	case GL_STENCIL_VALUE_MASK:
-	case GL_STENCIL_REF:
-	case GL_STENCIL_FAIL:
-	case GL_STENCIL_PASS_DEPTH_FAIL:
-	case GL_STENCIL_PASS_DEPTH_PASS:
-	case GL_DEPTH_FUNC:
-	case GL_BLEND_SRC:
-	case GL_BLEND_DST:
-	case GL_LOGIC_OP_MODE:
+	case GL_ARRAY_BUFFER_BINDING:
+		params[0] = m_CurrentArrayBuffer;
+		break;
 
 	case GL_UNPACK_ALIGNMENT:
+		params[0] = m_PixelStoreUnpackAlignment;
+		break;
+
 	case GL_PACK_ALIGNMENT:
+		params[0] = m_PixelStorePackAlignment;
+		break;
 
-	case GL_PERSPECTIVE_CORRECTION_HINT:
-	case GL_POINT_SMOOTH_HINT:
-	case GL_LINE_SMOOTH_HINT:
-	case GL_FOG_HINT:
-	case GL_GENERATE_MIPMAP_HINT:
+	case GL_STENCIL_CLEAR_VALUE:
+		params[0] = m_StencilClearValue;
+		break;
 
-	/* extensions */
+	case GL_DEPTH_CLEAR_VALUE:
+		params[0] = m_DepthClearValue;
+		break;
+
+	case GL_SCISSOR_BOX:
+		CopyRect(m_Scissor, params);
+		break;
+
+	case GL_SAMPLE_BUFFERS:
+		params[0] = m_Config.m_SampleBuffers;
+		break;
+
+	case GL_SAMPLES:
+		params[0] = m_Config.m_Samples;
+		break;
+
+	case GL_VIEWPORT:
+		CopyRect(m_Viewport, params);
+		break;
+
+	case GL_STENCIL_WRITEMASK:
+		params[0] = m_RasterizerState.GetStencilMask();
+		break;
+
+	case GL_STENCIL_VALUE_MASK:
+		params[0] = m_RasterizerState.GetStencilComparisonMask();
+		break;
+
+	case GL_STENCIL_REF:
+		params[0] = m_RasterizerState.GetStencilRef();
+		break;
+
+	case GL_ALPHA_TEST_REF:
+		params[0] = m_RasterizerState.GetAlphaRef();
+		break;
+
+	case GL_ALPHA_TEST_FUNC:
+		params[0] = EnumFromComparisonFunc(m_RasterizerState.GetAlphaFunc());
+		break;
+
+	case GL_STENCIL_FUNC:
+		params[0] = EnumFromComparisonFunc(m_RasterizerState.GetStencilFunc());
+		break;
+
+	case GL_STENCIL_FAIL:
+		params[0] = EnumFromStencilOp(m_RasterizerState.GetStencilOpFail());
+		break;
+
+	case GL_STENCIL_PASS_DEPTH_FAIL:
+		params[0] = EnumFromStencilOp(m_RasterizerState.GetStencilOpFailZFail());
+		break;
+
+	case GL_STENCIL_PASS_DEPTH_PASS:
+		params[0] = EnumFromStencilOp(m_RasterizerState.GetStencilOpFailZPass());
+		break;
+
+	case GL_DEPTH_FUNC:
+		params[0] = EnumFromComparisonFunc(m_RasterizerState.GetDepthFunc());
+		break;
+
+	case GL_LOGIC_OP_MODE:
+		params[0] = EnumFromLogicOp(m_RasterizerState.GetLogicOp());
+		break;
+
+	case GL_BLEND_SRC:
+		params[0] = EnumFromBlendFuncSrc(m_RasterizerState.GetBlendFuncSrc());
+		break;
+
+	case GL_BLEND_DST:
+		params[0] = EnumFromBlendFuncDst(m_RasterizerState.GetBlendFuncDst());
+		break;
+
+	case GL_FOG_MODE:
+		{
+			switch (m_FogMode) {
+			case FogLinear:		params[0] = GL_LINEAR;	break;
+			case FogModeExp:	params[0] = GL_EXP;		break;
+			case FogModeExp2:	params[0] = GL_EXP2;	break;
+			}
+		}
+
+		break;
+
+	case GL_SHADE_MODEL:
+		{
+			switch (m_RasterizerState.GetShadeModel()) {
+			case RasterizerState::ShadeModelFlat:	params[0] = GL_FLAT;
+			case RasterizerState::ShadeModelSmooth:	params[0] = GL_SMOOTH;
+			}
+		}
+
+		break;
+
+	case GL_CULL_FACE_MODE:
+		{
+			switch (m_CullMode) {
+			case CullModeFront:			params[0] = GL_FRONT;			break;
+			case CullModeBack:			params[0] = GL_BACK;			break;
+			case CullModeBackAndFront:	params[0] = GL_FRONT_AND_BACK;	break;
+			}
+		}
+
+		break;
+
+	case GL_FRONT_FACE:
+		params[0] = m_ReverseFaceOrientation ? GL_CW : GL_CCW;
+		break;
+
+	case GL_MATRIX_MODE:
+		params[0] = m_MatrixMode;
+		break;
+
+	case GL_ACTIVE_TEXTURE:
+	case GL_CLIENT_ACTIVE_TEXTURE:
+		params[0] = GL_TEXTURE0;
+		break;
+
+	case GL_TEXTURE_BINDING_2D:
+		{
+			size_t index = m_Textures.GetIndex(m_Rasterizer->GetTexture());
+
+			if (~index) {
+				params[0] = 0;
+			} else {
+				params[0] = index;
+			}
+		}
+
+		break;
+
 	case GL_MAX_VERTEX_UNITS_OES:
+		params[0] = 1;
+		break;
 
 	case GL_COORD_REPLACE_OES:
+		params[0] = m_RasterizerState.IsPointCoordReplaceEnabled();
+		break;
+
+	// TO DO: These state queries are still not implemented yet
+	case GL_CURRENT_COLOR:
+		{
+			params[0] = EGL_Mul(0x7fffffff, m_CurrentRGBA.r);
+			params[1] = EGL_Mul(0x7fffffff, m_CurrentRGBA.g);
+			params[2] = EGL_Mul(0x7fffffff, m_CurrentRGBA.b);
+			params[3] = EGL_Mul(0x7fffffff, m_CurrentRGBA.a);
+		}
+
+		break;
+
+	case GL_PERSPECTIVE_CORRECTION_HINT:
+		params[0] = m_PerspectiveCorrectionHint;
+		break;
+
+	case GL_POINT_SMOOTH_HINT:
+		params[0] = m_PointSmoothHint;
+		break;
+
+	case GL_LINE_SMOOTH_HINT:
+		params[0] = m_LineSmoothHint;
+		break;
+
+	case GL_FOG_HINT:
+		params[0] = m_FogHint;
+		break;
+
+	case GL_GENERATE_MIPMAP_HINT:
+		params[0] = m_GenerateMipmapHint;
+		break;
 
 	default:
 		RecordError(GL_INVALID_ENUM);
@@ -760,9 +1029,22 @@ void Context :: GetBooleanv(GLenum pname, GLboolean *params) {
 		break;
 
 	case GL_COLOR_WRITEMASK:
+		{
+			Color mask = m_RasterizerState.GetColorMask();
+			params[0] = mask.R() != 0;
+			params[1] = mask.G() != 0;
+			params[2] = mask.B() != 0;
+			params[3] = mask.A() != 0;
+		}
+		break;
+
 	case GL_DEPTH_WRITEMASK:
+		params[0] = m_RasterizerState.GetDepthMask();
+		break;
 
 	case GL_SAMPLE_COVERAGE_INVERT:
+		params[0] = m_RasterizerState.GetSampleCoverageInvert();
+		break;
 
 	default:
 		RecordError(GL_INVALID_ENUM);
@@ -770,50 +1052,113 @@ void Context :: GetBooleanv(GLenum pname, GLboolean *params) {
 	}
 }
 
-void Context :: GetFixedv(GLenum pname, GLfixed *params) {
+
+bool Context :: GetFixedv(GLenum pname, GLfixed *params) {
 	switch (pname) {
 	case GL_CURRENT_COLOR:
+		CopyColor(m_CurrentRGBA, params);
+		break;
+
 	case GL_CURRENT_TEXTURE_COORDS:
+		params[0] = m_DefaultTextureCoords.tu;
+		params[1] = m_DefaultTextureCoords.tv;
+		params[2] = 0;
+		params[3] = EGL_ONE;
+		break;
+
 	case GL_CURRENT_NORMAL:
+		params[0] = m_DefaultNormal.x();
+		params[1] = m_DefaultNormal.y();
+		params[2] = m_DefaultNormal.z();
+		break;
 
 	case GL_MODELVIEW_MATRIX:
+		CopyMatrix(m_ModelViewMatrixStack.CurrentMatrix(), params);
+		break;
+
 	case GL_PROJECTION_MATRIX:
+		CopyMatrix(m_ProjectionMatrixStack.CurrentMatrix(), params);
+		break;
+
 	case GL_TEXTURE_MATRIX:
-	case GL_DEPTH_RANGE:
+		CopyMatrix(m_TextureMatrixStack.CurrentMatrix(), params);
+		break;
 
 	case GL_FOG_COLOR:
+		CopyColor(m_RasterizerState.GetFogColor(), params);
+		break;
+
 	case GL_FOG_DENSITY:
+		params[0] = m_FogDensity;
+		break;
+
 	case GL_FOG_START:
+		params[0] = m_FogStart;
+		break;
+
 	case GL_FOG_END:
+		params[0] = m_FogEnd;
+		break;
 
 	case GL_LIGHT_MODEL_AMBIENT:
-
-	/*case GL_POINT_SIZE:*/
-	case GL_POINT_SIZE_MIN:
-	case GL_POINT_SIZE_MAX:
-	case GL_POINT_FADE_THRESHOLD_SIZE:
-	case GL_POINT_DISTANCE_ATTENUATION:
-
-	/*case GL_LINE_WIDTH:*/
-
-	case GL_POLYGON_OFFSET_UNITS:
-	case GL_POLYGON_OFFSET_FACTOR:
-
-	case GL_SAMPLE_COVERAGE_VALUE:
+		CopyColor(m_LightModelAmbient, params);
+		break;
 
 	case GL_COLOR_CLEAR_VALUE:
-
+		CopyColor(m_ColorClearValue, params);
+		break;
 
 	case GL_ALIASED_LINE_WIDTH_RANGE:
 	case GL_ALIASED_POINT_SIZE_RANGE:
 	case GL_SMOOTH_LINE_WIDTH_RANGE:
 	case GL_SMOOTH_POINT_SIZE_RANGE:
+		params[0] = params[1] = EGL_ONE;
+		break;
+
+	case GL_POLYGON_OFFSET_UNITS:
+		params[0] = m_RasterizerState.GetPolygonOffsetUnits();
+		break;
+
+	case GL_POLYGON_OFFSET_FACTOR:
+		params[0] = m_RasterizerState.GetPolygonOffsetFactor();
+		break;
+
+	case GL_SAMPLE_COVERAGE_VALUE:
+		params[0] = m_RasterizerState.GetSampleCoverage();
+		break;
+
+	case GL_POINT_SIZE_MIN:
+		params[0] = m_PointSizeMin;
+		break;
+
+	case GL_POINT_SIZE_MAX:
+		params[0] = m_PointSizeMax;
+		break;
+
+	case GL_POINT_FADE_THRESHOLD_SIZE:
+		params[0] = m_PointFadeThresholdSize;
+		break;
+
+	case GL_POINT_DISTANCE_ATTENUATION:
+		params[0] = m_PointDistanceAttenuation[0];
+		params[1] = m_PointDistanceAttenuation[1];
+		params[2] = m_PointDistanceAttenuation[2];
+		break;
+
+	case GL_DEPTH_RANGE:
+		params[0] = m_DepthRangeNear;
+		params[1] = m_DepthRangeFar;
+		break;
+
+	/*case GL_POINT_SIZE:*/
+	/*case GL_LINE_WIDTH:*/
 
 	default:
 		RecordError(GL_INVALID_ENUM);
-		break;
+		return false;
 	}
 
+	return true;
 }
 
 void Context :: GetPointerv(GLenum pname, void **params) {
@@ -856,25 +1201,31 @@ void Context :: GetPointerv(GLenum pname, void **params) {
 GLboolean Context :: IsEnabled(GLenum cap) {
 	switch (cap) {
 	case GL_VERTEX_ARRAY:
-	case GL_NORMAL_ARRAY:
-	case GL_COLOR_ARRAY:
-	case GL_TEXTURE_COORD_ARRAY:
+		return m_VertexArrayEnabled;
 
-	case GL_ARRAY_BUFFER_BINDING:
+	case GL_NORMAL_ARRAY:
+		return m_NormalArrayEnabled;
+
+	case GL_COLOR_ARRAY:
+		return m_ColorArrayEnabled;
+
+	case GL_TEXTURE_COORD_ARRAY:
+		return m_TexCoordArrayEnabled;
+
+	case GL_MATRIX_INDEX_ARRAY_OES:
+		return m_MatrixIndexArrayEnabled;
+
+	case GL_WEIGHT_ARRAY_OES:
+		return m_WeightArrayEnabled;
+
+	case GL_POINT_SIZE_ARRAY_OES:
+		return m_PointSizeArrayEnabled;
 
 	case GL_NORMALIZE:
+		return m_NormalizeEnabled;
+
 	case GL_RESCALE_NORMAL:
-
-	case GL_CLIP_PLANE0:
-	case GL_CLIP_PLANE1:
-	case GL_CLIP_PLANE2:
-	case GL_CLIP_PLANE3:
-	case GL_CLIP_PLANE4:
-	case GL_CLIP_PLANE5:
-
-	case GL_FOG:
-	case GL_LIGHTING:
-	case GL_COLOR_MATERIAL:
+		return m_RescaleNormalEnabled;
 
 	case GL_LIGHT0:
 	case GL_LIGHT1:
@@ -884,33 +1235,85 @@ GLboolean Context :: IsEnabled(GLenum cap) {
 	case GL_LIGHT5:
 	case GL_LIGHT6:
 	case GL_LIGHT7:
+		{
+			int mask = 1 << (cap - GL_LIGHT0);
+			return (m_LightEnabled & mask) != 0;
+		}
+
+	case GL_CLIP_PLANE0:
+	case GL_CLIP_PLANE1:
+	case GL_CLIP_PLANE2:
+	case GL_CLIP_PLANE3:
+	case GL_CLIP_PLANE4:
+	case GL_CLIP_PLANE5:
+		{
+			U32 bit = 1u << (cap - GL_CLIP_PLANE0);
+			return (m_ClipPlaneEnabled & bit) != 0;
+		}
+
+		break;
+
+	case GL_FOG:
+		return m_RasterizerState.IsEnabledFog();
+
+	case GL_LIGHTING:
+		return m_LightingEnabled;
+
+	case GL_COLOR_MATERIAL:
+		return m_ColorMaterialEnabled;
 
 	case GL_POINT_SMOOTH:
+		return m_RasterizerState.IsPointSmoothEnabled();
+
 	case GL_LINE_SMOOTH:
+		return m_RasterizerState.IsLineSmoothEnabled();
 
 	case GL_CULL_FACE:
+		return m_CullFaceEnabled;
+
 	case GL_POLYGON_OFFSET_FILL:
-
-	case GL_MULTISAMPLE:
-	case GL_SAMPLE_ALPHA_TO_COVERAGE:
-	case GL_SAMPLE_ALPHA_TO_ONE:
-	case GL_SAMPLE_COVERAGE:
-
-	case GL_TEXTURE_2D:
+		return m_RasterizerState.IsEnabledPolygonOffsetFill();
 
 	case GL_SCISSOR_TEST:
-	case GL_ALPHA_TEST:
-	case GL_STENCIL_TEST:
-	case GL_DEPTH_TEST:
-	case GL_BLEND:
-	case GL_DITHER:
-	case GL_COLOR_LOGIC_OP:
+		return m_ScissorTestEnabled;
 
-	/* extensions */
+	case GL_ALPHA_TEST:
+		return m_RasterizerState.IsEnabledAlphaTest();
+
+	case GL_STENCIL_TEST:
+		return m_RasterizerState.IsEnabledStencilTest();
+
+	case GL_DEPTH_TEST:
+		return m_RasterizerState.IsEnabledDepthTest();
+
+	case GL_BLEND:
+		return m_RasterizerState.IsEnabledBlending();
+
+	case GL_COLOR_LOGIC_OP:
+		return m_RasterizerState.IsEnabledLogicOp();
+
+	case GL_TEXTURE_2D:
+		return m_RasterizerState.IsEnabledTexture();
+
 	case GL_MATRIX_PALETTE_OES:
-	case GL_MATRIX_INDEX_ARRAY_OES:
-	case GL_WEIGHT_ARRAY_OES:
+		return m_MatrixPaletteEnabled;
+
 	case GL_POINT_SPRITE_OES:
+		return m_RasterizerState.IsPointSpriteEnabled();
+
+	case GL_MULTISAMPLE:
+		return m_MultiSampleEnabled;
+
+	case GL_SAMPLE_ALPHA_TO_COVERAGE:
+		return m_SampleAlphaToCoverageEnabled;
+
+	case GL_SAMPLE_ALPHA_TO_ONE:
+		return m_SampleAlphaToOneEnabled;
+
+	case GL_SAMPLE_COVERAGE:
+		return m_SampleCoverageEnabled;
+
+	case GL_DITHER:
 
 	default:
 		RecordError(GL_INVALID_ENUM);

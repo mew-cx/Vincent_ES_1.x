@@ -40,6 +40,8 @@
 #include "stdafx.h"
 #include "Context.h"
 #include "RasterizerState.h"
+#include "Utils.h"
+
 
 using namespace EGL;
 
@@ -224,29 +226,60 @@ void Context :: Lightxv(GLenum light, GLenum pname, const GLfixed *params) {
 	}
 }
 
-void Context :: GetLightxv(GLenum light, GLenum pname, GLfixed *params) {
+bool Context :: GetLightxv(GLenum light, GLenum pname, GLfixed *params) {
 	if (light < GL_LIGHT0 || light > GL_LIGHT7) {
 		RecordError(GL_INVALID_ENUM);
-		return;
+		return false;
 	}
 
 	Light * pLight = m_Lights + (light - GL_LIGHT0);
 
 	switch (pname) {
 	case GL_AMBIENT:
+		CopyColor(pLight->GetAmbientColor(), params);
+		break;
+
 	case GL_DIFFUSE:
+		CopyColor(pLight->GetDiffuseColor(), params);
+		break;
+
 	case GL_SPECULAR:
+		CopyColor(pLight->GetSpecularColor(), params);
+		break;
+
 	case GL_POSITION:
+		CopyVector(pLight->GetPosition(), params);
+		break;
+
 	case GL_SPOT_DIRECTION:
+		CopyVector(pLight->GetDirection(), params);
+		break;
+
 	case GL_SPOT_EXPONENT:
+		params[0] = pLight->GetSpotExponent();
+		break;
+
 	case GL_SPOT_CUTOFF:
+		params[0] = pLight->GetSpotExponent();
+		break;
+
 	case GL_CONSTANT_ATTENUATION:
+		params[0] = pLight->GetConstantAttenuation();
+		break;
+
 	case GL_LINEAR_ATTENUATION:
+		params[0] = pLight->GetLinearAttenuation();
+		break;
+
 	case GL_QUADRATIC_ATTENUATION:
+		params[0] = pLight->GetQuadraticAttenuation();
+		break;
 
 	default:
-		Lightx(light, pname, *params);
-		return;
+		RecordError(GL_INVALID_ENUM);
+		return false;
 	}
+
+	return true;
 }
 

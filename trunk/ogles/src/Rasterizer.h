@@ -195,6 +195,7 @@ namespace EGL {
 		void SetTexture(MultiTexture * texture);
 		MultiTexture * GetTexture()					{ return m_Texture; }
 		const MultiTexture * GetTexture() const		{ return m_Texture; }
+		void PrepareTexture();
 
 		// ----------------------------------------------------------------------
 		// Actual rasterization of primitives
