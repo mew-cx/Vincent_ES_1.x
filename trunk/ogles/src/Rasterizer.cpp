@@ -808,6 +808,9 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 
 		int count = LINEAR_SPAN; 
 
+		tu += deltaTu >> 1;
+		tv += deltaTv >> 1;
+
 		do {
 			Fragment(x, y, depth, tu, tv, EGL_ONE - fogDensity, baseColor);
 
@@ -819,6 +822,9 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 			tv += deltaTv;
 			++x;
 		} while (--count);
+
+		tu -= deltaTu >> 1;
+		tv -= deltaTv >> 1;
 	}
 
 	if (x != xEnd) {
@@ -832,13 +838,15 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 		EGL_Fixed deltaTu = EGL_Mul(endTu - tu, invSpan);
 		EGL_Fixed deltaTv = EGL_Mul(endTv - tv, invSpan);
 
+		tu += deltaTu >> 1;
+		tv += deltaTv >> 1;
+
 		for (; x < xEnd; ++x) {
 
 			Fragment(x, y, depth, tu, tv, EGL_ONE - fogDensity, baseColor);
 
 			baseColor += colorIncrement;
 			depth += deltaDepth;
-			z += deltaZ;
 			tu += deltaTu;
 			tv += deltaTv;
 			fogDensity += deltaFog;
@@ -1195,8 +1203,8 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	EGL_Fixed invZ3 = pos3.m_WindowCoords.invZ;
 
 	EdgePos start, end;
-	start.m_WindowCoords.x = pos1.m_WindowCoords.x;
-	end.m_WindowCoords.x = pos1.m_WindowCoords.x;
+	start.m_WindowCoords.x = pos1.m_WindowCoords.x + (EGL_ONE/2);
+	end.m_WindowCoords.x = pos1.m_WindowCoords.x + (EGL_ONE/2);
 	start.m_WindowCoords.invZ = end.m_WindowCoords.invZ = invZ1;
 	start.m_WindowCoords.depth = end.m_WindowCoords.depth = depth1;
 	start.m_Color = end.m_Color = pos1.m_Color;
@@ -1357,8 +1365,8 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	EGL_Fixed incTv23 = EGL_Mul(EGL_Mul(pos3.m_TextureCoords.tv, invZ3) - 
 								EGL_Mul(pos2.m_TextureCoords.tv, invZ2), invDeltaY23);
 
-	I32 yStart = EGL_IntFromFixed(pos1.m_WindowCoords.y);
-	I32 yEnd = EGL_IntFromFixed(pos2.m_WindowCoords.y);
+	I32 yStart = EGL_Round(pos1.m_WindowCoords.y);
+	I32 yEnd = EGL_Round(pos2.m_WindowCoords.y);
 	I32 y;
 
 	y = yStart;
@@ -1405,11 +1413,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 				end.m_FogDensity += incFog3;
 				end.m_WindowCoords.depth += incDepth3;
+
 			}
 
-			yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
+			yEnd = EGL_Round(pos3.m_WindowCoords.y);
 
-			start.m_WindowCoords.x = pos2.m_WindowCoords.x;
+			start.m_WindowCoords.x = pos2.m_WindowCoords.x + (EGL_ONE/2);
 			start.m_WindowCoords.invZ = invZ2;
 			start.m_WindowCoords.depth = depth2;
 			start.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
@@ -1483,11 +1492,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 				end.m_FogDensity += incFog2;
 				end.m_WindowCoords.depth += incDepth2;
+
 			}
 
-			yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
+			yEnd = EGL_Round(pos3.m_WindowCoords.y);
 
-			end.m_WindowCoords.x = pos2.m_WindowCoords.x;
+			end.m_WindowCoords.x = pos2.m_WindowCoords.x + (EGL_ONE/2);
 			end.m_Color = pos2.m_Color;
 			end.m_WindowCoords.invZ = invZ2;
 			end.m_WindowCoords.depth = depth2;
@@ -1563,11 +1573,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 				end.m_FogDensity += incFog3;
 				end.m_WindowCoords.depth += incDepth3;
+
 			}
 
-			yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
+			yEnd = EGL_Round(pos3.m_WindowCoords.y);
 
-			start.m_WindowCoords.x = pos2.m_WindowCoords.x;
+			start.m_WindowCoords.x = pos2.m_WindowCoords.x + (EGL_ONE/2);
 			start.m_WindowCoords.invZ = invZ2;
 			start.m_WindowCoords.depth = depth2;
 			start.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
@@ -1609,6 +1620,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			}
 		} else {
 			for (; y < yEnd; ++y) {
+
 				RasterScanLine(start, end, y);
 
 				// update start
@@ -1638,11 +1650,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 				end.m_FogDensity += incFog2;
 				end.m_WindowCoords.depth += incDepth2;
+
 			}
 
-			yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
+			yEnd = EGL_Round(pos3.m_WindowCoords.y);
 
-			end.m_WindowCoords.x = pos2.m_WindowCoords.x;
+			end.m_WindowCoords.x = pos2.m_WindowCoords.x + (EGL_ONE/2);
 			end.m_Color = pos2.m_Color;
 			end.m_WindowCoords.invZ = invZ2;
 			end.m_WindowCoords.depth = depth2;

@@ -150,7 +150,7 @@ namespace EGL {
 
 			if (m_Textures != 0) {
 				for (size_t index = 0; index < m_AllocatedTextures; ++index) {
-					if (m_Textures[index].IsPointer() || m_Textures[index].GetPointer())
+					if (m_Textures[index].IsPointer() && m_Textures[index].GetPointer())
 						delete m_Textures[index].GetPointer();
 				}
 

@@ -695,7 +695,7 @@ static void emit_unary_round(cg_codegen_t * gen, cg_inst_unary_t * inst,
 	ARM_ADD_REG_IMM(gen->cseg,
 					inst->dest_value->physical_reg->regno,
 					inst->operand.source->physical_reg->regno,
-					1, 0);
+					0x80, 24);
 	
 	if (update_flags)
 		ARM_MOVS_REG_IMMSHIFT(gen->cseg,
@@ -705,7 +705,7 @@ static void emit_unary_round(cg_codegen_t * gen, cg_inst_unary_t * inst,
 	else
 		ARM_MOV_REG_IMMSHIFT(gen->cseg,
 							 inst->dest_value->physical_reg->regno,
-							 inst->operand.source->physical_reg->regno,
+							 inst->dest_value->physical_reg->regno,
 							 ARMSHIFT_ASR, 16);						 
 
 }

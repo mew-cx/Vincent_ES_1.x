@@ -301,7 +301,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	LSL		(regOffset4, regOffset, regConstant2);
 	ADD		(regZBufferAddr, fragmentInfo.regDepthBuffer, regOffset4);
 	LDW		(regZBufferValue, regZBufferAddr);
-	FCMP	(regDepthTest, fragmentInfo.regDepth, regZBufferValue);
+	CMP		(regDepthTest, fragmentInfo.regDepth, regZBufferValue);
 
 	cg_opcode_t branchOnDepthTestPassed, branchOnDepthTestFailed;
 
@@ -767,8 +767,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						MUL		(regScaledB, fragmentInfo.regB, regConstant31);
 						LSR		(regColorB, regScaledB, regConstant16);
 
-						Color565FromRGB(block, regTexColor565, regTexColorR,
-							regTexColorG, regTexColorB);
+						Color565FromRGB(block, regColor565, regColorR,
+							regColorG, regColorB);
 
 						regColorA = regTexColorA;
 						}
@@ -804,8 +804,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						MUL		(regScaledB, fragmentInfo.regB, regConstant31);
 						LSR		(regColorB, regScaledB, regConstant16);
 
-						Color565FromRGB(block, regTexColor565, regTexColorR,
-							regTexColorG, regTexColorB);
+						Color565FromRGB(block, regColor565, regColorR,
+							regColorG, regColorB);
 
 						DECL_REG	(regAlphaProduct);
 
@@ -1794,7 +1794,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					break;
 			}
 
-			STW		(regNewStencilValue, regStencilAddr);
+			//STW		(regNewStencilValue, regStencilAddr);
 			BRA		(continuation);
 		//}
 		}
@@ -1813,8 +1813,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			} else {
 				DECL_FLAGS(regDepthTest1);
 
-				FCMP	(regDepthTest1, fragmentInfo.regDepth, regZBufferValue);
-				cg_create_inst_branch_cond(currentBlock, branchOnDepthTestPassed, regDepthTest1, labelStencilZTestPassed CG_INST_DEBUG_ARGS);
+				CMP	(regDepthTest1, fragmentInfo.regDepth, regZBufferValue);
+				cg_create_inst_branch_cond(block, branchOnDepthTestPassed, regDepthTest1, labelStencilZTestPassed CG_INST_DEBUG_ARGS);
 			}
 
 			{
@@ -1895,7 +1895,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				}
 
 				//m_Surface->GetStencilBuffer()[offset] = stencilValue;
-				STW		(regNewStencilValue, regStencilAddr);
+				//STW		(regNewStencilValue, regStencilAddr);
 			//}
 			}
 
@@ -1975,7 +1975,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				}
 
 				//m_Surface->GetStencilBuffer()[offset] = stencilValue;
-				STW		(regNewStencilValue, regStencilAddr);
+				//STW		(regNewStencilValue, regStencilAddr);
 			//}
 			}
 
@@ -2020,15 +2020,15 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	// Blending
 	if (m_State->m_BlendingEnabled) {
 
-		cg_virtual_reg_t * regSrcBlendR;
-		cg_virtual_reg_t * regSrcBlendG;
-		cg_virtual_reg_t * regSrcBlendB;
-		cg_virtual_reg_t * regSrcBlendA;
+		cg_virtual_reg_t * regSrcBlendR = 0;
+		cg_virtual_reg_t * regSrcBlendG = 0;
+		cg_virtual_reg_t * regSrcBlendB = 0;
+		cg_virtual_reg_t * regSrcBlendA = 0;
 
-		cg_virtual_reg_t * regDstBlendR;
-		cg_virtual_reg_t * regDstBlendG;
-		cg_virtual_reg_t * regDstBlendB;
-		cg_virtual_reg_t * regDstBlendA;
+		cg_virtual_reg_t * regDstBlendR = 0;
+		cg_virtual_reg_t * regDstBlendG = 0;
+		cg_virtual_reg_t * regDstBlendB = 0;
+		cg_virtual_reg_t * regDstBlendA = 0;
 
 		bool noSource = false;
 		bool noTarget = false;
@@ -2096,7 +2096,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					//srcCoeff * color
 
 					BlendColor(block,
-						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendB, &regSrcBlendA, 
 						regShiftedR, regShiftedG, regShiftedB, regColorA,
 						regColorR, regColorG, regColorB, regColorA);
 				}
@@ -2133,7 +2133,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					//srcCoeff * color
 
 					BlendColor(block,
-						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendB, &regSrcBlendA, 
 						regCoeffR, regCoeffG, regCoeffB, regCoeffA,
 						regColorR, regColorG, regColorB, regColorA);
 				}
@@ -2143,7 +2143,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				//srcCoeff = Color(color.A(), color.A(), color.A(), color.A());
 				//srcCoeff * color
 					BlendColor(block,
-						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendB, &regSrcBlendA, 
 						regColorA, regColorA, regColorA, regColorA,
 						regColorR, regColorG, regColorB, regColorA);
 
@@ -2160,7 +2160,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 					//srcCoeff * color
 						BlendColor(block,
-							&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+							&regSrcBlendR, &regSrcBlendG, &regSrcBlendB, &regSrcBlendA, 
 							regDiffA, regDiffA, regDiffA, regDiffA,
 							regColorR, regColorG, regColorB, regColorA);
 				}
@@ -2170,7 +2170,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				//srcCoeff = Color(dstAlpha, dstAlpha, dstAlpha, dstAlpha);
 				//srcCoeff * color
 					BlendColor(block,
-						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendB, &regSrcBlendA, 
 						regDstAlpha, regDstAlpha, regDstAlpha, regDstAlpha,
 						regColorR, regColorG, regColorB, regColorA);
 
@@ -2187,7 +2187,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 					//srcCoeff * color
 						BlendColor(block,
-							&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+							&regSrcBlendR, &regSrcBlendG, &regSrcBlendB, &regSrcBlendA, 
 							regDiffA, regDiffA, regDiffA, regDiffA,
 							regColorR, regColorG, regColorB, regColorA);
 				}
@@ -2243,7 +2243,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 					//dstCoeff * dstColor
 					BlendColor(block,
-						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						&regDstBlendR, &regDstBlendG, &regDstBlendB, &regDstBlendA, 
 						regShiftedR, regShiftedG, regShiftedB, regColorA,
 						regDstR, regDstG, regDstB, regDstAlpha);
 				}
@@ -2278,7 +2278,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 					//dstCoeff * dstColor
 					BlendColor(block,
-						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						&regDstBlendR, &regDstBlendG, &regDstBlendB, &regDstBlendA, 
 						regCoeffR, regCoeffG, regCoeffB, regCoeffA,
 						regDstR, regDstG, regDstB, regDstAlpha);
 				}
@@ -2288,7 +2288,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				//dstCoeff = Color(color.A(), color.A(), color.A(), color.A());
 				//dstCoeff * dstColor
 					BlendColor(block,
-						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						&regDstBlendR, &regDstBlendG, &regDstBlendB, &regDstBlendA, 
 						regColorA, regColorA, regColorA, regColorA,
 						regDstR, regDstG, regDstB, regDstAlpha);
 				break;
@@ -2304,7 +2304,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 					//dstCoeff * dstColor
 					BlendColor(block,
-						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						&regDstBlendR, &regDstBlendG, &regDstBlendB, &regDstBlendA, 
 						regDiffA, regDiffA, regDiffA, regDiffA,
 						regDstR, regDstG, regDstB, regDstAlpha);
 				}
@@ -2315,7 +2315,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					//dstCoeff = Color(dstAlpha, dstAlpha, dstAlpha, dstAlpha);
 					//dstCoeff * dstColor
 					BlendColor(block,
-						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						&regDstBlendR, &regDstBlendG, &regDstBlendB, &regDstBlendA, 
 						regDstAlpha, regDstAlpha, regDstAlpha, regDstAlpha,
 						regDstR, regDstG, regDstB, regDstAlpha);
 				}
@@ -2332,7 +2332,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 					//dstCoeff * dstColor
 					BlendColor(block,
-						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						&regDstBlendR, &regDstBlendG, &regDstBlendB, &regDstBlendA, 
 						regDiffA, regDiffA, regDiffA, regDiffA,
 						regDstR, regDstG, regDstB, regDstAlpha);
 				}
@@ -2354,7 +2354,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					//	dstCoeff = Color(f, f, f, Color::MAX);
 					//dstCoeff * dstColor
 					BlendColor(block,
-						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						&regDstBlendR, &regDstBlendG, &regDstBlendB, &regDstBlendA, 
 						regF, regF, regF, regConstant256,
 						regDstR, regDstG, regDstB, regDstAlpha);
 				}
@@ -2670,6 +2670,9 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	// Create instructions to calculate addresses of individual fields of
 	// edge buffer input arguments
 
+	DECL_REG	(regConstant1);
+	LDI		(regConstant1, 1);
+
 	// x coordinate
 	DECL_REG	(regOffsetWindowX);
 	DECL_REG	(regAddrStartWindowX);
@@ -2942,15 +2945,13 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	DECL_REG	(regLoop0UEntry);
 	DECL_REG	(regLoop0U);
-	DECL_REG	(regLoop1U);
 
-	PHI		(regLoop0UEntry, cg_create_virtual_reg_list(procedure->module->heap, regU, regLoop0U, regLoop1U, NULL));
+	PHI		(regLoop0UEntry, cg_create_virtual_reg_list(procedure->module->heap, regU, regLoop0U, NULL));
 
 	DECL_REG	(regLoop0VEntry);
 	DECL_REG	(regLoop0V);
-	DECL_REG	(regLoop1V);
 
-	PHI		(regLoop0VEntry, cg_create_virtual_reg_list(procedure->module->heap, regV, regLoop0V, regLoop1V, NULL));
+	PHI		(regLoop0VEntry, cg_create_virtual_reg_list(procedure->module->heap, regV, regLoop0V, NULL));
 
 	DECL_REG	(regLoop0InvZEntry);
 	DECL_REG	(regLoop0InvZ);
@@ -2972,12 +2973,10 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		//invTv += deltaInvV << LOG_LINEAR_SPAN;
 	DECL_REG	(regLinearSpan);
 	DECL_REG	(regLogLinearSpan);
-	DECL_REG	(regConstant1);
 	DECL_REG	(regDeltaInvZTimesLinearSpan);
 	DECL_REG	(regDeltaInvUTimesLinearSpan);
 	DECL_REG	(regDeltaInvVTimesLinearSpan);
 
-	LDI		(regConstant1, 1);
 	LDI		(regLinearSpan, LINEAR_SPAN);
 	LDI		(regLogLinearSpan, LOG_LINEAR_SPAN);
 	LSL		(regDeltaInvZTimesLinearSpan, regDeltaInvZ, regLogLinearSpan);	
@@ -3017,6 +3016,17 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FSUB	(regLoop0DiffV, regLoop0EndV, regLoop0VEntry); // Entry?
 	ASR		(regLoop0ScaledDiffV, regLoop0DiffV, regLogLinearSpan);
 
+	DECL_REG	(regLoop0ScaledDiffUOver2);
+	DECL_REG	(regLoop0ScaledDiffVOver2);
+
+	ASR		(regLoop0ScaledDiffUOver2, regLoop0ScaledDiffU, regConstant1);
+	ASR		(regLoop0ScaledDiffVOver2, regLoop0ScaledDiffV, regConstant1);
+
+	DECL_REG	(regAdjustedU0);
+	DECL_REG	(regAdjustedV0);
+	FADD		(regAdjustedU0, regLoop0UEntry, regLoop0ScaledDiffUOver2);
+	FADD		(regAdjustedV0, regLoop0VEntry, regLoop0ScaledDiffVOver2);
+
 	// also not to include phi projection for z coming from inner loop
 
 		//int count = LINEAR_SPAN; 
@@ -3037,7 +3047,9 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regLoop1XEntry);
 	DECL_REG	(regLoop1X);
 	DECL_REG	(regLoop1ZEntry);
+	DECL_REG	(regLoop1U);
 	DECL_REG	(regLoop1UEntry);
+	DECL_REG	(regLoop1V);
 	DECL_REG	(regLoop1VEntry);
 	DECL_REG	(regLoop1FogEntry);
 	DECL_REG	(regLoop1Fog);
@@ -3055,8 +3067,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	PHI		(regLoop1CountEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Count, regLinearSpan, NULL));
 	PHI		(regLoop1XEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1X, regX, NULL));
 	PHI		(regLoop1ZEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Z, regZ, NULL));
-	PHI		(regLoop1UEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1U, regU, NULL));
-	PHI		(regLoop1VEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1V, regV, NULL));
+	PHI		(regLoop1UEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1U, regAdjustedU0, NULL));
+	PHI		(regLoop1VEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1V, regAdjustedV0, NULL));
 	PHI		(regLoop1FogEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Fog, regStartFog, NULL));
 	PHI		(regLoop1DepthEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Depth, regStartDepth, NULL));
 	PHI		(regLoop1REntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1R, regStartColorR, NULL));
@@ -3119,6 +3131,17 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	BNE		(regLoop1Condition, beginLoop1);
 	//}
 
+	block = cg_block_create(procedure, 2);
+
+	DECL_REG	(regLoop1UExit);
+	DECL_REG	(regLoop1VExit);
+
+	PHI		(regLoop1UExit, cg_create_virtual_reg_list(procedure->module->heap, regLoop1U, regAdjustedU0, NULL));
+	PHI		(regLoop1VExit, cg_create_virtual_reg_list(procedure->module->heap, regLoop1V, regAdjustedV0, NULL));
+	
+	FSUB		(regLoop0U, regLoop1UExit, regLoop0ScaledDiffUOver2);
+	FSUB		(regLoop0V, regLoop1VExit, regLoop0ScaledDiffVOver2);
+
 	DECL_FLAGS	(regLoop0Condition);
 
 	CMP		(regLoop0Condition, regLoop1X, regXLinEnd);
@@ -3141,8 +3164,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	PHI		(regBlock4X, cg_create_virtual_reg_list(procedure->module->heap, regX, regLoop1X, NULL));
 	PHI		(regBlock4Z, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Z, regZ, NULL));
-	PHI		(regBlock4U, cg_create_virtual_reg_list(procedure->module->heap, regLoop1U, regU, NULL));
-	PHI		(regBlock4V, cg_create_virtual_reg_list(procedure->module->heap, regLoop1V, regV, NULL));
+	PHI		(regBlock4U, cg_create_virtual_reg_list(procedure->module->heap, regLoop0U, regU, NULL));
+	PHI		(regBlock4V, cg_create_virtual_reg_list(procedure->module->heap, regLoop0V, regV, NULL));
 	SUB_S	(regBlock4DiffX, regBlock4Condition, regXEnd, regBlock4X);
 	BEQ		(regBlock4Condition, endLoop2);
 
@@ -3173,6 +3196,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regLoop2ScaledDiffZ);
 	DECL_REG	(regLoop2ScaledDiffU);
 	DECL_REG	(regLoop2ScaledDiffV);
+	DECL_REG	(regLoop2ScaledDiffUOver2);
+	DECL_REG	(regLoop2ScaledDiffVOver2);
 
 	FSUB	(regBlock4DiffZ, regEndZ, regBlock4Z);
 	FMUL	(regLoop2ScaledDiffZ, regBlock4DiffZ, regBlock4InvSpan);
@@ -3181,7 +3206,15 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FSUB	(regBlock4DiffV, regEndV, regBlock4V);
 	FMUL	(regLoop2ScaledDiffV, regBlock4DiffV, regBlock4InvSpan);
 
-		//for (; x < xEnd; ++x) {
+	ASR		(regLoop2ScaledDiffUOver2, regLoop2ScaledDiffU, regConstant1);
+	ASR		(regLoop2ScaledDiffVOver2, regLoop2ScaledDiffV, regConstant1);
+
+	DECL_REG	(regAdjustedU);
+	DECL_REG	(regAdjustedV);
+	FADD		(regAdjustedU, regBlock4U, regLoop2ScaledDiffUOver2);
+	FADD		(regAdjustedV, regBlock4V, regLoop2ScaledDiffVOver2);
+
+	//for (; x < xEnd; ++x) {
 	block = cg_block_create(procedure, 4);
 	beginLoop2->block = block;
 
@@ -3189,8 +3222,6 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	DECL_REG	(regLoop2XEntry);
 	DECL_REG	(regLoop2X);
-	DECL_REG	(regLoop2ZEntry);
-	DECL_REG	(regLoop2Z);
 	DECL_REG	(regLoop2UEntry);
 	DECL_REG	(regLoop2U);
 	DECL_REG	(regLoop2VEntry);
@@ -3210,9 +3241,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 
 	PHI		(regLoop2XEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2X, regBlock4X, NULL));
-	PHI		(regLoop2ZEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2Z, regBlock4Z, NULL));
-	PHI		(regLoop2UEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2U, regBlock4U, NULL));
-	PHI		(regLoop2VEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2V, regBlock4V, NULL));
+	PHI		(regLoop2UEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2U, regAdjustedU, NULL));
+	PHI		(regLoop2VEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2V, regAdjustedV, NULL));
 	PHI		(regLoop2FogEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2Fog, regLoop1Fog, regStartFog, NULL));
 	PHI		(regLoop2DepthEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2Depth, regLoop1Depth, regStartDepth, NULL));
 	PHI		(regLoop2REntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2R, regLoop1R, regStartColorR, NULL));
@@ -3261,7 +3291,6 @@ void CodeGenerator :: GenerateRasterScanLine() {
 			//tv += deltaTv;
 	FADD	(regLoop2Depth, regLoop2DepthEntry, regDeltaDepth);
 	FADD	(regLoop2Fog, regLoop2FogEntry, regDeltaFog);
-	FADD	(regLoop2Z, regLoop2ZEntry, regLoop2ScaledDiffZ);
 	FADD	(regLoop2U, regLoop2UEntry, regLoop2ScaledDiffU);
 	FADD	(regLoop2V, regLoop2VEntry, regLoop2ScaledDiffV);
 
@@ -3338,10 +3367,22 @@ void CodeGenerator :: CompileRasterScanLine(FunctionCache * target) {
 
 	GenerateRasterScanLine();
 
+#ifndef NDEBEUG
+	Dump("dump1.txt", m_Module);
+#endif
+
 	cg_module_inst_def(m_Module);
 	cg_module_amode(m_Module);
 
+#ifndef NDEBEUG
+	Dump("dump2.txt", m_Module);
+#endif
+
 	cg_module_eliminate_dead_code(m_Module);
+
+#ifndef NDEBEUG
+	Dump("dump3.txt", m_Module);
+#endif
 
 	cg_module_unify_registers(m_Module);
 	cg_module_allocate_variables(m_Module);

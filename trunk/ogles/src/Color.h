@@ -139,10 +139,15 @@ namespace EGL {
 		}
 
 		static inline Color From4444(U16 u4444) {
-			U8 r = (u4444 & 0xF000u) << 8;
+			U8 r = (u4444 & 0xF000u) >> 8;
 			U8 g = (u4444 & 0x0F00u) >> 4;
 			U8 b = (u4444 & 0x00F0u);
 			U8 a = (u4444 & 0x000Fu) << 4;
+
+			if (r) r |= 15;
+			if (g) g |= 15;
+			if (b) b |= 15;
+			if (a) a |= 15;
 
 			return Color(r, g, b, a);
 		}
@@ -176,6 +181,11 @@ namespace EGL {
 			U8 g = (u5551 & 0x03E0u) >> 2;
 			U8 r = (u5551 & 0x7C00u) >> 7;
 			U8 a = (u5551 & 0x8000u) >> 8;
+
+			if (r) r |= 7;
+			if (g) g |= 7;
+			if (b) b |= 7;
+			if (a) a |= 0x7f;
 
 			return Color(r, g, b, a);
 		}

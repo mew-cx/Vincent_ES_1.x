@@ -129,7 +129,7 @@ inline OGLES_API I32 EGL_IntFromFixed(EGL_Fixed value) {
 //	value		-	Fixed point number to be rounded to integer value
 // --------------------------------------------------------------------------
 inline OGLES_API I32 EGL_Round(EGL_Fixed value) {
-	return (value + 1) >> EGL_PRECISION;
+	return (value + EGL_ONE/2) >> EGL_PRECISION;
 }
 
 
