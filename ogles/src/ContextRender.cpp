@@ -94,10 +94,10 @@ void Context :: ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvo
 		return;
 	}
 
-	if (pointer == 0) {
-		RecordError(GL_INVALID_VALUE);
-		return;
-	}
+	//if (pointer == 0) {
+	//	RecordError(GL_INVALID_VALUE);
+	//	return;
+	//}
 
 	if (stride == 0) {
 		switch (type) {
@@ -130,10 +130,10 @@ void Context :: NormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer
 
 	GLsizei size = 3;
 
-	if (pointer == 0) {
-		RecordError(GL_INVALID_VALUE);
-		return;
-	}
+	//if (pointer == 0) {
+	//	RecordError(GL_INVALID_VALUE);
+	//	return;
+	//}
 
 	if (stride == 0) {
 		switch (type) {
@@ -174,10 +174,10 @@ void Context :: VertexPointer(GLint size, GLenum type, GLsizei stride, const GLv
 		return;
 	}
 
-	if (pointer == 0) {
-		RecordError(GL_INVALID_VALUE);
-		return;
-	}
+	//if (pointer == 0) {
+	//	RecordError(GL_INVALID_VALUE);
+	//	return;
+	//}
 
 	if (stride == 0) {
 		switch (type) {
@@ -218,10 +218,10 @@ void Context :: TexCoordPointer(GLint size, GLenum type, GLsizei stride, const G
 		return;
 	}
 
-	if (pointer == 0) {
-		RecordError(GL_INVALID_VALUE);
-		return;
-	}
+	//if (pointer == 0) {
+	//	RecordError(GL_INVALID_VALUE);
+	//	return;
+	//}
 
 	if (stride == 0) {
 		switch (type) {
