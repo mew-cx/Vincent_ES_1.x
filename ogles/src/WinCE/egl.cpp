@@ -118,9 +118,6 @@ GLAPI const char * APIENTRY eglQueryString (EGLDisplay dpy, EGLint name) {
 	}
 }
 
-GLAPI EGLBoolean APIENTRY eglSaveSurfaceHM(EGLSurface surface, const TCHAR * filename) {
-	return surface->Save(filename);
-}
 
 static const struct {
 	const char * name;
@@ -128,7 +125,6 @@ static const struct {
 
 } FunctionTable[] = {
 	{ "glQueryMatrixxOES", glQueryMatrixxOES },
-	{ "eglSaveSurfaceHM", eglSaveSurfaceHM },
 };
 
 
