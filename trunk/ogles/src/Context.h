@@ -42,6 +42,8 @@
 
 #include "OGLES.h"
 #include "GLES/gl.h"
+#include "Types.h"
+#include "Arrays.h"
 #include "linalg.h"
 #include "FractionalColor.h"
 #include "Config.h"
@@ -53,181 +55,8 @@
 #include "Texture.h"
 #include <vector>
 
+
 namespace EGL {
-
-	struct OGLES_API VertexArray {
-		VertexArray() {
-			pointer = 0;
-			stride = 0;
-			size = 4;
-			size = 0;
-		};
-
-		GLfixed GetValue(int row, int column) {
-			GLsizei rowOffset = row * stride;
-			const unsigned char * base = reinterpret_cast<const unsigned char *>(pointer) + rowOffset;
-
-			switch (type) {
-			case GL_BYTE:
-				return EGL_FixedFromInt(*(reinterpret_cast<const char *>(base) + column));
-
-			case GL_SHORT:
-				return EGL_FixedFromInt(*(reinterpret_cast<const short *>(base) + column));
-
-			case GL_FIXED:
-				return *(reinterpret_cast<const I32 *>(base) + column);
-
-			case GL_FLOAT:
-				return EGL_FixedFromFloat(*(reinterpret_cast<const float *>(base) + column));
-
-			default:
-				return 0;
-			}
-		}
-
-		GLint			size;
-		GLenum			type;
-		GLsizei			stride;
-		const GLvoid *	pointer;
-	};
-
-	struct OGLES_API TextureArray {
-
-		struct TextureRecord {
-			U32 value;
-
-			void SetPointer(MultiTexture * texture) {
-				value = reinterpret_cast<U32>(texture);
-			}
-
-			MultiTexture * GetPointer() {
-				assert(IsPointer());
-				return reinterpret_cast<MultiTexture *>(value);
-			}
-
-			bool IsPointer() {
-				return (value & 1) == 0;
-			}
-
-			bool IsNil() {
-				return value == 0xFFFFFFFFu;
-			}
-
-			void SetNil() {
-				value = 0xFFFFFFFFu;
-			}
-
-			void SetIndex(size_t index) {
-				value = (index << 1) | 1;
-			}
-
-			size_t GetIndex() {
-				assert(!IsPointer() && !IsNil());
-				return (value >> 1);
-			}
-
-		};
-
-		enum {
-			INITIAL_SIZE = 64,
-			FACTOR = 2
-		};
-
-		TextureArray() {
-			m_Textures = new TextureRecord[INITIAL_SIZE];
-
-			for (size_t index = 0; index < INITIAL_SIZE; ++index) {
-				m_Textures[index].SetIndex(index + 1);
-			}
-
-			m_Textures[INITIAL_SIZE - 1].SetNil();
-
-			m_FreeTextures = m_AllocatedTextures = INITIAL_SIZE;
-			m_FreeListHead = 0;
-		}
-
-		~TextureArray() {
-
-			if (m_Textures != 0) {
-				for (size_t index = 0; index < m_AllocatedTextures; ++index) {
-					if (m_Textures[index].IsPointer() && m_Textures[index].GetPointer())
-						delete m_Textures[index].GetPointer();
-				}
-
-				delete [] m_Textures;
-			}
-		}
-
-		void Increase() {
-
-			assert(m_FreeListHead == 0xffffffffu);
-
-			size_t newAllocatedTextures = m_AllocatedTextures * FACTOR;
-
-			TextureRecord * newTextures = new TextureRecord[newAllocatedTextures];
-
-			for (size_t index = 0; index < m_AllocatedTextures; ++index) {
-				newTextures[index] = m_Textures[index];
-			}
-
-			for (index = m_AllocatedTextures; index < newAllocatedTextures - 1; ++index) {
-				newTextures[index].SetIndex(index + 1);
-			}
-
-			newTextures[newAllocatedTextures - 1].SetNil();
-
-			delete [] m_Textures;
-			m_Textures = newTextures;
-			m_FreeTextures = newAllocatedTextures - m_AllocatedTextures;
-			m_FreeListHead = m_AllocatedTextures;
-			m_AllocatedTextures = newAllocatedTextures;
-		}
-
-		size_t Allocate() {
-
-			if (m_FreeTextures == 0) {
-				Increase();
-				assert(m_FreeTextures != 0);
-			}
-
-			size_t result = m_FreeListHead;
-			m_FreeListHead = m_Textures[result].IsNil() ? 0xffffffffu : m_Textures[result].GetIndex();
-			m_FreeTextures--;
-			m_Textures[result].SetPointer(0);
-
-			return result;
-		}
-
-		void Deallocate(size_t index) {
-
-			if (m_Textures[index].IsPointer()) {
-				if (m_Textures[index].GetPointer())
-					delete m_Textures[index].GetPointer();
-
-				m_Textures[index].SetIndex(m_FreeListHead);
-				m_FreeListHead = index;
-				m_FreeTextures++;
-			}
-		}
-
-		MultiTexture * GetTexture(size_t index) {
-
-			if (index >= m_AllocatedTextures || !m_Textures[index].IsPointer()) 
-				return 0;
-
-			if (!m_Textures[index].GetPointer()) {
-				m_Textures[index].SetPointer(new MultiTexture());
-			}
-
-			return m_Textures[index].GetPointer();
-		}
-
-		TextureRecord *		m_Textures;
-		size_t				m_FreeTextures;
-		size_t				m_AllocatedTextures;
-		size_t				m_FreeListHead;
-	};
-
 
 	class Surface;
 	class MultiTexture;
@@ -444,6 +273,9 @@ namespace EGL {
 		// SGIS_generate_mipmap extension
 		void UpdateMipmaps(void);
 
+		// clipping rectangle recalculation
+		void UpdateScissorTest(void);
+
 		void RecordError(GLenum error);
 		void Toggle(GLenum cap, bool value);
 		void ToggleClientState(GLenum array, bool value);
@@ -525,12 +357,11 @@ private:
 		// ----------------------------------------------------------------------
 		// Viewport configuration
 		// ----------------------------------------------------------------------
-		GLint				m_ViewportX;
-		GLint				m_ViewportY;
-		GLsizei				m_ViewportWidth;
-		GLsizei				m_ViewportHeight;
+		Rect				m_Viewport;
+		Rect				m_Scissor;
 		GLclampx			m_ViewportNear;
 		GLclampx			m_ViewportFar;
+		bool				m_ScissorTestEnabled;
 
 		// origin and scale for actual transformation
 		Vec3D				m_ViewportOrigin;

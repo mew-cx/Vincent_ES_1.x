@@ -43,6 +43,7 @@
 #include "OGLES.h"
 #include "GLES/egl.h"
 #include "GLES/gl.h"
+#include "Types.h"
 #include "Config.h"
 #include "fixed.h"
 #include "Color.h"
@@ -68,6 +69,7 @@ namespace EGL {
 		U16 GetWidth();
 		U16 GetHeight();
 		U32 GetPixels();
+		const Rect& GetRect() const;
 
 		void SetCurrentContext(Context * context);
 		Context * GetCurrentContext();
@@ -94,8 +96,7 @@ namespace EGL {
 		I32 *	m_DepthBuffer;		// pointer to Z-buffer base address
 		U32 *	m_StencilBuffer;	// stencil buffer
 
-		U16		m_Width;			// number of pixels in x direction
-		U16		m_Height;			// number of pixels in y direction
+		Rect	m_Rect;
 
 		Context *	m_CurrentContext;
 		bool	m_Disposed;			// the surface 
@@ -112,7 +113,7 @@ namespace EGL {
 	}
 
 	inline U32 Surface :: GetPixels() {
-		return m_Width * m_Height;
+		return GetWidth() * GetHeight();
 	}
 
 	inline Context * Surface :: GetCurrentContext() {
@@ -144,12 +145,17 @@ namespace EGL {
 	}
 
 	inline U16 Surface :: GetWidth() {
-		return m_Width;
+		return m_Rect.width;
 	}
 
 	inline U16 Surface :: GetHeight() {
-		return m_Height;
+		return m_Rect.height;
 	}
+
+	inline const Rect& Surface :: GetRect() const {
+		return m_Rect;
+	}
+
 }
 
 #endif // ndef EGL_SURFACE_H

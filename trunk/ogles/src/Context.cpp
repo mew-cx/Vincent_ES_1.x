@@ -61,6 +61,8 @@ Context :: Context(const Config & config)
 	m_ProjectionMatrixStack(2),
 	m_TextureMatrixStack(2),
 	m_CurrentMatrixStack(&m_ModelViewMatrixStack),
+	m_Scissor(0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
+	m_Viewport(0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
 
 	// server flags
 	m_LightingEnabled(false),
@@ -77,6 +79,7 @@ Context :: Context(const Config & config)
 	m_SampleAlphaToCoverageEnabled(false),
 	m_SampleAlphaToOneEnabled(false),
 	m_SampleCoverageEnabled(false),
+	m_ScissorTestEnabled(false),
 
 	// fog parameters for setup phase
 	m_FogMode(FogModeExp),
@@ -157,6 +160,8 @@ void Context :: SetDrawSurface(EGL::Surface * surface) {
 	m_DrawSurface = surface;
 	m_DrawSurface->SetCurrentContext(this);
 	m_Rasterizer->SetSurface(surface);
+
+	UpdateScissorTest();
 }
 
 
@@ -314,7 +319,8 @@ void Context :: Toggle(GLenum cap, bool value) {
 		break;
 
 	case GL_SCISSOR_TEST:
-		GetRasterizerState()->EnableScissorTest(value);
+		m_ScissorTestEnabled = value;
+		UpdateScissorTest();
 		break;
 
 	case GL_COLOR_MATERIAL:

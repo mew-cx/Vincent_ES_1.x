@@ -46,15 +46,17 @@ using namespace EGL;
 
 Surface :: Surface(const Config & config, HDC hdc) 
 :	m_Config(config),
-	m_Width (config.GetConfigAttrib(EGL_WIDTH)), 
-	m_Height (config.GetConfigAttrib(EGL_HEIGHT)),
+	m_Rect (0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
 	m_Bitmap(reinterpret_cast<HBITMAP>(INVALID_HANDLE_VALUE)),
 	m_HDC(reinterpret_cast<HDC>(INVALID_HANDLE_VALUE))
 {
 	//m_ColorBuffer = new U16[m_Width * m_Height];
-	m_AlphaBuffer = new U8[m_Width * m_Height];
-	m_DepthBuffer = new I32[m_Width * m_Height];
-	m_StencilBuffer = new U32[m_Width * m_Height];
+	U32 width = GetWidth();
+	U32 height = GetHeight();
+
+	m_AlphaBuffer = new U8[width * height];
+	m_DepthBuffer = new I32[width * height];
+	m_StencilBuffer = new U32[width * height];
 
 	if (hdc != INVALID_HANDLE_VALUE) {
 		m_HDC = CreateCompatibleDC(hdc);
@@ -66,12 +68,12 @@ Surface :: Surface(const Config & config, HDC hdc)
 	} info;
 
 	info.bmiHeader.biSize = sizeof(info.bmiHeader); 
-	info.bmiHeader.biWidth = m_Width; 
-	info.bmiHeader.biHeight = m_Height; 
+	info.bmiHeader.biWidth = width; 
+	info.bmiHeader.biHeight = height; 
 	info.bmiHeader.biPlanes = 1; 
 	info.bmiHeader.biBitCount = 16; 
 	info.bmiHeader.biCompression = BI_BITFIELDS; 
-	info.bmiHeader.biSizeImage = m_Width * m_Height * sizeof(U16); 
+	info.bmiHeader.biSizeImage = width * height * sizeof(U16); 
 	info.bmiHeader.biXPelsPerMeter = 72 * 25; 
 	info.bmiHeader.biYPelsPerMeter = 72 * 25; 
 	info.bmiHeader.biClrUsed = 0; 
