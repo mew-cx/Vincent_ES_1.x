@@ -71,6 +71,7 @@ namespace {
 #define ALLOC_REG(reg) reg = cg_virtual_reg_create(procedure, cg_reg_type_general)
 #define ALLOC_FLAGS(reg) reg = cg_virtual_reg_create(procedure, cg_reg_type_flags)
 #define DECL_REG(reg) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_general)
+#define DECL_REG_ARRAY(reg, count) cg_virtual_reg_t * reg[count]; for (unit = 0; unit < count; ++unit) reg[unit] = cg_virtual_reg_create(procedure, cg_reg_type_general)
 #define DECL_FLAGS(reg) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_flags)
 #define DECL_CONST_REG(reg, value) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_general); LDI(reg, value)
 
@@ -110,6 +111,8 @@ namespace {
 //  texture->GetExponent()
 //	texture->GetData()
 void CodeGenerator :: GenerateRasterScanLine() {
+
+	size_t unit;
 
 	cg_proc_t * procedure = cg_proc_create(m_Module);
 
@@ -160,59 +163,76 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	ADD		(regAddrStartWindowDepth, regStart, regOffsetWindowDepth);
 	ADD		(regAddrEndWindowDepth, regEnd, regOffsetWindowDepth);
 
-	// u texture coordinate
-	DECL_REG	(regOffsetTextureU);
-	DECL_REG	(regAddrStartTextureU);
-	DECL_REG	(regAddrEndTextureU);
+	// texture coordinates 
+	cg_virtual_reg_t * regAddrStartTextureU[EGL_NUM_TEXTURE_UNITS];
+	cg_virtual_reg_t * regAddrEndTextureU[EGL_NUM_TEXTURE_UNITS];
+	cg_virtual_reg_t * regAddrStartTextureDuDx[EGL_NUM_TEXTURE_UNITS];
+	cg_virtual_reg_t * regAddrEndTextureDuDx[EGL_NUM_TEXTURE_UNITS];
+	cg_virtual_reg_t * regAddrStartTextureDuDy[EGL_NUM_TEXTURE_UNITS];
+	cg_virtual_reg_t * regAddrEndTextureDuDy[EGL_NUM_TEXTURE_UNITS];
 
-	LDI		(regOffsetTextureU, OFFSET_EDGE_BUFFER_TEX_TU);
-	ADD		(regAddrStartTextureU, regStart, regOffsetTextureU);
-	ADD		(regAddrEndTextureU, regEnd, regOffsetTextureU);
+	cg_virtual_reg_t * regAddrStartTextureV[EGL_NUM_TEXTURE_UNITS];
+	cg_virtual_reg_t * regAddrEndTextureV[EGL_NUM_TEXTURE_UNITS];
+	cg_virtual_reg_t * regAddrStartTextureDvDx[EGL_NUM_TEXTURE_UNITS];
+	cg_virtual_reg_t * regAddrEndTextureDvDx[EGL_NUM_TEXTURE_UNITS];
+	cg_virtual_reg_t * regAddrStartTextureDvDy[EGL_NUM_TEXTURE_UNITS];
+	cg_virtual_reg_t * regAddrEndTextureDvDy[EGL_NUM_TEXTURE_UNITS];
 
-	// du/dx texture coordinate
-	DECL_REG	(regOffsetTextureDuDx);
-	DECL_REG	(regAddrStartTextureDuDx);
-	DECL_REG	(regAddrEndTextureDuDx);
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		// u texture coordinate
+		DECL_REG	(regOffsetTextureU);
+		ALLOC_REG	(regAddrStartTextureU[unit]);
+		ALLOC_REG	(regAddrEndTextureU[unit]);
 
-	LDI		(regOffsetTextureDuDx, OFFSET_EDGE_BUFFER_TEX_DTUDX);
-	ADD		(regAddrStartTextureDuDx, regStart, regOffsetTextureDuDx);
-	ADD		(regAddrEndTextureDuDx, regEnd, regOffsetTextureDuDx);
+		LDI		(regOffsetTextureU, OFFSET_EDGE_BUFFER_TEX_TU + unit * sizeof(TexCoord));
+		ADD		(regAddrStartTextureU[unit], regStart, regOffsetTextureU);
+		ADD		(regAddrEndTextureU[unit], regEnd, regOffsetTextureU);
 
-	// du/dy texture coordinate
-	DECL_REG	(regOffsetTextureDuDy);
-	DECL_REG	(regAddrStartTextureDuDy);
-	DECL_REG	(regAddrEndTextureDuDy);
+		// du/dx texture coordinate
+		DECL_REG	(regOffsetTextureDuDx);
+		ALLOC_REG	(regAddrStartTextureDuDx[unit]);
+		ALLOC_REG	(regAddrEndTextureDuDx[unit]);
 
-	LDI		(regOffsetTextureDuDy, OFFSET_EDGE_BUFFER_TEX_DTUDY);
-	ADD		(regAddrStartTextureDuDy, regStart, regOffsetTextureDuDy);
-	ADD		(regAddrEndTextureDuDy, regEnd, regOffsetTextureDuDy);
+		LDI		(regOffsetTextureDuDx, OFFSET_EDGE_BUFFER_TEX_DTUDX + unit * sizeof(TexCoord));
+		ADD		(regAddrStartTextureDuDx[unit], regStart, regOffsetTextureDuDx);
+		ADD		(regAddrEndTextureDuDx[unit], regEnd, regOffsetTextureDuDx);
 
-	// v texture coordinate
-	DECL_REG	(regOffsetTextureV);
-	DECL_REG	(regAddrStartTextureV);
-	DECL_REG	(regAddrEndTextureV);
+		// du/dy texture coordinate
+		DECL_REG	(regOffsetTextureDuDy);
+		ALLOC_REG	(regAddrStartTextureDuDy[unit]);
+		ALLOC_REG	(regAddrEndTextureDuDy[unit]);
 
-	LDI		(regOffsetTextureV, OFFSET_EDGE_BUFFER_TEX_TV);
-	ADD		(regAddrStartTextureV, regStart, regOffsetTextureV);
-	ADD		(regAddrEndTextureV, regEnd, regOffsetTextureV);
+		LDI		(regOffsetTextureDuDy, OFFSET_EDGE_BUFFER_TEX_DTUDY + unit * sizeof(TexCoord));
+		ADD		(regAddrStartTextureDuDy[unit], regStart, regOffsetTextureDuDy);
+		ADD		(regAddrEndTextureDuDy[unit], regEnd, regOffsetTextureDuDy);
 
-	// dv/dx texture coordinate
-	DECL_REG	(regOffsetTextureDvDx);
-	DECL_REG	(regAddrStartTextureDvDx);
-	DECL_REG	(regAddrEndTextureDvDx);
+		// v texture coordinate
+		DECL_REG	(regOffsetTextureV);
+		ALLOC_REG	(regAddrStartTextureV[unit]);
+		ALLOC_REG	(regAddrEndTextureV[unit]);
 
-	LDI		(regOffsetTextureDvDx, OFFSET_EDGE_BUFFER_TEX_DTVDX);
-	ADD		(regAddrStartTextureDvDx, regStart, regOffsetTextureDvDx);
-	ADD		(regAddrEndTextureDvDx, regEnd, regOffsetTextureDvDx);
+		LDI		(regOffsetTextureV, OFFSET_EDGE_BUFFER_TEX_TV + unit * sizeof(TexCoord));
+		ADD		(regAddrStartTextureV[unit], regStart, regOffsetTextureV);
+		ADD		(regAddrEndTextureV[unit], regEnd, regOffsetTextureV);
 
-	// dv/dy texture coordinate
-	DECL_REG	(regOffsetTextureDvDy);
-	DECL_REG	(regAddrStartTextureDvDy);
-	DECL_REG	(regAddrEndTextureDvDy);
+		// dv/dx texture coordinate
+		DECL_REG	(regOffsetTextureDvDx);
+		ALLOC_REG	(regAddrStartTextureDvDx[unit]);
+		ALLOC_REG	(regAddrEndTextureDvDx[unit]);
 
-	LDI		(regOffsetTextureDvDy, OFFSET_EDGE_BUFFER_TEX_DTVDY);
-	ADD		(regAddrStartTextureDvDy, regStart, regOffsetTextureDvDy);
-	ADD		(regAddrEndTextureDvDy, regEnd, regOffsetTextureDvDy);
+		LDI		(regOffsetTextureDvDx, OFFSET_EDGE_BUFFER_TEX_DTVDX + unit * sizeof(TexCoord));
+		ADD		(regAddrStartTextureDvDx[unit], regStart, regOffsetTextureDvDx);
+		ADD		(regAddrEndTextureDvDx[unit], regEnd, regOffsetTextureDvDx);
+
+		// dv/dy texture coordinate
+		DECL_REG	(regOffsetTextureDvDy);
+		ALLOC_REG	(regAddrStartTextureDvDy[unit]);
+		ALLOC_REG	(regAddrEndTextureDvDy[unit]);
+
+		LDI		(regOffsetTextureDvDy, OFFSET_EDGE_BUFFER_TEX_DTVDY + unit * sizeof(TexCoord));
+		ADD		(regAddrStartTextureDvDy[unit], regStart, regOffsetTextureDvDy);
+		ADD		(regAddrEndTextureDvDy[unit], regEnd, regOffsetTextureDvDy);
+	}
 
 	// r color component
 	DECL_REG	(regOffsetColorR);
@@ -260,8 +280,13 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	ADD		(regAddrEndFog, regEnd, regOffsetFog);
 
 	// Texture base address
-	cg_virtual_reg_t * regAddrTextures = LOAD_DATA(block, regInfo, OFFSET_TEXTURES);
-	cg_virtual_reg_t * regTexture = regAddrTextures;
+	cg_virtual_reg_t * regAddrTextures[EGL_NUM_TEXTURE_UNITS];
+	cg_virtual_reg_t * regTexture[EGL_NUM_TEXTURE_UNITS];
+
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		regAddrTextures[unit] = LOAD_DATA(block, regInfo, OFFSET_TEXTURES + unit * sizeof(I32));
+		regTexture[unit] = regAddrTextures[unit];
+	}
 
 	//EGL_Fixed invSpan = EGL_Inverse(end.m_WindowCoords.x - start.m_WindowCoords.x);
 	DECL_REG	(regEndWindowX);
@@ -277,12 +302,13 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	BLE		(flagXCompare, endProc);
 
 	DECL_REG	(regStartWindowZ);
-	DECL_REG	(regStartTextureU);
-	DECL_REG	(regStartTextureDuDy);
-	DECL_REG	(regStartTextureV);
-	DECL_REG	(regStartTextureDvDy);
 	DECL_REG	(regStartFog);
 	DECL_REG	(regStartDepth);
+
+	DECL_REG_ARRAY	(regStartTextureU, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regStartTextureDuDy, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regStartTextureV, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regStartTextureDvDy, EGL_NUM_TEXTURE_UNITS);
 
 	LDW		(regStartWindowZ, regAddrStartWindowZ);
 
@@ -300,32 +326,35 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	//EGL_Fixed tu = EGL_Mul(invTu, z);
 	//EGL_Fixed tv = EGL_Mul(invTv, z);
 	DECL_REG	(regZ);
-	DECL_REG	(regU);
-	DECL_REG	(regV);
 
-	LDW		(regStartTextureU, regAddrStartTextureU);
 	FINV	(regZ, regStartWindowZ);
-	LDW		(regStartTextureV, regAddrStartTextureV);
-	LDW		(regStartFog, regAddrStartFog);
-	FMUL	(regU, regStartTextureU, regZ);
 	LDW		(regStartDepth, regAddrStartWindowDepth);
-	FMUL	(regV, regStartTextureV, regZ);
 
-	// texture gradients for mipmap selection
-	DECL_REG	(regDuDx);
-	DECL_REG	(regDvDx);
-	DECL_REG	(regAbsDuDx);
-	DECL_REG	(regAbsDvDx);
+	DECL_REG_ARRAY	(regU, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regV, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regDuDx, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regDvDx, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regAbsDuDx, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regAbsDvDx, EGL_NUM_TEXTURE_UNITS);
 
-	LDW		(regDuDx, regAddrStartTextureDuDx);
-	ABS		(regAbsDuDx, regDuDx);	
-	LDW		(regDvDx, regAddrStartTextureDvDx);
-	ABS		(regAbsDvDx, regDvDx);	
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		LDW		(regStartTextureU[unit], regAddrStartTextureU[unit]);
+		LDW		(regStartTextureV[unit], regAddrStartTextureV[unit]);
+		FMUL	(regU[unit], regStartTextureU[unit], regZ);
+		FMUL	(regV[unit], regStartTextureV[unit], regZ);
 
-	LDW		(regStartTextureDuDy, regAddrStartTextureDuDy);
-	LDW		(regStartTextureDvDy, regAddrStartTextureDvDy);
+		// texture gradients for mipmap selection
 
+		LDW		(regDuDx[unit], regAddrStartTextureDuDx[unit]);
+		ABS		(regAbsDuDx[unit], regDuDx[unit]);	
+		LDW		(regDvDx[unit], regAddrStartTextureDvDx[unit]);
+		ABS		(regAbsDvDx[unit], regDvDx[unit]);	
 
+		LDW		(regStartTextureDuDy[unit], regAddrStartTextureDuDy[unit]);
+		LDW		(regStartTextureDvDy[unit], regAddrStartTextureDvDy[unit]);
+	}
+
+	LDW		(regStartFog, regAddrStartFog);
 
 	//FractionalColor baseColor = start.m_Color;
 	DECL_REG	(regStartColorR);
@@ -372,154 +401,150 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regLoop0ZEntry);
 	DECL_REG	(regLoop0Z);
 	DECL_REG	(regLoop1Z);
-
-	PHI		(regLoop0ZEntry, cg_create_virtual_reg_list(procedure->module->heap, regZ, regLoop0Z, regLoop1Z, NULL));
-
-	DECL_REG	(regLoop0UEntry);
-	DECL_REG	(regLoop0U);
-
-	PHI		(regLoop0UEntry, cg_create_virtual_reg_list(procedure->module->heap, regU, regLoop0U, NULL));
-
-	DECL_REG	(regLoop0VEntry);
-	DECL_REG	(regLoop0V);
-
-	PHI		(regLoop0VEntry, cg_create_virtual_reg_list(procedure->module->heap, regV, regLoop0V, NULL));
-
 	DECL_REG	(regLoop0InvZEntry);
 	DECL_REG	(regLoop0InvZ);
 
+	PHI		(regLoop0ZEntry, cg_create_virtual_reg_list(procedure->module->heap, regZ, regLoop0Z, regLoop1Z, NULL));
 	PHI		(regLoop0InvZEntry, cg_create_virtual_reg_list(procedure->module->heap, regStartWindowZ, regLoop0InvZ, NULL));
 
-	DECL_REG	(regLoop0InvUEntry);
-	DECL_REG	(regLoop0InvU);
-
-	PHI		(regLoop0InvUEntry, cg_create_virtual_reg_list(procedure->module->heap, regStartTextureU, regLoop0InvU, NULL));
-
-	DECL_REG	(regLoop0InvVEntry);
-	DECL_REG	(regLoop0InvV);
-
-	PHI		(regLoop0InvVEntry, cg_create_virtual_reg_list(procedure->module->heap, regStartTextureV, regLoop0InvV, NULL));
-
-	DECL_REG	(regLoop0DuDyEntry);
-	DECL_REG	(regLoop0DuDy);
-	PHI		(regLoop0DuDyEntry, cg_create_virtual_reg_list(procedure->module->heap, regStartTextureDuDy, regLoop0DuDy, NULL));
-
-	DECL_REG	(regLoop0DvDyEntry);
-	DECL_REG	(regLoop0DvDy);
-	PHI		(regLoop0DvDyEntry, cg_create_virtual_reg_list(procedure->module->heap, regStartTextureDvDy, regLoop0DvDy, NULL));
-
-
 		//invZ += deltaInvZ << LOG_LINEAR_SPAN;
+	DECL_REG_ARRAY	(regLoop0UEntry, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0U, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0VEntry, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0V, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0InvUEntry, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0InvU, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0InvVEntry, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0InvV, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0DuDyEntry, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0DuDy, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0DvDyEntry, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0DvDy, EGL_NUM_TEXTURE_UNITS);
+
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		PHI		(regLoop0UEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regU[unit], regLoop0U[unit], NULL));
+		PHI		(regLoop0VEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regV[unit], regLoop0V[unit], NULL));
+		PHI		(regLoop0InvUEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regStartTextureU[unit], regLoop0InvU[unit], NULL));
+		PHI		(regLoop0InvVEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regStartTextureV[unit], regLoop0InvV[unit], NULL));
+		PHI		(regLoop0DuDyEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regStartTextureDuDy[unit], regLoop0DuDy[unit], NULL));
+		PHI		(regLoop0DvDyEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regStartTextureDvDy[unit], regLoop0DvDy[unit], NULL));
+	}
+
 		//invTu += deltaInvU << LOG_LINEAR_SPAN;
 		//invTv += deltaInvV << LOG_LINEAR_SPAN;
 	DECL_REG	(regLinearSpan);
 	DECL_REG	(regLogLinearSpan);
 	DECL_REG	(regDeltaInvZTimesLinearSpan);
-	DECL_REG	(regDeltaInvUTimesLinearSpan);
-	DECL_REG	(regDeltaInvVTimesLinearSpan);
+
+	DECL_REG_ARRAY	(regDeltaInvUTimesLinearSpan, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regDeltaInvVTimesLinearSpan, EGL_NUM_TEXTURE_UNITS);
 
 	LDI		(regLinearSpan, LINEAR_SPAN);
 	LDI		(regLogLinearSpan, LOG_LINEAR_SPAN);
 
 	{
 		DECL_REG	(regDeltaInvZ);
-		DECL_REG	(regDeltaInvU);
-		DECL_REG	(regDeltaInvV);
-
 		LDW		(regDeltaInvZ, regAddrEndWindowZ);
-		LDW		(regDeltaInvU, regAddrEndTextureU);
-		LDW		(regDeltaInvV, regAddrEndTextureV);
-
 		LSL		(regDeltaInvZTimesLinearSpan, regDeltaInvZ, regLogLinearSpan);	
 		FADD	(regLoop0InvZ, regLoop0InvZEntry, regDeltaInvZTimesLinearSpan);
-		LSL		(regDeltaInvUTimesLinearSpan, regDeltaInvU, regLogLinearSpan);	
-		FADD	(regLoop0InvU, regLoop0InvUEntry, regDeltaInvUTimesLinearSpan);
-		LSL		(regDeltaInvVTimesLinearSpan, regDeltaInvV, regLogLinearSpan);	
-		FADD	(regLoop0InvV, regLoop0InvVEntry, regDeltaInvVTimesLinearSpan);
+
+		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+			DECL_REG	(regDeltaInvU);
+			DECL_REG	(regDeltaInvV);
+
+			LDW		(regDeltaInvU, regAddrEndTextureU[unit]);
+			LDW		(regDeltaInvV, regAddrEndTextureV[unit]);
+
+			LSL		(regDeltaInvUTimesLinearSpan[unit], regDeltaInvU, regLogLinearSpan);	
+			FADD	(regLoop0InvU[unit], regLoop0InvUEntry[unit], regDeltaInvUTimesLinearSpan[unit]);
+			LSL		(regDeltaInvVTimesLinearSpan[unit], regDeltaInvV, regLogLinearSpan);	
+			FADD	(regLoop0InvV[unit], regLoop0InvVEntry[unit], regDeltaInvVTimesLinearSpan[unit]);
+		}
 	}
 	// ----------------------------------------------------------------------
 	// if multi-texture, determine texture mode (magnification vs. minifacation)
 	// and texture level here
 	// ----------------------------------------------------------------------
 
-	if (m_State->m_Texture[TODO].MipmapFilterMode != RasterizerState::FilterModeNone) {
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		if (m_State->m_Texture[unit].MipmapFilterMode != RasterizerState::FilterModeNone) {
 
-		if (m_State->m_Texture[TODO].MipmapFilterMode == RasterizerState::FilterModeNearest ||
-			/* remove this */ m_State->m_Texture[TODO].MipmapFilterMode == RasterizerState::FilterModeLinear) {
-			//	EGL_Fixed maxDu = EGL_Mul(EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)), m_Texture->GetTexture(0)->GetWidth());
-			//	EGL_Fixed maxDv = EGL_Mul(EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)), m_Texture->GetTexture(0)->GetHeight());
+			if (m_State->m_Texture[unit].MipmapFilterMode == RasterizerState::FilterModeNearest ||
+				/* remove this */ m_State->m_Texture[unit].MipmapFilterMode == RasterizerState::FilterModeLinear) {
+				//	EGL_Fixed maxDu = EGL_Mul(EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)), m_Texture->GetTexture(0)->GetWidth());
+				//	EGL_Fixed maxDv = EGL_Mul(EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)), m_Texture->GetTexture(0)->GetHeight());
 
-			DECL_REG	(regAbsDuDy);
-			DECL_REG	(regAbsDvDy);
+				DECL_REG	(regAbsDuDy);
+				DECL_REG	(regAbsDvDy);
 
-			ABS			(regAbsDuDy, regLoop0DuDyEntry);
-			ABS			(regAbsDvDy, regLoop0DvDyEntry);
+				ABS			(regAbsDuDy, regLoop0DuDyEntry[unit]);
+				ABS			(regAbsDvDy, regLoop0DvDyEntry[unit]);
 
-			DECL_REG	(regMaxDu0);
-			DECL_REG	(regMaxDv0);
-			DECL_REG	(regMaxDu);
-			DECL_REG	(regMaxDv);
+				DECL_REG	(regMaxDu0);
+				DECL_REG	(regMaxDv0);
+				DECL_REG	(regMaxDu);
+				DECL_REG	(regMaxDv);
 
-			cg_virtual_reg_t * regLogWidth = LOAD_DATA(block, regAddrTextures, OFFSET_TEXTURE_LOG_WIDTH);
-			DECL_CONST_REG	(regConstant16, 16);
+				cg_virtual_reg_t * regLogWidth = LOAD_DATA(block, regAddrTextures[unit], OFFSET_TEXTURE_LOG_WIDTH);
+				DECL_CONST_REG	(regConstant16, 16);
 
-			DECL_REG	(regShiftDu);
-			DECL_REG	(regShiftDv);
+				DECL_REG	(regShiftDu);
+				DECL_REG	(regShiftDv);
 
-			MAX			(regMaxDu0, regAbsDuDx, regAbsDuDy);
-			SUB			(regShiftDu, regConstant16, regLogWidth);
-			ASR			(regMaxDu, regMaxDu0, regShiftDu);
+				MAX			(regMaxDu0, regAbsDuDx[unit], regAbsDuDy);
+				SUB			(regShiftDu, regConstant16, regLogWidth);
+				ASR			(regMaxDu, regMaxDu0, regShiftDu);
 
-			cg_virtual_reg_t * regLogHeight = LOAD_DATA(block, regAddrTextures, OFFSET_TEXTURE_LOG_HEIGHT);
-			MAX			(regMaxDv0, regAbsDvDx, regAbsDvDy);
-			SUB			(regShiftDv, regConstant16, regLogHeight);
-			ASR			(regMaxDv, regMaxDv0, regShiftDv);
-			
-			//	EGL_Fixed maxD = maxDu + maxDv;
-			//	EGL_Fixed rho = EGL_Mul(z2, maxD);
+				cg_virtual_reg_t * regLogHeight = LOAD_DATA(block, regAddrTextures[unit], OFFSET_TEXTURE_LOG_HEIGHT);
+				MAX			(regMaxDv0, regAbsDvDx[unit], regAbsDvDy);
+				SUB			(regShiftDv, regConstant16, regLogHeight);
+				ASR			(regMaxDv, regMaxDv0, regShiftDv);
+				
+				//	EGL_Fixed maxD = maxDu + maxDv;
+				//	EGL_Fixed rho = EGL_Mul(z2, maxD);
 
-			DECL_REG	(regMaxD);
-			DECL_REG	(regRho);
+				DECL_REG	(regMaxD);
+				DECL_REG	(regRho);
 
-			FADD		(regMaxD, regMaxDu, regMaxDv);
+				FADD		(regMaxD, regMaxDu, regMaxDv);
 
-			//	EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
-			DECL_REG	(regShiftedZ);
-			DECL_REG	(regConstant4);
-			DECL_REG	(regZ2);
+				//	EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
+				DECL_REG	(regShiftedZ);
+				DECL_REG	(regConstant4);
+				DECL_REG	(regZ2);
 
-			LDI			(regConstant4, 4);
-			LSL			(regShiftedZ, regLoop0ZEntry, regConstant4);
-			FMUL		(regZ2, regShiftedZ, regShiftedZ);
+				LDI			(regConstant4, 4);
+				LSL			(regShiftedZ, regLoop0ZEntry, regConstant4);
+				FMUL		(regZ2, regShiftedZ, regShiftedZ);
 
-			FMUL		(regRho, regMaxD, regZ2);
+				FMUL		(regRho, regMaxD, regZ2);
 
-			// we start with nearest/minification only selection; will add LINEAR later
-			//	m_MipMapLevel = EGL_Min(EGL_Max(0, Log2(rho)), m_MaxMipmapLevel);
+				// we start with nearest/minification only selection; will add LINEAR later
+				//	m_MipMapLevel = EGL_Min(EGL_Max(0, Log2(rho)), m_MaxMipmapLevel);
 
-			DECL_REG	(regLog2);
-			DECL_REG	(regMipmapLevel);
+				DECL_REG	(regLog2);
+				DECL_REG	(regMipmapLevel);
 
-			LOG2		(regLog2, regRho);
-			
-			cg_virtual_reg_t * regMaxMipmapLevel = LOAD_DATA(block, regInfo, OFFSET_MAX_MIPMAP_LEVEL);
-			
-			MIN			(regMipmapLevel, regLog2, regMaxMipmapLevel);
+				LOG2		(regLog2, regRho);
+				
+				cg_virtual_reg_t * regMaxMipmapLevel = LOAD_DATA(block, regInfo, OFFSET_MAX_MIPMAP_LEVEL + unit * sizeof(I32));
+				
+				MIN			(regMipmapLevel, regLog2, regMaxMipmapLevel);
 
-			// now multiply the texture block size by the mipmap level and add this to the texture base
+				// now multiply the texture block size by the mipmap level and add this to the texture base
 
-			assert		((1 << Log(sizeof(Texture))) == sizeof(Texture));
+				assert		((1 << Log(sizeof(Texture))) == sizeof(Texture));
 
-			DECL_CONST_REG	(regLogTextureSize, Log(sizeof(Texture)));
-			DECL_REG	(regScaledLevel);
+				DECL_CONST_REG	(regLogTextureSize, Log(sizeof(Texture)));
+				DECL_REG	(regScaledLevel);
 
-			LSL			(regScaledLevel, regMipmapLevel, regLogTextureSize);
-			ALLOC_REG	(regTexture);
-			ADD			(regTexture, regAddrTextures, regScaledLevel);
+				LSL			(regScaledLevel, regMipmapLevel, regLogTextureSize);
+				ALLOC_REG	(regTexture[unit]);
+				ADD			(regTexture[unit], regAddrTextures[unit], regScaledLevel);
 
-		// TBD: } else if (m_State->m_MipmapFilterMode == RasterizerState::FilterModeLinear) {
+			// TBD: } else if (m_State->m_MipmapFilterMode == RasterizerState::FilterModeLinear) {
+			}
 		}
-
 
 		//EGL_Fixed deltaInvDu = delta.m_TextureCoords.dtudy;
 		//EGL_Fixed deltaInvDv = delta.m_TextureCoords.dtvdy;
@@ -528,8 +553,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		DECL_REG(regDvDyDx);
 		DECL_REG(regShiftedDuDyDx);
 		DECL_REG(regShiftedDvDyDx);
-		LDW		(regDuDyDx, regAddrEndTextureDuDy);
-		LDW		(regDvDyDx, regAddrEndTextureDvDy);
+		LDW		(regDuDyDx, regAddrEndTextureDuDy[unit]);
+		LDW		(regDvDyDx, regAddrEndTextureDvDy[unit]);
 
 		//dTuDyOverInvZ2 += deltaInvDu << LOG_LINEAR_SPAN;
 		//dTvDyOverInvZ2 += deltaInvDv << LOG_LINEAR_SPAN;
@@ -537,8 +562,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		LSL		(regShiftedDuDyDx, regDuDyDx, regLogLinearSpan);
 		LSL		(regShiftedDvDyDx, regDvDyDx, regLogLinearSpan);
 
-		FADD	(regLoop0DuDy, regLoop0DuDyEntry, regShiftedDuDyDx);
-		FADD	(regLoop0DvDy, regLoop0DvDyEntry, regShiftedDvDyDx);
+		FADD	(regLoop0DuDy[unit], regLoop0DuDyEntry[unit], regShiftedDuDyDx);
+		FADD	(regLoop0DvDy[unit], regLoop0DvDyEntry[unit], regShiftedDvDyDx);
 	}
 
 		//EGL_Fixed endZ = EGL_Inverse(invZ);
@@ -546,12 +571,15 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		//EGL_Fixed endTv = EGL_Mul(invTv, endZ);
 
 	DECL_REG	(regLoop0EndZ);
-	DECL_REG	(regLoop0EndU);
-	DECL_REG	(regLoop0EndV);
+	DECL_REG_ARRAY	(regLoop0EndU, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0EndV, EGL_NUM_TEXTURE_UNITS);
 
 	FINV	(regLoop0EndZ, regLoop0InvZ);
-	FMUL	(regLoop0EndU, regLoop0InvU, regLoop0EndZ);
-	FMUL	(regLoop0EndV, regLoop0InvV, regLoop0EndZ);
+
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		FMUL	(regLoop0EndU[unit], regLoop0InvU[unit], regLoop0EndZ);
+		FMUL	(regLoop0EndV[unit], regLoop0InvV[unit], regLoop0EndZ);
+	}
 
 		//EGL_Fixed deltaZ = (endZ - z) >> LOG_LINEAR_SPAN;
 		//EGL_Fixed deltaTu = (endTu - tu) >> LOG_LINEAR_SPAN; 
@@ -559,10 +587,11 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	DECL_REG	(regLoop0DiffZ);
 	DECL_REG	(regLoop0ScaledDiffZ);
-	DECL_REG	(regLoop0DiffU);
-	DECL_REG	(regLoop0ScaledDiffU);
-	DECL_REG	(regLoop0DiffV);
-	DECL_REG	(regLoop0ScaledDiffV);
+
+	DECL_REG_ARRAY	(regLoop0DiffU, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0ScaledDiffU, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0DiffV, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop0ScaledDiffV, EGL_NUM_TEXTURE_UNITS);
 	//DECL_REG	(regLoop0ScaledDiffUOver2);
 	//DECL_REG	(regLoop0ScaledDiffVOver2);
 	//DECL_REG	(regAdjustedU0);
@@ -572,12 +601,13 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FSUB	(regLoop0DiffZ, regLoop0EndZ, regLoop0ZEntry); 
 	ASR		(regLoop0ScaledDiffZ, regLoop0DiffZ, regLogLinearSpan);
 
-	FSUB	(regLoop0DiffU, regLoop0EndU, regLoop0UEntry); 
-	ASR		(regLoop0ScaledDiffU, regLoop0DiffU, regLogLinearSpan);
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		FSUB	(regLoop0DiffU[unit], regLoop0EndU[unit], regLoop0UEntry[unit]); 
+		ASR		(regLoop0ScaledDiffU[unit], regLoop0DiffU[unit], regLogLinearSpan);
 
-	FSUB	(regLoop0DiffV, regLoop0EndV, regLoop0VEntry); 
-	ASR		(regLoop0ScaledDiffV, regLoop0DiffV, regLogLinearSpan);
-
+		FSUB	(regLoop0DiffV[unit], regLoop0EndV[unit], regLoop0VEntry[unit]); 
+		ASR		(regLoop0ScaledDiffV[unit], regLoop0DiffV[unit], regLogLinearSpan);
+	}
 
 	// also not to include phi projection for z coming from inner loop
 
@@ -599,10 +629,6 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regLoop1XEntry);
 	DECL_REG	(regLoop1X);
 	DECL_REG	(regLoop1ZEntry);
-	DECL_REG	(regLoop1U);
-	DECL_REG	(regLoop1UEntry);
-	DECL_REG	(regLoop1V);
-	DECL_REG	(regLoop1VEntry);
 	DECL_REG	(regLoop1FogEntry);
 	DECL_REG	(regLoop1Fog);
 	DECL_REG	(regLoop1DepthEntry);
@@ -616,11 +642,14 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regLoop1AEntry);
 	DECL_REG	(regLoop1A);
 
+	DECL_REG_ARRAY	(regLoop1U, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop1UEntry, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop1V, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop1VEntry, EGL_NUM_TEXTURE_UNITS);
+
 	PHI		(regLoop1CountEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Count, regLinearSpan, NULL));
 	PHI		(regLoop1XEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1X, regX, NULL));
 	PHI		(regLoop1ZEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Z, regZ, NULL));
-	PHI		(regLoop1UEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1U, regLoop0UEntry, NULL));
-	PHI		(regLoop1VEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1V, regLoop0VEntry, NULL));
 	PHI		(regLoop1FogEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Fog, regStartFog, NULL));
 	PHI		(regLoop1DepthEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Depth, regStartDepth, NULL));
 	PHI		(regLoop1REntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1R, regStartColorR, NULL));
@@ -629,10 +658,18 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	PHI		(regLoop1AEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1A, regStartColorA, NULL));
 
 	FragmentGenerationInfo info;
+
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		PHI		(regLoop1UEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regLoop1U[unit], regLoop0UEntry[unit], NULL));
+		PHI		(regLoop1VEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regLoop1V[unit], regLoop0VEntry[unit], NULL));
+
+		info.regU[unit] = regLoop1UEntry[unit];
+		info.regV[unit] = regLoop1VEntry[unit]; 
+		info.regTexture[unit] = regTexture[unit];
+	}
+
 	info.regX = regLoop1XEntry;
 	info.regY = 0;
-	info.regU = regLoop1UEntry;
-	info.regV = regLoop1VEntry; 
 	info.regFog = regLoop1FogEntry;
 	info.regDepth = regLoop1DepthEntry;
 	info.regR = regLoop1REntry;
@@ -640,7 +677,6 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	info.regB = regLoop1BEntry; 
 	info.regA = regLoop1AEntry;
 	info.regInfo = regInfo;
-	info.regTexture = regTexture;
 
 	GenerateFragment(procedure, block, postFragmentLoop1, info, 8); 
 
@@ -676,9 +712,11 @@ void CodeGenerator :: GenerateRasterScanLine() {
 			//tu += deltaTu;
 			//tv += deltaTv;
 	FADD	(regLoop1Z, regLoop1ZEntry, regLoop0ScaledDiffZ);
-	FADD	(regLoop1U, regLoop1UEntry, regLoop0ScaledDiffU);
-	FADD	(regLoop1V, regLoop1VEntry, regLoop0ScaledDiffV);
 
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		FADD	(regLoop1U[unit], regLoop1UEntry[unit], regLoop0ScaledDiffU[unit]);
+		FADD	(regLoop1V[unit], regLoop1VEntry[unit], regLoop0ScaledDiffV[unit]);
+	}
 			//++x;
 	ADD		(regLoop1X, regLoop1XEntry, regConstant1);
 
@@ -694,8 +732,10 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	//DECL_REG	(regLoop1UExit);
 	//DECL_REG	(regLoop1VExit);
 
-	PHI		(regLoop0U, cg_create_virtual_reg_list(procedure->module->heap, regLoop1U, regLoop0UEntry, NULL));
-	PHI		(regLoop0V, cg_create_virtual_reg_list(procedure->module->heap, regLoop1V, regLoop0VEntry, NULL));
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		PHI		(regLoop0U[unit], cg_create_virtual_reg_list(procedure->module->heap, regLoop1U[unit], regLoop0UEntry[unit], NULL));
+		PHI		(regLoop0V[unit], cg_create_virtual_reg_list(procedure->module->heap, regLoop1V[unit], regLoop0VEntry[unit], NULL));
+	}
 	
 	//FSUB		(regLoop0U, regLoop1UExit, regLoop0ScaledDiffUOver2);
 	//FSUB		(regLoop0V, regLoop1VExit, regLoop0ScaledDiffVOver2);
@@ -715,26 +755,31 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	DECL_REG	(regBlock4X);
 	DECL_REG	(regBlock4Z);
-	DECL_REG	(regBlock4U);
-	DECL_REG	(regBlock4V);
 	DECL_REG	(regBlock4InvZ);
-	DECL_REG	(regBlock4InvU);
-	DECL_REG	(regBlock4InvV);
 	DECL_REG	(regBlock4DiffX);
 	DECL_FLAGS	(regBlock4Condition);
-	DECL_REG	(regLoop4DuDy);
-	DECL_REG	(regLoop4DvDy);
+
+	DECL_REG_ARRAY	(regBlock4U, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regBlock4V, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regBlock4InvU, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regBlock4InvV, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop4DuDy, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop4DvDy, EGL_NUM_TEXTURE_UNITS);
 		
 
-	PHI		(regLoop4DuDy, cg_create_virtual_reg_list(procedure->module->heap, regStartTextureDuDy, regLoop0DuDy, NULL));
-	PHI		(regLoop4DvDy, cg_create_virtual_reg_list(procedure->module->heap, regStartTextureDvDy, regLoop0DvDy, NULL));
 	PHI		(regBlock4InvZ, cg_create_virtual_reg_list(procedure->module->heap, regLoop0InvZ, regStartWindowZ, NULL));
-	PHI		(regBlock4InvU, cg_create_virtual_reg_list(procedure->module->heap, regLoop0InvU, regStartTextureU, NULL));
-	PHI		(regBlock4InvV, cg_create_virtual_reg_list(procedure->module->heap, regLoop0InvV, regStartTextureV, NULL));
 	PHI		(regBlock4X, cg_create_virtual_reg_list(procedure->module->heap, regX, regLoop1X, NULL));
 	PHI		(regBlock4Z, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Z, regZ, NULL));
-	PHI		(regBlock4U, cg_create_virtual_reg_list(procedure->module->heap, regLoop0U, regU, NULL));
-	PHI		(regBlock4V, cg_create_virtual_reg_list(procedure->module->heap, regLoop0V, regV, NULL));
+
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		PHI		(regLoop4DuDy[unit], cg_create_virtual_reg_list(procedure->module->heap, regStartTextureDuDy[unit], regLoop0DuDy[unit], NULL));
+		PHI		(regLoop4DvDy[unit], cg_create_virtual_reg_list(procedure->module->heap, regStartTextureDvDy[unit], regLoop0DvDy[unit], NULL));
+		PHI		(regBlock4InvU[unit], cg_create_virtual_reg_list(procedure->module->heap, regLoop0InvU[unit], regStartTextureU[unit], NULL));
+		PHI		(regBlock4InvV[unit], cg_create_virtual_reg_list(procedure->module->heap, regLoop0InvV[unit], regStartTextureV[unit], NULL));
+		PHI		(regBlock4U[unit], cg_create_virtual_reg_list(procedure->module->heap, regLoop0U[unit], regU[unit], NULL));
+		PHI		(regBlock4V[unit], cg_create_virtual_reg_list(procedure->module->heap, regLoop0V[unit], regV[unit], NULL));
+	}
+
 	SUB_S	(regBlock4DiffX, regBlock4Condition, regXEnd, regBlock4X);
 	BEQ		(regBlock4Condition, endLoop2);
 
@@ -743,121 +788,125 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	// and texture level here
 	// ----------------------------------------------------------------------
 
-	if (m_State->m_Texture[TODO].MipmapFilterMode != RasterizerState::FilterModeNone) {
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		if (m_State->m_Texture[unit].MipmapFilterMode != RasterizerState::FilterModeNone) {
 
-		if (m_State->m_Texture[TODO].MipmapFilterMode == RasterizerState::FilterModeNearest ||
-			/* remove this */ m_State->m_Texture[TODO].MipmapFilterMode == RasterizerState::FilterModeLinear) {
-			//	EGL_Fixed maxDu = EGL_Mul(EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)), m_Texture->GetTexture(0)->GetWidth());
-			//	EGL_Fixed maxDv = EGL_Mul(EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)), m_Texture->GetTexture(0)->GetHeight());
+			if (m_State->m_Texture[unit].MipmapFilterMode == RasterizerState::FilterModeNearest ||
+				/* remove this */ m_State->m_Texture[unit].MipmapFilterMode == RasterizerState::FilterModeLinear) {
+				//	EGL_Fixed maxDu = EGL_Mul(EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)), m_Texture->GetTexture(0)->GetWidth());
+				//	EGL_Fixed maxDv = EGL_Mul(EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)), m_Texture->GetTexture(0)->GetHeight());
 
-			DECL_REG	(regAbsDuDy);
-			DECL_REG	(regAbsDvDy);
+				DECL_REG	(regAbsDuDy);
+				DECL_REG	(regAbsDvDy);
 
-			ABS			(regAbsDuDy, regLoop4DuDy);
-			ABS			(regAbsDvDy, regLoop4DvDy);
+				ABS			(regAbsDuDy, regLoop4DuDy[unit]);
+				ABS			(regAbsDvDy, regLoop4DvDy[unit]);
 
-			DECL_REG	(regMaxDu0);
-			DECL_REG	(regMaxDv0);
-			DECL_REG	(regMaxDu);
-			DECL_REG	(regMaxDv);
+				DECL_REG	(regMaxDu0);
+				DECL_REG	(regMaxDv0);
+				DECL_REG	(regMaxDu);
+				DECL_REG	(regMaxDv);
 
-			cg_virtual_reg_t * regLogWidth = LOAD_DATA(block, regAddrTextures, OFFSET_TEXTURE_LOG_WIDTH);
-			DECL_CONST_REG	(regConstant16, 16);
+				cg_virtual_reg_t * regLogWidth = LOAD_DATA(block, regAddrTextures[unit], OFFSET_TEXTURE_LOG_WIDTH);
+				DECL_CONST_REG	(regConstant16, 16);
 
-			DECL_REG	(regShiftDu);
-			DECL_REG	(regShiftDv);
+				DECL_REG	(regShiftDu);
+				DECL_REG	(regShiftDv);
 
-			MAX			(regMaxDu0, regAbsDuDx, regAbsDuDy);
-			SUB			(regShiftDu, regConstant16, regLogWidth);
-			ASR			(regMaxDu, regMaxDu0, regShiftDu);
+				MAX			(regMaxDu0, regAbsDuDx[unit], regAbsDuDy);
+				SUB			(regShiftDu, regConstant16, regLogWidth);
+				ASR			(regMaxDu, regMaxDu0, regShiftDu);
 
-			cg_virtual_reg_t * regLogHeight = LOAD_DATA(block, regAddrTextures, OFFSET_TEXTURE_LOG_HEIGHT);
-			MAX			(regMaxDv0, regAbsDvDx, regAbsDvDy);
-			SUB			(regShiftDv, regConstant16, regLogHeight);
-			ASR			(regMaxDv, regMaxDv0, regShiftDv);
+				cg_virtual_reg_t * regLogHeight = LOAD_DATA(block, regAddrTextures[unit], OFFSET_TEXTURE_LOG_HEIGHT);
+				MAX			(regMaxDv0, regAbsDvDx[unit], regAbsDvDy);
+				SUB			(regShiftDv, regConstant16, regLogHeight);
+				ASR			(regMaxDv, regMaxDv0, regShiftDv);
 
-			//	EGL_Fixed maxD = maxDu + maxDv;
-			//	EGL_Fixed rho = EGL_Mul(z2, maxD);
+				//	EGL_Fixed maxD = maxDu + maxDv;
+				//	EGL_Fixed rho = EGL_Mul(z2, maxD);
 
-			DECL_REG	(regMaxD);
-			DECL_REG	(regRho);
+				DECL_REG	(regMaxD);
+				DECL_REG	(regRho);
 
-			FADD		(regMaxD, regMaxDu, regMaxDv);
+				FADD		(regMaxD, regMaxDu, regMaxDv);
 
-			//	EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
-			DECL_REG	(regShiftedZ);
-			DECL_REG	(regConstant4);
-			DECL_REG	(regZ2);
+				//	EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
+				DECL_REG	(regShiftedZ);
+				DECL_REG	(regConstant4);
+				DECL_REG	(regZ2);
 
-			LDI			(regConstant4, 4);
-			LSL			(regShiftedZ, regBlock4Z, regConstant4);
-			FMUL		(regZ2, regShiftedZ, regShiftedZ);
+				LDI			(regConstant4, 4);
+				LSL			(regShiftedZ, regBlock4Z, regConstant4);
+				FMUL		(regZ2, regShiftedZ, regShiftedZ);
 
-			FMUL		(regRho, regMaxD, regZ2);
+				FMUL		(regRho, regMaxD, regZ2);
 
-			// we start with nearest/minification only selection; will add LINEAR later
-			//	m_MipMapLevel = EGL_Min(EGL_Max(0, Log2(rho)), m_MaxMipmapLevel);
+				// we start with nearest/minification only selection; will add LINEAR later
+				//	m_MipMapLevel = EGL_Min(EGL_Max(0, Log2(rho)), m_MaxMipmapLevel);
 
-			DECL_REG	(regLog2);
-			DECL_REG	(regMipmapLevel);
+				DECL_REG	(regLog2);
+				DECL_REG	(regMipmapLevel);
 
-			LOG2		(regLog2, regRho);
-			
-			cg_virtual_reg_t * regMaxMipmapLevel = LOAD_DATA(block, regInfo, OFFSET_MAX_MIPMAP_LEVEL);
-			
-			MIN			(regMipmapLevel, regLog2, regMaxMipmapLevel);
+				LOG2		(regLog2, regRho);
+				
+				cg_virtual_reg_t * regMaxMipmapLevel = LOAD_DATA(block, regInfo, OFFSET_MAX_MIPMAP_LEVEL + unit * sizeof(I32));
+				
+				MIN			(regMipmapLevel, regLog2, regMaxMipmapLevel);
 
-			// now multiply the texture block size by the mipmap level and add this to the texture base
+				// now multiply the texture block size by the mipmap level and add this to the texture base
 
-			assert		((1 << Log(sizeof(Texture))) == sizeof(Texture));
+				assert		((1 << Log(sizeof(Texture))) == sizeof(Texture));
 
-			DECL_CONST_REG	(regLogTextureSize, Log(sizeof(Texture)));
-			DECL_REG	(regScaledLevel);
+				DECL_CONST_REG	(regLogTextureSize, Log(sizeof(Texture)));
+				DECL_REG	(regScaledLevel);
 
-			LSL			(regScaledLevel, regMipmapLevel, regLogTextureSize);
-			ALLOC_REG	(regTexture);
-			ADD			(regTexture, regAddrTextures, regScaledLevel);
+				LSL			(regScaledLevel, regMipmapLevel, regLogTextureSize);
+				ALLOC_REG	(regTexture[unit]);
+				ADD			(regTexture[unit], regAddrTextures[unit], regScaledLevel);
 
-		// TBD: } else if (m_State->m_MipmapFilterMode == RasterizerState::FilterModeLinear) {
+			// TBD: } else if (m_State->m_MipmapFilterMode == RasterizerState::FilterModeLinear) {
+			}
 		}
 	}
-		//I32 deltaX = xEnd - x;
+		
+	//I32 deltaX = xEnd - x;
 
-		//EGL_Fixed endZ = EGL_Inverse(invZ + deltaX * deltaInvZ);
-		//EGL_Fixed endTu = EGL_Mul(invTu + deltaX * deltaInvU, endZ);
-		//EGL_Fixed endTv = EGL_Mul(invTv + deltaX * deltaInvV, endZ);
+	//EGL_Fixed endZ = EGL_Inverse(invZ + deltaX * deltaInvZ);
+	//EGL_Fixed endTu = EGL_Mul(invTu + deltaX * deltaInvU, endZ);
+	//EGL_Fixed endTv = EGL_Mul(invTv + deltaX * deltaInvV, endZ);
 	DECL_REG(regDeltaXDeltaInvZ);
-	DECL_REG(regDeltaXDeltaInvU);
-	DECL_REG(regDeltaXDeltaInvV);
-
 	DECL_REG(regEndWindowZ);
-	DECL_REG(regEndTextureU);
-	DECL_REG(regEndTextureV);
-
 	DECL_REG	(regEndZ);
-	DECL_REG	(regEndU);
-	DECL_REG	(regEndV);
+
+	DECL_REG_ARRAY	(regDeltaXDeltaInvU, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regDeltaXDeltaInvV, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regEndTextureU, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regEndTextureV, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regEndU, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regEndV, EGL_NUM_TEXTURE_UNITS);
 
 	{
 		DECL_REG	(regDeltaInvZ);
-		DECL_REG	(regDeltaInvU);
-		DECL_REG	(regDeltaInvV);
 
 		LDW		(regDeltaInvZ, regAddrEndWindowZ);
 
 		MUL		(regDeltaXDeltaInvZ, regBlock4DiffX, regDeltaInvZ);
-		LDW		(regDeltaInvU, regAddrEndTextureU);
 		FADD	(regEndWindowZ, regBlock4InvZ, regDeltaXDeltaInvZ);
 		FINV	(regEndZ, regEndWindowZ);
 
-		MUL		(regDeltaXDeltaInvU, regBlock4DiffX, regDeltaInvU);
-		LDW		(regDeltaInvV, regAddrEndTextureV);
-		FADD	(regEndTextureU, regBlock4InvU, regDeltaXDeltaInvU);
-		MUL		(regDeltaXDeltaInvV, regBlock4DiffX, regDeltaInvV);
+		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+			DECL_REG	(regDeltaInvU);
+			DECL_REG	(regDeltaInvV);
 
-		FADD	(regEndTextureV, regBlock4InvV, regDeltaXDeltaInvV);
-		FMUL	(regEndU, regEndZ, regEndTextureU);
-		FMUL	(regEndV, regEndZ, regEndTextureV);
+			LDW		(regDeltaInvU, regAddrEndTextureU[unit]);
+			MUL		(regDeltaXDeltaInvU[unit], regBlock4DiffX, regDeltaInvU);
+			LDW		(regDeltaInvV, regAddrEndTextureV[unit]);
+			FADD	(regEndTextureU[unit], regBlock4InvU[unit], regDeltaXDeltaInvU[unit]);
+			MUL		(regDeltaXDeltaInvV[unit], regBlock4DiffX, regDeltaInvV);
+			FADD	(regEndTextureV[unit], regBlock4InvV[unit], regDeltaXDeltaInvV[unit]);
+			FMUL	(regEndU[unit], regEndZ, regEndTextureU[unit]);
+			FMUL	(regEndV[unit], regEndZ, regEndTextureV[unit]);
+		}
 	}
 
 		//invSpan = EGL_Inverse(EGL_FixedFromInt(deltaX));
@@ -879,11 +928,12 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		//EGL_Fixed deltaTu = EGL_Mul(endTu - tu, invSpan);
 		//EGL_Fixed deltaTv = EGL_Mul(endTv - tv, invSpan);
 	DECL_REG	(regBlock4DiffZ);
-	DECL_REG	(regBlock4DiffU);
-	DECL_REG	(regBlock4DiffV);
 	DECL_REG	(regLoop2ScaledDiffZ);
-	DECL_REG	(regLoop2ScaledDiffU);
-	DECL_REG	(regLoop2ScaledDiffV);
+
+	DECL_REG_ARRAY	(regBlock4DiffU, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regBlock4DiffV, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop2ScaledDiffU, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop2ScaledDiffV, EGL_NUM_TEXTURE_UNITS);
 	//DECL_REG	(regLoop2ScaledDiffUOver2);
 	//DECL_REG	(regLoop2ScaledDiffVOver2);
 	//DECL_REG	(regAdjustedU);
@@ -892,16 +942,18 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FSUB	(regBlock4DiffZ, regEndZ, regBlock4Z);
 	FMUL	(regLoop2ScaledDiffZ, regBlock4DiffZ, regBlock4InvSpan);
 
-	FSUB	(regBlock4DiffU, regEndU, regBlock4U);
-	FSUB	(regBlock4DiffV, regEndV, regBlock4V);
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		FSUB	(regBlock4DiffU[unit], regEndU[unit], regBlock4U[unit]);
+		FSUB	(regBlock4DiffV[unit], regEndV[unit], regBlock4V[unit]);
 
-	FMUL	(regLoop2ScaledDiffU, regBlock4DiffU, regBlock4InvSpan);
-	//ASR		(regLoop2ScaledDiffUOver2, regLoop2ScaledDiffU, regConstant1);
-	//FADD		(regAdjustedU, regBlock4U, regLoop2ScaledDiffUOver2);
+		FMUL	(regLoop2ScaledDiffU[unit], regBlock4DiffU[unit], regBlock4InvSpan);
+		//ASR		(regLoop2ScaledDiffUOver2, regLoop2ScaledDiffU, regConstant1);
+		//FADD		(regAdjustedU, regBlock4U, regLoop2ScaledDiffUOver2);
 
-	FMUL	(regLoop2ScaledDiffV, regBlock4DiffV, regBlock4InvSpan);
-	//ASR		(regLoop2ScaledDiffVOver2, regLoop2ScaledDiffV, regConstant1);
-	//FADD		(regAdjustedV, regBlock4V, regLoop2ScaledDiffVOver2);
+		FMUL	(regLoop2ScaledDiffV[unit], regBlock4DiffV[unit], regBlock4InvSpan);
+		//ASR		(regLoop2ScaledDiffVOver2, regLoop2ScaledDiffV, regConstant1);
+		//FADD		(regAdjustedV, regBlock4V, regLoop2ScaledDiffVOver2);
+	}
 
 	//for (; x < xEnd; ++x) {
 	block = cg_block_create(procedure, 4);
@@ -911,10 +963,6 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	DECL_REG	(regLoop2XEntry);
 	DECL_REG	(regLoop2X);
-	DECL_REG	(regLoop2UEntry);
-	DECL_REG	(regLoop2U);
-	DECL_REG	(regLoop2VEntry);
-	DECL_REG	(regLoop2V);
 	DECL_REG	(regLoop2FogEntry);
 	DECL_REG	(regLoop2Fog);
 	DECL_REG	(regLoop2DepthEntry);
@@ -930,8 +978,6 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 
 	PHI		(regLoop2XEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2X, regBlock4X, NULL));
-	PHI		(regLoop2UEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2U, regBlock4U, NULL));
-	PHI		(regLoop2VEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2V, regBlock4V, NULL));
 	PHI		(regLoop2FogEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2Fog, regLoop1Fog, regStartFog, NULL));
 	PHI		(regLoop2DepthEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2Depth, regLoop1Depth, regStartDepth, NULL));
 	PHI		(regLoop2REntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2R, regLoop1R, regStartColorR, NULL));
@@ -939,11 +985,24 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	PHI		(regLoop2BEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2B, regLoop1B, regStartColorB, NULL));
 	PHI		(regLoop2AEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2A, regLoop1A, regStartColorA, NULL));
 
+	DECL_REG_ARRAY	(regLoop2UEntry, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop2U, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop2VEntry, EGL_NUM_TEXTURE_UNITS);
+	DECL_REG_ARRAY	(regLoop2V, EGL_NUM_TEXTURE_UNITS);
+
 	FragmentGenerationInfo info2;
+
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		PHI		(regLoop2UEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regLoop2U[unit], regBlock4U[unit], NULL));
+		PHI		(regLoop2VEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regLoop2V[unit], regBlock4V[unit], NULL));
+
+		info2.regU[unit] = regLoop2UEntry[unit];
+		info2.regV[unit] = regLoop2VEntry[unit]; 
+		info2.regTexture[unit] = regTexture[unit];
+	}
+
 	info2.regX = regLoop2XEntry;
 	info2.regY = 0;
-	info2.regU = regLoop2UEntry;
-	info2.regV = regLoop2VEntry; 
 	info2.regFog = regLoop2FogEntry;
 	info2.regDepth = regLoop2DepthEntry;
 	info2.regR = regLoop2REntry;
@@ -951,7 +1010,6 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	info2.regB = regLoop2BEntry; 
 	info2.regA = regLoop2AEntry;	
 	info2.regInfo = regInfo;
-	info2.regTexture = regTexture;
 
 	GenerateFragment(procedure, block, postFragmentLoop2, info2, 4); 
 
@@ -973,10 +1031,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 				//tu += deltaTu;
 				//tv += deltaTv;
 		LDW		(regDeltaDepth, regAddrEndWindowDepth);
-		FADD	(regLoop2V, regLoop2VEntry, regLoop2ScaledDiffV);
 		LDW		(regColorIncrementR, regAddrEndColorR);
 		FADD	(regLoop2Depth, regLoop2DepthEntry, regDeltaDepth);
-		FADD	(regLoop2U, regLoop2UEntry, regLoop2ScaledDiffU);
 		LDW		(regColorIncrementG, regAddrEndColorG);
 		FADD	(regLoop2R, regLoop2REntry, regColorIncrementR);
 		LDW		(regColorIncrementB, regAddrEndColorB);
@@ -986,6 +1042,11 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		LDW		(regDeltaFog, regAddrEndFog);
 		FADD	(regLoop2A, regLoop2AEntry, regColorIncrementA);
 		FADD	(regLoop2Fog, regLoop2FogEntry, regDeltaFog);
+
+		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+			FADD	(regLoop2V[unit], regLoop2VEntry[unit], regLoop2ScaledDiffV[unit]);
+			FADD	(regLoop2U[unit], regLoop2UEntry[unit], regLoop2ScaledDiffU[unit]);
+		}
 	}
 			//++x;
 	ADD		(regLoop2X, regLoop2XEntry, regConstant1);

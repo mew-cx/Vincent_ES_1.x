@@ -80,6 +80,12 @@ extern "C" {
 using namespace EGL;
 
 
+#define ALLOC_REG(reg) reg = cg_virtual_reg_create(procedure, cg_reg_type_general)
+#define ALLOC_FLAGS(reg) reg = cg_virtual_reg_create(procedure, cg_reg_type_flags)
+#define DECL_REG(reg) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_general)
+#define DECL_FLAGS(reg) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_flags)
+#define DECL_CONST_REG(reg, value) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_general); LDI(reg, value)
+
 
 namespace {
 
@@ -176,3 +182,236 @@ void CodeGenerator :: Compile(FunctionCache * target, FunctionCache::FunctionTyp
 	cg_heap_destroy(module->heap);
 }
 
+
+cg_virtual_reg_t * CodeGenerator :: Mul255(cg_block_t * block, cg_virtual_reg_t * first, cg_virtual_reg_t * second) {
+	cg_proc_t * procedure = block->proc;
+
+	DECL_REG		(regProduct);
+	DECL_CONST_REG	(constant8, 8);
+	DECL_REG		(regShifted);
+	DECL_REG		(regAdjusted);
+	DECL_REG		(regFinal);
+	
+	MUL			(regProduct,	first, second);
+	ASR			(regShifted,	regProduct, constant8);
+	ADD			(regAdjusted,	regProduct, regShifted);
+	ASR			(regFinal,		regAdjusted, constant8);
+
+	return regFinal;
+}
+
+cg_virtual_reg_t * CodeGenerator :: AddSaturate255(cg_block_t * block, cg_virtual_reg_t * first, cg_virtual_reg_t * second) {
+	cg_proc_t * procedure = block->proc;
+
+	DECL_REG		(regSum);
+	DECL_CONST_REG	(constant255, 0xff);
+	DECL_REG		(regResult);
+
+	ADD				(regSum, first, second);
+	MIN				(regResult, regSum, constant255);
+
+	return regResult;
+}
+
+cg_virtual_reg_t * CodeGenerator :: ClampTo255(cg_block_t * block, cg_virtual_reg_t * value) {
+	cg_proc_t * procedure = block->proc;
+
+	DECL_CONST_REG	(constant0, 0);
+	DECL_CONST_REG	(constant8, 8);
+	DECL_CONST_REG	(constant16, 16);
+	DECL_CONST_REG	(constant1, 0x10000);
+
+	DECL_REG	(regClamped0);
+	DECL_REG	(regClamped1);
+	DECL_REG	(regShifted);
+	DECL_REG	(regAdjusted);
+	DECL_REG	(regResult);
+
+	MAX		(regClamped0, value, constant0);
+	MIN		(regClamped1, regClamped0, constant1);
+
+	LSR		(regShifted, regClamped1, constant16);
+	SUB		(regAdjusted, regClamped1, regShifted);
+	LSR		(regResult, regAdjusted, constant8);
+
+	return regResult;
+}
+
+cg_virtual_reg_t * CodeGenerator :: Add(cg_block_t * block, cg_virtual_reg_t * first, cg_virtual_reg_t * second) {
+	cg_proc_t * procedure = block->proc;
+
+	DECL_REG		(regResult);
+
+	ADD				(regResult, first, second);
+
+	return regResult;
+}
+
+cg_virtual_reg_t * CodeGenerator :: Sub(cg_block_t * block, cg_virtual_reg_t * first, cg_virtual_reg_t * second) {
+	cg_proc_t * procedure = block->proc;
+
+	DECL_REG		(regResult);
+
+	SUB				(regResult, first, second);
+
+	return regResult;
+}
+
+cg_virtual_reg_t * CodeGenerator :: ExtractBitFieldTo255(cg_block_t * block, cg_virtual_reg_t * value, size_t low, size_t high) {
+	cg_proc_t * procedure = block->proc;
+
+	if (high == low) {
+		if (high < 8) {
+			DECL_REG		(regShifted);
+			DECL_CONST_REG	(constantShift, 8 - high);
+
+			LSL				(regShifted, value, constantShift);
+
+			value = regShifted;
+		} else if (high > 8) {
+			DECL_REG		(regShifted);
+			DECL_CONST_REG	(constantShift, high - 8);
+
+			LSR				(regShifted, value, constantShift);
+
+			value = regShifted;
+		}
+
+		DECL_CONST_REG	(constantMask,	0x100);
+		DECL_REG		(regMasked);
+
+		AND				(regMasked,		value, constantMask);
+
+		DECL_CONST_REG	(constant8,		8);
+		DECL_REG		(regShifted);
+		DECL_REG		(regAdjusted);
+
+		LSR				(regShifted,	value, constant8);
+		SUB				(regAdjusted,	value, regShifted);
+
+		return regAdjusted;
+	}
+
+	if (high < 7) {
+		DECL_REG		(regShifted);
+		DECL_CONST_REG	(constantShift, 7 - high);
+
+		LSL				(regShifted, value, constantShift);
+
+		value = regShifted;
+	} else if (high > 7) {
+		DECL_REG		(regShifted);
+		DECL_CONST_REG	(constantShift, high - 7);
+
+		LSR				(regShifted, value, constantShift);
+
+		value = regShifted;
+	}
+
+	size_t bits = high - low + 1;
+	static const U8 mask[9] = { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
+
+	DECL_CONST_REG		(constantMask,	mask[bits]);
+	DECL_REG			(regMasked);
+
+	AND					(regMasked,		value, constantMask);
+	value = regMasked;
+
+	while (bits < 8) {
+		DECL_CONST_REG	(constantShift,	bits);
+		DECL_REG		(regShifted);
+		DECL_REG		(regOred);
+
+		LSR				(regShifted,	value, constantShift);
+		OR				(regOred,		value, regShifted);
+
+		value = regOred;
+		bits += 2;
+	}
+
+	return value;
+}
+
+cg_virtual_reg_t * CodeGenerator :: BitFieldFrom255(cg_block_t * block, cg_virtual_reg_t * value, size_t low, size_t high) {
+	cg_proc_t * procedure = block->proc;
+
+	size_t bits = high - low + 1;
+	assert(bits <= 8);
+
+	if (bits != 8) {
+		static const U8 mask[9] = { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
+
+		DECL_CONST_REG		(constantMask,	mask[bits]);
+		DECL_REG			(regMasked);
+
+		AND					(regMasked,		value, constantMask);
+		value = regMasked;
+	}
+	
+	if (low) {
+		DECL_CONST_REG		(constantShift,	low);
+		DECL_REG			(regShifted);
+
+		LSL					(regShifted,	value, constantShift);
+		value = regShifted;
+	}
+
+	return value;
+}
+
+// ----------------------------------------------------------------------
+// Emit code to convert a representation of a color as individual
+// R, G and B components into a 16-bit 565 representation
+//
+// R, G B are within the range 0..0xff
+// ----------------------------------------------------------------------
+void CodeGenerator :: Color565FromRGB(cg_block_t * block, cg_virtual_reg_t * regRGB,
+	cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b) {
+	cg_proc_t * procedure = block->proc;
+
+	cg_virtual_reg_t *	regFieldR = BitFieldFrom255(block, r, 11, 15);
+	cg_virtual_reg_t *	regFieldG = BitFieldFrom255(block, g, 5, 10);
+	cg_virtual_reg_t *	regFieldB = BitFieldFrom255(block, b, 0, 4);
+
+	DECL_REG	(regBG);
+
+	OR			(regBG,		regFieldB, regFieldG);
+	OR			(regRGB,	regBG, regFieldR);
+}
+
+
+cg_virtual_reg_t * CodeGenerator :: Color565FromRGB(cg_block_t * block,
+													cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b) {
+	cg_proc_t * procedure = block->proc;
+
+	DECL_REG	(regResult);
+
+	Color565FromRGB(block, regResult, r, g, b);
+
+	return regResult;
+}
+
+
+cg_virtual_reg_t * CodeGenerator :: Blend255(cg_block_t * block, cg_virtual_reg_t * first, cg_virtual_reg_t * second,
+											 cg_virtual_reg_t * alpha) {
+
+	cg_proc_t * procedure = block->proc;
+
+	DECL_REG		(regDiff);
+
+	SUB				(regDiff,		second, first);		// diff = (second - first)
+
+	cg_virtual_reg_t *	regProd = Mul255(block, regDiff, alpha);	//	alpha * (second - first)
+
+	return Add(block, first, regDiff);					// first + alpha * (second - first)
+}
+
+
+cg_virtual_reg_t * CodeGenerator :: Blend255(cg_block_t * block, U8 constant, cg_virtual_reg_t * second,
+											 cg_virtual_reg_t * alpha) {
+	cg_proc_t * procedure = block->proc;
+
+	DECL_CONST_REG	(regConst,	constant);
+
+	return Blend255(block, regConst, second, alpha);
+}
