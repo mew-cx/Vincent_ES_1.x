@@ -154,6 +154,13 @@ namespace EGL {
 			return *this;
 		}
 
+		inline FractionalColor operator-(const FractionalColor& other) const {
+			return FractionalColor(r - other.r, g - other.g, b - other.b, a - other.a);
+		}
+
+		inline FractionalColor operator+(const FractionalColor& other) const {
+			return FractionalColor(r + other.r, g + other.g, b + other.b, a + other.a);
+		}
 
 		inline void Accumulate(const FractionalColor& color,
 							EGL_Fixed scale) {

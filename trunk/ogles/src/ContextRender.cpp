@@ -474,20 +474,13 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 	// apply projection matrix to eye coordinates 
 	Vec4D clipCoords = m_ProjectionMatrixStack.CurrentMatrix() * eyeCoords;
 
-#if 0
 	// perform depth division
 	I32 invDenominator = EGL_Inverse(clipCoords.w());
-	gppVec3DScale_16_32s(reinterpret_cast<GPP_VEC3D *>(&clipCoords), invDenominator);
+	Vec3D viewPortScale = m_ViewportScale * invDenominator;
 
-	// apply viewport transform to clip coordinates -> window coordinates
-	gppMul_16_32s(clipCoords.x, m_ViewportScale.x, &clipCoords.x);
-	gppMul_16_32s(clipCoords.y, m_ViewportScale.y, &clipCoords.y);
-	gppMul_16_32s(clipCoords.z, m_ViewportScale.z, &clipCoords.z);
-	gppVec3DAdd_n_32s(reinterpret_cast<GPP_VEC3D *>(&clipCoords), &m_ViewportOrigin, 
-		reinterpret_cast<GPP_VEC3D *>(&rasterPos->m_WindowsCoords));
-	rasterPos->m_WindowsCoords.w = clipCoords.w;
-
-#endif
+	rasterPos->m_WindowCoords.x = EGL_Mul(clipCoords.x(), viewPortScale.x()) + m_ViewportOrigin.x();
+	rasterPos->m_WindowCoords.y = EGL_Mul(clipCoords.y(), viewPortScale.y()) + m_ViewportOrigin.y();
+	rasterPos->m_WindowCoords.w = clipCoords.w();
 
 	if (m_LightingEnabled) {
 		// for each light that is turned on, call into calculation

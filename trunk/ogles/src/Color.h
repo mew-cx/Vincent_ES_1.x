@@ -70,11 +70,11 @@ namespace EGL {
 		}
 
 		inline U16 ConvertTo565() const {
-			return b >> 3 | (g & 0xFC) << 3 | (b & 0xF8) << 8;
+			return r >> 3 | (g & 0xFC) << 3 | (b & 0xF8) << 8;
 		}
 
 		inline U16 ConvertTo5551() const {
-			return b >> 3 | (g & 0xF8) << 2 | (b & 0xF8) << 7 | (a & 0x80) << 8;
+			return r >> 3 | (g & 0xF8) << 2 | (b & 0xF8) << 7 | (a & 0x80) << 8;
 		}
 
 		inline U16 ConvertTo4444() const {

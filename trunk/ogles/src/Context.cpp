@@ -65,6 +65,7 @@ Context :: Context(const Config & config)
 	DepthRangex(VIEWPORT_NEAR, VIEWPORT_FAR);
 	m_Textures.push_back(new MultiTexture());
 	GetRasterizerState()->SetTexture(m_Textures[0]);
+	m_Rasterizer = new Rasterizer(GetRasterizerState());
 
 	m_LightModelAmbient.r = m_LightModelAmbient.g = m_LightModelAmbient.b = F(0.2f);
 	m_LightModelAmbient.a = F(1.0);
@@ -119,6 +120,7 @@ void Context :: SetDrawSurface(EGL::Surface * surface) {
 
 	m_DrawSurface = surface;
 	m_DrawSurface->SetCurrentContext(this);
+	m_Rasterizer->SetSurface(surface);
 }
 
 
