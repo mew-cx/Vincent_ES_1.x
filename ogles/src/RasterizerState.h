@@ -209,8 +209,6 @@ namespace EGL {
 		bool					m_PointSmoothEnabled;
 		bool					m_LineSmoothEnabled;
 
-		EGL_Fixed				m_DepthRangeNear, m_DepthRangeFar;
-
 		Color					m_FogColor;
 
 		bool					m_FogEnabled;
@@ -293,12 +291,6 @@ namespace EGL {
 
 	inline void RasterizerState :: SetTexEnvColor(const Color& color) {
 		m_TexEnvColor = color;
-		VersionChanged();
-	}
-
-	inline void RasterizerState :: SetDepthRange(EGL_Fixed zNear, EGL_Fixed zFar) {
-		m_DepthRangeNear = zNear;
-		m_DepthRangeFar = zFar;
 		VersionChanged();
 	}
 
