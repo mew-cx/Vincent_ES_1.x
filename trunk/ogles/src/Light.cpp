@@ -135,6 +135,62 @@ void Light :: InitWithMaterial(const Material& material) {
 	m_EffectiveSpecularColor = material.GetSpecularColor() * m_SpecularColor;
 }
 
+// --------------------------------------------------------------------------
+// One-sided lightning calculation
+// --------------------------------------------------------------------------
+
+void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
+							  const Material& currMaterial,
+							  FractionalColor& result) {
+	// initially, do not support spotlights to simplify calculations,
+	// i.e. set spot_i from lightning equation (p. 48) to 1.0
+
+	result += currMaterial.GetAmbientColor() * m_AmbientColor;
+
+	Vec3D vp_li = EGL_Direction(vertexCoords, m_Position);
+	EGL_Fixed sqLength = vp_li.LengthSq();			// keep squared length around for later
+	vp_li.Normalize();								// can optimizer factor this out?
+	EGL_Fixed diffuseFactor = vertexNormal * vp_li;
+
+	if (diffuseFactor > 0) {
+		EGL_Fixed att = EGL_ONE;
+
+		if (m_SpotCutoff != EGL_FixedFromInt(180)) {
+			EGL_Fixed cosine = vp_li * m_SpotDirection;
+
+			if (cosine < m_CosineSpotCutoff) {
+				return;
+			} else {
+				att = EGL_Power(cosine, m_SpotExponent);
+			}
+		}
+
+		if (m_Position.w() != 0) {
+			EGL_Fixed length = EGL_Sqrt(sqLength);
+
+			att = EGL_Mul(att, EGL_Inverse(m_ConstantAttenuation + 
+				EGL_Mul(m_LinearAttenuation, length) +
+				EGL_Mul(m_QuadraticAttenuation, sqLength)));
+		}
+
+		result.Accumulate(currMaterial.GetDiffuseColor() * m_DiffuseColor, EGL_Mul(diffuseFactor, att));
+
+			// add specular component
+			// calculate h^
+		Vec3D h = vp_li + Vec3D(0, 0, EGL_ONE);
+		h.Normalize();
+		EGL_Fixed specularFactor = vertexNormal * h;
+
+		result.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
+			EGL_Mul(att, EGL_Power(specularFactor, currMaterial.GetSpecularExponent())));
+	}
+}
+
+
+// --------------------------------------------------------------------------
+// Two-sided lightning calculation
+// --------------------------------------------------------------------------
+
 void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
 							  const Material& currMaterial,
 							  FractionalColor& result, 
@@ -142,13 +198,13 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 	// initially, do not support spotlights to simplify calculations,
 	// i.e. set spot_i from lightning equation (p. 48) to 1.0
 
-	result2 = (result += currMaterial.GetAmbientColor() * m_AmbientColor);
+	result += currMaterial.GetAmbientColor() * m_AmbientColor;
+	result2 += currMaterial.GetAmbientColor() * m_AmbientColor;
 
 	Vec3D vp_li = EGL_Direction(vertexCoords, m_Position);
 	EGL_Fixed sqLength = vp_li.LengthSq();			// keep squared length around for later
 	vp_li.Normalize();								// can optimizer factor this out?
 	EGL_Fixed diffuseFactor = vertexNormal * vp_li;
-//	EGL_Fixed diffuseFactor_back = negVertexNormal * vp_li;
 
 //either front or back color have to be enabled...
 //	if (diffuseFactor > 0) {

@@ -81,6 +81,9 @@ public:
 	void InitWithMaterial(const Material& material);
 
 	void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
+		const Material& currMaterial, FractionalColor& result);
+
+	void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
 		const Material& currMaterial, FractionalColor& result, 
 		FractionalColor& result2);
 

@@ -625,17 +625,24 @@ inline bool Context :: IsCulled(RasterPos& a, RasterPos& b, RasterPos& c) {
 
 void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
 
-	bool cullResult;
-	cullResult = IsCulled(a, b, c);
-
-	if (cullResult) { //do work only when triangle is backward facing.
-			if (m_CullFaceEnabled)
-				return;
-			else {
-				a.m_Color = a.m_BackColor;
-				b.m_Color = b.m_BackColor;
-				c.m_Color = c.m_BackColor;
-			}
+	if (m_CullFaceEnabled) {
+		if (IsCulled(a, b, c)) {
+			return;
+		}
+	} else if (m_TwoSidedLightning) {
+		if (IsCulled(a, b, c)) {
+			a.m_Color = a.m_BackColor;
+			b.m_Color = b.m_BackColor;
+			c.m_Color = c.m_BackColor;
+		} else {
+			a.m_Color = a.m_FrontColor;
+			b.m_Color = b.m_FrontColor;
+			c.m_Color = c.m_FrontColor;
+		}
+	} else {
+		a.m_Color = a.m_FrontColor;
+		b.m_Color = b.m_FrontColor;
+		c.m_Color = c.m_FrontColor;
 	}
 
 	RasterPos * array1[16];

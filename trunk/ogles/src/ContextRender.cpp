@@ -560,25 +560,41 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 		} else {
 			color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
 		}
-		color += m_FrontMaterial.GetEmisiveColor();
-			
-		for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
-			if (m_LightEnabled & mask) {
-				m_Lights[index].AccumulateLight(eyeCoords, eyeNormal, 
-					m_FrontMaterial, color, backColor);
-			}
-		}
 
-		color.Clamp();
-		backColor.Clamp();
-		
-		rasterPos->m_Color = color;
-		rasterPos->m_BackColor = backColor;
+		color += m_FrontMaterial.GetEmisiveColor();
+
+		if (m_TwoSidedLightning) {
+
+			backColor = color;		
+
+			for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
+				if (m_LightEnabled & mask) {
+					m_Lights[index].AccumulateLight(eyeCoords, eyeNormal, 
+						m_FrontMaterial, color, backColor);
+				}
+			}
+
+			color.Clamp();
+			backColor.Clamp();
+			
+			rasterPos->m_FrontColor = color;
+			rasterPos->m_BackColor = backColor;
+		} else {
+			for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
+				if (m_LightEnabled & mask) {
+					m_Lights[index].AccumulateLight(eyeCoords, eyeNormal, 
+						m_FrontMaterial, color);
+				}
+			}
+
+			color.Clamp();
+		}
+			
 		// populate fog density here...
 		rasterPos->m_FogDensity = FogDensity(eyeDistance);
 	} else {
 		//	copy current colors to raster pos
-		rasterPos->m_Color = m_CurrentRGBA;
+		rasterPos->m_FrontColor = rasterPos->m_BackColor = m_CurrentRGBA;
 
 		if (m_RasterizerState.IsEnabledFog()) {
 			// populate fog density here...

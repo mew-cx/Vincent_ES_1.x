@@ -582,7 +582,8 @@ private:
 
 		EGL_Fixed			m_DepthRangeBase, m_DepthRangeFactor;
 
-		bool				m_LightingEnabled;	// is lightning enabled?
+		bool				m_LightingEnabled;		// is lightning enabled?
+		bool				m_TwoSidedLightning;	// do we have two-sided lightning
 		bool				m_CullFaceEnabled;
 		bool				m_ReverseFaceOrientation;
 		bool				m_ColorMaterialEnabled;

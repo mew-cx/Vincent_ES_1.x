@@ -88,7 +88,8 @@ namespace EGL {
 	struct RasterPos {
 		Vec4D				m_ClipCoords;
 		ScreenCoord			m_WindowCoords;		
-		FractionalColor		m_Color;			// color in range 0..255
+		FractionalColor		m_Color;
+		FractionalColor		m_FrontColor;		// color in range 0..255
 		FractionalColor		m_BackColor;		
 		TexCoord			m_TextureCoords;	// texture coords 0..1
 		EGL_Fixed			m_FogDensity;		// fog density at this vertex

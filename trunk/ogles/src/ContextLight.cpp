@@ -102,6 +102,13 @@ void Context :: Fogxv(GLenum pname, const GLfixed *params) {
 }
 
 void Context :: LightModelx(GLenum pname, GLfixed param) { 
+	switch (pname) {
+	case GL_LIGHT_MODEL_TWO_SIDE:
+		m_TwoSidedLightning = (param != 0);
+		break;
+	default:
+		RecordError(GL_INVALID_ENUM);
+	}
 }
 
 void Context :: LightModelxv(GLenum pname, const GLfixed *params) { 
