@@ -87,6 +87,7 @@ namespace {
 	}
 }
 
+#if 0
 
 void CodeGenerator :: GenerateRasterPoint() {
 
@@ -138,7 +139,7 @@ void CodeGenerator :: GenerateRasterPoint() {
 
 	cg_block_ref_t * postFragment = cg_block_ref_create(procedure);
 
-	GenerateFragment(procedure, block, postFragment, info, 1);
+	GenerateFragment(procedure, block, postFragment, info, 1, true);
 
 	block = cg_block_create(procedure, 1);
 	postFragment->block = block;
@@ -147,3 +148,226 @@ void CodeGenerator :: GenerateRasterPoint() {
 
 }
 
+#endif
+
+void CodeGenerator :: GenerateRasterPoint() {
+
+	cg_proc_t * procedure = cg_proc_create(m_Module);
+
+	// The signature of the generated function is:
+	//	(const RasterInfo * info, const RasterPos& pos);
+
+	DECL_REG	(regInfo);		// virtual register containing info structure pointer
+	DECL_REG	(regPos);		// virtual register containing vertex coordinate pointer
+	DECL_REG	(regSize);		// virtual register containing point size
+
+	procedure->num_args = 3;	// the previous three declarations make up the arguments
+
+	cg_block_t * block = cg_block_create(procedure, 1);
+
+	// load argument values
+	cg_virtual_reg_t * regTexture = LOAD_DATA(block, regInfo, OFFSET_TEXTURES);
+
+	FragmentGenerationInfo info;
+
+	info.regInfo = regInfo;
+	info.regTexture = regTexture;
+
+	// EGL_Fixed halfSize = size / 2;
+	DECL_REG		(regHalfSize);
+	DECL_CONST_REG	(regConstant1, 1);
+
+	ASR				(regHalfSize, regSize, regConstant1);
+
+	// I32 xmin = EGL_IntFromFixed(point.m_WindowCoords.x - halfSize + EGL_HALF);
+	// I32 xmax = EGL_IntFromFixed(point.m_WindowCoords.x + halfSize + (EGL_HALF - 1));
+	// I32 ymin = EGL_IntFromFixed(point.m_WindowCoords.y - halfSize + EGL_HALF);
+	// I32 ymax = EGL_IntFromFixed(point.m_WindowCoords.y + halfSize + (EGL_HALF - 1));
+
+	DECL_CONST_REG	(regHalf, 0x8000);
+	DECL_CONST_REG	(regHalf_1, 0x7fff);
+	DECL_REG		(regWindowXPlus);
+	DECL_REG		(regWindowXMinus);
+	DECL_REG		(regWindowYPlus);
+	DECL_REG		(regWindowYMinus);
+	DECL_REG		(regWindowXPlusSized);
+	DECL_REG		(regWindowXMinusSized);
+	DECL_REG		(regWindowYPlusSized);
+	DECL_REG		(regWindowYMinusSized);
+
+	DECL_REG		(regXMin);
+	DECL_REG		(regXMax);
+	DECL_REG		(regYMin);
+	DECL_REG		(regYMax);
+
+	cg_virtual_reg_t *	regPointWindowX = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_WINDOW_X);
+
+	FADD			(regWindowXPlus, regPointWindowX, regHalf);
+	FSUB			(regWindowXPlusSized, regWindowXPlus, regHalfSize);
+	TRUNC			(regXMin, regWindowXPlusSized);
+
+	FADD			(regWindowXMinus, regPointWindowX, regHalf_1);
+	FADD			(regWindowXMinusSized, regWindowXMinus, regHalfSize);
+	TRUNC			(regXMax, regWindowXMinusSized);
+
+	cg_virtual_reg_t *	regPointWindowY = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_WINDOW_Y);
+
+	FADD			(regWindowYPlus, regPointWindowY, regHalf);
+	FSUB			(regWindowYPlusSized, regWindowYPlus, regHalfSize);
+	TRUNC			(regYMin, regWindowYPlusSized);
+
+	FADD			(regWindowYMinus, regPointWindowY, regHalf_1);
+	FADD			(regWindowYMinusSized, regWindowYMinus, regHalfSize);
+	TRUNC			(regYMax, regWindowYMinusSized);
+
+	// EGL_Fixed depth = point.m_WindowCoords.depth;
+	// FractionalColor baseColor = point.m_Color;
+	// EGL_Fixed fogDensity = point.m_FogDensity;
+
+	info.regFog = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_FOG);
+	info.regDepth = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_WINDOW_DEPTH);
+	info.regR = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_COLOR_R);
+	info.regG = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_COLOR_G);
+	info.regB = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_COLOR_B);
+	info.regA = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_COLOR_A);
+
+	cg_block_ref_t * blockEndProc = cg_block_ref_create(procedure);
+
+	if (!m_State->m_Point.SpriteEnabled && !m_State->m_Point.CoordReplaceEnabled) {
+		//	EGL_Fixed tu = point.m_TextureCoords.tu;
+		//	EGL_Fixed tv = point.m_TextureCoords.tv;
+		info.regU = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TU);
+		info.regV = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TV); 
+
+		//	for (I32 y = ymin; y <= ymax; y++) {
+		block = cg_block_create(procedure, 3);
+		cg_block_ref_t * loopYBegin = cg_block_ref_create(procedure);
+		loopYBegin->block = block;
+
+		DECL_REG	(regYLoopEnter);
+		DECL_REG	(regYLoopExit);
+
+		PHI			(regYLoopEnter, cg_create_virtual_reg_list(procedure->module->heap, regYLoopExit, regYMin, NULL));
+
+		info.regY =	regYLoopEnter;
+
+		DECL_REG	(regInitX);
+		OR			(regInitX, regXMin, regXMin);
+
+		//		for (I32 x = xmin; x <= xmax; x++) {
+		block = cg_block_create(procedure, 9);
+		cg_block_ref_t * loopXBegin = cg_block_ref_create(procedure);
+		loopXBegin->block = block;
+
+		DECL_REG	(regXLoopEnter);
+		DECL_REG	(regXLoopExit);
+
+		PHI			(regXLoopEnter, cg_create_virtual_reg_list(procedure->module->heap, regXLoopExit, regInitX, NULL));
+
+		info.regX =	regXLoopEnter;
+
+		//			Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
+
+		cg_block_ref_t * postFragment = cg_block_ref_create(procedure);
+
+		GenerateFragment(procedure, block, postFragment, info, 9, true);
+
+		block = cg_block_create(procedure, 9);
+		postFragment->block = block;
+
+		FADD		(regXLoopExit,	regXLoopEnter, regConstant1);
+		DECL_FLAGS	(flagsXLimit);
+
+		FCMP		(flagsXLimit, regXLoopExit, regXMax);
+		BLE			(flagsXLimit, loopXBegin);
+		//		}
+
+		block = cg_block_create(procedure, 3);
+
+		FADD		(regYLoopExit,	regYLoopEnter, regConstant1);
+		DECL_FLAGS	(flagsYLimit);
+
+		FCMP		(flagsYLimit, regYLoopExit, regYMax);
+		BLE			(flagsYLimit, loopYBegin);
+		BRA			(blockEndProc);
+		//	}
+	} else {
+
+		//	EGL_Fixed delta = EGL_Inverse(size);
+		DECL_REG	(regDelta);
+		DECL_REG	(regDeltaHalf);
+
+		FINV		(regDelta, regSize);
+		ASR			(regDeltaHalf, regDelta, regConstant1);
+		DECL_REG	(regInitV);
+		OR			(regInitV, regDeltaHalf, regDeltaHalf);
+
+		//	for (I32 y = ymin, tv = delta / 2; y <= ymax; y++, tv += delta) {
+		block = cg_block_create(procedure, 3);
+		cg_block_ref_t * loopYBegin = cg_block_ref_create(procedure);
+		loopYBegin->block = block;
+
+		DECL_REG	(regYLoopEnter);
+		DECL_REG	(regYLoopExit);
+		DECL_REG	(regVLoopEnter);
+		DECL_REG	(regVLoopExit);
+
+		PHI			(regYLoopEnter, cg_create_virtual_reg_list(procedure->module->heap, regYLoopExit, regYMin, NULL));
+		PHI			(regVLoopEnter, cg_create_virtual_reg_list(procedure->module->heap, regVLoopExit, regInitV, NULL));
+
+		info.regY =	regYLoopEnter;
+		info.regV = regVLoopEnter;
+
+		//		for (I32 x = xmin, tu = delta / 2; x <= xmax; x++, tu += delta) {
+		DECL_REG	(regInitX);
+		OR			(regInitX, regXMin, regXMin);
+		DECL_REG	(regInitU);
+		OR			(regInitU, regDeltaHalf, regDeltaHalf);
+
+		block = cg_block_create(procedure, 9);
+		cg_block_ref_t * loopXBegin = cg_block_ref_create(procedure);
+		loopXBegin->block = block;
+
+		DECL_REG	(regXLoopEnter);
+		DECL_REG	(regXLoopExit);
+		DECL_REG	(regULoopEnter);
+		DECL_REG	(regULoopExit);
+
+		PHI			(regXLoopEnter, cg_create_virtual_reg_list(procedure->module->heap, regXLoopExit, regInitX, NULL));
+		PHI			(regULoopEnter, cg_create_virtual_reg_list(procedure->module->heap, regULoopExit, regInitU, NULL));
+
+		info.regX =	regXLoopEnter;
+		info.regU =	regULoopEnter;
+
+		//			Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
+
+		cg_block_ref_t * postFragment = cg_block_ref_create(procedure);
+
+		GenerateFragment(procedure, block, postFragment, info, 9, true);
+
+		block = cg_block_create(procedure, 9);
+		postFragment->block = block;
+
+		FADD		(regULoopExit,  regULoopEnter, regDelta);
+		FADD		(regXLoopExit,	regXLoopEnter, regConstant1);
+		DECL_FLAGS	(flagsXLimit);
+
+		FCMP		(flagsXLimit, regXLoopExit, regXMax);
+		BLE			(flagsXLimit, loopXBegin);
+		//		}
+
+		block = cg_block_create(procedure, 3);
+
+		FADD		(regVLoopExit,  regVLoopEnter, regDelta);
+		FADD		(regYLoopExit,	regYLoopEnter, regConstant1);
+		DECL_FLAGS	(flagsYLimit);
+
+		FCMP		(flagsYLimit, regYLoopExit, regYMax);
+		BLE			(flagsYLimit, loopYBegin);
+	}
+
+	block = cg_block_create(procedure, 1);
+	blockEndProc->block = block;
+
+	RET();
+}

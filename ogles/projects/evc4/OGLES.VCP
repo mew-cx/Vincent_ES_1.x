@@ -187,7 +187,7 @@ RSC=rc.exe
 # ADD RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "DEBUG" /d "UNICODE" /d "_UNICODE" /d "$(CePlatform)" /d "ARM" /d "_ARM_" /d "ARMV4" /r
 CPP="C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xicle42"
 # ADD BASE CPP /nologo /W3 /GX /Zi /Od /D "DEBUG" /D "ARM" /D "_ARM_" /D "ARMV4" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "OGLES_EXPORTS" /D "EGL_USE_GPP" /Yu"stdafx.h" /M$(CECrtMTDebug) /c
-# ADD CPP /W3 /GX /Zi /Od /I "..\..\include" /I "..\..\src" /I "..\..\src\codegen" /I "..\..\src\WinCE" /D "DEBUG" /D "ARM" /D "_ARM_" /D "ARMV4" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "OGLES_EXPORTS" /FR /Yu"stdafx.h" /M$(CECrtMTDebug) /D EGL_RELEASE="\"0.82\"" /c
+# ADD CPP /W3 /Zi /Od /I "..\..\include" /I "..\..\src" /I "..\..\src\codegen" /I "..\..\src\WinCE" /D "DEBUG" /D "ARM" /D "_ARM_" /D "ARMV4" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "OGLES_EXPORTS" /FR /Yu"stdafx.h" /M$(CECrtMTDebug) /D EGL_RELEASE="\"0.82\"" /c
 MTL=midl.exe
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
@@ -222,7 +222,7 @@ RSC=rc.exe
 # ADD RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "NDEBUG" /d "UNICODE" /d "_UNICODE" /d "$(CePlatform)" /d "ARM" /d "_ARM_" /d "ARMV4" /r
 CPP="C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xicle42"
 # ADD BASE CPP /nologo /W3 /GX /Zi /Oxt /Ob2 /D "ARM" /D "_ARM_" /D "ARMV4" /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "OGLES_EXPORTS" /D "EGL_USE_GPP" /Yu"stdafx.h" /M$(CECrtMT) /c
-# ADD CPP /nologo /W3 /GX /Zi /Oxt /Ob2 /I "..\..\include" /I "..\..\src" /I "..\..\src\codegen" /I "..\..\src\WinCE" /D "ARM" /D "_ARM_" /D "ARMV4" /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "OGLES_EXPORTS" /Yu"stdafx.h" /M$(CECrtMT) /D EGL_RELEASE="\"0.82\"" /c
+# ADD CPP /nologo /W3 /Zi /Oxt /Ob2 /I "..\..\include" /I "..\..\src" /I "..\..\src\codegen" /I "..\..\src\WinCE" /D "ARM" /D "_ARM_" /D "ARMV4" /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "OGLES_EXPORTS" /Yu"stdafx.h" /M$(CECrtMT) /D EGL_RELEASE="\"0.82\"" /c
 MTL=midl.exe
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
@@ -328,7 +328,9 @@ DEP_CPP_CONFI=\
 	"..\..\src\Config.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONFI=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -497,7 +499,9 @@ DEP_CPP_CONTE=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTE=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -668,7 +672,9 @@ DEP_CPP_CONTEX=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEX=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -836,7 +842,9 @@ DEP_CPP_CONTEXT=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXT=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -1004,7 +1012,9 @@ DEP_CPP_CONTEXTL=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTL=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -1181,7 +1191,9 @@ DEP_CPP_CONTEXTLI=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTLI=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -1349,7 +1361,9 @@ DEP_CPP_CONTEXTM=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTM=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -1517,7 +1531,9 @@ DEP_CPP_CONTEXTMA=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTMA=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -1685,7 +1701,9 @@ DEP_CPP_CONTEXTP=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTP=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -1856,7 +1874,9 @@ DEP_CPP_CONTEXTR=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTR=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -2025,7 +2045,9 @@ DEP_CPP_CONTEXTRE=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTRE=\
+	".\mnintrin.h"\
 	
 # ADD CPP /FAs
 
@@ -2195,7 +2217,9 @@ DEP_CPP_CONTEXTT=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTT=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -2373,7 +2397,9 @@ DEP_CPP_CONTEXTTR=\
 	"..\..\src\TriangleClipperLow.inc"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTTR=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -2541,7 +2567,9 @@ DEP_CPP_CONTEXTV=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTV=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -2629,7 +2657,9 @@ DEP_CPP_DISPL=\
 	"..\..\src\Display.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_DISPL=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -2704,7 +2734,9 @@ DEP_CPP_FIXED=\
 	"..\..\src\gl_sin.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_FIXED=\
+	".\mnintrin.h"\
 	
 # ADD CPP /FAs
 
@@ -2873,7 +2905,9 @@ DEP_CPP_GL_CP=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_GL_CP=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -2973,7 +3007,9 @@ DEP_CPP_LIGHT=\
 	"..\..\src\Material.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_LIGHT=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -3049,7 +3085,9 @@ DEP_CPP_LINAL=\
 	"..\..\src\linalg.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_LINAL=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -3141,7 +3179,9 @@ DEP_CPP_MATER=\
 	"..\..\src\Material.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_MATER=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -3223,7 +3263,9 @@ DEP_CPP_MATRI=\
 	"..\..\src\MatrixStack.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_MATRI=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -3366,7 +3408,9 @@ DEP_CPP_RASTE=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_RASTE=\
+	".\mnintrin.h"\
 	
 # ADD BASE CPP /Oxt /Ob2 /FAs
 # ADD CPP /Oxt /Ob2 /FAs
@@ -3456,7 +3500,9 @@ DEP_CPP_RASTER=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_RASTER=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -3601,7 +3647,9 @@ DEP_CPP_RASTERI=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_RASTERI=\
+	".\mnintrin.h"\
 	
 # ADD CPP /FAs
 
@@ -3724,7 +3772,9 @@ DEP_CPP_TEXTU=\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_TEXTU=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -4016,7 +4066,9 @@ DEP_CPP_CODEG=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CODEG=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -4157,7 +4209,9 @@ DEP_CPP_FUNCT=\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_FUNCT=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -4346,7 +4400,9 @@ DEP_CPP_GENFR=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_GENFR=\
+	".\mnintrin.h"\
 	
 # ADD CPP /FAs
 
@@ -4530,7 +4586,9 @@ DEP_CPP_GENLL=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_GENLL=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -4713,7 +4771,9 @@ DEP_CPP_GENPO=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_GENPO=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -4898,7 +4958,9 @@ DEP_CPP_GENSC=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_GENSC=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -5081,7 +5143,9 @@ DEP_CPP_GENTR=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_GENTR=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -5256,7 +5320,9 @@ DEP_CPP_CONTEXTW=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTW=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -5427,7 +5493,9 @@ DEP_CPP_EGL_C=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_EGL_C=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -5490,7 +5558,9 @@ DEP_CPP_OGLES=\
 DEP_CPP_OGLES=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_OGLES=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 
@@ -5552,7 +5622,9 @@ DEP_CPP_STDAF=\
 
 DEP_CPP_STDAF=\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_STDAF=\
+	".\mnintrin.h"\
 	
 # ADD CPP /Yc"stdafx.h"
 
@@ -5662,7 +5734,9 @@ DEP_CPP_SURFA=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_SURFA=\
+	".\mnintrin.h"\
 	
 
 !ENDIF 

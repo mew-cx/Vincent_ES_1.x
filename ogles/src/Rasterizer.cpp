@@ -980,7 +980,7 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 	if (EGL_Round(p_from.m_WindowCoords.x) == EGL_Round(p_to.m_WindowCoords.x) &&
 		EGL_Round(p_from.m_WindowCoords.y) == EGL_Round(p_to.m_WindowCoords.y)) {
 		// both ends of line on same pixel
-		RasterPoint(p_from);
+		RasterPoint(p_from, EGL_ONE);
 		return;
 	}
 
