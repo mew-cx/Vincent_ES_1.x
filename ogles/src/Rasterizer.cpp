@@ -2,7 +2,7 @@
 //
 // Rasterizer.cpp	Rasterizer Class for 3D Rendering Library
 //
-//					The rasterizer converts transformed and lit 
+//					The rasterizer converts transformed and lit
 //					primitives and creates a raster image in the
 //					current rendering surface.
 //
@@ -13,27 +13,27 @@
 // --------------------------------------------------------------------------
 //
 // Copyright (c) 2004, Hans-Martin Will. All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without 
-// modification, are permitted provided that the following conditions are 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 //	 *  Redistributions of source code must retain the above copyright
-// 		notice, this list of conditions and the following disclaimer. 
+// 		notice, this list of conditions and the following disclaimer.
 //   *	Redistributions in binary form must reproduce the above copyright
-// 		notice, this list of conditions and the following disclaimer in the 
-// 		documentation and/or other materials provided with the distribution. 
-// 
+// 		notice, this list of conditions and the following disclaimer in the
+// 		documentation and/or other materials provided with the distribution.
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 // SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
 // ==========================================================================
@@ -82,58 +82,58 @@ Rasterizer :: Rasterizer(RasterizerState * state):
 	memset(m_RasterTriangleFunctions, 0, sizeof m_RasterTriangleFunctions);
 
 	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)	] = RasterTriangle_cTdfs;
-	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  | 
+	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  |
 							  (1 << RasterTriangleFog)		] = RasterTriangle_cTdFs;
-	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  | 
+	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  |
 							  (1 << RasterTriangleDepth)	] = RasterTriangle_cTDfs;
-	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  | 
+	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  |
 							  (1 << RasterTriangleDepth)	|
 							  (1 << RasterTriangleFog)		] = RasterTriangle_cTDFs;
 
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	] = RasterTriangle_Ctdfs;
-	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	| 
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleFog)		] = RasterTriangle_CtdFs;
-	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	| 
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleDepth)	] = RasterTriangle_CtDfs;
-	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	| 
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleDepth)	|
 							  (1 << RasterTriangleFog)		] = RasterTriangle_CtDFs;
 
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleTexture)	] = RasterTriangle_CTdfs;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
-							  (1 << RasterTriangleTexture)	| 
+							  (1 << RasterTriangleTexture)	|
 							  (1 << RasterTriangleFog)		] = RasterTriangle_CTdFs;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
-							  (1 << RasterTriangleTexture)	| 
+							  (1 << RasterTriangleTexture)	|
 							  (1 << RasterTriangleDepth)	] = RasterTriangle_CTDfs;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
-							  (1 << RasterTriangleTexture)	| 
+							  (1 << RasterTriangleTexture)	|
 							  (1 << RasterTriangleDepth)	|
 							  (1 << RasterTriangleFog)		] = RasterTriangle_CTDFs;
 
 	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)	|
 							  (1 << RasterTriangleScissor)	] = RasterTriangle_cTdfS;
-	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  | 
+	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  |
 							  (1 << RasterTriangleFog)		|
 							  (1 << RasterTriangleScissor)	] = RasterTriangle_cTdFS;
-	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  | 
+	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  |
 							  (1 << RasterTriangleDepth)	|
 							  (1 << RasterTriangleScissor)	] = RasterTriangle_cTDfS;
-	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  | 
+	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  |
 							  (1 << RasterTriangleDepth)	|
 							  (1 << RasterTriangleFog)		|
 							  (1 << RasterTriangleScissor)	] = RasterTriangle_cTDFS;
 
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleScissor)	] = RasterTriangle_CtdfS;
-	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	| 
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleFog)		|
 							  (1 << RasterTriangleScissor)	] = RasterTriangle_CtdFS;
-	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	| 
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleDepth)	|
 							  (1 << RasterTriangleScissor)	] = RasterTriangle_CtDfS;
-	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	| 
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleDepth)	|
 							  (1 << RasterTriangleFog)		|
 							  (1 << RasterTriangleScissor)	] = RasterTriangle_CtDFS;
@@ -142,15 +142,15 @@ Rasterizer :: Rasterizer(RasterizerState * state):
 							  (1 << RasterTriangleTexture)	|
 							  (1 << RasterTriangleScissor)	] = RasterTriangle_CTdfS;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
-							  (1 << RasterTriangleTexture)	| 
+							  (1 << RasterTriangleTexture)	|
 							  (1 << RasterTriangleFog)		|
 							  (1 << RasterTriangleScissor)	] = RasterTriangle_CTdFS;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
-							  (1 << RasterTriangleTexture)	| 
+							  (1 << RasterTriangleTexture)	|
 							  (1 << RasterTriangleDepth)	|
 							  (1 << RasterTriangleScissor)	] = RasterTriangle_CTDfS;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
-							  (1 << RasterTriangleTexture)	| 
+							  (1 << RasterTriangleTexture)	|
 							  (1 << RasterTriangleDepth)	|
 							  (1 << RasterTriangleFog)		|
 							  (1 << RasterTriangleScissor)	] = RasterTriangle_CTDFS;
@@ -176,7 +176,7 @@ RasterizerState * Rasterizer :: GetState() const {
 
 
 void Rasterizer :: SetTexture(MultiTexture * texture) {
-	m_Texture = texture; 
+	m_Texture = texture;
 
 	if (m_Texture && m_State) {
 		m_State->SetWrappingModeS(m_Texture->GetWrappingModeS());
@@ -196,7 +196,7 @@ void Rasterizer :: SetTexture(MultiTexture * texture) {
 }
 
 
-inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv, 
+inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv,
 								   EGL_Fixed fogDensity, const Color& baseColor) {
 
 	// pixel ownership test
@@ -233,7 +233,7 @@ Color Rasterizer :: GetRawTexColor(const Texture * texture, EGL_Fixed tu, EGL_Fi
 				tu0 = 0;
 			else if (tu >= EGL_ONE)
 				tu0 = EGL_ONE - 1;
-			else 
+			else
 				tu0 = tu;
 
 			break;
@@ -312,11 +312,11 @@ Color Rasterizer :: GetRawTexColor(const Texture * texture, EGL_Fixed tu, EGL_Fi
 			return Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
 	}
 }
-				  
+
 
 inline Color Rasterizer :: GetTexColor(const Texture * texture, EGL_Fixed tu, EGL_Fixed tv,
 								RasterizerState::FilterMode filterMode) {
-	// retrieve the texture color from a texture plane 
+	// retrieve the texture color from a texture plane
 
 	if (filterMode == RasterizerState::FilterModeNearest) {
 		return GetRawTexColor(texture, tu, tv);
@@ -332,9 +332,9 @@ inline Color Rasterizer :: GetTexColor(const Texture * texture, EGL_Fixed tu, EG
 		U32 alpha = EGL_FractionFromFixed(tu0 << logWidth) >> 8;
 		U32 beta = EGL_FractionFromFixed(tv0 << logHeight) >> 8;
 
-		return Color::BlendAlpha(Color::BlendAlpha(GetRawTexColor(texture, tu1, tv1), 
-												   GetRawTexColor(texture, tu0, tv1), alpha), 
-								 Color::BlendAlpha(GetRawTexColor(texture, tu1, tv0), 
+		return Color::BlendAlpha(Color::BlendAlpha(GetRawTexColor(texture, tu1, tv1),
+												   GetRawTexColor(texture, tu0, tv1), alpha),
+								 Color::BlendAlpha(GetRawTexColor(texture, tu1, tv0),
 												   GetRawTexColor(texture, tu0, tv0), alpha),
 								 beta);
 	} else {
@@ -342,7 +342,7 @@ inline Color Rasterizer :: GetTexColor(const Texture * texture, EGL_Fixed tu, EG
 	}
 }
 
-				  
+
 void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv,
 			  const Color& baseColor, EGL_Fixed fogDensity) {
 	// fragment rendering with signature corresponding to function fragment
@@ -412,12 +412,12 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 						break;
 
 					case RasterizerState::TextureModeModulate:
-						color = Color(MulU8(color.r, texColor.r), 
+						color = Color(MulU8(color.r, texColor.r),
 							MulU8(color.g, texColor.g), MulU8(color.b, texColor.b), color.a);
 						break;
 
 					case RasterizerState::TextureModeBlend:
-						color = 
+						color =
 							Color(
 								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture.EnvColor.r, texColor.r),
 								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture.EnvColor.g, texColor.g),
@@ -445,12 +445,12 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 						break;
 
 					case RasterizerState::TextureModeModulate:
-						color = Color(MulU8(color.r, texColor.r), 
+						color = Color(MulU8(color.r, texColor.r),
 							MulU8(color.g, texColor.g), MulU8(color.b, texColor.b), color.a);
 						break;
 
 					case RasterizerState::TextureModeBlend:
-						color = 
+						color =
 							Color(
 								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture.EnvColor.r, texColor.r),
 								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture.EnvColor.g, texColor.g),
@@ -480,7 +480,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 						break;
 
 					case RasterizerState::TextureModeDecal:
-						color = 
+						color =
 							Color(
 								MulU8(color.r, 0xff - texColor.a) + MulU8(texColor.r, texColor.a),
 								MulU8(color.g, 0xff - texColor.a) + MulU8(texColor.g, texColor.a),
@@ -489,7 +489,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 						break;
 
 					case RasterizerState::TextureModeBlend:
-						color = 
+						color =
 							Color(
 								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture.EnvColor.r, texColor.r),
 								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture.EnvColor.g, texColor.g),
@@ -521,7 +521,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 						break;
 
 					case RasterizerState::TextureModeDecal:
-						color = 
+						color =
 							Color(
 								MulU8(color.r, 0xff - texColor.a) + MulU8(texColor.r, texColor.a),
 								MulU8(color.g, 0xff - texColor.a) + MulU8(texColor.g, texColor.a),
@@ -530,7 +530,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 						break;
 
 					case RasterizerState::TextureModeBlend:
-						color = 
+						color =
 							Color(
 								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture.EnvColor.r, texColor.r),
 								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture.EnvColor.g, texColor.g),
@@ -605,33 +605,33 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 			switch (m_State->m_Stencil.Fail) {
 				default:
-				case RasterizerState::StencilOpKeep: 
+				case RasterizerState::StencilOpKeep:
 					break;
 
-				case RasterizerState::StencilOpZero: 
-					stencilValue = 0; 
+				case RasterizerState::StencilOpZero:
+					stencilValue = 0;
 					break;
 
-				case RasterizerState::StencilOpReplace: 
-					stencilValue = m_State->m_Stencil.Reference; 
+				case RasterizerState::StencilOpReplace:
+					stencilValue = m_State->m_Stencil.Reference;
 					break;
 
-				case RasterizerState::StencilOpIncr: 
+				case RasterizerState::StencilOpIncr:
 					if (stencilValue != 0xffffffff) {
-						stencilValue++; 
+						stencilValue++;
 					}
-					
+
 					break;
 
-				case RasterizerState::StencilOpDecr: 
+				case RasterizerState::StencilOpDecr:
 					if (stencilValue != 0) {
-						stencilValue--; 
+						stencilValue--;
 					}
-					
+
 					break;
 
-				case RasterizerState::StencilOpInvert: 
-					stencilValue = ~stencilValue; 
+				case RasterizerState::StencilOpInvert:
+					stencilValue = ~stencilValue;
 					break;
 			}
 
@@ -642,33 +642,33 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 		if (depthTest) {
 			switch (m_State->m_Stencil.ZPass) {
 				default:
-				case RasterizerState::StencilOpKeep: 
+				case RasterizerState::StencilOpKeep:
 					break;
 
-				case RasterizerState::StencilOpZero: 
-					stencilValue = 0; 
+				case RasterizerState::StencilOpZero:
+					stencilValue = 0;
 					break;
 
-				case RasterizerState::StencilOpReplace: 
-					stencilValue = m_State->m_Stencil.Reference; 
+				case RasterizerState::StencilOpReplace:
+					stencilValue = m_State->m_Stencil.Reference;
 					break;
 
-				case RasterizerState::StencilOpIncr: 
+				case RasterizerState::StencilOpIncr:
 					if (stencilValue != 0xffffffff) {
-						stencilValue++; 
+						stencilValue++;
 					}
-					
+
 					break;
 
-				case RasterizerState::StencilOpDecr: 
+				case RasterizerState::StencilOpDecr:
 					if (stencilValue != 0) {
-						stencilValue--; 
+						stencilValue--;
 					}
-					
+
 					break;
 
-				case RasterizerState::StencilOpInvert: 
-					stencilValue = ~stencilValue; 
+				case RasterizerState::StencilOpInvert:
+					stencilValue = ~stencilValue;
 					break;
 			}
 
@@ -676,33 +676,33 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 		} else {
 			switch (m_State->m_Stencil.ZFail) {
 				default:
-				case RasterizerState::StencilOpKeep: 
+				case RasterizerState::StencilOpKeep:
 					break;
 
-				case RasterizerState::StencilOpZero: 
-					stencilValue = 0; 
+				case RasterizerState::StencilOpZero:
+					stencilValue = 0;
 					break;
 
-				case RasterizerState::StencilOpReplace: 
-					stencilValue = m_State->m_Stencil.Reference; 
+				case RasterizerState::StencilOpReplace:
+					stencilValue = m_State->m_Stencil.Reference;
 					break;
 
-				case RasterizerState::StencilOpIncr: 
+				case RasterizerState::StencilOpIncr:
 					if (stencilValue != 0xffffffff) {
-						stencilValue++; 
+						stencilValue++;
 					}
-					
+
 					break;
 
-				case RasterizerState::StencilOpDecr: 
+				case RasterizerState::StencilOpDecr:
 					if (stencilValue != 0) {
-						stencilValue--; 
+						stencilValue--;
 					}
-					
+
 					break;
 
-				case RasterizerState::StencilOpInvert: 
-					stencilValue = ~stencilValue; 
+				case RasterizerState::StencilOpInvert:
+					stencilValue = ~stencilValue;
 					break;
 			}
 
@@ -715,7 +715,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 		return;
 	}
 
-	// have color, offset 
+	// have color, offset
 
 	// Blending
 	if (m_State->m_Blend.Enabled) {
@@ -816,7 +816,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 		rasterInfo->DepthBuffer[offset] = depth;
 	}
 
-	Color maskedColor = 
+	Color maskedColor =
 		color.Mask(m_State->m_Mask.Red, m_State->m_Mask.Green, m_State->m_Mask.Blue, m_State->m_Mask.Alpha);
 
 	if (m_State->m_LogicOp.Enabled) {
@@ -832,84 +832,84 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 		switch (m_State->m_LogicOp.Opcode) {
 			default:
-			case RasterizerState:: LogicOpClear:		
-				value = 0; 
-				alpha = 0;						
+			case RasterizerState:: LogicOpClear:
+				value = 0;
+				alpha = 0;
 				break;
 
-			case RasterizerState:: LogicOpAnd:			
-				value = newValue & oldValue;	
+			case RasterizerState:: LogicOpAnd:
+				value = newValue & oldValue;
 				alpha = newAlpha & oldAlpha;
 				break;
 
-			case RasterizerState:: LogicOpAndReverse:	
-				value = newValue & ~oldValue;	
-				alpha = newAlpha & ~oldAlpha;	
+			case RasterizerState:: LogicOpAndReverse:
+				value = newValue & ~oldValue;
+				alpha = newAlpha & ~oldAlpha;
 				break;
 
-			case RasterizerState:: LogicOpCopy:			
-				value = newValue;				
-				alpha = newAlpha;				
+			case RasterizerState:: LogicOpCopy:
+				value = newValue;
+				alpha = newAlpha;
 				break;
 
-			case RasterizerState:: LogicOpAndInverted:	
-				value = ~newValue & oldValue;	
-				alpha = ~newAlpha & oldAlpha;	
+			case RasterizerState:: LogicOpAndInverted:
+				value = ~newValue & oldValue;
+				alpha = ~newAlpha & oldAlpha;
 				break;
 
-			case RasterizerState:: LogicOpNoop:			
-				value = oldValue;				
-				alpha = oldAlpha;				
+			case RasterizerState:: LogicOpNoop:
+				value = oldValue;
+				alpha = oldAlpha;
 				break;
 
-			case RasterizerState:: LogicOpXor:			
-				value = newValue ^ oldValue;	
-				alpha = newAlpha ^ oldAlpha;	
+			case RasterizerState:: LogicOpXor:
+				value = newValue ^ oldValue;
+				alpha = newAlpha ^ oldAlpha;
 				break;
 
-			case RasterizerState:: LogicOpOr:			
-				value = newValue | oldValue;	
-				alpha = newAlpha | oldAlpha;	
+			case RasterizerState:: LogicOpOr:
+				value = newValue | oldValue;
+				alpha = newAlpha | oldAlpha;
 				break;
 
-			case RasterizerState:: LogicOpNor:			
-				value = ~(newValue | oldValue); 
-				alpha = ~(newAlpha | oldAlpha); 
+			case RasterizerState:: LogicOpNor:
+				value = ~(newValue | oldValue);
+				alpha = ~(newAlpha | oldAlpha);
 				break;
 
-			case RasterizerState:: LogicOpEquiv:		
-				value = ~(newValue ^ oldValue); 
-				alpha = ~(newAlpha ^ oldAlpha); 
+			case RasterizerState:: LogicOpEquiv:
+				value = ~(newValue ^ oldValue);
+				alpha = ~(newAlpha ^ oldAlpha);
 				break;
 
-			case RasterizerState:: LogicOpInvert:		
-				value = ~oldValue;				
-				alpha = ~oldAlpha;				
+			case RasterizerState:: LogicOpInvert:
+				value = ~oldValue;
+				alpha = ~oldAlpha;
 				break;
 
-			case RasterizerState:: LogicOpOrReverse:	
-				value = newValue | ~oldValue;	
-				alpha = newAlpha | ~oldAlpha;	
+			case RasterizerState:: LogicOpOrReverse:
+				value = newValue | ~oldValue;
+				alpha = newAlpha | ~oldAlpha;
 				break;
 
-			case RasterizerState:: LogicOpCopyInverted:	
-				value = ~newValue;				
-				alpha = ~newAlpha;				
+			case RasterizerState:: LogicOpCopyInverted:
+				value = ~newValue;
+				alpha = ~newAlpha;
 				break;
 
-			case RasterizerState:: LogicOpOrInverted:	
-				value = ~newValue | oldValue;	
-				alpha = ~newAlpha | oldAlpha;	
+			case RasterizerState:: LogicOpOrInverted:
+				value = ~newValue | oldValue;
+				alpha = ~newAlpha | oldAlpha;
 				break;
 
-			case RasterizerState:: LogicOpNand:			
-				value = ~(newValue & oldValue); 
-				alpha = ~(newAlpha & oldAlpha); 
+			case RasterizerState:: LogicOpNand:
+				value = ~(newValue & oldValue);
+				alpha = ~(newAlpha & oldAlpha);
 				break;
 
-			case RasterizerState:: LogicOpSet:			
-				value = 0xFFFF;					
-				alpha = 0xFF;					
+			case RasterizerState:: LogicOpSet:
+				value = 0xFFFF;
+				alpha = 0xFF;
 				break;
 		}
 
@@ -937,7 +937,7 @@ void Rasterizer :: PreparePoint() {
 	}
 
 	m_PointFunction = (PointFunction *)
-		m_FunctionCache->GetFunction(FunctionCache::FunctionTypePoint, 
+		m_FunctionCache->GetFunction(FunctionCache::FunctionTypePoint,
 									 *m_State);
 
 	m_RasterInfo.Init(m_Surface, 0);
@@ -1019,7 +1019,7 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 		EGL_Fixed deltaU = EGL_Mul(EGL_Mul(to.m_TextureCoords.tu, OneOverZTo) -
 								   EGL_Mul(from.m_TextureCoords.tu, OneOverZ), invSpan);
 
-		EGL_Fixed deltaV = EGL_Mul(EGL_Mul(to.m_TextureCoords.tv, OneOverZTo) - 
+		EGL_Fixed deltaV = EGL_Mul(EGL_Mul(to.m_TextureCoords.tv, OneOverZTo) -
 								   EGL_Mul(from.m_TextureCoords.tv, OneOverZ), invSpan);
 
 		EGL_Fixed deltaDepth = EGL_Mul(to.m_WindowCoords.depth - from.m_WindowCoords.depth, invSpan);
@@ -1035,7 +1035,7 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 		OneOverZ	+= EGL_Mul(deltaZ, preStepX);
 		tuOverZ		+= EGL_Mul(deltaU, preStepX);
 		tvOverZ		+= EGL_Mul(deltaV, preStepX);
-		
+
 		I32 y = EGL_IntFromFixed(from.m_WindowCoords.y + ((EGL_ONE)/2-1));
 
 		I32 yIncrement = (deltaY > 0) ? 1 : -1;
@@ -1112,7 +1112,7 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 		EGL_Fixed deltaU = EGL_Mul(EGL_Mul(to.m_TextureCoords.tu, OneOverZTo) -
 								   EGL_Mul(from.m_TextureCoords.tu, OneOverZ), invSpan);
 
-		EGL_Fixed deltaV = EGL_Mul(EGL_Mul(to.m_TextureCoords.tv, OneOverZTo) - 
+		EGL_Fixed deltaV = EGL_Mul(EGL_Mul(to.m_TextureCoords.tv, OneOverZTo) -
 								   EGL_Mul(from.m_TextureCoords.tv, OneOverZ), invSpan);
 
 		EGL_Fixed deltaDepth = EGL_Mul(to.m_WindowCoords.depth - from.m_WindowCoords.depth, invSpan);
@@ -1160,21 +1160,21 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 }
 
 
-const I32 RasterInfo::InversionTable[] = {
-	0, 
-	EGL_FixedFromFloat(1.0f / 1.0f), 
-	EGL_FixedFromFloat(1.0f / 2.0f), 
-	EGL_FixedFromFloat(1.0f / 3.0f), 
+const I32 RasterInfo::InversionTable[32] = {
+	0,
+	EGL_FixedFromFloat(1.0f / 1.0f),
+	EGL_FixedFromFloat(1.0f / 2.0f),
+	EGL_FixedFromFloat(1.0f / 3.0f),
 	EGL_FixedFromFloat(1.0f / 4.0f),
-	EGL_FixedFromFloat(1.0f / 5.0f), 
-	EGL_FixedFromFloat(1.0f / 6.0f), 
+	EGL_FixedFromFloat(1.0f / 5.0f),
+	EGL_FixedFromFloat(1.0f / 6.0f),
 	EGL_FixedFromFloat(1.0f / 7.0f),
-	EGL_FixedFromFloat(1.0f / 8.0f), 
+	EGL_FixedFromFloat(1.0f / 8.0f),
 	EGL_FixedFromFloat(1.0f / 9.0f),
-	EGL_FixedFromFloat(1.0f / 10.0f), 
-	EGL_FixedFromFloat(1.0f / 11.0f), 
+	EGL_FixedFromFloat(1.0f / 10.0f),
+	EGL_FixedFromFloat(1.0f / 11.0f),
 	EGL_FixedFromFloat(1.0f / 12.0f),
-	EGL_FixedFromFloat(1.0f / 13.0f), 
-	EGL_FixedFromFloat(1.0f / 14.0f), 
+	EGL_FixedFromFloat(1.0f / 13.0f),
+	EGL_FixedFromFloat(1.0f / 14.0f),
 	EGL_FixedFromFloat(1.0f / 15.0f),
 };
