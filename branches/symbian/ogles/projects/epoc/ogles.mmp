@@ -50,4 +50,4 @@ SYSTEMINCLUDE \epoc32\include\libc
 SYSTEMINCLUDE \epoc32\include
 LIBRARY 	ws32.lib fbscli.lib 
 LIBRARY		estlib.lib euser.lib
-STATICLIBRARY	int64x.lib codegen.lib
+STATICLIBRARY	codegen.lib
