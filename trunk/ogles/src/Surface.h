@@ -57,11 +57,11 @@ namespace EGL {
 
 		// Windows integration
 		HDC GetMemoryDC();
-		//HBITMAP GetBitmap();
+		HBITMAP GetBitmap();
 
 	private:
 		HDC		m_HDC;				// windows device context handle
-		//HBITMAP	m_Bitmap;			// windows bitmap handle
+		HBITMAP	m_Bitmap;			// windows bitmap handle
 		Config	m_Config;			// configuration arguments
 		U16 *	m_ColorBuffer;		// pointer to frame buffer base address 5-6-5
 		U8 *	m_AlphaBuffer;		// pointer to alpha buffer
@@ -97,11 +97,9 @@ namespace EGL {
 		return m_HDC;
 	}
 
-	/*
 	inline HBITMAP Surface :: GetBitmap() {
 		return m_Bitmap;
 	}
-	*/
 
 	inline U16 * Surface :: GetColorBuffer() {
 		return m_ColorBuffer;

@@ -20,7 +20,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)..\..\src&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_WIN32_WINNT=0x0500"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="5"
@@ -28,20 +28,20 @@
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="FALSE"
 				DebugInformationFormat="4"
-				AdditionalOptions="">
+				AdditionalOptions="&lt;?ICLPrjArgs?&gt; /Qvc7.1 /Qlocation,link,&quot;$(VCInstallDir)bin&quot; /c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WIN32_WINNT=0x0500&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MLd /Yu&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/test.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/vc70.pdb&quot; /Gd /TP &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseNonIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnPrjArgs?&gt;">
 				<IntelOptions
 					Optimization="0"
 					MinimalRebuild="1"
 					BasicRuntimeChecks="3"
 					RuntimeLibrary="5"
-					AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MLd /Yu&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/test.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/vc70.pdb&quot; /Gd /TP"
+					AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WIN32_WINNT=0x0500&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MLd /Yu&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/test.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/vc70.pdb&quot; /Gd /TP"
 					MSOriginalAdditionalOptions=""/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="GLES_CL.lib"
+				AdditionalDependencies="GLES_CL.lib GdiPlus.lib"
 				OutputFile="$(OutDir)/test.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
@@ -50,9 +50,9 @@
 				ProgramDatabaseFile="$(OutDir)/test.pdb"
 				SubSystem="2"
 				TargetMachine="1"
-				AdditionalOptions="">
+				AdditionalOptions="&lt;?ICLPrjArgs?&gt; /NOLOGO /OUT:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/test.exe&quot; /INCREMENTAL /LIBPATH:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug&quot; GLES_CL.lib GdiPlus.lib /DEBUG /PDB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/test.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /MACHINE:IX86  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseNonIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnPrjArgs?&gt;">
 				<IntelOptions
-					AllOptions="/NOLOGO /OUT:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/test.exe&quot; /INCREMENTAL /LIBPATH:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug&quot; GLES_CL.lib /DEBUG /PDB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/test.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /MACHINE:IX86  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"
+					AllOptions="/NOLOGO /OUT:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/test.exe&quot; /INCREMENTAL /LIBPATH:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug&quot; GLES_CL.lib GdiPlus.lib /DEBUG /PDB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/test.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /MACHINE:IX86  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"
 					MSOriginalAdditionalOptions=""/>
 			</Tool>
 			<Tool
@@ -75,6 +75,8 @@
 				Name="VCManagedWrapperGeneratorTool"/>
 			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+			<IntelOptions
+				CompilerName="1"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
@@ -85,13 +87,13 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)..\..\src&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_WIN32_WINNT=0x0500"
 				RuntimeLibrary="4"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="FALSE"
 				DebugInformationFormat="3"
-				AdditionalOptions="">
+				AdditionalOptions="&lt;?ICLPrjArgs?&gt; /Qvc7.1 /Qlocation,link,&quot;$(VCInstallDir)bin&quot; /c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /Zi /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WIN32_WINNT=0x0500&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /ML /GS /Gy /Yu&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/test.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/vc70.pdb&quot; /Gd /TP &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseNonIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnPrjArgs?&gt;">
 				<IntelOptions
 					Optimization="2"
 					InlineFunctionExpansion="1"
@@ -100,14 +102,14 @@
 					RuntimeLibrary="4"
 					BufferSecurityCheck="1"
 					EnableFunctionLevelLinking="1"
-					AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /Zi /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /ML /GS /Gy /Yu&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/test.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/vc70.pdb&quot; /Gd /TP"
+					AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /Zi /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WIN32_WINNT=0x0500&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /ML /GS /Gy /Yu&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/test.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/vc70.pdb&quot; /Gd /TP"
 					MSOriginalAdditionalOptions=""/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="GLES_CL.lib"
+				AdditionalDependencies="GLES_CL.lib GdiPlus.lib"
 				OutputFile="$(OutDir)/test.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -117,9 +119,9 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="1"
-				AdditionalOptions="">
+				AdditionalOptions="&lt;?ICLPrjArgs?&gt; /NOLOGO /OUT:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/test.exe&quot; /INCREMENTAL:NO /LIBPATH:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release&quot; GLES_CL.lib GdiPlus.lib /DEBUG /PDB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/test.pdb&quot; /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /TLBID:1 /MACHINE:IX86  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseNonIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnPrjArgs?&gt;">
 				<IntelOptions
-					AllOptions="/NOLOGO /OUT:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/test.exe&quot; /INCREMENTAL:NO /LIBPATH:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release&quot; GLES_CL.lib /DEBUG /PDB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/test.pdb&quot; /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /TLBID:1 /MACHINE:IX86  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"
+					AllOptions="/NOLOGO /OUT:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/test.exe&quot; /INCREMENTAL:NO /LIBPATH:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release&quot; GLES_CL.lib GdiPlus.lib /DEBUG /PDB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/test.pdb&quot; /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /TLBID:1 /MACHINE:IX86  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"
 					MSOriginalAdditionalOptions=""/>
 			</Tool>
 			<Tool
@@ -142,6 +144,8 @@
 				Name="VCManagedWrapperGeneratorTool"/>
 			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+			<IntelOptions
+				CompilerName="1"/>
 		</Configuration>
 	</Configurations>
 	<References/>
@@ -159,9 +163,9 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"
-						AdditionalOptions="">
+						AdditionalOptions=" &lt;?ICLFileArgs?&gt; /Qvc7.1 /Qlocation,link,&quot;$(VCInstallDir)bin&quot;  /c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WIN32_WINNT=0x0500&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MLd /Yc&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/test.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/vc70.pdb&quot; /Gd /TP &lt;?/ICLFileArgs?&gt; &lt;?IVCSpawnFileArgs?&gt; #$UseNonIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnFileArgs?&gt;">
 						<IntelOptions
-							AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MLd /Yc&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/test.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/vc70.pdb&quot; /Gd /TP"
+							AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WIN32_WINNT=0x0500&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MLd /Yc&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/test.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Debug/vc70.pdb&quot; /Gd /TP"
 							MSOriginalAdditionalOptions=""/>
 					</Tool>
 				</FileConfiguration>
@@ -170,9 +174,9 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"
-						AdditionalOptions="">
+						AdditionalOptions=" &lt;?ICLFileArgs?&gt; /Qvc7.1 /Qlocation,link,&quot;$(VCInstallDir)bin&quot;  /c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /Zi /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WIN32_WINNT=0x0500&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /ML /GS /Gy /Yc&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/test.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/vc70.pdb&quot; /Gd /TP &lt;?/ICLFileArgs?&gt; &lt;?IVCSpawnFileArgs?&gt; #$UseNonIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnFileArgs?&gt;">
 						<IntelOptions
-							AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /Zi /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /ML /GS /Gy /Yc&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/test.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/vc70.pdb&quot; /Gd /TP"
+							AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /Zi /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WIN32_WINNT=0x0500&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /ML /GS /Gy /Yc&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/test.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/vc70.pdb&quot; /Gd /TP"
 							MSOriginalAdditionalOptions=""/>
 					</Tool>
 				</FileConfiguration>
