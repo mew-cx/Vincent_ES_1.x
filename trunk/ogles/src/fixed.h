@@ -287,6 +287,8 @@ inline OGLES_API EGL_Fixed EGL_Div(EGL_Fixed a, EGL_Fixed b) {
 // --------------------------------------------------------------------------
 inline OGLES_API EGL_Fixed EGL_Inverse(EGL_Fixed value) {
 	I32 result;
+	assert(value);
+	assert(-value);
 	gppInv_16_32s(value, &result);
 	return result;
 }

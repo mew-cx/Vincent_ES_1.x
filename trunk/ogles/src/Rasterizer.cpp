@@ -1100,17 +1100,47 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 	// set up the triangle
 	// init start, end, deltas
-	EGL_Fixed invDeltaY2 = EGL_Inverse(pos2.m_WindowCoords.y - pos1.m_WindowCoords.y);
+	EGL_Fixed deltaY21 = pos2.m_WindowCoords.y - pos1.m_WindowCoords.y;
 
-	EGL_Fixed incX2 = EGL_Mul(pos2.m_WindowCoords.x - pos1.m_WindowCoords.x, invDeltaY2);
-	EGL_Fixed incR2 = EGL_Mul(pos2.m_Color.r - pos1.m_Color.r, invDeltaY2);
-	EGL_Fixed incG2 = EGL_Mul(pos2.m_Color.g - pos1.m_Color.g, invDeltaY2);
-	EGL_Fixed incB2 = EGL_Mul(pos2.m_Color.b - pos1.m_Color.b, invDeltaY2);
-	EGL_Fixed incA2 = EGL_Mul(pos2.m_Color.a - pos1.m_Color.a, invDeltaY2);
-	EGL_Fixed incFog2 = EGL_Mul(pos2.m_FogDensity - pos1.m_FogDensity, invDeltaY2);
+	EGL_Fixed invDeltaY2;
+
+	EGL_Fixed incX2;
+	EGL_Fixed incR2;
+	EGL_Fixed incG2;
+	EGL_Fixed incB2;
+	EGL_Fixed incA2;
+	EGL_Fixed incFog2;
 
 	// perspective interpolation
-	EGL_Fixed incZ2 = EGL_Mul(invZ2 - invZ1, invDeltaY2);
+	EGL_Fixed incZ2;
+
+	if (deltaY21) {
+		invDeltaY2 = EGL_Inverse(pos2.m_WindowCoords.y - pos1.m_WindowCoords.y);
+
+		incX2 = EGL_Mul(pos2.m_WindowCoords.x - pos1.m_WindowCoords.x, invDeltaY2);
+		incR2 = EGL_Mul(pos2.m_Color.r - pos1.m_Color.r, invDeltaY2);
+		incG2 = EGL_Mul(pos2.m_Color.g - pos1.m_Color.g, invDeltaY2);
+		incB2 = EGL_Mul(pos2.m_Color.b - pos1.m_Color.b, invDeltaY2);
+		incA2 = EGL_Mul(pos2.m_Color.a - pos1.m_Color.a, invDeltaY2);
+		incFog2 = EGL_Mul(pos2.m_FogDensity - pos1.m_FogDensity, invDeltaY2);
+
+		// perspective interpolation
+		incZ2 = EGL_Mul(invZ2 - invZ1, invDeltaY2);
+
+	} else {
+		invDeltaY2 = 0;
+
+		incX2 = 0;
+		incR2 = 0;
+		incG2 = 0;
+		incB2 = 0;
+		incA2 = 0;
+		incFog2 = 0;
+
+		// perspective interpolation
+		incZ2 = 0;
+
+	}
 
 	EGL_Fixed incTu2 = EGL_Mul(EGL_Mul(pos2.m_TextureCoords.tu, invZ2) - 
 							   EGL_Mul(pos1.m_TextureCoords.tu, invZ1), invDeltaY2);
@@ -1118,17 +1148,46 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	EGL_Fixed incTv2 = EGL_Mul(EGL_Mul(pos2.m_TextureCoords.tv, invZ2) - 
 							   EGL_Mul(pos1.m_TextureCoords.tv, invZ1), invDeltaY2);
 
-	EGL_Fixed invDeltaY3 = EGL_Inverse(pos3.m_WindowCoords.y - pos1.m_WindowCoords.y);
 
-	EGL_Fixed incX3 = EGL_Mul(pos3.m_WindowCoords.x - pos1.m_WindowCoords.x, invDeltaY3);
-	EGL_Fixed incR3 = EGL_Mul(pos3.m_Color.r - pos1.m_Color.r, invDeltaY3);
-	EGL_Fixed incG3 = EGL_Mul(pos3.m_Color.g - pos1.m_Color.g, invDeltaY3);
-	EGL_Fixed incB3 = EGL_Mul(pos3.m_Color.b - pos1.m_Color.b, invDeltaY3);
-	EGL_Fixed incA3 = EGL_Mul(pos3.m_Color.a - pos1.m_Color.a, invDeltaY3);
-	EGL_Fixed incFog3 = EGL_Mul(pos3.m_FogDensity - pos1.m_FogDensity, invDeltaY3);
+	EGL_Fixed deltaY31 = pos3.m_WindowCoords.y - pos1.m_WindowCoords.y;
+
+	EGL_Fixed invDeltaY3;
+
+	EGL_Fixed incX3;
+	EGL_Fixed incR3;
+	EGL_Fixed incG3;
+	EGL_Fixed incB3;
+	EGL_Fixed incA3;
+	EGL_Fixed incFog3;
 
 	// perspective interpolation
-	EGL_Fixed incZ3 = EGL_Mul(invZ3 - invZ1, invDeltaY3);
+	EGL_Fixed incZ3;
+
+	if (deltaY31) {
+		invDeltaY3 = EGL_Inverse(deltaY31);
+
+		incX3 = EGL_Mul(pos3.m_WindowCoords.x - pos1.m_WindowCoords.x, invDeltaY3);
+		incR3 = EGL_Mul(pos3.m_Color.r - pos1.m_Color.r, invDeltaY3);
+		incG3 = EGL_Mul(pos3.m_Color.g - pos1.m_Color.g, invDeltaY3);
+		incB3 = EGL_Mul(pos3.m_Color.b - pos1.m_Color.b, invDeltaY3);
+		incA3 = EGL_Mul(pos3.m_Color.a - pos1.m_Color.a, invDeltaY3);
+		incFog3 = EGL_Mul(pos3.m_FogDensity - pos1.m_FogDensity, invDeltaY3);
+
+		// perspective interpolation
+		incZ3 = EGL_Mul(invZ3 - invZ1, invDeltaY3);
+	} else {
+		invDeltaY3 = 0;
+
+		incX3 = 0;
+		incR3 = 0;
+		incG3 = 0;
+		incB3 = 0;
+		incA3 = 0;
+		incFog3 = 0;
+
+		// perspective interpolation
+		incZ3 = 0;
+	}
 
 	EGL_Fixed incTu3 = EGL_Mul(EGL_Mul(pos3.m_TextureCoords.tu, invZ3) - 
 							   EGL_Mul(pos1.m_TextureCoords.tu, invZ1), invDeltaY3);
@@ -1136,17 +1195,46 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	EGL_Fixed incTv3 = EGL_Mul(EGL_Mul(pos3.m_TextureCoords.tv, invZ3) - 
 							   EGL_Mul(pos1.m_TextureCoords.tv, invZ1), invDeltaY3);
 
-	EGL_Fixed invDeltaY23 = EGL_Inverse(pos3.m_WindowCoords.y - pos2.m_WindowCoords.y);
+	EGL_Fixed deltaY32 = pos3.m_WindowCoords.y - pos2.m_WindowCoords.y;
+	EGL_Fixed invDeltaY23;
 
-	EGL_Fixed incX23 = EGL_Mul(pos3.m_WindowCoords.x - pos2.m_WindowCoords.x, invDeltaY23);
-	EGL_Fixed incR23 = EGL_Mul(pos3.m_Color.r - pos2.m_Color.r, invDeltaY23);
-	EGL_Fixed incG23 = EGL_Mul(pos3.m_Color.g - pos2.m_Color.g, invDeltaY23);
-	EGL_Fixed incB23 = EGL_Mul(pos3.m_Color.b - pos2.m_Color.b, invDeltaY23);
-	EGL_Fixed incA23 = EGL_Mul(pos3.m_Color.a - pos2.m_Color.a, invDeltaY23);
-	EGL_Fixed incFog23 = EGL_Mul(pos3.m_FogDensity - pos2.m_FogDensity, invDeltaY23);
+	EGL_Fixed incX23;
+	EGL_Fixed incR23;
+	EGL_Fixed incG23;
+	EGL_Fixed incB23;
+	EGL_Fixed incA23;
+	EGL_Fixed incFog23;
 
 	// perspective interpolation
-	EGL_Fixed incZ23 = EGL_Mul(invZ3 - invZ2, invDeltaY23);
+	EGL_Fixed incZ23;
+
+	if (deltaY32) {
+		invDeltaY23 = EGL_Inverse(deltaY32);
+
+		incX23 = EGL_Mul(pos3.m_WindowCoords.x - pos2.m_WindowCoords.x, invDeltaY23);
+		incR23 = EGL_Mul(pos3.m_Color.r - pos2.m_Color.r, invDeltaY23);
+		incG23 = EGL_Mul(pos3.m_Color.g - pos2.m_Color.g, invDeltaY23);
+		incB23 = EGL_Mul(pos3.m_Color.b - pos2.m_Color.b, invDeltaY23);
+		incA23 = EGL_Mul(pos3.m_Color.a - pos2.m_Color.a, invDeltaY23);
+		incFog23 = EGL_Mul(pos3.m_FogDensity - pos2.m_FogDensity, invDeltaY23);
+
+		// perspective interpolation
+		incZ23 = EGL_Mul(invZ3 - invZ2, invDeltaY23);
+
+	} else {
+		invDeltaY23 = 0;
+
+		incX23 = 0;
+		incR23 = 0;
+		incG23 = 0;
+		incB23 = 0;
+		incA23 = 0;
+		incFog23 = 0;
+
+		// perspective interpolation
+		incZ23 = 0;
+
+	}
 
 	EGL_Fixed incTu23 = EGL_Mul(EGL_Mul(pos3.m_TextureCoords.tu, invZ3) - 
 								EGL_Mul(pos2.m_TextureCoords.tu, invZ2), invDeltaY23);
