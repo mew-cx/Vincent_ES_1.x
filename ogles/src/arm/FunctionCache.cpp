@@ -119,7 +119,19 @@ ScanlineFunction * FunctionCache :: GetFunction(FunctionType type, const Rasteri
 
 	switch (type) {
 	case FunctionTypeScanline:
-		generator.CompileRasterScanLine(this);
+		generator.Compile(this, FunctionTypeScanline, &CodeGenerator::GenerateRasterScanLine);
+		break;
+
+	case FunctionTypePoint:
+		generator.Compile(this, FunctionTypePoint, &CodeGenerator::GenerateRasterPoint);
+		break;
+
+	case FunctionTypeLine:
+		generator.Compile(this, FunctionTypeLine, &CodeGenerator::GenerateRasterLine);
+		break;
+
+	case FunctionTypeTriangle:
+		generator.Compile(this, FunctionTypeTriangle, &CodeGenerator::GenerateRasterTriangle);
 
 	default:
 		;

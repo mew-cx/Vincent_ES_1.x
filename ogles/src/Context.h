@@ -93,8 +93,9 @@ namespace EGL {
 		~Context();
 
 		// ----------------------------------------------------------------------
-		// Public OpenGL ES entry points
+		// Fixed point API
 		// ----------------------------------------------------------------------
+
 		void ActiveTexture(GLenum texture);
 		void AlphaFuncx(GLenum func, GLclampx ref);
 		void BindTexture(GLenum target, GLuint texture);
@@ -207,6 +208,10 @@ namespace EGL {
 		void TexEnvf(GLenum target, GLenum pname, GLfloat param);
 		void TexEnvfv(GLenum target, GLenum pname, const GLfloat *params);
 		void Translatef(GLfloat x, GLfloat y, GLfloat z);
+
+		// ----------------------------------------------------------------------
+		// Extensions
+		// ----------------------------------------------------------------------
 
 		void DrawMesh(GLsizei count, GLenum type, GLsizei stride,
 					  GLsizei offsetVertex, GLsizei strideVertex,
@@ -345,6 +350,7 @@ private:
 		// ----------------------------------------------------------------------
 		// Matrix stacks
 		// ----------------------------------------------------------------------
+
 		MatrixStack			m_ModelViewMatrixStack;
 		MatrixStack			m_ProjectionMatrixStack;
 		MatrixStack			m_TextureMatrixStack;
@@ -356,6 +362,7 @@ private:
 		// ----------------------------------------------------------------------
 		// Viewport configuration
 		// ----------------------------------------------------------------------
+
 		Rect				m_Viewport;
 		Rect				m_Scissor;
 		GLclampx			m_ViewportNear;
@@ -369,6 +376,7 @@ private:
 		// ----------------------------------------------------------------------
 		// Client state variables
 		// ----------------------------------------------------------------------
+
 		bool				m_VertexArrayEnabled;
 		bool				m_NormalArrayEnabled;
 		bool				m_ColorArrayEnabled;
@@ -383,6 +391,7 @@ private:
 		// ----------------------------------------------------------------------
 		// Default values if arrays are disabled
 		// ----------------------------------------------------------------------
+
 		Vec3D				m_DefaultNormal;
 		FractionalColor		m_DefaultRGBA;
 		TexCoord			m_DefaultTextureCoords;
@@ -390,6 +399,7 @@ private:
 		// ----------------------------------------------------------------------
 		// Current values for setup
 		// ----------------------------------------------------------------------
+
 		Vec4D				m_CurrentVertex;	
 		Vec3D				m_CurrentNormal;
 		FractionalColor		m_CurrentRGBA;
@@ -398,6 +408,7 @@ private:
 		// ----------------------------------------------------------------------
 		// Rendering State
 		// ----------------------------------------------------------------------
+
 		Light				m_Lights[EGL_NUMBER_LIGHTS];
 		Material			m_FrontMaterial;
 		FractionalColor		m_LightModelAmbient;
