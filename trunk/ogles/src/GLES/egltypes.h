@@ -48,7 +48,6 @@ typedef void *			EGLContext;
 
 #endif
 
-typedef int		int32_t;
 typedef HDC		NativeDisplayType;
 typedef HWND	NativeWindowType;
 typedef HBITMAP NativePixmapType;
@@ -58,7 +57,7 @@ typedef HBITMAP NativePixmapType;
 ** Types and resources
 */
 typedef int				EGLBoolean;
-typedef int32_t			EGLint;
+typedef __int32			EGLint;
 typedef void *			EGLDisplay;
 
 /*

@@ -10,6 +10,9 @@ Version 0.71
 
 This version incorporates critical fixes for 0.7.
 
+929529 - instruction selection raises exception 
+929528 - assertion raised in instruction selection 
+929526 - assertion failed after function cleanup 
 928068 - EGL coverage test fails 
 928046 - GL coverage test fails 
 923737 - glBindTexture can fail 

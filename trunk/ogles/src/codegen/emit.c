@@ -1052,6 +1052,7 @@ static void emit_binary(cg_codegen_t * gen, cg_inst_binary_t * inst, int update_
 static void emit_compare(cg_codegen_t * gen, cg_inst_compare_t * inst)
 {
 	ARMShiftType shift_type;
+	int shift;
 	
 	assert(inst->base.opcode == cg_op_cmp ||
 		   inst->base.opcode == cg_op_fcmp);
@@ -1065,12 +1066,18 @@ static void emit_compare(cg_codegen_t * gen, cg_inst_compare_t * inst)
 			break;
 			
 		case cg_inst_arm_compare_immed:
-			assert(inst->operand.immed <= 0xff &&
-				   inst->operand.immed >= 0);
-			
-			ARM_CMP_REG_IMM8(gen->cseg,
-							inst->source->physical_reg->regno,
-							inst->operand.immed);
+			shift = calc_arm_mov_const_shift(inst->operand.immed);
+
+			if ((shift & 0x80000001) != 1) {
+				if (shift >= 0) {
+					ARM_CMP_REG_IMM(gen->cseg, inst->source->physical_reg->regno, inst->operand.immed >> ((32 - shift) & 31), shift);
+				} else {
+					ARM_CMN_REG_IMM(gen->cseg, inst->source->physical_reg->regno, (inst->operand.immed ^ (~0)) >> ((32 + 2 + shift) & 31), (-shift - 2));
+				}
+			} else {
+				assert(0);
+			}
+
 			break;
 			
 		case cg_inst_arm_compare_shift_reg:
@@ -1310,6 +1317,8 @@ static void emit_branch(cg_codegen_t * gen, cg_inst_branch_t * inst)
 				case cg_op_bgt:		cond = ARMCOND_GT; break;
 				case cg_op_blt:		cond = ARMCOND_LT; break;
 				case cg_op_bne:		cond = ARMCOND_NE; break;
+				case cg_op_bra:		cond = ARMCOND_AL; break;
+				case cg_op_nop:		cond = ARMCOND_NV; break;
 					
 				default:
 					assert(0);
