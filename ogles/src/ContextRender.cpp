@@ -669,7 +669,7 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 		// keep this value around for perspective-correct texturing
 		EGL_Fixed invDenominator = EGL_Inverse(w >> 8);
 
-		// Scale 1/Z by 2^10 to avoid rounding problems during prespective correct
+		// Scale 1/Z by 2^2 to avoid rounding problems during prespective correct
 		// interpolation
 		// See book by LaMothe for more detailed discussion on this
 		pos.m_WindowCoords.invZ = invDenominator << 2;
