@@ -20,10 +20,10 @@ CFG=OGLES - Win32 (WCE emulator) Debug
 !MESSAGE 
 !MESSAGE "OGLES - Win32 (WCE emulator) Release" (based on "Win32 (WCE emulator) Dynamic-Link Library")
 !MESSAGE "OGLES - Win32 (WCE emulator) Debug" (based on "Win32 (WCE emulator) Dynamic-Link Library")
-!MESSAGE "OGLES - Win32 (WCE ARMV4) Release" (based on "Win32 (WCE ARMV4) Dynamic-Link Library")
-!MESSAGE "OGLES - Win32 (WCE ARMV4) Debug" (based on "Win32 (WCE ARMV4) Dynamic-Link Library")
-!MESSAGE "OGLES - Win32 (WCE ARMV4) Debug StrongARM" (based on "Win32 (WCE ARMV4) Dynamic-Link Library")
-!MESSAGE "OGLES - Win32 (WCE ARMV4) Release StrongARM" (based on "Win32 (WCE ARMV4) Dynamic-Link Library")
+!MESSAGE "OGLES - Win32 (WCE ARMV4) Release XScale" (based on "Win32 (WCE ARMV4) Dynamic-Link Library")
+!MESSAGE "OGLES - Win32 (WCE ARMV4) Debug XScale" (based on "Win32 (WCE ARMV4) Dynamic-Link Library")
+!MESSAGE "OGLES - Win32 (WCE ARMV4) Debug ARM" (based on "Win32 (WCE ARMV4) Dynamic-Link Library")
+!MESSAGE "OGLES - Win32 (WCE ARMV4) Release ARM" (based on "Win32 (WCE ARMV4) Dynamic-Link Library")
 !MESSAGE 
 
 # Begin Project
@@ -98,7 +98,7 @@ LINK32=link.exe
 # ADD BASE LINK32 commctrl.lib coredll.lib $(CEx86Corelibc) /nologo /base:"0x00100000" /stack:0x10000,0x1000 /entry:"_DllMainCRTStartup" /dll /debug /nodefaultlib:"OLDNAMES.lib" /nodefaultlib:$(CENoDefaultLib) /subsystem:$(CESubsystem) /MACHINE:IX86
 # ADD LINK32 commctrl.lib coredll.lib $(CEx86Corelibc) /nologo /base:"0x00100000" /stack:0x10000,0x1000 /entry:"_DllMainCRTStartup" /dll /map /debug /nodefaultlib:"OLDNAMES.lib" /nodefaultlib:$(CENoDefaultLib) /out:"..\..\bin\emu\Debug/GLES_CL.dll" /subsystem:$(CESubsystem) /MACHINE:IX86
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 0
@@ -131,7 +131,7 @@ LINK32=C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xilinke42
 # ADD BASE LINK32 commctrl.lib coredll.lib /nologo /base:"0x00100000" /stack:0x10000,0x1000 /entry:"_DllMainCRTStartup" /dll /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 # ADD LINK32 commctrl.lib coredll.lib gpp_WMMX40B_r.lib /nologo /base:"0x00100000" /stack:0x10000,0x1000 /entry:"_DllMainCRTStartup" /dll /debug /nodefaultlib:"$(CENoDefaultLib)" /out:"..\..\bin\arm\Release/GLES_CL.dll" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
@@ -164,12 +164,12 @@ LINK32=C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xilinke42
 # ADD BASE LINK32 commctrl.lib coredll.lib /nologo /base:"0x00100000" /stack:0x10000,0x1000 /entry:"_DllMainCRTStartup" /dll /debug /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 # ADD LINK32 commctrl.lib coredll.lib gpp_WMMX40B_d.lib /nologo /base:"0x00100000" /stack:0x10000,0x1000 /entry:"_DllMainCRTStartup" /dll /debug /nodefaultlib:"$(CENoDefaultLib)" /out:"..\..\bin\arm\Debug/GLES_CL.dll" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
-# PROP BASE Output_Dir "ARMV4Debug StrongARM"
-# PROP BASE Intermediate_Dir "ARMV4Debug StrongARM"
+# PROP BASE Output_Dir "ARMV4Debug ARM"
+# PROP BASE Intermediate_Dir "ARMV4Debug ARM"
 # PROP BASE CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
 # PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
 # PROP BASE Ignore_Export_Lib 0
@@ -198,12 +198,12 @@ LINK32=C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xilinke42
 # ADD BASE LINK32 commctrl.lib coredll.lib gpp_WMMX40B_d.lib /nologo /base:"0x00100000" /stack:0x10000,0x1000 /entry:"_DllMainCRTStartup" /dll /debug /nodefaultlib:"$(CENoDefaultLib)" /out:"..\..\bin\arm\Debug/GLES_CL.dll" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 # ADD LINK32 commctrl.lib coredll.lib /nologo /base:"0x00100000" /stack:0x10000,0x1000 /entry:"_DllMainCRTStartup" /dll /debug /nodefaultlib:"$(CENoDefaultLib)" /out:"..\..\bin\arm\Debug/GLES_CL.dll" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 0
-# PROP BASE Output_Dir "ARMV4Release StrongARM"
-# PROP BASE Intermediate_Dir "ARMV4Release StrongARM"
+# PROP BASE Output_Dir "ARMV4Release ARM"
+# PROP BASE Intermediate_Dir "ARMV4Release ARM"
 # PROP BASE CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
 # PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
 # PROP BASE Ignore_Export_Lib 0
@@ -238,10 +238,10 @@ LINK32=C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xilinke42
 
 # Name "OGLES - Win32 (WCE emulator) Release"
 # Name "OGLES - Win32 (WCE emulator) Debug"
-# Name "OGLES - Win32 (WCE ARMV4) Release"
-# Name "OGLES - Win32 (WCE ARMV4) Debug"
-# Name "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
-# Name "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+# Name "OGLES - Win32 (WCE ARMV4) Release XScale"
+# Name "OGLES - Win32 (WCE ARMV4) Debug XScale"
+# Name "OGLES - Win32 (WCE ARMV4) Debug ARM"
+# Name "OGLES - Win32 (WCE ARMV4) Release ARM"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
@@ -271,7 +271,7 @@ DEP_CPP_COLOR=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_COLOR=\
 	"..\..\src\Color.h"\
@@ -282,7 +282,7 @@ DEP_CPP_COLOR=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_COLOR=\
 	"..\..\src\Color.h"\
@@ -293,7 +293,7 @@ DEP_CPP_COLOR=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_COLOR=\
 	"..\..\src\Color.h"\
@@ -304,7 +304,7 @@ DEP_CPP_COLOR=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_COLOR=\
 	"..\..\src\Color.h"\
@@ -346,7 +346,7 @@ DEP_CPP_CONFI=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_CONFI=\
 	"..\..\src\Config.h"\
@@ -358,7 +358,7 @@ DEP_CPP_CONFI=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_CONFI=\
 	"..\..\src\Config.h"\
@@ -370,7 +370,7 @@ DEP_CPP_CONFI=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_CONFI=\
 	"..\..\src\Config.h"\
@@ -382,7 +382,7 @@ DEP_CPP_CONFI=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_CONFI=\
 	"..\..\src\Config.h"\
@@ -449,7 +449,7 @@ DEP_CPP_CONTE=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_CONTE=\
 	"..\..\src\Color.h"\
@@ -473,7 +473,7 @@ DEP_CPP_CONTE=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_CONTE=\
 	"..\..\src\Color.h"\
@@ -497,7 +497,7 @@ DEP_CPP_CONTE=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_CONTE=\
 	"..\..\src\Color.h"\
@@ -521,7 +521,7 @@ DEP_CPP_CONTE=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_CONTE=\
 	"..\..\src\Color.h"\
@@ -598,7 +598,7 @@ DEP_CPP_CONTEX=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_CONTEX=\
 	"..\..\src\Color.h"\
@@ -621,7 +621,7 @@ DEP_CPP_CONTEX=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_CONTEX=\
 	"..\..\src\Color.h"\
@@ -644,7 +644,7 @@ DEP_CPP_CONTEX=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_CONTEX=\
 	"..\..\src\Color.h"\
@@ -667,7 +667,7 @@ DEP_CPP_CONTEX=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_CONTEX=\
 	"..\..\src\Color.h"\
@@ -743,7 +743,7 @@ DEP_CPP_CONTEXT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_CONTEXT=\
 	"..\..\src\Color.h"\
@@ -766,7 +766,7 @@ DEP_CPP_CONTEXT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_CONTEXT=\
 	"..\..\src\Color.h"\
@@ -789,7 +789,7 @@ DEP_CPP_CONTEXT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_CONTEXT=\
 	"..\..\src\Color.h"\
@@ -812,7 +812,7 @@ DEP_CPP_CONTEXT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_CONTEXT=\
 	"..\..\src\Color.h"\
@@ -888,7 +888,7 @@ DEP_CPP_CONTEXTM=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_CONTEXTM=\
 	"..\..\src\Color.h"\
@@ -911,7 +911,7 @@ DEP_CPP_CONTEXTM=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_CONTEXTM=\
 	"..\..\src\Color.h"\
@@ -934,7 +934,7 @@ DEP_CPP_CONTEXTM=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_CONTEXTM=\
 	"..\..\src\Color.h"\
@@ -957,7 +957,7 @@ DEP_CPP_CONTEXTM=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_CONTEXTM=\
 	"..\..\src\Color.h"\
@@ -1033,7 +1033,7 @@ DEP_CPP_CONTEXTMA=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_CONTEXTMA=\
 	"..\..\src\Color.h"\
@@ -1056,7 +1056,7 @@ DEP_CPP_CONTEXTMA=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_CONTEXTMA=\
 	"..\..\src\Color.h"\
@@ -1079,7 +1079,7 @@ DEP_CPP_CONTEXTMA=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_CONTEXTMA=\
 	"..\..\src\Color.h"\
@@ -1102,7 +1102,7 @@ DEP_CPP_CONTEXTMA=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_CONTEXTMA=\
 	"..\..\src\Color.h"\
@@ -1178,7 +1178,7 @@ DEP_CPP_CONTEXTME=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_CONTEXTME=\
 	"..\..\src\Color.h"\
@@ -1201,7 +1201,7 @@ DEP_CPP_CONTEXTME=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_CONTEXTME=\
 	"..\..\src\Color.h"\
@@ -1224,7 +1224,7 @@ DEP_CPP_CONTEXTME=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_CONTEXTME=\
 	"..\..\src\Color.h"\
@@ -1247,7 +1247,7 @@ DEP_CPP_CONTEXTME=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_CONTEXTME=\
 	"..\..\src\Color.h"\
@@ -1323,7 +1323,7 @@ DEP_CPP_CONTEXTP=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_CONTEXTP=\
 	"..\..\src\Color.h"\
@@ -1346,7 +1346,7 @@ DEP_CPP_CONTEXTP=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_CONTEXTP=\
 	"..\..\src\Color.h"\
@@ -1369,7 +1369,7 @@ DEP_CPP_CONTEXTP=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_CONTEXTP=\
 	"..\..\src\Color.h"\
@@ -1392,7 +1392,7 @@ DEP_CPP_CONTEXTP=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_CONTEXTP=\
 	"..\..\src\Color.h"\
@@ -1470,7 +1470,7 @@ DEP_CPP_CONTEXTR=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_CONTEXTR=\
 	"..\..\src\Color.h"\
@@ -1494,7 +1494,7 @@ DEP_CPP_CONTEXTR=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_CONTEXTR=\
 	"..\..\src\Color.h"\
@@ -1518,7 +1518,7 @@ DEP_CPP_CONTEXTR=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_CONTEXTR=\
 	"..\..\src\Color.h"\
@@ -1542,7 +1542,7 @@ DEP_CPP_CONTEXTR=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_CONTEXTR=\
 	"..\..\src\Color.h"\
@@ -1621,7 +1621,7 @@ DEP_CPP_CONTEXTRE=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_CONTEXTRE=\
 	"..\..\src\Color.h"\
@@ -1645,7 +1645,7 @@ DEP_CPP_CONTEXTRE=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_CONTEXTRE=\
 	"..\..\src\Color.h"\
@@ -1669,7 +1669,7 @@ DEP_CPP_CONTEXTRE=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_CONTEXTRE=\
 	"..\..\src\Color.h"\
@@ -1693,7 +1693,7 @@ DEP_CPP_CONTEXTRE=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_CONTEXTRE=\
 	"..\..\src\Color.h"\
@@ -1772,7 +1772,7 @@ DEP_CPP_CONTEXTT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_CONTEXTT=\
 	"..\..\src\Color.h"\
@@ -1796,7 +1796,7 @@ DEP_CPP_CONTEXTT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_CONTEXTT=\
 	"..\..\src\Color.h"\
@@ -1820,7 +1820,7 @@ DEP_CPP_CONTEXTT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_CONTEXTT=\
 	"..\..\src\Color.h"\
@@ -1844,7 +1844,7 @@ DEP_CPP_CONTEXTT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_CONTEXTT=\
 	"..\..\src\Color.h"\
@@ -1923,7 +1923,7 @@ DEP_CPP_CONTEXTTR=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_CONTEXTTR=\
 	"..\..\src\Color.h"\
@@ -1947,7 +1947,7 @@ DEP_CPP_CONTEXTTR=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_CONTEXTTR=\
 	"..\..\src\Color.h"\
@@ -1971,7 +1971,7 @@ DEP_CPP_CONTEXTTR=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_CONTEXTTR=\
 	"..\..\src\Color.h"\
@@ -1995,7 +1995,7 @@ DEP_CPP_CONTEXTTR=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_CONTEXTTR=\
 	"..\..\src\Color.h"\
@@ -2072,7 +2072,7 @@ DEP_CPP_CONTEXTV=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_CONTEXTV=\
 	"..\..\src\Color.h"\
@@ -2095,7 +2095,7 @@ DEP_CPP_CONTEXTV=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_CONTEXTV=\
 	"..\..\src\Color.h"\
@@ -2118,7 +2118,7 @@ DEP_CPP_CONTEXTV=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_CONTEXTV=\
 	"..\..\src\Color.h"\
@@ -2141,7 +2141,7 @@ DEP_CPP_CONTEXTV=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_CONTEXTV=\
 	"..\..\src\Color.h"\
@@ -2195,7 +2195,7 @@ DEP_CPP_DISPL=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_DISPL=\
 	"..\..\src\Display.h"\
@@ -2207,7 +2207,7 @@ DEP_CPP_DISPL=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_DISPL=\
 	"..\..\src\Display.h"\
@@ -2219,7 +2219,7 @@ DEP_CPP_DISPL=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_DISPL=\
 	"..\..\src\Display.h"\
@@ -2231,7 +2231,7 @@ DEP_CPP_DISPL=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_DISPL=\
 	"..\..\src\Display.h"\
@@ -2298,7 +2298,7 @@ DEP_CPP_EGL_C=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_EGL_C=\
 	"..\..\src\Color.h"\
@@ -2322,7 +2322,7 @@ DEP_CPP_EGL_C=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_EGL_C=\
 	"..\..\src\Color.h"\
@@ -2346,7 +2346,7 @@ DEP_CPP_EGL_C=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_EGL_C=\
 	"..\..\src\Color.h"\
@@ -2370,7 +2370,7 @@ DEP_CPP_EGL_C=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_EGL_C=\
 	"..\..\src\Color.h"\
@@ -2447,7 +2447,7 @@ DEP_CPP_GL_CP=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_GL_CP=\
 	"..\..\src\Color.h"\
@@ -2470,7 +2470,7 @@ DEP_CPP_GL_CP=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_GL_CP=\
 	"..\..\src\Color.h"\
@@ -2493,7 +2493,7 @@ DEP_CPP_GL_CP=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_GL_CP=\
 	"..\..\src\Color.h"\
@@ -2516,7 +2516,7 @@ DEP_CPP_GL_CP=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_GL_CP=\
 	"..\..\src\Color.h"\
@@ -2574,7 +2574,7 @@ DEP_CPP_LIGHT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_LIGHT=\
 	"..\..\src\Color.h"\
@@ -2588,7 +2588,7 @@ DEP_CPP_LIGHT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_LIGHT=\
 	"..\..\src\Color.h"\
@@ -2602,7 +2602,7 @@ DEP_CPP_LIGHT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_LIGHT=\
 	"..\..\src\Color.h"\
@@ -2616,7 +2616,7 @@ DEP_CPP_LIGHT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_LIGHT=\
 	"..\..\src\Color.h"\
@@ -2657,7 +2657,7 @@ DEP_CPP_LINAL=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_LINAL=\
 	"..\..\src\fixed.h"\
@@ -2667,7 +2667,7 @@ DEP_CPP_LINAL=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_LINAL=\
 	"..\..\src\fixed.h"\
@@ -2677,7 +2677,7 @@ DEP_CPP_LINAL=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_LINAL=\
 	"..\..\src\fixed.h"\
@@ -2687,7 +2687,7 @@ DEP_CPP_LINAL=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_LINAL=\
 	"..\..\src\fixed.h"\
@@ -2756,7 +2756,7 @@ DEP_CPP_LINES=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_LINES=\
 	"..\..\src\Color.h"\
@@ -2780,7 +2780,7 @@ DEP_CPP_LINES=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_LINES=\
 	"..\..\src\Color.h"\
@@ -2804,7 +2804,7 @@ DEP_CPP_LINES=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_LINES=\
 	"..\..\src\Color.h"\
@@ -2828,7 +2828,7 @@ DEP_CPP_LINES=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_LINES=\
 	"..\..\src\Color.h"\
@@ -2883,7 +2883,7 @@ DEP_CPP_MATER=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_MATER=\
 	"..\..\src\Color.h"\
@@ -2895,7 +2895,7 @@ DEP_CPP_MATER=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_MATER=\
 	"..\..\src\Color.h"\
@@ -2907,7 +2907,7 @@ DEP_CPP_MATER=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_MATER=\
 	"..\..\src\Color.h"\
@@ -2919,7 +2919,7 @@ DEP_CPP_MATER=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_MATER=\
 	"..\..\src\Color.h"\
@@ -2960,7 +2960,7 @@ DEP_CPP_MATRI=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_MATRI=\
 	"..\..\src\fixed.h"\
@@ -2971,7 +2971,7 @@ DEP_CPP_MATRI=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_MATRI=\
 	"..\..\src\fixed.h"\
@@ -2982,7 +2982,7 @@ DEP_CPP_MATRI=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_MATRI=\
 	"..\..\src\fixed.h"\
@@ -2993,7 +2993,7 @@ DEP_CPP_MATRI=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_MATRI=\
 	"..\..\src\fixed.h"\
@@ -3027,7 +3027,7 @@ DEP_CPP_OGLES=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_OGLES=\
 	"..\..\src\OGLES.h"\
@@ -3035,7 +3035,7 @@ DEP_CPP_OGLES=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_OGLES=\
 	"..\..\src\OGLES.h"\
@@ -3043,7 +3043,7 @@ DEP_CPP_OGLES=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_OGLES=\
 	"..\..\src\OGLES.h"\
@@ -3051,7 +3051,7 @@ DEP_CPP_OGLES=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_OGLES=\
 	"..\..\src\OGLES.h"\
@@ -3108,7 +3108,7 @@ DEP_CPP_RASTE=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_RASTE=\
 	"..\..\src\arm\FunctionCache.h"\
@@ -3130,7 +3130,7 @@ DEP_CPP_RASTE=\
 	
 # ADD CPP /Oxt /Ob2 /FAs
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_RASTE=\
 	"..\..\src\arm\FunctionCache.h"\
@@ -3151,7 +3151,7 @@ DEP_CPP_RASTE=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_RASTE=\
 	"..\..\src\arm\FunctionCache.h"\
@@ -3172,7 +3172,7 @@ DEP_CPP_RASTE=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_RASTE=\
 	"..\..\src\arm\FunctionCache.h"\
@@ -3226,7 +3226,7 @@ DEP_CPP_RASTER=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_RASTER=\
 	"..\..\src\Color.h"\
@@ -3238,7 +3238,7 @@ DEP_CPP_RASTER=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_RASTER=\
 	"..\..\src\Color.h"\
@@ -3250,7 +3250,7 @@ DEP_CPP_RASTER=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_RASTER=\
 	"..\..\src\Color.h"\
@@ -3262,7 +3262,7 @@ DEP_CPP_RASTER=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_RASTER=\
 	"..\..\src\Color.h"\
@@ -3297,7 +3297,7 @@ DEP_CPP_STDAF=\
 	
 # ADD CPP /Yc"stdafx.h"
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_STDAF=\
 	"..\..\src\stdafx.h"\
@@ -3305,7 +3305,7 @@ DEP_CPP_STDAF=\
 	
 # ADD CPP /Yc"stdafx.h"
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_STDAF=\
 	"..\..\src\stdafx.h"\
@@ -3313,7 +3313,7 @@ DEP_CPP_STDAF=\
 	
 # ADD CPP /Yc"stdafx.h"
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_STDAF=\
 	"..\..\src\stdafx.h"\
@@ -3322,7 +3322,7 @@ DEP_CPP_STDAF=\
 # ADD BASE CPP /Yc"stdafx.h"
 # ADD CPP /Yc"stdafx.h"
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_STDAF=\
 	"..\..\src\stdafx.h"\
@@ -3368,7 +3368,7 @@ DEP_CPP_SURFA=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_SURFA=\
 	"..\..\src\Color.h"\
@@ -3383,7 +3383,7 @@ DEP_CPP_SURFA=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_SURFA=\
 	"..\..\src\Color.h"\
@@ -3398,7 +3398,7 @@ DEP_CPP_SURFA=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_SURFA=\
 	"..\..\src\Color.h"\
@@ -3413,7 +3413,7 @@ DEP_CPP_SURFA=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_SURFA=\
 	"..\..\src\Color.h"\
@@ -3469,7 +3469,7 @@ DEP_CPP_TEXTU=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_TEXTU=\
 	"..\..\src\Color.h"\
@@ -3486,7 +3486,7 @@ DEP_CPP_TEXTU=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_TEXTU=\
 	"..\..\src\Color.h"\
@@ -3503,7 +3503,7 @@ DEP_CPP_TEXTU=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_TEXTU=\
 	"..\..\src\Color.h"\
@@ -3520,7 +3520,7 @@ DEP_CPP_TEXTU=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_TEXTU=\
 	"..\..\src\Color.h"\
@@ -3708,7 +3708,7 @@ DEP_CPP_CODEG=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_CODEG=\
 	"..\..\src\arm\CodeGenerator.h"\
@@ -3736,7 +3736,7 @@ DEP_CPP_CODEG=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_CODEG=\
 	"..\..\src\arm\CodeGenerator.h"\
@@ -3764,7 +3764,7 @@ DEP_CPP_CODEG=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_CODEG=\
 	"..\..\src\arm\CodeGenerator.h"\
@@ -3785,7 +3785,7 @@ NODEP_CPP_CODEG=\
 	"..\..\src\arm\Texture.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_CODEG=\
 	"..\..\src\arm\CodeGenerator.h"\
@@ -3856,7 +3856,7 @@ DEP_CPP_FUNCT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
 
 DEP_CPP_FUNCT=\
 	"..\..\src\arm\CodeGenerator.h"\
@@ -3872,7 +3872,7 @@ DEP_CPP_FUNCT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug XScale"
 
 DEP_CPP_FUNCT=\
 	"..\..\src\arm\CodeGenerator.h"\
@@ -3888,7 +3888,7 @@ DEP_CPP_FUNCT=\
 	{$(INCLUDE)}"gpp.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Debug ARM"
 
 DEP_CPP_FUNCT=\
 	"..\..\src\arm\CodeGenerator.h"\
@@ -3903,7 +3903,7 @@ NODEP_CPP_FUNCT=\
 	"..\..\src\arm\stdafx.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release StrongARM"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_FUNCT=\
 	"..\..\src\arm\CodeGenerator.h"\
