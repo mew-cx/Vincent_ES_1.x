@@ -1,5 +1,6 @@
 TARGET gles_cl.dll
 TARGETTYPE dll
+UID 0x1000008D 0x10202D9E
 SOURCEPATH ..\..\src
 SOURCE Context.cpp
 SOURCE ContextBuffer.cpp

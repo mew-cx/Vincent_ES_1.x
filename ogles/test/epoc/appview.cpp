@@ -11,10 +11,9 @@
 #include <quartzkeys.h>
 #include "appview.h"
 
-extern int InitOpenGL(CWindowGc* gc, RWindow* win);
-extern void ShutdownOpenGL();
-extern void PaintProc(CWindowGc* gc, const TRect& aRect);
-extern float angle;
+extern int InitOpenGL(CWindowGc* gc, RWindow* win, TAppGlobal* data);
+extern void ShutdownOpenGL(TAppGlobal* data);
+extern void PaintProc(CWindowGc* gc, const TRect& aRect, TAppGlobal* data);
 
 _LIT(KBitmapFile, "z:\\system\\apps\\test\\dodge.mbm");
 
@@ -33,7 +32,7 @@ void CAppView::ConstructL(const TRect& aRect)
 	CreateWindowL();
 	SetRect(aRect);
 	ActivateL();
-    InitOpenGL(Gc(), Win());
+    InitOpenGL(Gc(), Win(), &iData);
     iCallBack = new (ELeave) TCallBack(&CAppView::OnTimer, this);
 }
 
@@ -42,7 +41,7 @@ void CAppView::Exit()
     delete iCallBack;
     delete iTimer;
     iTimer = NULL;
-    ShutdownOpenGL();
+    ShutdownOpenGL(&iData);
 }
 
 void CAppView::Draw(const TRect& aRect) const
@@ -65,7 +64,7 @@ void CAppView::Draw(const TRect& aRect) const
 
     if (iShowTest)
     {
-        PaintProc(&gc, aRect);
+        PaintProc(&gc, aRect, &iData);
         return;
     }
 
@@ -148,7 +147,7 @@ void CAppView::HandlePointerEventL(const TPointerEvent& aPointerEvent)
 int CAppView::OnTimer(void* aArg)
 {
     CAppView* self = (CAppView*)aArg;
-    angle += 0.5f;
+    self->iData.angle += 0.5f;
     self->DrawNow();
     return 0;
 }

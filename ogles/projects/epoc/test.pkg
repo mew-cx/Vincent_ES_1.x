@@ -1,0 +1,20 @@
+; Languages
+; None -  English only by default
+&EN
+
+; Installation header
+; Only one component name as we only support English
+#{"test"},(0x10202DA0),1,0,0
+
+; UI Platform
+(0x101F617B), 2, 0, 0, {"UIQ20ProductID"}
+
+; Application Files
+"\EPOC32\RELEASE\ARMI\UREL\TEST.APP"-"!:\system\apps\test\test.app"
+"\EPOC32\DATA\Z\SYSTEM\APPS\TEST\TEST.RSC"-"!:\system\apps\test\test.rsc"
+
+; Other Files
+"\EPOC32\DATA\Z\SYSTEM\APPS\TEST\DODGE.MBM"-"!:\system\apps\test\dodge.mbm"
+
+; Component .sis files
+@"gles_cl.sis",(0x10202D9E)
