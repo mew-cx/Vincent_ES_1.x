@@ -4,8 +4,6 @@ TO-DO List
 Completion:
 -----------
 
-- Test calling through real API functions
-- Load full model and render it
 - Complete lightning model
 - Culling and object space clipping
 - Mipmapping for textures
@@ -23,6 +21,9 @@ Optimization:
 - Create configuration header file
 - Make stencil support configuration parameter
 - Create specialized rasterization functions
+- merge matrix multiplications for setup
+- transform lights instead of transforming eye normals
+- Create specialized setup functions
 - investigate blitting options
 - JIT and shading language
 
