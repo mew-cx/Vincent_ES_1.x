@@ -80,7 +80,7 @@ RasterizerState :: RasterizerState():
 	m_MaskRed(true),
 	m_MaskGreen(true),
 	m_MaskBlue(true),
-	m_MaskAlpha(false),	// or true?
+	m_MaskAlpha(true),	
 
 	// initial values for logic op
 	m_LogicOpEnabled(false),

@@ -174,8 +174,8 @@ namespace {
 		U32 srcGap = srcWidth - copyWidth;	// how many pixels to skip for next line
 		U32 dstGap = dstWidth - copyWidth;	// how many pixels to skip for next line
 
-		const PixelType * srcPtr = reinterpret_cast<const PixelType *>(src) + srcX;
-		PixelType * dstPtr = reinterpret_cast<PixelType *>(dst) + dstX;
+		const PixelType * srcPtr = reinterpret_cast<const PixelType *>(src) + srcX + srcY * srcWidth;
+		PixelType * dstPtr = reinterpret_cast<PixelType *>(dst) + dstX + dstY * dstWidth;
 
 		do {
 			U32 span = copyWidth;
@@ -345,8 +345,8 @@ namespace {
 		U32 srcGap = srcWidth - copyWidth;	// how many pixels to skip for next line
 		U32 dstGap = dstWidth - copyWidth;	// how many pixels to skip for next line
 
-		const SrcBaseType * srcPtr = reinterpret_cast<const SrcBaseType *>(src) + srcX;
-		DstBaseType * dstPtr = reinterpret_cast<DstBaseType *>(dst) + dstX;
+		const SrcBaseType * srcPtr = reinterpret_cast<const SrcBaseType *>(src) + srcX + srcY * srcWidth;
+		DstBaseType * dstPtr = reinterpret_cast<DstBaseType *>(dst) + dstX + dstY * dstWidth;
 
 		do {
 			U32 span = copyWidth;
@@ -388,20 +388,20 @@ namespace {
 		// clip the copy rectangle to the valid size
 		// ---------------------------------------------------------------------
 
-		if (srcX + copyWidth > dstX + dstWidth) {
-			copyWidth = dstX + dstWidth - srcX;
+		if (copyWidth > dstWidth) {
+			copyWidth = dstWidth;
 		}
 
-		if (srcX + copyWidth > srcX + srcWidth) {
-			copyWidth = srcWidth - srcX;
+		if (copyWidth > srcWidth) {
+			copyWidth = srcWidth;
 		}
 
-		if (srcY + copyHeight > dstY + dstHeight) {
-			copyHeight = dstY + dstHeight - srcY;
+		if (copyHeight > dstHeight) {
+			copyHeight = dstHeight;
 		}
 
-		if (srcY + copyHeight > srcY + srcHeight) {
-			copyHeight = srcHeight - srcY;
+		if (copyHeight > srcHeight) {
+			copyHeight = srcHeight;
 		}
 
 		// ---------------------------------------------------------------------
@@ -521,6 +521,114 @@ namespace {
 				break;
 
 		}
+	}
+
+	// -------------------------------------------------------------------------
+	// Given two bitmaps src and dst, where src is a drawing surface
+	// and dst has dimensions (dstWidth * dstHeight),
+	// copy the rectangle (srcX, srcY, copyWidth, copyHeight) into
+	// dst at location (dstX, dstY).
+	//
+	// The texture format and the type of the source format a given as
+	// parameters.
+	// -------------------------------------------------------------------------
+	bool CopySurfacePixels(Surface * src, 
+					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
+					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
+					RasterizerState::TextureFormat format, GLenum srcType, GLenum dstType) {
+
+		U32 srcWidth = src->GetWidth();
+		U32 srcHeight = src->GetHeight();
+
+		// ---------------------------------------------------------------------
+		// clip lower left corner
+		// ---------------------------------------------------------------------
+
+		if (srcX >= srcWidth || srcY >= srcHeight ||
+			dstX >= dstWidth || dstY >= dstHeight ||
+			copyWidth == 0 || copyHeight == 0) {
+			return true;
+		}
+
+		// ---------------------------------------------------------------------
+		// clip the copy rectangle to the valid size
+		// ---------------------------------------------------------------------
+
+		if (copyWidth > dstWidth) {
+			copyWidth = dstWidth;
+		}
+
+		if (copyWidth > srcWidth) {
+			copyWidth = srcWidth;
+		}
+
+		if (copyHeight > dstHeight) {
+			copyHeight = dstHeight;
+		}
+
+		if (copyHeight > srcHeight) {
+			copyHeight = srcHeight;
+		}
+
+		// ---------------------------------------------------------------------
+		// at this point we know that the copy rectangle is valid and non-empty
+		// ---------------------------------------------------------------------
+
+		assert(srcType == GL_UNSIGNED_SHORT_5_6_5);
+
+		switch (format) {
+			case RasterizerState::TextureFormatRGBA:
+				switch (dstType) {
+				case GL_UNSIGNED_BYTE:
+					{
+						U32 srcGap = srcWidth - copyWidth;	// how many pixels to skip for next line
+						U32 dstGap = dstWidth - copyWidth;	// how many pixels to skip for next line
+
+						const U16 * srcPtr = src->GetColorBuffer() + srcX + srcY * srcWidth;
+						const U8 * alphaPtr = src->GetAlphaBuffer() + srcX + srcY * srcWidth;
+						U8 * dstPtr = reinterpret_cast<U8 *>(dst) + dstX + dstY * dstWidth;
+						Color2RGBA accessor;
+
+						do {
+							U32 span = copyWidth;
+
+							do {
+								Color color = Color::From565A(*srcPtr++, *alphaPtr++);
+								accessor(dstPtr, color);
+							} while (--span);
+
+							srcPtr += srcGap;
+							alphaPtr += srcGap;
+							dstPtr += dstGap * Color2RGBA::baseIncr;
+						} while (--copyHeight);
+					}
+
+					return true;
+				}
+
+				break;
+
+			case RasterizerState::TextureFormatRGB:
+				switch (dstType) {
+				case GL_UNSIGNED_BYTE:
+					CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+						copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+						RGB5652Color(), Color2RGB());
+
+					return true;
+
+				case GL_UNSIGNED_SHORT_5_6_5:
+					CopyPixels(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+						reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY);
+
+					return true;
+				}
+
+				break;
+
+		}
+
+		return false;
 	}
 
 	// -------------------------------------------------------------------------
@@ -923,17 +1031,17 @@ void Context :: ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 	RasterizerState::TextureFormat externalFormat = TextureFormatFromEnum(format);
 	GLenum internalType = GL_UNSIGNED_SHORT_5_6_5;
 
-	if (!ValidateFormats(internalFormat, externalFormat, type)) {
-		RecordError(GL_INVALID_VALUE);
-		return;
-	}
-
 	Surface * readSurface = GetReadSurface();
 
-	CopyPixels(readSurface->GetColorBuffer(), readSurface->GetWidth(), readSurface->GetHeight(), 
+	bool result = CopySurfacePixels(readSurface, 
 				x, y, width, height,
 				pixels, width, height, 0, 0, 
-				internalFormat, internalType, type);
+				externalFormat, internalType, type);
+	
+	if (!result) {
+		RecordError(GL_INVALID_VALUE);
+	}
+
 }
 
 
