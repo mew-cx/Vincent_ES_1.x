@@ -84,7 +84,7 @@ void Context :: EnableClientState(GLenum array) {
 
 void Context :: ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) { 
 
-	if (type != GL_BYTE && type != GL_SHORT && type != GL_FIXED) {
+	if (type != GL_UNSIGNED_BYTE && type != GL_FIXED) {
 		RecordError(GL_INVALID_ENUM);
 		return;
 	}

@@ -595,11 +595,12 @@ GLAPI void APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height)
 /* Extension: HM_render_mesh												*/
 /****************************************************************************/
 
-GLAPI void APIENTRY glDrawMeshHM(GLsizei count, GLenum type, GLsizei stride, const GLvoid *pointer,
+GLAPI void APIENTRY glDrawMeshHM(GLsizei count, GLenum type, GLsizei stride,
 								 GLsizei offsetVertex, GLsizei strideVertex,
 								 GLsizei offsetNormal, GLsizei strideNormal,
 								 GLsizei offsetTexture, GLsizei strideTexture,
-								 GLsizei offsetColor, GLsizei strideColor);
+								 GLsizei offsetColor, GLsizei strideColor, 
+								 const GLvoid *pointer);
 
 #ifdef __cplusplus
 }

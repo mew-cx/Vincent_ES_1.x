@@ -305,7 +305,7 @@ namespace EGL {
 		LogicOp					m_LogicOpcode;
 
 		// -------------------------------------------------------------------------
-		// Stencil buffer not required by OpenGL (R) ES
+		// Stencil buffer not required by OpenGL ES
 		// -------------------------------------------------------------------------
 		bool					m_StencilTestEnabled;
 
