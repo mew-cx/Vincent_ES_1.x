@@ -95,11 +95,24 @@ namespace EGL {
 		EGL_Fixed			m_FogDensity;		// fog density at this vertex
 	};
 
+	// ----------------------------------------------------------------------
+	// Coordinate increments used in various parts of the rasterizer
+	// ----------------------------------------------------------------------
+
 	struct EdgePos {
 		EdgeCoord			m_WindowCoords;		// z over w
 		FractionalColor		m_Color;			// color in range 0..255
 		TexCoord			m_TextureCoords;	// texture coords 0..1 over w
 		EGL_Fixed			m_FogDensity;		// fog density at this vertex
+	};
+
+	// ----------------------------------------------------------------------
+	// Gradient data structure used for triangle rasterization
+	// ----------------------------------------------------------------------
+
+	struct Gradients {
+		EdgePos				dx;
+		EdgePos				dy;
 	};
 
 	struct EdgePos;
