@@ -111,6 +111,7 @@ typedef struct cg_inst_base_t
 	cg_inst_kind_t		kind;
 	cg_opcode_t			opcode;
 	int					used : 1;
+	int					sequence;
 #ifndef NDEBUG
 	const char *		file;
 	int					line;
