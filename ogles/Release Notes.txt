@@ -15,6 +15,7 @@ parameters.
 This version addresses the following issues:
 
 961343 - Use DDA for triangle edges
+970915 - Matrix Stack test failed
 
 
 Version 0.78
