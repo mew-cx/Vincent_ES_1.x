@@ -94,6 +94,26 @@ namespace {
 #define DECL_REG(reg) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_general)
 #define DECL_FLAGS(reg) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_flags)
 
+	// This function will create the color components after multiplication scaled by a factor
+	// of 256
+	void BlendColor(cg_block_t * block,
+		cg_virtual_reg_t ** resultR, cg_virtual_reg_t ** resultG, cg_virtual_reg_t ** resultB, cg_virtual_reg_t ** resultA, 
+		cg_virtual_reg_t * coeffR, cg_virtual_reg_t * coeffG, cg_virtual_reg_t * coeffB, cg_virtual_reg_t * coeffA,
+		cg_virtual_reg_t * colorR, cg_virtual_reg_t * colorG, cg_virtual_reg_t * colorB, cg_virtual_reg_t * colorA) {
+
+		// TO DO: implement color blending code here
+		// we could do optimizations here in an attempt to share registers
+
+		*resultR = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+		*resultG = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+		*resultB = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+		*resultA = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+
+		MUL(*resultR, colorR, coeffR);
+		MUL(*resultG, colorG, coeffG);
+		MUL(*resultB, colorB, coeffB);
+		MUL(*resultA, colorA, coeffA);
+	}
 }
 
 // This method needs access to the following:
@@ -2081,42 +2101,177 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	// Blending
 	if (m_State->m_BlendingEnabled) {
 
+		cg_virtual_reg_t * regSrcBlendR;
+		cg_virtual_reg_t * regSrcBlendG;
+		cg_virtual_reg_t * regSrcBlendB;
+		cg_virtual_reg_t * regSrcBlendA;
+
+		cg_virtual_reg_t * regDstBlendR;
+		cg_virtual_reg_t * regDstBlendG;
+		cg_virtual_reg_t * regDstBlendB;
+		cg_virtual_reg_t * regDstBlendA;
+
+		bool noSource = false;
+		bool noTarget = false;
+
 		//Color dstColor = Color::From565A(dstValue, dstAlpha);
 
 		//Color srcCoeff, dstCoeff;
+
+		// ------------------------------------------------------------------
+		// In all the blending code, the assumption is that the blending
+		// coefficients are in the range 0x00 - 0x100, while the color to
+		// be modulated is R:5, G:6, B:5, A:8 bits format
+		// ------------------------------------------------------------------
 
 		switch (m_State->m_BlendFuncSrc) {
 			default:
 			case RasterizerState::BlendFuncSrcZero:
 				//srcCoeff = Color(0, 0, 0, 0);
+				regSrcBlendR = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+
+				LDI			(regSrcBlendR, 0);
+
+				regSrcBlendG = regSrcBlendB = regSrcBlendA = regSrcBlendR;
+				noSource = true;
+
 				break;
 
 			case RasterizerState::BlendFuncSrcOne:
-				//srcCoeff = Color(Color::MAX, Color::MAX, Color::MAX, Color::MAX);
+				{
+					DECL_REG(regConstant8);
+					LDI		(regConstant8, 8);
+
+					//srcCoeff = Color(Color::MAX, Color::MAX, Color::MAX, Color::MAX);
+					// regular blending will create a color multiplied by 256, so lets
+					// scale the values up
+
+					regSrcBlendR = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+					regSrcBlendG = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+					regSrcBlendB = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+					regSrcBlendA = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+
+					LSL		(regSrcBlendR, regColorR, regConstant8);
+					LSL		(regSrcBlendG, regColorG, regConstant8);
+					LSL		(regSrcBlendB, regColorB, regConstant8);
+					LSL		(regSrcBlendA, regColorA, regConstant8);
+				}
 				break;
 
 			case RasterizerState::BlendFuncSrcSrcColor:
-				//srcCoeff = color;
+				{
+					//srcCoeff = color;	// adjust scaling of R, G, B
+					DECL_REG(regShiftedR);
+					DECL_REG(regShiftedG);
+					DECL_REG(regShiftedB);
+
+					DECL_REG(regConstant3);
+					LDI		(regConstant3, 3);
+					DECL_REG(regConstant2);
+					LDI		(regConstant2, 2);
+
+					LSL		(regShiftedR, regColorR, regConstant3);
+					LSL		(regShiftedG, regColorG, regConstant2);
+					LSL		(regShiftedB, regColorB, regConstant3);
+
+					//srcCoeff * color
+
+					BlendColor(block,
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						regShiftedR, regShiftedG, regShiftedB, regColorA,
+						regColorR, regColorG, regColorB, regColorA);
+				}
 				break;
 
 			case RasterizerState::BlendFuncSrcOneMinusSrcColor:
-				//srcCoeff = Color(Color::MAX - color.R(), Color::MAX - color.G(), Color::MAX - color.B(), Color::MAX - color.A());
+				{
+					//srcCoeff = Color(Color::MAX - color.R(), Color::MAX - color.G(), Color::MAX - color.B(), Color::MAX - color.A());
+
+					DECL_REG(regConstant256);
+					DECL_REG(regShiftedR);
+					DECL_REG(regCoeffR);
+					DECL_REG(regShiftedG);
+					DECL_REG(regCoeffG);
+					DECL_REG(regShiftedB);
+					DECL_REG(regCoeffB);
+					DECL_REG(regCoeffA);
+
+					DECL_REG(regConstant3);
+					LDI		(regConstant3, 3);
+					DECL_REG(regConstant2);
+					LDI		(regConstant2, 2);
+					LDI		(regConstant256, 256);
+
+					LSL		(regShiftedR, regColorR, regConstant3);
+					LSL		(regShiftedG, regColorG, regConstant2);
+					LSL		(regShiftedB, regColorB, regConstant3);
+
+					SUB		(regCoeffR, regConstant256, regShiftedR);
+					SUB		(regCoeffG, regConstant256, regShiftedG);
+					SUB		(regCoeffB, regConstant256, regShiftedB);
+					SUB		(regCoeffA, regConstant256, regColorA);
+
+					//srcCoeff * color
+
+					BlendColor(block,
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						regCoeffR, regCoeffG, regCoeffB, regCoeffA,
+						regColorR, regColorG, regColorB, regColorA);
+				}
 				break;
 
 			case RasterizerState::BlendFuncSrcSrcAlpha:
 				//srcCoeff = Color(color.A(), color.A(), color.A(), color.A());
+				//srcCoeff * color
+					BlendColor(block,
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						regColorA, regColorA, regColorA, regColorA,
+						regColorR, regColorG, regColorB, regColorA);
+
 				break;
 
 			case RasterizerState::BlendFuncSrcOneMinusSrcAlpha:
-				//srcCoeff = Color(Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A());
+				{
+					//srcCoeff = Color(Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A());
+					DECL_REG(regConstant256);
+					DECL_REG(regDiffA);
+
+					LDI		(regConstant256, 256);
+					SUB		(regDiffA, regConstant256, regColorA);
+
+					//srcCoeff * color
+						BlendColor(block,
+							&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+							regDiffA, regDiffA, regDiffA, regDiffA,
+							regColorR, regColorG, regColorB, regColorA);
+				}
 				break;
 
 			case RasterizerState::BlendFuncSrcDstAlpha:
 				//srcCoeff = Color(dstAlpha, dstAlpha, dstAlpha, dstAlpha);
+				//srcCoeff * color
+					BlendColor(block,
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						regDstAlpha, regDstAlpha, regDstAlpha, regDstAlpha,
+						regColorR, regColorG, regColorB, regColorA);
+
 				break;
 
 			case RasterizerState::BlendFuncSrcOneMinusDstAlpha:
-				//srcCoeff = Color(Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha);
+				{
+					//srcCoeff = Color(Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha);
+					DECL_REG(regConstant256);
+					DECL_REG(regDiffA);
+
+					LDI		(regConstant256, 256);
+					SUB		(regDiffA, regConstant256, regDstAlpha);
+
+					//srcCoeff * color
+						BlendColor(block,
+							&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+							regDiffA, regDiffA, regDiffA, regDiffA,
+							regColorR, regColorG, regColorB, regColorA);
+				}
 				break;
 		}
 
@@ -2124,46 +2279,221 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			default:
 			case RasterizerState::BlendFuncDstZero:
 				//dstCoeff = Color(0, 0, 0, 0);
+				regDstBlendR = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+				LDI			(regDstBlendR, 0);
+
+				regDstBlendG = regDstBlendB = regDstBlendA = regDstBlendR;
+				noTarget = true;
+
 				break;
 
 			case RasterizerState::BlendFuncDstOne:
-				//dstCoeff = Color(Color::MAX, Color::MAX, Color::MAX, Color::MAX);
+				{
+					//dstCoeff = Color(Color::MAX, Color::MAX, Color::MAX, Color::MAX);
+
+					DECL_REG(regConstant8);
+					LDI		(regConstant8, 8);
+
+					regDstBlendR = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+					regDstBlendG = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+					regDstBlendB = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+					regDstBlendA = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+
+					LSL		(regDstBlendR, regDstR, regConstant8);
+					LSL		(regDstBlendG, regDstG, regConstant8);
+					LSL		(regDstBlendB, regDstB, regConstant8);
+					LSL		(regDstBlendA, regDstAlpha, regConstant8);
+				}
 				break;
 
 			case RasterizerState::BlendFuncDstSrcColor:
-				//dstCoeff = color;
+				{
+					//dstCoeff = color;
+					DECL_REG(regShiftedR);
+					DECL_REG(regShiftedG);
+					DECL_REG(regShiftedB);
+
+					DECL_REG(regConstant3);
+					LDI		(regConstant3, 3);
+					DECL_REG(regConstant2);
+					LDI		(regConstant2, 2);
+
+					LSL		(regShiftedR, regColorR, regConstant3);
+					LSL		(regShiftedG, regColorG, regConstant2);
+					LSL		(regShiftedB, regColorB, regConstant3);
+
+					//dstCoeff * dstColor
+					BlendColor(block,
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						regShiftedR, regShiftedG, regShiftedB, regColorA,
+						regDstR, regDstG, regDstB, regDstAlpha);
+				}
 				break;
 
 			case RasterizerState::BlendFuncDstOneMinusSrcColor:
-				//dstCoeff = Color(Color::MAX - color.R(), Color::MAX - color.G(), Color::MAX - color.B(), Color::MAX - color.A());
+				{
+					//dstCoeff = Color(Color::MAX - color.R(), Color::MAX - color.G(), Color::MAX - color.B(), Color::MAX - color.A());
+					DECL_REG(regConstant256);
+					DECL_REG(regShiftedR);
+					DECL_REG(regCoeffR);
+					DECL_REG(regShiftedG);
+					DECL_REG(regCoeffG);
+					DECL_REG(regShiftedB);
+					DECL_REG(regCoeffB);
+					DECL_REG(regCoeffA);
+
+					DECL_REG(regConstant3);
+					LDI		(regConstant3, 3);
+					DECL_REG(regConstant2);
+					LDI		(regConstant2, 2);
+					LDI		(regConstant256, 256);
+
+					LSL		(regShiftedR, regColorR, regConstant3);
+					LSL		(regShiftedG, regColorG, regConstant2);
+					LSL		(regShiftedB, regColorB, regConstant3);
+
+					SUB		(regCoeffR, regConstant256, regShiftedR);
+					SUB		(regCoeffG, regConstant256, regShiftedG);
+					SUB		(regCoeffB, regConstant256, regShiftedB);
+					SUB		(regCoeffA, regConstant256, regColorA);
+
+					//dstCoeff * dstColor
+					BlendColor(block,
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						regCoeffR, regCoeffG, regCoeffB, regCoeffA,
+						regDstR, regDstG, regDstB, regDstAlpha);
+				}
 				break;
 
 			case RasterizerState::BlendFuncDstSrcAlpha:
 				//dstCoeff = Color(color.A(), color.A(), color.A(), color.A());
+				//dstCoeff * dstColor
+					BlendColor(block,
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						regColorA, regColorA, regColorA, regColorA,
+						regDstR, regDstG, regDstB, regDstAlpha);
 				break;
 
 			case RasterizerState::BlendFuncDstSrcOneMinusSrcAlpha:
-				//dstCoeff = Color(Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A());
+				{
+					//dstCoeff = Color(Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A());
+					DECL_REG(regConstant256);
+					DECL_REG(regDiffA);
+
+					LDI		(regConstant256, 256);
+					SUB		(regDiffA, regConstant256, regColorA);
+
+					//dstCoeff * dstColor
+					BlendColor(block,
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						regDiffA, regDiffA, regDiffA, regDiffA,
+						regDstR, regDstG, regDstB, regDstAlpha);
+				}
 				break;
 
 			case RasterizerState::BlendFuncDstDstAlpha:
-				//dstCoeff = Color(dstAlpha, dstAlpha, dstAlpha, dstAlpha);
+				{
+					//dstCoeff = Color(dstAlpha, dstAlpha, dstAlpha, dstAlpha);
+					//dstCoeff * dstColor
+					BlendColor(block,
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						regDstAlpha, regDstAlpha, regDstAlpha, regDstAlpha,
+						regDstR, regDstG, regDstB, regDstAlpha);
+				}
 				break;
 
 			case RasterizerState::BlendFuncDstOneMinusDstAlpha:
-				//dstCoeff = Color(Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha);
+				{
+					//dstCoeff = Color(Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha);
+					DECL_REG(regConstant256);
+					DECL_REG(regDiffA);
+
+					LDI		(regConstant256, 256);
+					SUB		(regDiffA, regConstant256, regDstAlpha);
+
+					//dstCoeff * dstColor
+					BlendColor(block,
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						regDiffA, regDiffA, regDiffA, regDiffA,
+						regDstR, regDstG, regDstB, regDstAlpha);
+				}
 				break;
 
 			case RasterizerState::BlendFuncDstSrcAlphaSaturate:
-				//{
-				//	U8 rev = Color::MAX - dstAlpha;
-				//	U8 f = (rev < color.A() ? rev : color.A());
-				//	dstCoeff = Color(f, f, f, Color::MAX);
-				//}
+				{
+					//	U8 rev = Color::MAX - dstAlpha;
+					DECL_REG(regConstant256);
+					DECL_REG(regRev);
+
+					LDI		(regConstant256, 256);
+					SUB		(regRev, regConstant256, regColorA);
+
+					//	U8 f = (rev < color.A() ? rev : color.A());
+					DECL_REG(regF);
+					MIN		(regF, regRev, regColorA);
+
+					//	dstCoeff = Color(f, f, f, Color::MAX);
+					//dstCoeff * dstColor
+					BlendColor(block,
+						&regSrcBlendR, &regSrcBlendG, &regSrcBlendG, &regSrcBlendA, 
+						regF, regF, regF, regConstant256,
+						regDstR, regDstG, regDstB, regDstAlpha);
+				}
 				break;
 		}
 
+		// Note: At this point, we expect the products of the colors srcCoeff * color and
+		// dstCoeff * dstColor to be multiplied by a factor of 256!
+
 		//color = srcCoeff * color + dstCoeff * dstColor;
+
+		// just add modulated source to modulated destination
+
+		if (noSource) {
+			regColorR = regDstBlendR;
+			regColorG = regDstBlendG;
+			regColorB = regDstBlendB;
+			regColorA = regDstBlendA;
+		} else if (noTarget) {
+			regColorR = regSrcBlendR;
+			regColorG = regSrcBlendG;
+			regColorB = regSrcBlendB;
+			regColorA = regSrcBlendA;
+		} else {
+			DECL_REG(regTempR);
+			DECL_REG(regTempG);
+			DECL_REG(regTempB);
+			DECL_REG(regTempA);
+
+			ADD		(regTempR, regDstBlendR, regSrcBlendR);
+			ADD		(regTempG, regDstBlendG, regSrcBlendG);
+			ADD		(regTempB, regDstBlendB, regSrcBlendB);
+			ADD		(regTempA, regDstBlendA, regSrcBlendA);
+
+			regColorR = regTempR;
+			regColorG = regTempG;
+			regColorB = regTempB;
+			regColorA = regTempA;
+		}
+
+		// create RGB 565 representation
+		DECL_REG	(regConstant8);
+		DECL_REG	(regConstant3);
+		DECL_REG	(regShiftedR);
+		DECL_REG	(regShiftedB);
+		DECL_REG	(regShiftedG);
+		DECL_REG	(regRG);
+		DECL_REG	(regNewColor565);
+
+		LDI		(regConstant8, 8);
+		LDI		(regConstant3, 3);
+		LSR		(regShiftedR, regColorR, regConstant8);
+		LSL		(regShiftedB, regColorB, regConstant3);
+		LSR		(regShiftedG, regColorG, regConstant3);
+		OR		(regRG, regShiftedR, regShiftedG);
+		OR		(regNewColor565, regRG, regShiftedB);
+
+		regColor565 = regNewColor565;
 	}
 
 	// Masking and write to framebuffer

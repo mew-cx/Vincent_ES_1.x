@@ -92,7 +92,8 @@ typedef enum cg_opcode_t {
 	cg_op_nop,					
 	cg_op_add,		cg_op_and,		cg_op_asr,		cg_op_cmp,		cg_op_div,		
 	cg_op_lsl,		cg_op_lsr,		cg_op_mod,		cg_op_mul,		cg_op_neg,	
-	cg_op_not,		cg_op_or,		cg_op_sub,		cg_op_xor,									
+	cg_op_not,		cg_op_or,		cg_op_sub,		cg_op_xor,				
+	cg_op_min,		cg_op_max,
 	cg_op_fadd,		cg_op_fcmp,		cg_op_fdiv,		cg_op_fmul,		cg_op_fneg,		
 	cg_op_fsub,		cg_op_finv,		cg_op_fsqrt,					
 	cg_op_trunc,	cg_op_round,	cg_op_fcnv,															
@@ -479,6 +480,9 @@ cg_inst_t * cg_create_inst_binary(cg_block_t * block,
 #define FDIV(dest, source, operand)		cg_create_inst_binary(block, cg_op_fdiv, dest, source, operand CG_INST_DEBUG_ARGS)
 #define FMUL(dest, source, operand)		cg_create_inst_binary(block, cg_op_fmul, dest, source, operand CG_INST_DEBUG_ARGS)
 #define FSUB(dest, source, operand)		cg_create_inst_binary(block, cg_op_fsub, dest, source, operand CG_INST_DEBUG_ARGS)
+#define MIN(dest, source, operand)		cg_create_inst_binary(block, cg_op_min, dest, source, operand CG_INST_DEBUG_ARGS)
+#define MAX(dest, source, operand)		cg_create_inst_binary(block, cg_op_max, dest, source, operand CG_INST_DEBUG_ARGS)
+
 
 cg_inst_t * cg_create_inst_binary_s(cg_block_t * block, 
 									cg_opcode_t op, 
