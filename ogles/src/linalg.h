@@ -6,7 +6,7 @@
 
 // ==========================================================================
 //
-// linalg.h	Implementation of Linaear Algebra using Fixed Point Arithmetic
+// linalg.h	Implementation of Linear Algebra using Fixed Point Arithmetic
 //
 // --------------------------------------------------------------------------
 //
