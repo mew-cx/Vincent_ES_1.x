@@ -40,9 +40,13 @@
 
 
 #include "stdafx.h"
-#include "fixed.h"
+#include "CodeGenerator.h"
+#include "Rasterizer.h"
+#include "Surface.h"
+#include "Texture.h"
 #include "trivm.h"
 #include "Inst.h"
+#include "fixed.h"
 #include "Sweep.h"
 
 
@@ -110,15 +114,6 @@ namespace {
 		"sth",
 		"stw",
 
-		// load/store volatile
-		"vldb",
-		"vldh",
-		"vldw",
-
-		"vstb",
-		"vsth",
-		"vstw",
-
 		// special
 		"call",
 		"ret",
@@ -155,6 +150,27 @@ namespace {
 
 	}
 
+	void PrintRegisterSet(FILE * out, const char * name, std::vector<bool> const & registerSet) {
+
+		if (registerSet.size() == 0) {
+			return;
+		}
+
+		const char * separator = " ";
+
+		fprintf(out, "\t; %s = {", name);
+
+		for (size_t reg = 0; reg < registerSet.size(); ++reg) {
+
+			if (registerSet[reg]) {
+				fprintf(out, "%s%d", separator, reg);
+				separator = ", ";
+			}
+		}
+
+		fprintf(out, " }\n");
+	}
+
 	class Dump: public Sweep {
 	public:
 		Dump(FILE * stream): out(stream) {
@@ -175,6 +191,11 @@ namespace {
 			for (LabelList::iterator iter = block->labels.begin(); iter != block->labels.end(); ++iter) {
 				fprintf(out, "%s:\n", (*iter)->base.name);
 			}
+
+			PrintRegisterSet(out, "def", block->def);
+			PrintRegisterSet(out, "use", block->use);
+			PrintRegisterSet(out, "liveIn", block->liveIn);
+			PrintRegisterSet(out, "liveOut", block->liveOut);
 		}
 
 		virtual void dispatch(triVM::Instruction * instruction) {
@@ -282,17 +303,15 @@ namespace {
 			DumpRegisterList(out, instruction->args);
 			fprintf(out, ")");
 			
-			if (instruction->results != 0) {
-				fprintf(out, ", ");
-				DumpRegisterList(out, instruction->results);
+			if (instruction->rD != -1) {
+				fprintf(out, ", %d", instruction->rD);
 			}
 		}
 
 		virtual void  visit(triVM::InstructionRetType * instruction) { 
 
-			if (instruction->registers != 0) {
-				fprintf(out, "ret ");
-				DumpRegisterList(out, instruction->registers);
+			if (instruction->rS != -1) {
+				fprintf(out, "ret %d", instruction->rS);
 			} else {
 				fprintf(out, "ret");
 			}
@@ -360,7 +379,7 @@ namespace {
 					instruction->rS,
 					instruction->immed);
 			} else {
-				fprintf(out, "%s r%d, r%d, r%d",
+				fprintf(out, "%s r%d, r%d, %d",
 					opcodeName[instruction->opcode],
 					instruction->rD,
 					instruction->rS,
@@ -426,15 +445,6 @@ namespace {
 				instruction->rOffset);
 		}
 
-		virtual void visit(triVM::InstructionArmLoadRegImmedOffsetType * instruction) { 
-			fprintf(out, "%s r%d, %d[r%d, r%d]",
-				opcodeName[instruction->opcode],
-				instruction->rD,
-				instruction->immed8,
-				instruction->rS,
-				instruction->rOffset);
-		}
-
 		virtual void visit(triVM::InstructionArmStoreImmedOffsetType * instruction) { 
 			fprintf(out, "%s %d[r%d], %d",
 				opcodeName[instruction->opcode],
@@ -451,15 +461,6 @@ namespace {
 				instruction->rS);
 		}
 
-		virtual void visit(triVM::InstructionArmStoreRegImmedOffsetType * instruction) { 
-			fprintf(out, "%s %d[r%d, r%d], %d",
-				opcodeName[instruction->opcode],
-				instruction->immed8,
-				instruction->rD,
-				instruction->rOffset,
-				instruction->rS);
-		}	
-
 	private:
 		FILE * out;
 	};
@@ -467,9 +468,22 @@ namespace {
 
 
 
-void EGL::triVM::DumpModule(FILE * out, EGL::triVM::Module * module) {
+void CodeGenerator :: DumpModule(FILE * out, EGL::triVM::Module * module) {
 	Dump dump(out);
 	dump.sweep(module);
+}
+
+
+void CodeGenerator :: DumpModule(const char * filename, Module * module) {
+
+#ifndef NDEBUG
+
+	FILE * out = fopen(filename, "w");
+	DumpModule(out, module);
+	fclose(out);
+
+#endif
+
 }
 
 

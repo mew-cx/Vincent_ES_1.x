@@ -59,6 +59,7 @@ namespace EGL {
 	class OGLES_API RasterizerState {
 
 		friend class Rasterizer;
+		friend class CodeGenerator;
 
 	public:
 		enum LogicOp {

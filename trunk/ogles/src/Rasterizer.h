@@ -55,16 +55,8 @@
 
 namespace EGL {
 
-	namespace triVM {
-		union Label;
-		struct Block;
-		struct Procedure;
-	}
-
 	class Surface;
 	class Texture;
-
-	struct FragmentGenerationInfo;
 
 	// ----------------------------------------------------------------------
 	// u and v coordinates for texture mapping
@@ -176,14 +168,6 @@ namespace EGL {
 		// Rasterization of triangle scan line
 		// ----------------------------------------------------------------------
 		void RasterScanLine(const EdgePos& start, const EdgePos& end, U32 y);
-
-		// ----------------------------------------------------------------------
-		// Code generation of triangle scan line
-		// ----------------------------------------------------------------------
-		void GenerateRasterScanLine();
-		void GenerateFragment(triVM::Procedure * procedure, triVM::Block & currentBlock,
-			triVM::Label * continuation, I32 & nextRegister,
-			FragmentGenerationInfo & fragmentInfo);
 
 		// ----------------------------------------------------------------------
 		// Rasterization of fragment

@@ -1,10 +1,14 @@
 // ==========================================================================
 //
-// stdafx.h			Precompiled headers for OpenGL (R) ES Implementation
+// CodeSegment.cpp	A piece of runtime generated code that can be executed
+//				
+//					This class is part of the runtime compiler infrastructure
+//					used by the OpenGL|ES implementation for compiling
+//					shader code at runtime into machine language.
 //
 // --------------------------------------------------------------------------
 //
-// 10-15-2003		Hans-Martin Will	initial version
+// 11-13-2003		Hans-Martin Will	initial version
 //
 // --------------------------------------------------------------------------
 //
@@ -35,25 +39,41 @@
 // ==========================================================================
 
 
-#pragma once
+
+#include "stdafx.h"
+#include "CodeSegment.h"
 
 
-// --------------------------------------------------------------------------
-// Windows Header Files:
-// --------------------------------------------------------------------------
+using namespace EGL;
 
 
-#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+CodeSegment :: CodeSegment(U32 initialSize) {
+	m_Size = initialSize;
+	m_Base = reinterpret_cast<U32 *>(VirtualAlloc(0, m_Size, MEM_COMMIT, PAGE_EXECUTE_READWRITE));
+}
 
-#include <windows.h>
 
-// --------------------------------------------------------------------------
-// Standard Library Files
-// --------------------------------------------------------------------------
+CodeSegment :: ~CodeSegment() {
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-#include <assert.h>
+	if (m_Base != 0) {
+		VirtualFree(m_Base, m_Size, MEM_RELEASE);
+		m_Base = 0;
+	}
+}
+
+
+void CodeSegment :: EnsureSize(U32 newSize) {
+
+	if (newSize > m_Size) {
+		if (m_Base != 0) {
+			VirtualFree(m_Base, m_Size, MEM_RELEASE);
+		}
+
+		m_Size = newSize;
+		m_Base = reinterpret_cast<U32 *>(VirtualAlloc(0, m_Size, MEM_COMMIT, PAGE_EXECUTE_READWRITE));
+	}
+}
+
+
+
 

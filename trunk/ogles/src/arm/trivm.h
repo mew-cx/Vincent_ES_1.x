@@ -48,6 +48,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <algorithm>
 
 
 namespace EGL {
@@ -180,6 +181,7 @@ namespace triVM {
 
 	typedef std::vector<Constant *> ConstantList;
 	typedef std::vector<int> RegisterList;
+	typedef std::vector<bool> RegisterSet;
 
 	enum InstructionKind;
 	struct InstructionBaseType {
@@ -202,6 +204,17 @@ namespace triVM {
 		
 			used = 0;
 		}
+
+		// the following two methods are use to retrieve DEF/USE information for a given
+		// instruction
+		//virtual int * GetDef(int * buffer) = 0;
+		//virtual int * GetUse(int * buffer) = 0;
+
+		// emit the instruction to an output stream
+		//virtual void Print(FILE * out) = 0;
+
+		// code rewrite too?
+		// code emmission too?
 	};
 
 	typedef InstructionBaseType Instruction;
@@ -221,12 +234,19 @@ namespace triVM {
 		BlockList			predecessors;
 		BlockList			successors;
 
+		// Control- & data flow analysis
+		RegisterSet			def;			// registers defined in this block
+		RegisterSet			use;			// registers used by this block
+		RegisterSet			liveIn;			// registers alive on entering this block
+		RegisterSet			liveOut;		// registers alive on exiting this block
+
 		Block(Procedure * owner) {
 			procedure = owner;
 		}
 
 		Block& operator+=(Instruction * inst) {
 			instructions.push_back(inst);
+			inst->block = this;
 			return *this;
 		}
 
@@ -266,9 +286,11 @@ namespace triVM {
 		ProcedureList	procedures;
 		LabelList		labels;
 		ConstantList	constants;
+		int				registerCount;
 
 		Module(const char * aName) {
 			name = aName;
+			registerCount = 0;
 		}
 	};
 
@@ -282,13 +304,6 @@ namespace triVM {
 
 	typedef std::map<const char *, Label *, StringCompare> IdentifierMap;
 
-	extern void RemoveUnusedCode(Module * module);
-
-	typedef std::map<int, Instruction *> RegisterDefinitionMap;
-
-	extern RegisterDefinitionMap * FindDefinitions(Module * module);
-
-	extern void DumpModule(FILE * out, EGL::triVM::Module * module);
 
 } // namespace triVM
 } // namespace EGL

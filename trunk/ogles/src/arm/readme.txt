@@ -1,1 +1,1 @@
-This folder contains any source coded that is specific to the arm/XScale version of the library
+This folder contains the runtime code generation sub-system of the rasterizer.
