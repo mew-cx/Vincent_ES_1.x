@@ -360,6 +360,7 @@ struct cg_proc_t
 	cg_virtual_reg_t *  registers;			/* list of virtual registers	*/
 	cg_virtual_reg_t *	last_register;		/* ptr to last register in list */
 	cg_virtual_reg_t **	reg_array;			/* array of register pointers	*/	
+	cg_virtual_reg_list_t * globals;		/* list of registers selected for global allocation */
 	size_t				num_registers;		/* number of virtual registers  */
 	size_t				num_args;			/* number of arguments			*/
 	size_t				local_storage;		/* size of activation record	*/
