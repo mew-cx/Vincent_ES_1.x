@@ -43,6 +43,7 @@
 using namespace EGL;
 
 
+# if 0
 EGL_Fixed Color::s_alphaFactor[256];
 
 
@@ -56,3 +57,5 @@ void Color :: InitAlphaFactorTable() {
 namespace {
 	Init init(Color::InitAlphaFactorTable);
 }
+
+#endif

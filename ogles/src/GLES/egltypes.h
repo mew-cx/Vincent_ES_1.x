@@ -18,7 +18,7 @@
 ** EGL and native handle values must match their types.
 */
 
-#if (defined(WIN32) || defined(_WIN32_WCE)) 
+#if (defined(WIN32) || defined(_WIN32_WCE))
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
@@ -33,11 +33,16 @@ typedef HBITMAP NativePixmapType;
 
 #elif defined(__SYMBIAN32__)
 
-typedef void *	NativeDisplayType;
-typedef void *	NativeWindowType;
-typedef void *	NativePixmapType;
-
 #include <e32def.h>
+
+class RWindow;
+class CWindowGc;
+class CFbsBitmap;
+
+typedef CWindowGc *		NativeDisplayType;
+typedef RWindow *		NativeWindowType;
+typedef CFbsBitmap * 	NativePixmapType;
+
 #else
 
 #	error "Unsupported Operating System"
