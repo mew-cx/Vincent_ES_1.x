@@ -9,9 +9,17 @@ http://sourceforge.net/projects/ogl-es/
 Overview
 --------
 
-The goal of this project is create a compliant implementation of the OpenGL (R) ES specification 
-for mobile dvices. The initial target platform are Windows Mobile 2003 devices using the Intel 
-StrongARM or XScale PA2xx processor.
+Vincent develops a compliant implementation of the OpenGL (R) ES 1.0 API specification for 
+Pocket PCs and Smartphones. The current target platforms are Windows Mobile and Symbian devices 
+using TI OMAP, Intel (R) StrongARM and XScale PA2xx processors.
+
+As officially registered adopter of the OpenGL ES API, this project has full access to the
+official OpenGL ES 1.0 conformance test. Starting with build 0.8, Vincent fully passes the 
+conformance test for the Common Light profile, i.e. the fixed point API defined by the standard.
+
+Further builds of the project will focus on addressing performance issues present in the
+current build, as well as adressing issues as reported by users that are not covered by
+the tests we have run so far.
 
 
 
