@@ -605,10 +605,10 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regLoop2ScaledDiffZ);
 	DECL_REG	(regLoop2ScaledDiffU);
 	DECL_REG	(regLoop2ScaledDiffV);
-	DECL_REG	(regLoop2ScaledDiffUOver2);
-	DECL_REG	(regLoop2ScaledDiffVOver2);
-	DECL_REG	(regAdjustedU);
-	DECL_REG	(regAdjustedV);
+	//DECL_REG	(regLoop2ScaledDiffUOver2);
+	//DECL_REG	(regLoop2ScaledDiffVOver2);
+	//DECL_REG	(regAdjustedU);
+	//DECL_REG	(regAdjustedV);
 
 	FSUB	(regBlock4DiffZ, regEndZ, regBlock4Z);
 	FMUL	(regLoop2ScaledDiffZ, regBlock4DiffZ, regBlock4InvSpan);
@@ -617,12 +617,12 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FSUB	(regBlock4DiffV, regEndV, regBlock4V);
 
 	FMUL	(regLoop2ScaledDiffU, regBlock4DiffU, regBlock4InvSpan);
-	ASR		(regLoop2ScaledDiffUOver2, regLoop2ScaledDiffU, regConstant1);
-	FADD		(regAdjustedU, regBlock4U, regLoop2ScaledDiffUOver2);
+	//ASR		(regLoop2ScaledDiffUOver2, regLoop2ScaledDiffU, regConstant1);
+	//FADD		(regAdjustedU, regBlock4U, regLoop2ScaledDiffUOver2);
 
 	FMUL	(regLoop2ScaledDiffV, regBlock4DiffV, regBlock4InvSpan);
-	ASR		(regLoop2ScaledDiffVOver2, regLoop2ScaledDiffV, regConstant1);
-	FADD		(regAdjustedV, regBlock4V, regLoop2ScaledDiffVOver2);
+	//ASR		(regLoop2ScaledDiffVOver2, regLoop2ScaledDiffV, regConstant1);
+	//FADD		(regAdjustedV, regBlock4V, regLoop2ScaledDiffVOver2);
 
 	//for (; x < xEnd; ++x) {
 	block = cg_block_create(procedure, 4);
@@ -651,8 +651,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 
 	PHI		(regLoop2XEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2X, regBlock4X, NULL));
-	PHI		(regLoop2UEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2U, regAdjustedU, NULL));
-	PHI		(regLoop2VEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2V, regAdjustedV, NULL));
+	PHI		(regLoop2UEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2U, regBlock4U, NULL));
+	PHI		(regLoop2VEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2V, regBlock4V, NULL));
 	PHI		(regLoop2FogEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2Fog, regLoop1Fog, regStartFog, NULL));
 	PHI		(regLoop2DepthEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2Depth, regLoop1Depth, regStartDepth, NULL));
 	PHI		(regLoop2REntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2R, regLoop1R, regStartColorR, NULL));

@@ -253,7 +253,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 		//tu += ((EGL_ONE/2) >> rasterInfo->TextureLogWidth) - 1;
 		//tv += ((EGL_ONE/2) >> rasterInfo->TextureLogHeight) - 1;
-#if 1
+#if 0
 		DECL_REG	(regU);
 		DECL_REG	(regV);
 		DECL_REG	(regUDelta);

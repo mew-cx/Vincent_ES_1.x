@@ -211,8 +211,8 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 		EGL_Fixed tv0;
 
 		// for nearest texel
-		tu += ((EGL_ONE/2) >> rasterInfo->TextureLogWidth) - 1;
-		tv += ((EGL_ONE/2) >> rasterInfo->TextureLogHeight) - 1;
+//		tu += ((EGL_ONE/2) >> rasterInfo->TextureLogWidth) - 1;
+//		tv += ((EGL_ONE/2) >> rasterInfo->TextureLogHeight) - 1;
 
 		switch (m_Texture->GetWrappingModeS()) {
 			case RasterizerState::WrappingModeClampToEdge:
