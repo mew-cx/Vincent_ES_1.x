@@ -78,23 +78,6 @@ namespace EGL {
 
 		}
 
-		void FetchUnsignedByteValues(int row, GLfixed * buffer) {
-			GLsizei rowOffset = row * stride;
-			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
-			size_t count = size;
-
-			const GLubyte * byteBase = reinterpret_cast<const GLubyte *>(base);
-
-			do {
-				*buffer++ = EGL_FixedFromInt(*byteBase++);
-			} while (--count);
-
-#ifdef EGL_XSCALE
-			_PreLoad(const_cast<unsigned long *>(reinterpret_cast<const unsigned long *>(base + stride)));
-#endif
-
-		}
-
 		void FetchUnsignedByteValues(int row, GLubyte * buffer) {
 			GLsizei rowOffset = row * stride;
 			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
@@ -104,6 +87,23 @@ namespace EGL {
 
 			do {
 				*buffer++ = *byteBase++;
+			} while (--count);
+
+#ifdef EGL_XSCALE
+			_PreLoad(const_cast<unsigned long *>(reinterpret_cast<const unsigned long *>(base + stride)));
+#endif
+
+		}
+
+		void FetchUnsignedByteValues(int row, GLfixed * buffer) {
+			GLsizei rowOffset = row * stride;
+			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+			size_t count = size;
+
+			const GLubyte * byteBase = reinterpret_cast<const GLubyte *>(base);
+
+			do {
+				*buffer++ = EGL_FixedFromInt(*byteBase++);
 			} while (--count);
 
 #ifdef EGL_XSCALE
@@ -230,6 +230,10 @@ namespace EGL {
 
 	template <class ELEMENT>
 	struct ObjectArray {
+		enum {
+			INITIAL_SIZE = 64,
+			FACTOR = 2
+		};
 
 		struct ObjectRecord {
 			U32 value;
@@ -264,11 +268,6 @@ namespace EGL {
 				return (value >> 1);
 			}
 
-		};
-
-		enum {
-			INITIAL_SIZE = 64,
-			FACTOR = 2
 		};
 
 		ObjectArray() {
