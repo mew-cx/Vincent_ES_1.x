@@ -67,7 +67,7 @@ Context :: Context(const Config & config)
 	// server flags
 	m_LightingEnabled(false),
 	m_TwoSidedLightning(false),
-	m_LightEnabled(1),				// only light 0 is on
+	m_LightEnabled(0),				// no light on
 	m_CullFaceEnabled(false),
 	m_ReverseFaceOrientation(false),
 	m_CullMode(CullModeBack),
