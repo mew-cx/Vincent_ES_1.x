@@ -34,8 +34,6 @@
 #include "segment.h"
 #include "arm-codegen.h"
 
-#include <malloc.h>
-
 
 typedef struct reference_t
 {

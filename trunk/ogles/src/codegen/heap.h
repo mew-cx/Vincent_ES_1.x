@@ -1,8 +1,6 @@
 #ifndef CODEGEN_HEAP_H
 #define CODEGEN_HEAP_H 1
 
-#pragma once
-
 /****************************************************************************/
 /*																			*/
 /* Copyright (c) 2004, Hans-Martin Will. All rights reserved.				*/
