@@ -278,12 +278,12 @@ namespace EGL {
 			return m_Rasterizer;
 		}
 
-		MultiTexture * GetCurrentTexture(size_t unit) {
-			return m_Rasterizer->GetTexture(unit);
+		MultiTexture * GetCurrentTexture() {
+			return m_Rasterizer->GetTexture();
 		}
 
-		const MultiTexture * GetCurrentTexture(size_t unit) const {
-			return m_Rasterizer->GetTexture(unit);
+		const MultiTexture * GetCurrentTexture() const {
+			return m_Rasterizer->GetTexture();
 		}
 
 		static void SetCurrentContext(Context * context);
@@ -363,7 +363,6 @@ private:
 		EGL_Fixed SelectPointSizeArrayElement(int index);
 
 		void CurrentValuesToRasterPos(RasterPos * rasterPos);
-		void CurrentTextureValuesToRasterPos(RasterPos * rasterPos);
 
 		typedef void (Context::*GeometryFunction)(RasterPos * rasterPos);
 
@@ -403,7 +402,7 @@ private:
 
 		MatrixStack			m_ModelViewMatrixStack;
 		MatrixStack			m_ProjectionMatrixStack;
-		MatrixStack			m_TextureMatrixStack[EGL_NUM_TEXTURE_UNITS];
+		MatrixStack			m_TextureMatrixStack;
 		Matrix4x4			m_MatrixPalette[MATRIX_PALETTE_SIZE];
 		Matrix4x4			m_MatrixPaletteInverse[MATRIX_PALETTE_SIZE];
 
@@ -436,7 +435,7 @@ private:
 		bool				m_VertexArrayEnabled;
 		bool				m_NormalArrayEnabled;
 		bool				m_ColorArrayEnabled;
-		bool				m_TexCoordArrayEnabled[EGL_NUM_TEXTURE_UNITS];
+		bool				m_TexCoordArrayEnabled;
 		bool				m_PointSizeArrayEnabled;
 		bool				m_WeightArrayEnabled;
 		bool				m_MatrixIndexArrayEnabled;
@@ -444,7 +443,7 @@ private:
 		VertexArray			m_VertexArray;
 		VertexArray			m_NormalArray;
 		VertexArray			m_ColorArray;
-		VertexArray			m_TexCoordArray[EGL_NUM_TEXTURE_UNITS];
+		VertexArray			m_TexCoordArray;
 		VertexArray			m_PointSizeArray;
 		VertexArray			m_WeightArray;
 		VertexArray			m_MatrixIndexArray;
@@ -455,9 +454,7 @@ private:
 
 		Vec3D				m_DefaultNormal;
 		FractionalColor		m_DefaultRGBA;
-		TexCoord			m_DefaultTextureCoords[EGL_NUM_TEXTURE_UNITS];
-		size_t				m_ActiveTexture;
-		size_t				m_ClientActiveTexture;
+		TexCoord			m_DefaultTextureCoords;
 
 		// ----------------------------------------------------------------------
 		// Current values for setup
@@ -466,7 +463,7 @@ private:
 		Vec4D				m_CurrentVertex;	
 		Vec3D				m_CurrentNormal;
 		FractionalColor		m_CurrentRGBA;
-		TexCoord			m_CurrentTextureCoords[EGL_NUM_TEXTURE_UNITS];
+		TexCoord			m_CurrentTextureCoords;
 
 		// ----------------------------------------------------------------------
 		// Hints

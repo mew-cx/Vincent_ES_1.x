@@ -95,7 +95,7 @@
 namespace {
 	inline void InitScanlineStart(EdgePos & start, const Gradients & grad,
 		EGL_Fixed xPreStep, EGL_Fixed yPreStep,
-		const FractionalColor& color, EGL_Fixed fog, EGL_Fixed depth, EGL_Fixed invZ, EGL_Fixed tuOverZ[], EGL_Fixed tvOverZ[]) {
+		const FractionalColor& color, EGL_Fixed fog, EGL_Fixed depth, EGL_Fixed invZ, EGL_Fixed tuOverZ, EGL_Fixed tvOverZ) {
 #if HasDepth
 		start.m_WindowCoords.depth = 
 			depth		+ EGL_Mul(grad.dx.m_WindowCoords.depth, xPreStep)	
@@ -125,42 +125,38 @@ namespace {
 			invZ		+ EGL_Mul(grad.dx.m_WindowCoords.invZ, xPreStep)	
 						+ EGL_Mul(grad.dy.m_WindowCoords.invZ, yPreStep); 
 
-		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
-			start.m_TextureCoords[index].tu = 
-				tuOverZ[index]		
-					+ EGL_Mul(grad.dx.m_TextureCoords[index].tu, xPreStep)		
-					+ EGL_Mul(grad.dy.m_TextureCoords[index].tu, yPreStep);
+		start.m_TextureCoords.tu = 
+			tuOverZ		+ EGL_Mul(grad.dx.m_TextureCoords.tu, xPreStep)		
+						+ EGL_Mul(grad.dy.m_TextureCoords.tu, yPreStep);
 
-			start.m_TextureCoords[index].tv = 
-				tvOverZ[index]		
-					+ EGL_Mul(grad.dx.m_TextureCoords[index].tv, xPreStep)		
-					+ EGL_Mul(grad.dy.m_TextureCoords[index].tv, yPreStep);
+		start.m_TextureCoords.tv = 
+			tvOverZ		+ EGL_Mul(grad.dx.m_TextureCoords.tv, xPreStep)		
+						+ EGL_Mul(grad.dy.m_TextureCoords.tv, yPreStep);
 
-			// ------------------------------------------------------------------
-			// Determine partial derivatives of texture functions, 
-			// see eq. (2) and (3) in
-			// J. P. Ewins et al (1998), 
-			// "MIP-Map Level Selection for Texture Mapping",
-			// IEEE Transactions on Visualization and Computer Graphics, 
-			// Vol 4, No. 4
-			// ------------------------------------------------------------------
+		// ------------------------------------------------------------------
+		// Determine partial derivatives of texture functions, 
+		// see eq. (2) and (3) in
+		// J. P. Ewins et al (1998), 
+		// "MIP-Map Level Selection for Texture Mapping",
+		// IEEE Transactions on Visualization and Computer Graphics, 
+		// Vol 4, No. 4
+		// ------------------------------------------------------------------
 
-			start.m_TextureCoords[index].dtudx = 
-				Det2x2(grad.dx.m_TextureCoords[index].tu, tuOverZ[index], grad.dx.m_WindowCoords.invZ, invZ) 
-					+ EGL_Mul(grad.dy.m_TextureCoords[index].dtudx, yPreStep);
+		start.m_TextureCoords.dtudx = 
+			Det2x2(grad.dx.m_TextureCoords.tu, tuOverZ, grad.dx.m_WindowCoords.invZ, invZ) 
+						+ EGL_Mul(grad.dy.m_TextureCoords.dtudx, yPreStep);
 
-			start.m_TextureCoords[index].dtudy = 
-				Det2x2(grad.dx.m_TextureCoords[index].tv, tvOverZ[index], grad.dx.m_WindowCoords.invZ, invZ)
-					+ EGL_Mul(grad.dx.m_TextureCoords[index].dtudy, xPreStep);
+		start.m_TextureCoords.dtudy = 
+			Det2x2(grad.dx.m_TextureCoords.tv, tvOverZ, grad.dx.m_WindowCoords.invZ, invZ)
+						+ EGL_Mul(grad.dx.m_TextureCoords.dtudy, xPreStep);
 
-			start.m_TextureCoords[index].dtvdx = 
-				Det2x2(grad.dy.m_TextureCoords[index].tu, tuOverZ[index], grad.dy.m_WindowCoords.invZ, invZ)
-					+ EGL_Mul(grad.dy.m_TextureCoords[index].dtvdx, yPreStep);
+		start.m_TextureCoords.dtvdx = 
+			Det2x2(grad.dy.m_TextureCoords.tu, tuOverZ, grad.dy.m_WindowCoords.invZ, invZ)
+						+ EGL_Mul(grad.dy.m_TextureCoords.dtvdx, yPreStep);
 
-			start.m_TextureCoords[index].dtvdy = 
-				Det2x2(grad.dy.m_TextureCoords[index].tv, tvOverZ[index], grad.dy.m_WindowCoords.invZ, invZ)
-					+ EGL_Mul(grad.dx.m_TextureCoords[index].dtvdy, xPreStep);
-		}
+		start.m_TextureCoords.dtvdy = 
+			Det2x2(grad.dy.m_TextureCoords.tv, tvOverZ, grad.dy.m_WindowCoords.invZ, invZ)
+						+ EGL_Mul(grad.dx.m_TextureCoords.dtvdy, xPreStep);
 #endif
 
 #if HasFog
@@ -190,23 +186,12 @@ namespace {
 
 #if HasTexture		
 		deltaSmall.m_WindowCoords.invZ	= gradients.dx.m_WindowCoords.invZ * dXdYStepInt	+ gradients.dy.m_WindowCoords.invZ; 
-
-		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
-			deltaSmall.m_TextureCoords[index].tu	= 
-				gradients.dx.m_TextureCoords[index].tu * dXdYStepInt		
-					+ gradients.dy.m_TextureCoords[index].tu;
-			deltaSmall.m_TextureCoords[index].tv	= 
-				gradients.dx.m_TextureCoords[index].tv * dXdYStepInt		
-					+ gradients.dy.m_TextureCoords[index].tv;
-			deltaSmall.m_TextureCoords[index].dtudx =													  
-				gradients.dy.m_TextureCoords[index].dtudx;; 
-			deltaSmall.m_TextureCoords[index].dtudy = 
-				gradients.dx.m_TextureCoords[index].dtudy * dXdYStepInt;
-			deltaSmall.m_TextureCoords[index].dtvdx =													  
-				gradients.dy.m_TextureCoords[index].dtvdx;
-			deltaSmall.m_TextureCoords[index].dtvdy = 
-				gradients.dx.m_TextureCoords[index].dtvdy * dXdYStepInt;
-		}
+		deltaSmall.m_TextureCoords.tu	= gradients.dx.m_TextureCoords.tu * dXdYStepInt		+ gradients.dy.m_TextureCoords.tu;
+		deltaSmall.m_TextureCoords.tv	= gradients.dx.m_TextureCoords.tv * dXdYStepInt		+ gradients.dy.m_TextureCoords.tv;
+		deltaSmall.m_TextureCoords.dtudx=													  gradients.dy.m_TextureCoords.dtudx;; 
+		deltaSmall.m_TextureCoords.dtudy= gradients.dx.m_TextureCoords.dtudy * dXdYStepInt;
+		deltaSmall.m_TextureCoords.dtvdx=													  gradients.dy.m_TextureCoords.dtvdx;
+		deltaSmall.m_TextureCoords.dtvdy= gradients.dx.m_TextureCoords.dtvdy * dXdYStepInt;
 #endif
 
 #if HasFog
@@ -229,15 +214,12 @@ namespace {
 
 #if HasTexture			
 			deltaBig.m_WindowCoords.invZ	= deltaSmall.m_WindowCoords.invZ	+ gradients.dx.m_WindowCoords.invZ; 
-
-			for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
-				deltaBig.m_TextureCoords[index].tu		= deltaSmall.m_TextureCoords[index].tu		+ gradients.dx.m_TextureCoords[index].tu;
-				deltaBig.m_TextureCoords[index].tv		= deltaSmall.m_TextureCoords[index].tv		+ gradients.dx.m_TextureCoords[index].tv;
-				deltaBig.m_TextureCoords[index].dtudx	= deltaSmall.m_TextureCoords[index].dtudx;
-				deltaBig.m_TextureCoords[index].dtudy	= deltaSmall.m_TextureCoords[index].dtudy	+ gradients.dx.m_TextureCoords[index].dtudy;
-				deltaBig.m_TextureCoords[index].dtvdx	= deltaSmall.m_TextureCoords[index].dtvdx;
-				deltaBig.m_TextureCoords[index].dtvdy	= deltaSmall.m_TextureCoords[index].dtvdy	+ gradients.dx.m_TextureCoords[index].dtvdy;
-			}
+			deltaBig.m_TextureCoords.tu		= deltaSmall.m_TextureCoords.tu		+ gradients.dx.m_TextureCoords.tu;
+			deltaBig.m_TextureCoords.tv		= deltaSmall.m_TextureCoords.tv		+ gradients.dx.m_TextureCoords.tv;
+			deltaBig.m_TextureCoords.dtudx	= deltaSmall.m_TextureCoords.dtudx;
+			deltaBig.m_TextureCoords.dtudy	= deltaSmall.m_TextureCoords.dtudy	+ gradients.dx.m_TextureCoords.dtudy;
+			deltaBig.m_TextureCoords.dtvdx	= deltaSmall.m_TextureCoords.dtvdx;
+			deltaBig.m_TextureCoords.dtvdy	= deltaSmall.m_TextureCoords.dtvdy	+ gradients.dx.m_TextureCoords.dtvdy;
 #endif
 
 #if HasFog
@@ -257,15 +239,12 @@ namespace {
 
 #if HasTexture			
 			deltaBig.m_WindowCoords.invZ	= deltaSmall.m_WindowCoords.invZ	- gradients.dx.m_WindowCoords.invZ; 
-
-			for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
-				deltaBig.m_TextureCoords[index].tu		= deltaSmall.m_TextureCoords[index].tu		- gradients.dx.m_TextureCoords[index].tu;
-				deltaBig.m_TextureCoords[index].tv		= deltaSmall.m_TextureCoords[index].tv		- gradients.dx.m_TextureCoords[index].tv;
-				deltaBig.m_TextureCoords[index].dtudx	= deltaSmall.m_TextureCoords[index].dtudx;
-				deltaBig.m_TextureCoords[index].dtudy	= deltaSmall.m_TextureCoords[index].dtudy	- gradients.dx.m_TextureCoords[index].dtudy;
-				deltaBig.m_TextureCoords[index].dtvdx	= deltaSmall.m_TextureCoords[index].dtvdx;
-				deltaBig.m_TextureCoords[index].dtvdy	= deltaSmall.m_TextureCoords[index].dtvdy	+ gradients.dx.m_TextureCoords[index].dtvdy;
-			}
+			deltaBig.m_TextureCoords.tu		= deltaSmall.m_TextureCoords.tu		- gradients.dx.m_TextureCoords.tu;
+			deltaBig.m_TextureCoords.tv		= deltaSmall.m_TextureCoords.tv		- gradients.dx.m_TextureCoords.tv;
+			deltaBig.m_TextureCoords.dtudx	= deltaSmall.m_TextureCoords.dtudx;
+			deltaBig.m_TextureCoords.dtudy	= deltaSmall.m_TextureCoords.dtudy	- gradients.dx.m_TextureCoords.dtudy;
+			deltaBig.m_TextureCoords.dtvdx	= deltaSmall.m_TextureCoords.dtvdx;
+			deltaBig.m_TextureCoords.dtvdy	= deltaSmall.m_TextureCoords.dtvdy	+ gradients.dx.m_TextureCoords.dtvdy;
 #endif
 
 #if HasFog
@@ -310,26 +289,22 @@ namespace {
 
 #if HasTexture
 #define ScanlineDeltaTextureBig(rasterInfo, start, delta, deltaSmall, deltaBig, xError, xStepError, dxdy) \
-		start.m_WindowCoords.invZ	+= deltaBig.m_WindowCoords.invZ;			\
-		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {		\
-			start.m_TextureCoords[index].tu	+= deltaBig.m_TextureCoords[index].tu;			\
-			start.m_TextureCoords[index].tv	+= deltaBig.m_TextureCoords[index].tv;			\
-			start.m_TextureCoords[index].dtudx	+= deltaBig.m_TextureCoords[index].dtudx;		\
-			start.m_TextureCoords[index].dtudy	+= deltaBig.m_TextureCoords[index].dtudy;		\
-			start.m_TextureCoords[index].dtvdx	+= deltaBig.m_TextureCoords[index].dtvdx;		\
-			start.m_TextureCoords[index].dtvdy	+= deltaBig.m_TextureCoords[index].dtvdy;		\
-		}
+			start.m_WindowCoords.invZ	+= deltaBig.m_WindowCoords.invZ;		\
+			start.m_TextureCoords.tu	+= deltaBig.m_TextureCoords.tu;			\
+			start.m_TextureCoords.tv	+= deltaBig.m_TextureCoords.tv;			\
+			start.m_TextureCoords.dtudx	+= deltaBig.m_TextureCoords.dtudx;		\
+			start.m_TextureCoords.dtudy	+= deltaBig.m_TextureCoords.dtudy;		\
+			start.m_TextureCoords.dtvdx	+= deltaBig.m_TextureCoords.dtvdx;		\
+			start.m_TextureCoords.dtvdy	+= deltaBig.m_TextureCoords.dtvdy;
 
 #define ScanlineDeltaTextureSmall(rasterInfo, start, delta, deltaSmall, deltaBig, xError, xStepError, dxdy) \
 			start.m_WindowCoords.invZ	+= deltaSmall.m_WindowCoords.invZ;		\
-		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {		\
-			start.m_TextureCoords[index].tu	+= deltaSmall.m_TextureCoords[index].tu;		\
-			start.m_TextureCoords[index].tv	+= deltaSmall.m_TextureCoords[index].tv;		\
-			start.m_TextureCoords[index].dtudx	+= deltaSmall.m_TextureCoords[index].dtudx;	\
-			start.m_TextureCoords[index].dtudy	+= deltaSmall.m_TextureCoords[index].dtudy;	\
-			start.m_TextureCoords[index].dtvdx	+= deltaSmall.m_TextureCoords[index].dtvdx;	\
-			start.m_TextureCoords[index].dtvdy	+= deltaSmall.m_TextureCoords[index].dtvdy;	\
-		}
+			start.m_TextureCoords.tu	+= deltaSmall.m_TextureCoords.tu;		\
+			start.m_TextureCoords.tv	+= deltaSmall.m_TextureCoords.tv;		\
+			start.m_TextureCoords.dtudx	+= deltaSmall.m_TextureCoords.dtudx;	\
+			start.m_TextureCoords.dtudy	+= deltaSmall.m_TextureCoords.dtudy;	\
+			start.m_TextureCoords.dtvdx	+= deltaSmall.m_TextureCoords.dtvdx;	\
+			start.m_TextureCoords.dtvdy	+= deltaSmall.m_TextureCoords.dtvdy;	
 
 #else
 #define ScanlineDeltaTextureBig(rasterInfo, start, delta, deltaSmall, deltaBig, xError, xStepError, dxdy)
@@ -440,23 +415,16 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 	Gradients grad;
 
-	EGL_Fixed tuOverZ1[EGL_NUM_TEXTURE_UNITS], 
-			  tuOverZ2[EGL_NUM_TEXTURE_UNITS], 
-			  tuOverZ3[EGL_NUM_TEXTURE_UNITS], 
-			  tvOverZ1[EGL_NUM_TEXTURE_UNITS], 
-			  tvOverZ2[EGL_NUM_TEXTURE_UNITS], 
-			  tvOverZ3[EGL_NUM_TEXTURE_UNITS];
-
 #if HasTexture
-	for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
-		tuOverZ1[index] = EGL_Mul(pos1.m_TextureCoords[index].tu, pos1.m_WindowCoords.invZ);
-		tuOverZ2[index] = EGL_Mul(pos2.m_TextureCoords[index].tu, pos2.m_WindowCoords.invZ);
-		tuOverZ3[index] = EGL_Mul(pos3.m_TextureCoords[index].tu, pos3.m_WindowCoords.invZ);
+	EGL_Fixed tuOverZ1 = EGL_Mul(pos1.m_TextureCoords.tu, pos1.m_WindowCoords.invZ);
+	EGL_Fixed tuOverZ2 = EGL_Mul(pos2.m_TextureCoords.tu, pos2.m_WindowCoords.invZ);
+	EGL_Fixed tuOverZ3 = EGL_Mul(pos3.m_TextureCoords.tu, pos3.m_WindowCoords.invZ);
 
-		tvOverZ1[index] = EGL_Mul(pos1.m_TextureCoords[index].tv, pos1.m_WindowCoords.invZ);
-		tvOverZ2[index] = EGL_Mul(pos2.m_TextureCoords[index].tv, pos2.m_WindowCoords.invZ);
-		tvOverZ3[index] = EGL_Mul(pos3.m_TextureCoords[index].tv, pos3.m_WindowCoords.invZ);
-	}
+	EGL_Fixed tvOverZ1 = EGL_Mul(pos1.m_TextureCoords.tv, pos1.m_WindowCoords.invZ);
+	EGL_Fixed tvOverZ2 = EGL_Mul(pos2.m_TextureCoords.tv, pos2.m_WindowCoords.invZ);
+	EGL_Fixed tvOverZ3 = EGL_Mul(pos3.m_TextureCoords.tv, pos3.m_WindowCoords.invZ);
+#else
+	EGL_Fixed tuOverZ1, tuOverZ2, tuOverZ3, tvOverZ1, tvOverZ2, tvOverZ3;
 #endif
 
 	if (!denominator) {
@@ -482,40 +450,38 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 #if HasTexture
 		SOLVE_XY(m_WindowCoords.invZ, invDenominator);
 
-		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
-			SOLVE_PARAM_XY(m_TextureCoords[index].tu, tuOverZ1[index], tuOverZ2[index], tuOverZ3[index], invDenominator);
-			SOLVE_PARAM_XY(m_TextureCoords[index].tv, tvOverZ1[index], tvOverZ2[index], tvOverZ3[index], invDenominator);
+		SOLVE_PARAM_XY(m_TextureCoords.tu, tuOverZ1, tuOverZ2, tuOverZ3, invDenominator);
+		SOLVE_PARAM_XY(m_TextureCoords.tv, tvOverZ1, tvOverZ2, tvOverZ3, invDenominator);
 
-			// ------------------------------------------------------------------
-			// Determine partial derivatives of texture functions, 
-			// see eq. (2) and (3) in
-			// J. P. Ewins et al (1998), 
-			// "MIP-Map Level Selection for Texture Mapping",
-			// IEEE Transactions on Visualization and Computer Graphics, 
-			// Vol 4, No. 4
-			// ------------------------------------------------------------------
+		// ------------------------------------------------------------------
+		// Determine partial derivatives of texture functions, 
+		// see eq. (2) and (3) in
+		// J. P. Ewins et al (1998), 
+		// "MIP-Map Level Selection for Texture Mapping",
+		// IEEE Transactions on Visualization and Computer Graphics, 
+		// Vol 4, No. 4
+		// ------------------------------------------------------------------
 
-			EGL_Fixed A = grad.dx.m_TextureCoords[index].tu;
-			EGL_Fixed B = grad.dy.m_TextureCoords[index].tu;
-			EGL_Fixed D = grad.dx.m_WindowCoords.invZ;
-			EGL_Fixed E = grad.dy.m_WindowCoords.invZ;
-			EGL_Fixed F = pos1.m_WindowCoords.invZ;
-			EGL_Fixed G = grad.dx.m_TextureCoords[index].tv;
-			EGL_Fixed H = grad.dy.m_TextureCoords[index].tv;
+		EGL_Fixed A = grad.dx.m_TextureCoords.tu;
+		EGL_Fixed B = grad.dy.m_TextureCoords.tu;
+		EGL_Fixed D = grad.dx.m_WindowCoords.invZ;
+		EGL_Fixed E = grad.dy.m_WindowCoords.invZ;
+		EGL_Fixed F = pos1.m_WindowCoords.invZ;
+		EGL_Fixed G = grad.dx.m_TextureCoords.tv;
+		EGL_Fixed H = grad.dy.m_TextureCoords.tv;
 
-			EGL_Fixed K1 = Det2x2(A, B, D, E);
-			EGL_Fixed K2 = Det2x2(G, H, D, E);
+		EGL_Fixed K1 = Det2x2(A, B, D, E);
+		EGL_Fixed K2 = Det2x2(G, H, D, E);
 
-			grad.dy.m_TextureCoords[index].dtudx = K1;
-			grad.dy.m_TextureCoords[index].dtudy = 0;
-			grad.dy.m_TextureCoords[index].dtvdx = K2;
-			grad.dy.m_TextureCoords[index].dtvdy = 0;
+		grad.dy.m_TextureCoords.dtudx = K1;
+		grad.dy.m_TextureCoords.dtudy = 0;
+		grad.dy.m_TextureCoords.dtvdx = K2;
+		grad.dy.m_TextureCoords.dtvdy = 0;
 
-			grad.dx.m_TextureCoords[index].dtudx = 0;
-			grad.dx.m_TextureCoords[index].dtudy = -K1;
-			grad.dx.m_TextureCoords[index].dtvdx = 0;
-			grad.dx.m_TextureCoords[index].dtvdy = -K2;
-		}
+		grad.dx.m_TextureCoords.dtudx = 0;
+		grad.dx.m_TextureCoords.dtudy = -K1;
+		grad.dx.m_TextureCoords.dtvdx = 0;
+		grad.dx.m_TextureCoords.dtvdy = -K2;
 #endif
 	}
 

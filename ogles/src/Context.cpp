@@ -59,6 +59,8 @@ Context :: Context(const Config & config)
 
 	// transformation matrices
 	m_ModelViewMatrixStack(16),
+	m_ProjectionMatrixStack(2),
+	m_TextureMatrixStack(2),
 	m_CurrentMatrixStack(&m_ModelViewMatrixStack),
 	m_MatrixMode(GL_MODELVIEW),
 	m_Scissor(0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
@@ -84,8 +86,6 @@ Context :: Context(const Config & config)
 	m_ScissorTestEnabled(false),
 	m_MatrixPaletteEnabled(false),
 	m_MatrixModePaletteEnabled(false),
-	m_ActiveTexture(0),
-	m_ClientActiveTexture(0),
 
 	// point parameters
 	m_PointSize(EGL_ONE),
@@ -106,6 +106,7 @@ Context :: Context(const Config & config)
 	m_VertexArrayEnabled(false),
 	m_NormalArrayEnabled(false),
 	m_ColorArrayEnabled(false),
+	m_TexCoordArrayEnabled(false),
 	m_PointSizeArrayEnabled(false),
 
 	// buffers
@@ -150,10 +151,6 @@ Context :: Context(const Config & config)
 	m_PointDistanceAttenuation[0] = EGL_ONE;
 	m_PointDistanceAttenuation[1] = 0;
 	m_PointDistanceAttenuation[2] = 0;
-
-	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		m_TexCoordArrayEnabled[unit] = false;
-	}
 
 	memset(&m_ClipPlanes, 0, sizeof(m_ClipPlanes));
 }
@@ -670,7 +667,7 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_MAX_TEXTURE_STACK_DEPTH:
-		params[0] = m_TextureMatrixStack[m_ActiveTexture].GetStackSize();
+		params[0] = m_TextureMatrixStack.GetStackSize();
 		break;
 
 	case GL_MAX_TEXTURE_SIZE:
@@ -731,15 +728,15 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_TEXTURE_COORD_ARRAY_SIZE:
-		params[0] = m_TexCoordArray[m_ClientActiveTexture].size;
+		params[0] = m_TexCoordArray.size;
 		break;
 
 	case GL_TEXTURE_COORD_ARRAY_STRIDE:
-		params[0] = m_TexCoordArray[m_ClientActiveTexture].stride;
+		params[0] = m_TexCoordArray.stride;
 		break;
 
 	case GL_TEXTURE_COORD_ARRAY_TYPE:
-		params[0] = m_TexCoordArray[m_ClientActiveTexture].type;
+		params[0] = m_TexCoordArray.type;
 		break;
 
 	case GL_MATRIX_INDEX_ARRAY_SIZE_OES:
@@ -787,7 +784,7 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING:
-		params[0] = m_TexCoordArray[m_ClientActiveTexture].boundBuffer;
+		params[0] = m_TexCoordArray.boundBuffer;
 		break;
 
 	case GL_ELEMENT_ARRAY_BUFFER_BINDING:
@@ -953,13 +950,14 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_MAX_VERTEX_UNITS_OES:
-		params[0] = EGL_NUM_TEXTURE_UNITS;
+		params[0] = 1;
 		break;
 
 	case GL_COORD_REPLACE_OES:
 		params[0] = m_RasterizerState.IsPointCoordReplaceEnabled();
 		break;
 
+	// TO DO: These state queries are still not implemented yet
 	case GL_CURRENT_COLOR:
 		{
 			params[0] = EGL_Mul(0x7fffffff, m_CurrentRGBA.r);
@@ -1059,8 +1057,8 @@ bool Context :: GetFixedv(GLenum pname, GLfixed *params) {
 		break;
 
 	case GL_CURRENT_TEXTURE_COORDS:
-		params[0] = m_DefaultTextureCoords[m_ActiveTexture].tu;
-		params[1] = m_DefaultTextureCoords[m_ActiveTexture].tv;
+		params[0] = m_DefaultTextureCoords.tu;
+		params[1] = m_DefaultTextureCoords.tv;
 		params[2] = 0;
 		params[3] = EGL_ONE;
 		break;
@@ -1080,7 +1078,7 @@ bool Context :: GetFixedv(GLenum pname, GLfixed *params) {
 		break;
 
 	case GL_TEXTURE_MATRIX:
-		CopyMatrix(m_TextureMatrixStack[m_ActiveTexture].CurrentMatrix(), params);
+		CopyMatrix(m_TextureMatrixStack.CurrentMatrix(), params);
 		break;
 
 	case GL_FOG_COLOR:
@@ -1175,7 +1173,7 @@ void Context :: GetPointerv(GLenum pname, void **params) {
 		break;
 
 	case GL_TEXTURE_COORD_ARRAY_POINTER:
-		params[0] = const_cast<void *>(m_TexCoordArray[m_ClientActiveTexture].pointer);
+		params[0] = const_cast<void *>(m_TexCoordArray.pointer);
 		break;
 
 	case GL_MATRIX_INDEX_ARRAY_POINTER_OES:
@@ -1209,7 +1207,7 @@ GLboolean Context :: IsEnabled(GLenum cap) {
 		return m_ColorArrayEnabled;
 
 	case GL_TEXTURE_COORD_ARRAY:
-		return m_TexCoordArrayEnabled[m_ClientActiveTexture];
+		return m_TexCoordArrayEnabled;
 
 	case GL_MATRIX_INDEX_ARRAY_OES:
 		return m_MatrixIndexArrayEnabled;

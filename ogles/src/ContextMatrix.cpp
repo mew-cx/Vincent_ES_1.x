@@ -61,7 +61,7 @@ void Context :: MatrixMode(GLenum mode) {
 		break;
 
 	case GL_TEXTURE:
-		m_CurrentMatrixStack = &m_TextureMatrixStack[m_ActiveTexture];
+		m_CurrentMatrixStack = &m_TextureMatrixStack;
 		m_MatrixModePaletteEnabled = false;
 		break;
 

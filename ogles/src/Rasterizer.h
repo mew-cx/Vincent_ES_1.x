@@ -90,7 +90,7 @@ namespace EGL {
 		FractionalColor		m_Color;
 		FractionalColor		m_FrontColor;		// color in range 0..255
 		FractionalColor		m_BackColor;		
-		TexCoord			m_TextureCoords[EGL_NUM_TEXTURE_UNITS];	// texture coords 0..1
+		TexCoord			m_TextureCoords;	// texture coords 0..1
 		EGL_Fixed			m_FogDensity;		// fog density at this vertex
 	};
 
@@ -99,10 +99,10 @@ namespace EGL {
 	// ----------------------------------------------------------------------
 
 	struct EdgePos {
-		EdgeCoord			m_WindowCoords;								// z over w
-		FractionalColor		m_Color;									// color in range 0..255
-		TexCoord			m_TextureCoords[EGL_NUM_TEXTURE_UNITS];		// texture coords 0..1 over w
-		EGL_Fixed			m_FogDensity;								// fog density at this vertex
+		EdgeCoord			m_WindowCoords;		// z over w
+		FractionalColor		m_Color;			// color in range 0..255
+		TexCoord			m_TextureCoords;	// texture coords 0..1 over w
+		EGL_Fixed			m_FogDensity;		// fog density at this vertex
 	};
 
 	// ----------------------------------------------------------------------
@@ -130,7 +130,7 @@ namespace EGL {
 		// TODO: 
 
 		// texture info
-		Texture *	Textures[EGL_NUM_TEXTURE_UNITS];
+		Texture *	Textures;
 		U32			MipmapLevel;
 		U32			MaxMipmapLevel;
 
@@ -192,9 +192,9 @@ namespace EGL {
 		void SetSurface(Surface * surface);
 		Surface * GetSurface() const;
 
-		void SetTexture(size_t unit, MultiTexture * texture);
-		MultiTexture * GetTexture(size_t unit)				{ return m_Texture[unit]; }
-		const MultiTexture * GetTexture(size_t unit) const	{ return m_Texture[unit]; }
+		void SetTexture(MultiTexture * texture);
+		MultiTexture * GetTexture()					{ return m_Texture; }
+		const MultiTexture * GetTexture() const		{ return m_Texture; }
 		void PrepareTexture();
 
 		// ----------------------------------------------------------------------
@@ -305,7 +305,7 @@ namespace EGL {
 
 		RasterInfo				m_RasterInfo;
 		Surface *				m_Surface;			// rendering surface
-		MultiTexture *			m_Texture[EGL_NUM_TEXTURE_UNITS];	// current texture 
+		MultiTexture *			m_Texture;			// current texture 
 		RasterizerState *		m_State;			// current rasterization settings
 		FunctionCache *			m_FunctionCache;
 
@@ -325,7 +325,7 @@ namespace EGL {
 		EGL_Fixed				m_MinY;
 		EGL_Fixed				m_MaxY;
 
-		bool					m_UseMipmap[EGL_NUM_TEXTURE_UNITS];
+		bool					m_UseMipmap;
 
 	};
 

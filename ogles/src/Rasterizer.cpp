@@ -189,18 +189,12 @@ void Rasterizer :: PrepareTexture() {
 		m_State->SetMipmapFilterMode(m_Texture->GetMipmapFilterMode());
 		m_State->SetInternalFormat(m_Texture->GetInternalFormat());
 
-		for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			m_RasterInfo.Textures[unit] = m_Texture->m_TextureLevels;
-
-			m_UseMipmap = m_Texture->IsMipMap() && m_Texture->IsComplete();
-			m_RasterInfo.MaxMipmapLevel = EGL_Max(m_Texture->GetTexture(0)->GetLogWidth(), m_Texture->GetTexture(0)->GetLogHeight());
-		}
+		m_RasterInfo.Textures = m_Texture->m_TextureLevels;
+		m_UseMipmap = m_Texture->IsMipMap() && m_Texture->IsComplete();
+		m_RasterInfo.MaxMipmapLevel = EGL_Max(m_Texture->GetTexture(0)->GetLogWidth(), m_Texture->GetTexture(0)->GetLogHeight());
 	} else {
 		m_UseMipmap = false;
-
-		for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			m_RasterInfo.Textures[unit] = 0;
-		}
+		m_RasterInfo.Textures = 0;
 	}
 }
 
