@@ -131,7 +131,7 @@ namespace EGL {
 		// Rasterization of fragment
 		// ----------------------------------------------------------------------
 
-		void Fragment(I32 x, I32 y, EGL_Fixed depth, const Color & color);
+		void Fragment(I32 x, I32 y, EGL_Fixed depth, Color color);
 			// will have special cases based on settings
 			// the coordinates are integer coordinates
 

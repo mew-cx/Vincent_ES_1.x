@@ -73,7 +73,8 @@ namespace EGL {
 			BlendFuncDstSrcAlpha,
 			BlendFuncDstSrcOneMinusSrcAlpha,
 			BlendFuncDstDstAlpha,
-			BlendFuncDstOneMinusDstAlpha
+			BlendFuncDstOneMinusDstAlpha,
+			BlendFuncDstSrcAlphaSaturate
 		};
 
 		enum BlendFuncSrc {
@@ -82,7 +83,6 @@ namespace EGL {
 			BlendFuncSrcSrcColor,
 			BlendFuncSrcOneMinusSrcColor,
 			BlendFuncSrcOneMinusDstColor,
-			BlendFuncSrcSrcAlphaSaturate,
 			BlendFuncSrcOneMinusSrcAlpha,
 			BlendFuncSrcSrcAlpha,
 			BlendFuncSrcDstAlpha,

@@ -26,6 +26,7 @@ Surface :: Surface(const Config & config, HDC hdc)
 	m_HDC(reinterpret_cast<HDC>(INVALID_HANDLE_VALUE))
 {
 	m_ColorBuffer = new U16[m_Width * m_Height];
+	m_AlphaBuffer = new U8[m_Width * m_Height];
 	m_DepthBuffer = new I32[m_Width * m_Height];
 	m_StencilBuffer = new U32[m_Width * m_Height];
 
@@ -51,6 +52,11 @@ Surface :: ~Surface() {
 	if (m_ColorBuffer != 0) {
 		delete [] m_ColorBuffer;
 		m_ColorBuffer = 0;
+	}
+
+	if (m_AlphaBuffer != 0) {
+		delete [] m_AlphaBuffer;
+		m_AlphaBuffer = 0;
 	}
 
 	if (m_DepthBuffer != 0) {

@@ -47,7 +47,6 @@ namespace {
 			case GL_ONE_MINUS_SRC_ALPHA:	return RasterizerState::BlendFuncSrcOneMinusSrcAlpha;
 			case GL_DST_ALPHA:				return RasterizerState::BlendFuncSrcDstAlpha;
 			case GL_ONE_MINUS_DST_ALPHA:	return RasterizerState::BlendFuncSrcOneMinusDstAlpha;
-			case GL_SRC_ALPHA_SATURATE:		return RasterizerState::BlendFuncSrcSrcAlphaSaturate;
 
 			default:						// TODO RecordError(GL_INVALID_ENUM);
 			case GL_ZERO:					return RasterizerState::BlendFuncSrcZero;
@@ -63,6 +62,7 @@ namespace {
 			case GL_ONE_MINUS_SRC_ALPHA:	return RasterizerState::BlendFuncDstSrcOneMinusSrcAlpha;
 			case GL_DST_ALPHA:				return RasterizerState::BlendFuncDstDstAlpha;
 			case GL_ONE_MINUS_DST_ALPHA:	return RasterizerState::BlendFuncDstOneMinusDstAlpha;
+			case GL_SRC_ALPHA_SATURATE:		return RasterizerState::BlendFuncDstSrcAlphaSaturate;
 
 			default:						// TODO RecordError(GL_INVALID_ENUM);
 			case GL_ONE:					return RasterizerState::BlendFuncDstOne;
