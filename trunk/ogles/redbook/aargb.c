@@ -49,12 +49,19 @@ static float rotAngle = 0.;
  *  blending, hint, and line width.  Print out implementation
  *  specific info on line width granularity and width.
  */
+   static const GLfloat v1[] = {
+      -0.5, 0.5,
+      0.5, -0.5
+	};
+
+   static const GLfloat v2[] = {
+	  0.5, 0.5,
+	  -0.5,-0.5
+   };
+
 void init(void)
 {
-   static const GLfloat v[] = {
-      0.5, 0.5,
-      0.5, -0.5,
-   };
+
    GLint values[2];
 #if 0
    glGetIntegerv (GL_SMOOTH_LINE_WIDTH_GRANULARITY, values);
@@ -72,15 +79,17 @@ void init(void)
    glLineWidth (1.5);
 
    glClearColor(0.0, 0.0, 0.0, 0.0);
-   glVertexPointer(2, GL_FLOAT, 0, v);
-   glEnableClientState(GL_VERTEX_ARRAY);
 }
 
 /* Draw 2 diagonal lines to form an X
  */
 void display(UGWindow uwin)
 {
+
    glClear(GL_COLOR_BUFFER_BIT);
+
+   glVertexPointer(2, GL_FLOAT, 0, v1);
+   glEnableClientState(GL_VERTEX_ARRAY);
 
    glColor4f(0.0, 1.0, 0.0, 1.0);
    glPushMatrix();
@@ -88,11 +97,20 @@ void display(UGWindow uwin)
    glDrawArrays(GL_LINES, 0, 2);
    glPopMatrix();
 
+   glDisableClientState(GL_VERTEX_ARRAY);
+
+
+   glVertexPointer(2, GL_FLOAT, 0, v2);
+   glEnableClientState(GL_VERTEX_ARRAY);
+
    glColor4f (0.0, 0.0, 1.0, 10);
    glPushMatrix();
    glRotatef(rotAngle, 0.0, 0.0, 0.1);
    glDrawArrays(GL_LINES, 0, 2);
    glPopMatrix();
+
+   glDisableClientState(GL_VERTEX_ARRAY);
+
 
    glFlush();
    ugSwapBuffers(uwin);
@@ -104,11 +122,20 @@ void reshape(UGWindow uwin, int w, int h)
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
    if (w <= h) 
+   {
       glOrthof (-1.0, 1.0, 
          -1.0*(GLfloat)h/(GLfloat)w, 1.0*(GLfloat)h/(GLfloat)w, -1.0, 1.0);
-   else 
-      glOrthof (-1.0*(GLfloat)w/(GLfloat)h, 
-         1.0*(GLfloat)w/(GLfloat)h, -1.0, 1.0, -1.0, 1.0);
+
+//	 glClearColor(0.0, 1.0, 0.0, 0.0);
+
+	}
+	else 
+	{
+		glOrthof (-1.0*(GLfloat)w/(GLfloat)h,  
+							1.0*(GLfloat)w/(GLfloat)h, -1.0, 1.0, -1.0, 1.0);
+
+//		glClearColor(0.0, 0.0, 1.0, 0.0);
+	}
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
 }
