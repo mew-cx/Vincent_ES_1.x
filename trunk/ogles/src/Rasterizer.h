@@ -27,11 +27,11 @@
 #include "FractionalColor.h"
 
 
-class Surface;
-class Texture;
-
 
 namespace EGL {
+
+	class Surface;
+	class Texture;
 
 	// ----------------------------------------------------------------------
 	// u and v coordinates for texture mapping

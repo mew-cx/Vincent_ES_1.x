@@ -22,16 +22,16 @@ using namespace EGL;
 
 
 U8 Texture :: s_BytesPerPixel[] = {
-	0,				// undefined
+	1,				// ALPHA
 	1,				// LUMINANCE
-	1,				// LUMINANCE_ALPHA
+	2,				// LUMINANCE_ALPHA
 	2,				// RGB
 	2				// RGBA
 };
 
 
 Texture :: Texture():
-	m_Data(0), m_InternalFormat(static_cast<TextureFormatInternal>(0))
+	m_Data(0), m_InternalFormat(static_cast<TextureFormat>(0))
 {
 }
 
@@ -59,7 +59,7 @@ namespace {
 }
 
 
-void Texture :: Initialize(U32 width, U32 height, TextureFormatInternal format) {
+void Texture :: Initialize(U32 width, U32 height, TextureFormat format) {
 
 	if (m_Data != 0) {
 		free(m_Data);

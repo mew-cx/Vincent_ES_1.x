@@ -22,9 +22,11 @@
 namespace EGL {
 	class OGLES_API Texture { 
 	public:
-		enum TextureFormatInternal {
+		enum TextureFormat {
+			TextureFormatInvalid = -1,
+			TextureFormatAlpha = 0,				// 8
 			TextureFormatLuminance = 1,			// 8
-			TextureFormatLuminanceAlpha = 2,	// 7-1
+			TextureFormatLuminanceAlpha = 2,	// 8-8
 			TextureFormatRGB = 3,				// 5-6-5
 			TextureFormatRGBA = 4				// 5-5-5-1
 		};
@@ -34,13 +36,13 @@ namespace EGL {
 		Texture();
 		~Texture();
 
-		void Initialize(U32 width, U32 height, TextureFormatInternal format);
+		void Initialize(U32 width, U32 height, TextureFormat format);
 
 		U32 GetWidth() const				{ return m_Width; }
 		U32 GetHeight() const				{ return m_Height; }
 		U32 GetExponent() const				{ return m_Exponent; }
 
-		TextureFormatInternal 
+		TextureFormat 
 			GetInternalFormat() const		{ return m_InternalFormat; }
 
 		U8 GetBytesPerPixel() const			{ return s_BytesPerPixel[m_InternalFormat]; }
@@ -52,7 +54,7 @@ namespace EGL {
 		U32						m_Width;
 		U32						m_Height;
 		U32						m_Exponent;
-		TextureFormatInternal	m_InternalFormat;
+		TextureFormat	m_InternalFormat;
 
 		static U8 s_BytesPerPixel[];
 	};

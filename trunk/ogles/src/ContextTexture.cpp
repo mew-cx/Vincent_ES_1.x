@@ -12,8 +12,8 @@
 
 
 #include "stdafx.h"
-#include "context.h"
-#include <string.h>
+#include "Context.h"
+#include "Color.h"
 #include "fixed.h"
 
 
@@ -64,6 +64,35 @@ void Context :: CopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLi
 	}
 }
 
+namespace {
+	Texture::TextureFormat TextureFormatFromEnum(GLenum format) {
+		switch (format) {
+			case GL_ALPHA:
+				return Texture::TextureFormatAlpha;
+
+			case 1:
+			case GL_LUMINANCE:
+				return Texture::TextureFormatLuminance;
+
+			case 2:
+			case GL_LUMINANCE_ALPHA:
+				return Texture::TextureFormatLuminanceAlpha;
+
+			case 3:
+			case GL_RGB:
+				return Texture::TextureFormatRGB;
+
+			case 4:
+			case GL_RGBA:
+				return Texture::TextureFormatRGBA;
+
+			default:
+				return Texture::TextureFormatInvalid;
+		}
+	}
+}
+
+
 void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels) { 
 	if (target != GL_TEXTURE_2D) {
 		return;
@@ -74,34 +103,46 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat, GLs
 		return;
 	}
 
-	Texture::TextureFormatInternal internalFormat;
+	Texture::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
+	Texture::TextureFormat externalFormat = TextureFormatFromEnum(format);
 
-	switch (internalformat) {
-		case 1:
-		case GL_LUMINANCE:
-			internalFormat = Texture::TextureFormatLuminance;
-			break;
-
-		case 2:
-		case GL_LUMINANCE_ALPHA:
-			internalFormat = Texture::TextureFormatLuminanceAlpha;
-			break;
-
-		case 3:
-		case GL_RGB:
-			internalFormat = Texture::TextureFormatRGB;
-			break;
-
-		case 4:
-		case GL_RGBA:
-			internalFormat = Texture::TextureFormatRGBA;
-			break;
-
-		default:
-			RecordError(GL_INVALID_ENUM);
-			return;
+	if (internalFormat == Texture::TextureFormatInvalid || 
+		externalFormat == Texture::TextureFormatInvalid || 
+		internalFormat != externalFormat) {
+		RecordError(GL_INVALID_VALUE);
+		return;
 	}
 
+	switch (internalFormat) {
+		case Texture::TextureFormatAlpha:
+		case Texture::TextureFormatLuminance:
+		case Texture::TextureFormatLuminanceAlpha:
+			if (type != GL_UNSIGNED_BYTE) {
+				RecordError(GL_INVALID_VALUE);
+				return;
+			}
+
+			break;
+
+		case Texture::TextureFormatRGB:
+			if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT_5_6_5) {
+				RecordError(GL_INVALID_VALUE);
+				return;
+			}
+
+			break;
+
+		case Texture::TextureFormatRGBA:
+			if (type != GL_UNSIGNED_BYTE &&
+				type != GL_UNSIGNED_SHORT_4_4_4_4 &&
+				type != GL_UNSIGNED_SHORT_5_5_5_1) {
+				RecordError(GL_INVALID_VALUE);
+				return;
+			}
+
+			break;
+
+	}
 	// check that width and height and border are of valid size
 	// check for validity of format
 
@@ -109,8 +150,76 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat, GLs
 	Texture * texture = multiTexture->GetTexture(level);
 	texture->Initialize(width, height, internalFormat);
 
-	// based on external and internal format, allocate copy operator
-	// execute copy
+	switch (internalFormat) {
+		case Texture::TextureFormatAlpha:
+		case Texture::TextureFormatLuminance:
+		case Texture::TextureFormatLuminanceAlpha:
+			memcpy(texture->GetData(), pixels, width * height * texture->GetBytesPerPixel());
+			break;
+
+		case Texture::TextureFormatRGB:
+			switch (type) {
+				case GL_UNSIGNED_BYTE:
+					{
+						U32 count = width * height;
+						const U8 * src = reinterpret_cast<const U8 *>(pixels);
+						U16 * dst = reinterpret_cast<U16 *>(texture->GetData());
+
+						while (count != 0) {
+							--count;
+							Color color = Color(*src++, *src++, *src++, 0);
+							*dst++ = color.ConvertTo565();
+						}
+					}
+					break;
+				case GL_UNSIGNED_SHORT_5_6_5:
+					memcpy(texture->GetData(), pixels, width * height * texture->GetBytesPerPixel());
+					break;
+			}
+
+			break;
+
+		case Texture::TextureFormatRGBA:
+			switch (type) {
+				case GL_UNSIGNED_BYTE:
+					{
+						U32 count = width * height;
+						const U8 * src = reinterpret_cast<const U8 *>(pixels);
+						U16 * dst = reinterpret_cast<U16 *>(texture->GetData());
+
+						while (count != 0) {
+							--count;
+							Color color = Color(*src++, *src++, *src++, *src++);
+							*dst++ = color.ConvertTo5551();
+						}
+					}
+					break;
+				case GL_UNSIGNED_SHORT_5_5_5_1:
+					memcpy(texture->GetData(), pixels, width * height * texture->GetBytesPerPixel());
+					break;
+
+				case GL_UNSIGNED_SHORT_4_4_4_4:
+					{
+						U32 count = width * height;
+						const U8 * src = reinterpret_cast<const U8 *>(pixels);
+						U16 * dst = reinterpret_cast<U16 *>(texture->GetData());
+
+						while (count != 0) {
+							--count;
+							U8 r = *src & 0xF0;
+							U8 g = (*src++ & 0xF) << 4;
+							U8 b = *src & 0xF0;
+							U8 a = (*src++ & 0xF) << 4;
+							Color color = Color(r, g, b, a);
+							*dst++ = color.ConvertTo5551();
+						}
+					}
+					break;
+			}
+
+			break;
+
+	}
 }
 
 void Context :: TexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels) { 
