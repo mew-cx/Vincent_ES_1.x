@@ -500,16 +500,29 @@ private:
 	inline void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 
 		// perform depth division
-		I32 invDenominator = EGL_Inverse(pos.m_ClipCoords.w());
+		EGL_Fixed x = pos.m_ClipCoords.x();
+		EGL_Fixed y = pos.m_ClipCoords.y();
+		EGL_Fixed z = pos.m_ClipCoords.z();
+		EGL_Fixed w = pos.m_ClipCoords.w();
+
+		// fix possible rounding problems
+		if (x < -w)	x = -w;
+		if (x >= w)	x = w - 1;
+		if (y < -w)	y = -w;
+		if (y >= w)	y = w - 1;
+		if (z < -w)	z = -w;
+		if (z >= w)	z = w - 1;
+
+		I32 invDenominator = EGL_Inverse(w);
 
 		pos.m_WindowCoords.x = 
-			EGL_Mul(pos.m_ClipCoords.x(), EGL_Mul(m_ViewportScale.x(), invDenominator)) + m_ViewportOrigin.x();
+			EGL_Mul(x, EGL_Mul(m_ViewportScale.x(), invDenominator)) + m_ViewportOrigin.x();
 
 		pos.m_WindowCoords.y = 
-			EGL_Mul(pos.m_ClipCoords.y(), EGL_Mul(m_ViewportScale.y(), invDenominator)) + m_ViewportOrigin.y();
+			EGL_Mul(y, EGL_Mul(m_ViewportScale.y(), invDenominator)) + m_ViewportOrigin.y();
 
 		pos.m_WindowCoords.z = 
-			EGL_Mul(pos.m_ClipCoords.z(), EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase;
+			EGL_Mul(z, EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase;
 
 	}
 

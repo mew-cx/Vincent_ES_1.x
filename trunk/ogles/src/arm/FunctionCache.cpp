@@ -116,12 +116,12 @@ ScanlineFunction * FunctionCache :: GetFunction(const RasterizerState & state) {
 
 void * FunctionCache :: AddFunction(const RasterizerState & state, size_t size) {
 
-	if (size + m_Used > m_Total || m_UsedFunctions == m_MaxFunctions) {
+	if (size + m_Used >= m_Total || m_UsedFunctions >= m_MaxFunctions) {
 		CompactCode();
 	}
 
 	assert(m_UsedFunctions < m_MaxFunctions);
-	assert(size + m_Used <= m_Total);
+	assert(size + m_Used < m_Total);
 
 	FunctionInfo * function = m_Functions + m_UsedFunctions++;
 

@@ -1136,10 +1136,10 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	}
 
 	EGL_Fixed incTu2 = EGL_Mul(EGL_Mul(pos2.m_TextureCoords.tu, invZ2) - 
-							   EGL_Mul(pos1.m_TextureCoords.tu, invZ1), invDeltaY2);
+							   start.m_TextureCoords.tu, invDeltaY2);
 
 	EGL_Fixed incTv2 = EGL_Mul(EGL_Mul(pos2.m_TextureCoords.tv, invZ2) - 
-							   EGL_Mul(pos1.m_TextureCoords.tv, invZ1), invDeltaY2);
+							   start.m_TextureCoords.tv, invDeltaY2);
 
 
 	EGL_Fixed deltaY31 = pos3.m_WindowCoords.y - pos1.m_WindowCoords.y;
@@ -1183,10 +1183,10 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	}
 
 	EGL_Fixed incTu3 = EGL_Mul(EGL_Mul(pos3.m_TextureCoords.tu, invZ3) - 
-							   EGL_Mul(pos1.m_TextureCoords.tu, invZ1), invDeltaY3);
+							   start.m_TextureCoords.tu, invDeltaY3);
 
 	EGL_Fixed incTv3 = EGL_Mul(EGL_Mul(pos3.m_TextureCoords.tv, invZ3) - 
-							   EGL_Mul(pos1.m_TextureCoords.tv, invZ1), invDeltaY3);
+							   start.m_TextureCoords.tv, invDeltaY3);
 
 	EGL_Fixed deltaY32 = pos3.m_WindowCoords.y - pos2.m_WindowCoords.y;
 	EGL_Fixed invDeltaY23;

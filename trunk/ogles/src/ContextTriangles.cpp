@@ -491,7 +491,7 @@ namespace {
 
 #		define COORDINATE x()
 #		define CLIP_VALUE(p) ((p)->m_ClipCoords.w())
-#		define COMPARISON <=
+#		define COMPARISON <
 #		include "TriangleClipper.inc"
 #		undef COMPARISON
 #		undef CLIP_VALUE
@@ -515,7 +515,7 @@ namespace {
 
 #		define COORDINATE y()
 #		define CLIP_VALUE(p) ((p)->m_ClipCoords.w())
-#		define COMPARISON <=
+#		define COMPARISON <
 #		include "TriangleClipper.inc"
 #		undef COMPARISON
 #		undef CLIP_VALUE
@@ -539,7 +539,7 @@ namespace {
 
 #		define COORDINATE z()
 #		define CLIP_VALUE(p) ((p)->m_ClipCoords.w())
-#		define COMPARISON <=
+#		define COMPARISON <
 #		include "TriangleClipper.inc"
 #		undef COMPARISON
 #		undef CLIP_VALUE
@@ -653,7 +653,7 @@ void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
 
 		for (int index = 2; index < numVertices; ++index) {
 			ClipCoordsToWindowCoords(*array1[index]);
-			m_Rasterizer->RasterTriangle(*array1[0], *array1[1], *array1[index]);
+			m_Rasterizer->RasterTriangle(*array1[0], *array1[index - 1], *array1[index]);
 		}
 	}
 }
