@@ -48,7 +48,7 @@ GLuint list;
 GLint spinx = 0;
 GLint spiny = 0;
 GLfloat tdist = 0.0;
-GLfloat polyfactor = 1.0;
+GLfloat polyfactor = 2.0;
 GLfloat polyunits = 1.0;
 
 /*  display() draws two spheres, one with a gray, diffuse material,
@@ -68,9 +68,9 @@ void display (UGWindow uwin)
     glRotatef ((GLfloat) spinx, 1.0, 0.0, 0.0);
     glRotatef ((GLfloat) spiny, 0.0, 1.0, 0.0);
 
-    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, black);
-    glMaterialf(GL_FRONT, GL_SHININESS, 0.0);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, gray);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     glEnable(GL_POLYGON_OFFSET_FILL);

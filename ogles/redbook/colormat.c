@@ -55,9 +55,9 @@ void init(void)
    glClearColor (0.0, 0.0, 0.0, 0.0);
    glShadeModel (GL_SMOOTH);
    glEnable(GL_DEPTH_TEST);
-   glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseMaterial);
-   glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-   glMaterialf(GL_FRONT, GL_SHININESS, 25.0);
+   glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseMaterial);
+   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 25.0);
    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
    glEnable(GL_LIGHTING);
    glEnable(GL_LIGHT0);

@@ -58,8 +58,8 @@ static void init(void)
    GLfloat mat_shininess[] = { 100.0 };
    GLfloat position[] = { 0.5, 0.5, 1.0, 0.0 };
 
-   glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-   glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
    glLightfv(GL_LIGHT0, GL_POSITION, position);
 
    glEnable(GL_LIGHTING);
@@ -78,17 +78,17 @@ void display(UGWindow uwin)
 
    glPushMatrix ();
       glTranslatef (-0.15, -0.15, solidZ);
-      glMaterialfv(GL_FRONT, GL_EMISSION, mat_zero);
-      glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_solid);
-      ugSolidSpheref(0.4, 16, 16);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mat_zero);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_solid);
+      ugSolidSpheref(0.4, 32, 32);
    glPopMatrix ();
 
    glPushMatrix ();
       glTranslatef (0.15, 0.15, transparentZ);
       glRotatef (15.0, 1.0, 1.0, 0.0);
       glRotatef (30.0, 0.0, 1.0, 0.0);
-      glMaterialfv(GL_FRONT, GL_EMISSION, mat_emission);
-      glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_transparent);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mat_emission);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_transparent);
       glEnable (GL_BLEND);
       glDepthMask (GL_FALSE);
       glBlendFunc (GL_SRC_ALPHA, GL_ONE);
