@@ -187,7 +187,8 @@ namespace {
 	// -------------------------------------------------------------------------
 
 #	define OFFSET_EDGE_COORD_X				offsetof(EdgeCoord, x)
-#	define OFFSET_EDGE_COORD_Z				offsetof(EdgeCoord, z)
+#	define OFFSET_EDGE_COORD_INV_Z			offsetof(EdgeCoord, invZ)
+#	define OFFSET_EDGE_COORD_DEPTH			offsetof(EdgeCoord, depth)
 
 	// -------------------------------------------------------------------------
 	// For TexCoord
@@ -206,7 +207,8 @@ namespace {
 #	define OFFSET_EDGE_BUFFER_FOG			offsetof(EdgePos, m_FogDensity)
 
 #	define OFFSET_EDGE_BUFFER_WINDOW_X		(OFFSET_EDGE_BUFFER_WINDOW + OFFSET_EDGE_COORD_X)
-#	define OFFSET_EDGE_BUFFER_WINDOW_Z		(OFFSET_EDGE_BUFFER_WINDOW + OFFSET_EDGE_COORD_Z)
+#	define OFFSET_EDGE_BUFFER_WINDOW_INV_Z	(OFFSET_EDGE_BUFFER_WINDOW + OFFSET_EDGE_COORD_INV_Z)
+#	define OFFSET_EDGE_BUFFER_WINDOW_DEPTH	(OFFSET_EDGE_BUFFER_WINDOW + OFFSET_EDGE_COORD_DEPTH)
 
 #	define OFFSET_EDGE_BUFFER_COLOR_R		(OFFSET_EDGE_BUFFER_COLOR + OFFSET_COLOR_RED)
 #	define OFFSET_EDGE_BUFFER_COLOR_G		(OFFSET_EDGE_BUFFER_COLOR + OFFSET_COLOR_GREEN)
@@ -2664,9 +2666,18 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regAddrStartWindowZ);
 	DECL_REG	(regAddrEndWindowZ);
 
-	LDI		(regOffsetWindowZ, OFFSET_EDGE_BUFFER_WINDOW_Z);
+	LDI		(regOffsetWindowZ, OFFSET_EDGE_BUFFER_WINDOW_INV_Z);
 	ADD		(regAddrStartWindowZ, regStart, regOffsetWindowZ);
 	ADD		(regAddrEndWindowZ, regEnd, regOffsetWindowZ);
+
+	// depth coordinate
+	DECL_REG	(regOffsetWindowDepth);
+	DECL_REG	(regAddrStartWindowDepth);
+	DECL_REG	(regAddrEndWindowDepth);
+
+	LDI		(regOffsetWindowDepth, OFFSET_EDGE_BUFFER_WINDOW_DEPTH);
+	ADD		(regAddrStartWindowDepth, regStart, regOffsetWindowDepth);
+	ADD		(regAddrEndWindowDepth, regEnd, regOffsetWindowDepth);
 
 	// u texture coordinate
 	DECL_REG	(regOffsetTextureU);
@@ -2832,6 +2843,18 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	SUB		(regDiffFog, regEndFog, regStartFog);
 	FMUL	(regDeltaFog, regDiffFog, regInvSpan);
 
+	//EGL_Fixed deltaDepth = EGL_Mul(end.m_WindowCoords.depth - start.m_WindowCoords.depth, invSpan);
+	DECL_REG	(regEndDepth);
+	DECL_REG	(regStartDepth);
+	DECL_REG	(regDiffDepth);
+	DECL_REG	(regDeltaDepth);
+
+	LDW		(regEndDepth, regAddrEndWindowDepth);
+	LDW		(regStartDepth, regAddrStartWindowDepth);
+	SUB		(regDiffDepth, regEndDepth, regStartDepth);
+	FMUL	(regDeltaDepth, regDiffDepth, regInvSpan);
+
+
 	//EGL_Fixed invTu = start.m_TextureCoords.tu;
 	//EGL_Fixed invTv = start.m_TextureCoords.tv;
 	//EGL_Fixed invZ = start.m_WindowCoords.z;
@@ -2989,7 +3012,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 		//do {
 
-	// phi for count, x, z, tu, tv, fog, r, g, b, a
+	// phi for count, x, z, tu, tv, fog, depth, r, g, b, a
 
 	DECL_REG	(regLoop1CountEntry);
 	DECL_REG	(regLoop1Count);
@@ -3000,6 +3023,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regLoop1VEntry);
 	DECL_REG	(regLoop1FogEntry);
 	DECL_REG	(regLoop1Fog);
+	DECL_REG	(regLoop1DepthEntry);
+	DECL_REG	(regLoop1Depth);
 	DECL_REG	(regLoop1REntry);
 	DECL_REG	(regLoop1R);
 	DECL_REG	(regLoop1GEntry);
@@ -3015,6 +3040,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	PHI		(regLoop1UEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1U, regU, NULL));
 	PHI		(regLoop1VEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1V, regV, NULL));
 	PHI		(regLoop1FogEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Fog, regStartFog, NULL));
+	PHI		(regLoop1DepthEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Depth, regStartDepth, NULL));
 	PHI		(regLoop1REntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1R, regStartColorR, NULL));
 	PHI		(regLoop1GEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1G, regStartColorG, NULL));
 	PHI		(regLoop1BEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1B, regStartColorB, NULL));
@@ -3022,10 +3048,10 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		
 	FragmentGenerationInfo info;
 	info.regX = regLoop1XEntry;
-	info.regDepth = regLoop1ZEntry;
 	info.regU = regLoop1UEntry;
 	info.regV = regLoop1VEntry; 
 	info.regFog = regLoop1FogEntry;
+	info.regDepth = regLoop1DepthEntry;
 	info.regR = regLoop1REntry;
 	info.regG = regLoop1GEntry;
 	info.regB = regLoop1BEntry; 
@@ -3054,10 +3080,12 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FADD	(regLoop1B, regLoop1BEntry, regColorIncrementB);
 	FADD	(regLoop1A, regLoop1AEntry, regColorIncrementA);
 
+			//depth += deltaDepth;
 			//fogDensity += deltaFog;
 			//z += deltaZ;
 			//tu += deltaTu;
 			//tv += deltaTv;
+	FADD	(regLoop1Depth, regLoop1DepthEntry, regDeltaDepth);
 	FADD	(regLoop1Fog, regLoop1FogEntry, regDeltaFog);
 	FADD	(regLoop1Z, regLoop1ZEntry, regLoop0ScaledDiffZ);
 	FADD	(regLoop1U, regLoop1UEntry, regLoop0ScaledDiffU);
@@ -3139,7 +3167,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	block = cg_block_create(procedure, 4);
 	beginLoop2->block = block;
 
-	// phi for x, z, tu, tv, fog, r, g, b, a
+	// phi for x, z, tu, tv, fog, depth, r, g, b, a
 
 	DECL_REG	(regLoop2XEntry);
 	DECL_REG	(regLoop2X);
@@ -3151,6 +3179,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regLoop2V);
 	DECL_REG	(regLoop2FogEntry);
 	DECL_REG	(regLoop2Fog);
+	DECL_REG	(regLoop2DepthEntry);
+	DECL_REG	(regLoop2Depth);
 	DECL_REG	(regLoop2REntry);
 	DECL_REG	(regLoop2R);
 	DECL_REG	(regLoop2GEntry);
@@ -3166,6 +3196,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	PHI		(regLoop2UEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2U, regBlock4U, NULL));
 	PHI		(regLoop2VEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2V, regBlock4V, NULL));
 	PHI		(regLoop2FogEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2Fog, regLoop1Fog, regStartFog, NULL));
+	PHI		(regLoop2DepthEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2Depth, regLoop1Depth, regStartDepth, NULL));
 	PHI		(regLoop2REntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2R, regLoop1R, regStartColorR, NULL));
 	PHI		(regLoop2GEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2G, regLoop1G, regStartColorG, NULL));
 	PHI		(regLoop2BEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2B, regLoop1B, regStartColorB, NULL));
@@ -3173,10 +3204,10 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	FragmentGenerationInfo info2;
 	info2.regX = regLoop2XEntry;
-	info2.regDepth = regLoop2ZEntry;
 	info2.regU = regLoop2UEntry;
 	info2.regV = regLoop2VEntry; 
 	info2.regFog = regLoop2FogEntry;
+	info2.regDepth = regLoop2DepthEntry;
 	info2.regR = regLoop2REntry;
 	info2.regG = regLoop2GEntry;
 	info2.regB = regLoop2BEntry; 
@@ -3205,10 +3236,12 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FADD	(regLoop2B, regLoop2BEntry, regColorIncrementB);
 	FADD	(regLoop2A, regLoop2AEntry, regColorIncrementA);
 
+			//depth += deltaDepth;
 			//fogDensity += deltaFog;
 			//z += deltaZ;
 			//tu += deltaTu;
 			//tv += deltaTv;
+	FADD	(regLoop2Depth, regLoop2DepthEntry, regDeltaDepth);
 	FADD	(regLoop2Fog, regLoop2FogEntry, regDeltaFog);
 	FADD	(regLoop2Z, regLoop2ZEntry, regLoop2ScaledDiffZ);
 	FADD	(regLoop2U, regLoop2UEntry, regLoop2ScaledDiffU);

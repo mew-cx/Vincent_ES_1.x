@@ -67,11 +67,18 @@ namespace EGL {
 	};
 
 	struct ScreenCoord {
-		EGL_Fixed		x, y, z;	// x, y, z window coords
+		EGL_Fixed		x, y;		// x, y window coords
+		EGL_Fixed		invZ;		// 1/Z (w) from depth division
+
+		// TO DO: once the rasterizer works properly, change this to binary 0..2^n-1
+		EGL_Fixed		depth;		// depth coordinate after transformation
 	};
 
 	struct EdgeCoord {
-		EGL_Fixed		x, z;		// x window coords
+		EGL_Fixed		x, invZ;	// x window coords
+
+		// TO DO: once the rasterizer works properly, change this to binary 0..2^n-1
+		EGL_Fixed		depth;		// depth coordinate
 	};
 
 	// ----------------------------------------------------------------------
@@ -82,7 +89,6 @@ namespace EGL {
 		Vec4D				m_ClipCoords;
 		ScreenCoord			m_WindowCoords;		
 		FractionalColor		m_Color;			// color in range 0..255
-//added for backcolor storage
 		FractionalColor		m_BackColor;		
 		TexCoord			m_TextureCoords;	// texture coords 0..1
 		EGL_Fixed			m_FogDensity;		// fog density at this vertex

@@ -664,7 +664,13 @@ private:
 		if (z < -w)	z = -w;
 		if (z >= w)	z = w - 1;
 
-		I32 invDenominator = EGL_Inverse(w);
+		// keep this value around for perspective-correct texturing
+		EGL_Fixed invDenominator = EGL_Inverse(w);
+
+		// Scale 1/Z by 2^10 to avoid rounding problems during prespective correct
+		// interpolation
+		// So book by LaMothe for more detailed discussion on this
+		pos.m_WindowCoords.invZ = invDenominator << 10;
 
 		pos.m_WindowCoords.x = 
 			EGL_Mul(x, EGL_Mul(m_ViewportScale.x(), invDenominator)) + m_ViewportOrigin.x();
@@ -672,7 +678,7 @@ private:
 		pos.m_WindowCoords.y = 
 			EGL_Mul(y, EGL_Mul(m_ViewportScale.y(), invDenominator)) + m_ViewportOrigin.y();
 
-		pos.m_WindowCoords.z = 
+		pos.m_WindowCoords.depth = 
 			EGL_Mul(z, EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase;
 
 	}
