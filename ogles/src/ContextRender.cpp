@@ -1030,7 +1030,7 @@ void Context :: ClipPlanex(GLenum plane, const GLfixed *equation) {
 	}
 
 	size_t index = plane - GL_CLIP_PLANE0;
-	m_ClipPlanes[index] = m_FullInverseModelViewMatrix * Vec4D(equation);
+	m_ClipPlanes[index] = m_FullInverseModelViewMatrix.Transpose() * Vec4D(equation);
 }
 
 // --------------------------------------------------------------------------
