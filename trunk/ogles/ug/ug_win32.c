@@ -141,6 +141,7 @@ ugCreateWindow(UGCtx ug,  const char* config,
 			//x, y, width, height, 
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 
 			NULL, NULL, instance, NULL);
+		SetTimer(w->win, 1, 40, NULL);
 
 		free(str);
 

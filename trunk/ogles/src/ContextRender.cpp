@@ -587,6 +587,7 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 			}
 		} else {
 			color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
+			color.a = m_FrontMaterial.GetDiffuseColor().a;
 			color += m_FrontMaterial.GetEmisiveColor();
 
 			if (m_TwoSidedLightning) {

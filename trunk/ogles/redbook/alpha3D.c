@@ -91,9 +91,9 @@ void display(UGWindow uwin)
       glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_transparent);
       glEnable (GL_BLEND);
       glDepthMask (GL_FALSE);
-      glBlendFunc (GL_SRC_ALPHA, GL_ONE);
+	  glBlendFunc (GL_SRC_ALPHA, GL_ONE);
       ugSolidCubef(0.6);
-      glDepthMask (GL_TRUE);
+	  glDepthMask (GL_TRUE);
       glDisable (GL_BLEND);
    glPopMatrix ();
 
@@ -154,6 +154,7 @@ int main(int argc, char** argv)
    ugDisplayFunc(uwin, display); 
    ugReshapeFunc(uwin, reshape);
    ugKeyboardFunc(uwin, keyboard);
+   ugIdleFunc(ugCtxFromWin(uwin), animate);
    ugMainLoop(ug);
    return 0;
 }

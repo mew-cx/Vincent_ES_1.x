@@ -371,6 +371,7 @@ ugSolidCubef(GLfloat size) {
 	0., -1., 0.,
     };
     int i;
+	size /= 2;
     v = malloc(sizeof cubev); memcpy(v, cubev, sizeof cubev);
     n = malloc(sizeof cuben); memcpy(n, cuben, sizeof cuben);
     for(i = 0; i < sizeof cubev/sizeof cubev[0]; i++) {
@@ -450,6 +451,7 @@ ugWireCubef(GLfloat size) {
 	0., -1., 0.,
     };
     int i;
+	size /= 2;
     v = malloc(sizeof cubev); memcpy(v, cubev, sizeof cubev);
     n = malloc(sizeof cuben); memcpy(n, cuben, sizeof cuben);
     for(i = 0; i < sizeof cubev/sizeof cubev[0]; i++) {
