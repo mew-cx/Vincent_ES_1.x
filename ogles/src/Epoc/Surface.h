@@ -45,22 +45,21 @@
 #include "Config.h"
 #include "fixed.h"
 #include "Color.h"
-#include "Color.h"
+
+#include <fbs.h>
 
 
 namespace EGL {
 
-	// TO DO: change this to Symbian types
-	typedef void * HDC; 					// to be chnaged later
-	typedef void * HBITMAP; 				// to be chnaged later
-
-	class Surface {
+	class Surface: public CBase {
 		friend Context;
 
 	public:
 
 		// Create a PBuffer surface
-		Surface(const Config & config, HDC hdc = 0);
+		static Surface * NewL(const Config & config);
+		static Surface * NewLC(const Config & config);
+
 		~Surface();
 
 		// Is the depth value re-scaled based on near/far settings?.
@@ -90,22 +89,23 @@ namespace EGL {
 		void Dispose();
 
 		// Windows integration
-		HDC GetMemoryDC();
-		HBITMAP GetBitmap();
+		CFbsBitmap * GetBitmap();
 
 	private:
-		HDC		m_HDC;				// windows device context handle
-		HBITMAP	m_Bitmap;			// windows bitmap handle
-		Config	m_Config;			// configuration arguments
-		U16 *	m_ColorBuffer;		// pointer to frame buffer base address 5-6-5
-		U8 *	m_AlphaBuffer;		// pointer to alpha buffer
-		I32 *	m_DepthBuffer;		// pointer to Z-buffer base address
-		U32 *	m_StencilBuffer;	// stencil buffer
+		void ConstructL(const Config & config);
 
-		Rect	m_Rect;
+	private:
+		CFbsBitmap *	m_Bitmap;			// windows bitmap handle
+		Config			m_Config;			// configuration arguments
+		U16 *			m_ColorBuffer;		// pointer to frame buffer base address 5-6-5
+		U8 *			m_AlphaBuffer;		// pointer to alpha buffer
+		I32 *			m_DepthBuffer;		// pointer to Z-buffer base address
+		U32 *			m_StencilBuffer;	// stencil buffer
 
-		Context *	m_CurrentContext;
-		bool	m_Disposed;			// the surface
+		Rect			m_Rect;
+
+		Context *		m_CurrentContext;
+		bool			m_Disposed;			// the surface
 	};
 
 
@@ -126,11 +126,7 @@ namespace EGL {
 		return m_CurrentContext;
 	}
 
-	inline HDC Surface :: GetMemoryDC() {
-		return m_HDC;
-	}
-
-	inline HBITMAP Surface :: GetBitmap() {
+	inline CFbsBitmap * Surface :: GetBitmap() {
 		return m_Bitmap;
 	}
 

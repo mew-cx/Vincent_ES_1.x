@@ -66,6 +66,7 @@
 #ifdef EGL_ON_SYMBIAN
 
 #	include <e32def.h>
+#	include <e32base.h>
 
 #endif // ndef EGL_ON_SYMBIAN
 
