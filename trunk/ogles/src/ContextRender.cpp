@@ -130,10 +130,10 @@ void Context :: NormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer
 
 	GLsizei size = 3;
 
-	//if (pointer == 0) {
-	//	RecordError(GL_INVALID_VALUE);
-	//	return;
-	//}
+	if (stride < 0) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
 
 	if (stride == 0) {
 		switch (type) {
@@ -174,10 +174,10 @@ void Context :: VertexPointer(GLint size, GLenum type, GLsizei stride, const GLv
 		return;
 	}
 
-	//if (pointer == 0) {
-	//	RecordError(GL_INVALID_VALUE);
-	//	return;
-	//}
+	if (stride < 0) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
 
 	if (stride == 0) {
 		switch (type) {
@@ -218,10 +218,10 @@ void Context :: TexCoordPointer(GLint size, GLenum type, GLsizei stride, const G
 		return;
 	}
 
-	//if (pointer == 0) {
-	//	RecordError(GL_INVALID_VALUE);
-	//	return;
-	//}
+	if (stride < 0) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
 
 	if (stride == 0) {
 		switch (type) {
@@ -290,6 +290,15 @@ void Context :: Normal3x(GLfixed nx, GLfixed ny, GLfixed nz) {
 
 void Context :: DrawArrays(GLenum mode, GLint first, GLsizei count) { 
 
+	if (count < 0) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	if (!m_VertexArrayEnabled) {
+		return;
+	}
+
 	SetGeometryFunction();
 
 	switch (mode) {
@@ -330,6 +339,15 @@ void Context :: DrawArrays(GLenum mode, GLint first, GLsizei count) {
 
 void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices) { 
 	
+	if (count < 0) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	if (!m_VertexArrayEnabled || !indices) {
+		return;
+	}
+
 	SetGeometryFunction();
 
 	switch (mode) {
@@ -429,7 +447,7 @@ void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
 void Context :: SelectArrayElement(int vertexIndex, int normalIndex, int textureIndex, int colorIndex) {
 
 	// TO DO: this whole method should be redesigned for efficient pipelining
-	if (!m_VertexArrayEnabled) {
+	if (!m_VertexArrayEnabled || !m_VertexArray.pointer) {
 		m_CurrentVertex = Vec4D(0, 0, 0, EGL_ONE);
 	} else {
 		if (m_VertexArray.size == 3) {
@@ -453,7 +471,7 @@ void Context :: SelectArrayElement(int vertexIndex, int normalIndex, int texture
 		}
 	}
 
-	if (!m_NormalArrayEnabled) {
+	if (!m_NormalArrayEnabled || !m_NormalArray.pointer) {
 		m_CurrentNormal = m_DefaultNormal;
 	} else {
 		m_CurrentNormal = 
@@ -462,7 +480,7 @@ void Context :: SelectArrayElement(int vertexIndex, int normalIndex, int texture
 				  m_NormalArray.GetValue(normalIndex, 2));
 	}
 
-	if (!m_ColorArrayEnabled) {
+	if (!m_ColorArrayEnabled || !m_ColorArray.pointer) {
 		m_CurrentRGBA = m_DefaultRGBA;
 	} else {
 		m_CurrentRGBA =
@@ -472,7 +490,7 @@ void Context :: SelectArrayElement(int vertexIndex, int normalIndex, int texture
 							m_ColorArray.GetValue(colorIndex, 3));
 	}
 
-	if (!m_TexCoordArrayEnabled) {
+	if (!m_TexCoordArrayEnabled || !m_TexCoordArray.pointer) {
 		m_CurrentTextureCoords.tu = m_DefaultTextureCoords.tu;
 		m_CurrentTextureCoords.tv = m_DefaultTextureCoords.tv;
 	} else {

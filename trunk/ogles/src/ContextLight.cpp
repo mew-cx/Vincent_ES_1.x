@@ -81,7 +81,12 @@ void Context :: Fogx(GLenum pname, GLfixed param) {
 			break;
 
 		case GL_FOG_DENSITY:
-			m_FogDensity = param;
+			if (param < 0) {
+				RecordError(GL_INVALID_VALUE);
+			} else {
+				m_FogDensity = param;
+			}
+
 			break;
 
 		default:
@@ -135,11 +140,21 @@ void Context :: Lightx(GLenum light, GLenum pname, GLfixed param) {
 
 	switch (pname) {
 	case GL_SPOT_EXPONENT:
-		pLight->SetSpotExponent(param);
+		if (param < 0 || param > EGL_FixedFromInt(128)) {
+			RecordError(GL_INVALID_VALUE);
+		} else {
+			pLight->SetSpotExponent(param);
+		}
+
 		break;
 
 	case GL_SPOT_CUTOFF:
-		pLight->SetSpotCutoff(param);
+		if (param < 0 || param > EGL_FixedFromInt(90) && param != EGL_FixedFromInt(180)) {
+			RecordError(GL_INVALID_VALUE);
+		} else {
+			pLight->SetSpotCutoff(param);
+		}
+
 		break;
 
 	case GL_CONSTANT_ATTENUATION:

@@ -60,7 +60,7 @@ namespace EGL {
 		void Init();
 		void Dispose();
 
-		void Initialize(U32 width, U32 height, RasterizerState::TextureFormat format);
+		bool Initialize(U32 width, U32 height, RasterizerState::TextureFormat format);
 
 		U32 GetWidth() const				{ return 1 << m_LogWidth; }
 		U32 GetHeight() const				{ return 1 << m_LogHeight; }
@@ -91,7 +91,7 @@ namespace EGL {
 
 	public:
 		enum {
-			MAX_LEVELS = 20
+			MAX_LEVELS = RasterizerState::LogMaxTextureSize
 		};
 
 		MultiTexture();
@@ -120,7 +120,7 @@ namespace EGL {
 		bool IsMipMap() const;
 
 	private:
-		Texture							m_TextureLevels[MAX_LEVELS];
+		Texture							m_TextureLevels[MAX_LEVELS + 1];
 		RasterizerState::FilterMode		m_MinFilterMode;
 		RasterizerState::FilterMode		m_MagFilterMode;
 		RasterizerState::FilterMode		m_MipmapFilterMode;

@@ -402,8 +402,28 @@ void Context :: Enable(GLenum cap) {
 }
 
 void Context :: Hint(GLenum target, GLenum mode) { 
-	// in principle, we have to fail for any target/mode combination 
-	// that is not defined
+	switch (target) {
+	case GL_FOG_HINT:
+	case GL_LINE_SMOOTH_HINT:
+	case GL_PERSPECTIVE_CORRECTION_HINT:
+	case GL_POINT_SMOOTH_HINT:
+		break;
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	switch (mode) {
+	case GL_FASTEST:
+	case GL_NICEST:
+	case GL_DONT_CARE:
+		break;
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
 }
 
 namespace {
@@ -496,7 +516,7 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_MAX_TEXTURE_SIZE:
-		params[0] = 4096;
+		params[0] = RasterizerState::MaxTextureSize;
 		break;
 
 	case GL_MAX_TEXTURE_UNITS:

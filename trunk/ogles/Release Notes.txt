@@ -10,6 +10,8 @@ Version 0.82
 
 This version addresses the following issues:
 
+ 960546 - Validate all error conditions for all gl... entry points
+ 970894 - glDrawArrays/glDrawElements should validate arrays
 1010509 - specular exponent in material not initialized
 1010508 - EGL_Power on x86 buggy
 1010510 - specular color incorrect
