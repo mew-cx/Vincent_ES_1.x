@@ -63,9 +63,8 @@ Context :: Context(const Config & config)
 	m_ViewportInitialized(false)
 {
 	DepthRangex(VIEWPORT_NEAR, VIEWPORT_FAR);
-	m_CurrentTexture = new MultiTexture();
-	m_Textures.push_back(m_CurrentTexture);
-	GetRasterizerState()->SetTexture(m_CurrentTexture);
+	m_Textures.push_back(new MultiTexture());
+	GetRasterizerState()->SetTexture(m_Textures[0]);
 
 	m_LightModelAmbient.r = m_LightModelAmbient.g = m_LightModelAmbient.b = F(0.2f);
 	m_LightModelAmbient.a = F(1.0);

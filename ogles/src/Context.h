@@ -398,7 +398,6 @@ namespace EGL {
 		typedef std::vector<MultiTexture *> TextureVector;
 
 		TextureVector		m_Textures;
-		MultiTexture *		m_CurrentTexture;
 
 		// ----------------------------------------------------------------------
 		// Object-Life Cycle State

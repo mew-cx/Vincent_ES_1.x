@@ -32,16 +32,54 @@ void Context :: BindTexture(GLenum target, GLuint texture) {
 
 	if (texture >= m_Textures.size() || m_Textures[texture] == 0) {
 		// allocate a new texture
+		if (m_Textures.size() < texture) {
+			U32 newSize = m_Textures.size() * 2;
+
+			if (newSize <= texture) {
+				newSize = texture + 1;
+			}
+
+			m_Textures.resize(newSize);
+			m_Textures[texture] = new MultiTexture();
+		}
 	}
 
-	m_CurrentTexture = m_Textures[texture];
-	GetRasterizerState()->SetTexture(m_CurrentTexture);
+	GetRasterizerState()->SetTexture(m_Textures[texture]);
 }
 
 void Context :: DeleteTextures(GLsizei n, const GLuint *textures) { 
+
+	while (n-- != 0) {
+		U32 texture = *textures++;
+
+		if (texture != 0) {
+			if (texture < m_Textures.size() && m_Textures[texture] != 0) {
+				if (m_Textures[texture] == GetRasterizerState()->GetTexture()) {
+					GetRasterizerState()->SetTexture(m_Textures[0]);
+				}
+
+				delete m_Textures[texture];
+				m_Textures[texture] = 0;
+			}
+		}
+	}
 }
 
 void Context :: GenTextures(GLsizei n, GLuint *textures) { 
+
+	U32 nextIndex = 1;
+
+	for (; n != 0 && nextIndex < m_Textures.size(); ++nextIndex) {
+		if (m_Textures[nextIndex] == 0) {
+			*textures++ = nextIndex;
+			--n;
+		}
+	}
+	
+	while (n != 0) {
+		*textures++ = nextIndex;
+		--n;
+	}
 }
 
 // --------------------------------------------------------------------------
