@@ -879,16 +879,23 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 	if (EGL_Abs(deltaX) > EGL_Abs(deltaY)) {
 		// Bresenheim along x-axis
 
-		const RasterPos * start, *end;
+		const RasterPos *start, *end;
+
+		I32 x;
+		I32 endX;
 
 		if (deltaX < 0) {
 			deltaY = -deltaY;
 			deltaX = -deltaX;
 			start = &p_to;
 			end = &p_from;
+			x = EGL_IntFromFixed(p_to.m_WindowCoords.x + ((EGL_ONE)/2));
+			endX = EGL_IntFromFixed(p_from.m_WindowCoords.x + ((EGL_ONE)/2));
 		} else {
 			start = &p_from;
 			end = &p_to;
+			x = EGL_IntFromFixed(p_from.m_WindowCoords.x + ((EGL_ONE)/2-1));
+			endX = EGL_IntFromFixed(p_to.m_WindowCoords.x + ((EGL_ONE)/2-1));
 		}
 
 		const RasterPos& from = *start;
@@ -918,9 +925,8 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 
 		EGL_Fixed deltaDepth = EGL_Mul(to.m_WindowCoords.depth - from.m_WindowCoords.depth, invSpan);
 
-		I32 x = EGL_IntFromFixed(from.m_WindowCoords.x);
-		I32 y = EGL_IntFromFixed(from.m_WindowCoords.y);
-		I32 endX = EGL_IntFromFixed(to.m_WindowCoords.x);
+		I32 y = EGL_IntFromFixed(from.m_WindowCoords.y + ((EGL_ONE)/2-1));
+
 		I32 yIncrement = (deltaY > 0) ? 1 : -1;
 		EGL_Fixed error = 0;//EGL_ONE/2;
 
@@ -949,16 +955,23 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 	} else {
 		// Bresenheim along y-axis
 
-		const RasterPos * start, *end;
+		const RasterPos *start, *end;
+
+		I32 y;
+		I32 endY;
 
 		if (deltaY < 0) {
 			deltaY = -deltaY;
 			deltaX = -deltaX;
 			start = &p_to;
 			end = &p_from;
+			y = EGL_IntFromFixed(p_to.m_WindowCoords.y + ((EGL_ONE)/2));
+			endY = EGL_IntFromFixed(p_from.m_WindowCoords.y + ((EGL_ONE)/2));
 		} else {
 			start = &p_from;
 			end = &p_to;
+			y = EGL_IntFromFixed(p_from.m_WindowCoords.y + ((EGL_ONE)/2-1));
+			endY = EGL_IntFromFixed(p_to.m_WindowCoords.y + ((EGL_ONE)/2-1));
 		}
 
 		const RasterPos& from = *start;
@@ -988,9 +1001,7 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 
 		EGL_Fixed deltaDepth = EGL_Mul(to.m_WindowCoords.depth - from.m_WindowCoords.depth, invSpan);
 
-		I32 x = EGL_IntFromFixed(from.m_WindowCoords.x);
-		I32 y = EGL_IntFromFixed(from.m_WindowCoords.y);
-		I32 endY = EGL_IntFromFixed(to.m_WindowCoords.y);
+		I32 x = EGL_IntFromFixed(from.m_WindowCoords.x + ((EGL_ONE)/2-1));
 
 		I32 xIncrement = (deltaX > 0) ? 1 : -1;
 		EGL_Fixed error = 0;//EGL_ONE/2;

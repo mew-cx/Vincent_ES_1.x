@@ -10,6 +10,8 @@ Version 0.77
 
 This version addresses the following issues:
 
+970914 - Read Format test failed.
+970901 - Color Ramp test failed
 970907 - LogicOp Function test failed.
 970902 - Stencil Plane Clear test failed.
 970903 - Stencil Plane Corners test failed.
