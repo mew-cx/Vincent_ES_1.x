@@ -1209,9 +1209,9 @@ void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
 	EGL_Fixed halfSize = size / 2;
 
 	I32 xmin = EGL_IntFromFixed(point.m_WindowCoords.x - halfSize + EGL_HALF);
-	I32 xmax = EGL_IntFromFixed(point.m_WindowCoords.x + halfSize + (EGL_HALF - 1));
+	I32 xmax = xmin + ((size - EGL_HALF) >> EGL_PRECISION);
 	I32 ymin = EGL_IntFromFixed(point.m_WindowCoords.y - halfSize + EGL_HALF);
-	I32 ymax = EGL_IntFromFixed(point.m_WindowCoords.y + halfSize + (EGL_HALF - 1));
+	I32 ymax = ymin + ((size - EGL_HALF) >> EGL_PRECISION);
 
 	EGL_Fixed depth = point.m_WindowCoords.depth;
 	FractionalColor baseColor = point.m_Color;

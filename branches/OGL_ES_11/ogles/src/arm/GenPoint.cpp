@@ -119,20 +119,21 @@ void CodeGenerator :: GenerateRasterPoint() {
 	ASR				(regHalfSize, regSize, regConstant1);
 
 	// I32 xmin = EGL_IntFromFixed(point.m_WindowCoords.x - halfSize + EGL_HALF);
-	// I32 xmax = EGL_IntFromFixed(point.m_WindowCoords.x + halfSize + (EGL_HALF - 1));
+	// I32 xmax = xmin + EGL_IntFromFixed(size) - 1;
 	// I32 ymin = EGL_IntFromFixed(point.m_WindowCoords.y - halfSize + EGL_HALF);
-	// I32 ymax = EGL_IntFromFixed(point.m_WindowCoords.y + halfSize + (EGL_HALF - 1));
+	// I32 ymax = ymin + EGL_IntFromFixed(size) - 1;
 
 	DECL_CONST_REG	(regHalf, 0x8000);
-	DECL_CONST_REG	(regHalf_1, 0x7fff);
+	DECL_REG		(regAdjustedSize);
+	DECL_REG		(regRoundedSize);
+
+	FSUB			(regAdjustedSize, regSize, regHalf);
+	TRUNC			(regRoundedSize, regAdjustedSize);
+
 	DECL_REG		(regWindowXPlus);
-	DECL_REG		(regWindowXMinus);
 	DECL_REG		(regWindowYPlus);
-	DECL_REG		(regWindowYMinus);
 	DECL_REG		(regWindowXPlusSized);
-	DECL_REG		(regWindowXMinusSized);
 	DECL_REG		(regWindowYPlusSized);
-	DECL_REG		(regWindowYMinusSized);
 
 	DECL_REG		(regXMin);
 	DECL_REG		(regXMax);
@@ -145,9 +146,7 @@ void CodeGenerator :: GenerateRasterPoint() {
 	FSUB			(regWindowXPlusSized, regWindowXPlus, regHalfSize);
 	TRUNC			(regXMin, regWindowXPlusSized);
 
-	FADD			(regWindowXMinus, regPointWindowX, regHalf_1);
-	FADD			(regWindowXMinusSized, regWindowXMinus, regHalfSize);
-	TRUNC			(regXMax, regWindowXMinusSized);
+	ADD				(regXMax, regXMin, regRoundedSize);
 
 	cg_virtual_reg_t *	regPointWindowY = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_WINDOW_Y);
 
@@ -155,9 +154,7 @@ void CodeGenerator :: GenerateRasterPoint() {
 	FSUB			(regWindowYPlusSized, regWindowYPlus, regHalfSize);
 	TRUNC			(regYMin, regWindowYPlusSized);
 
-	FADD			(regWindowYMinus, regPointWindowY, regHalf_1);
-	FADD			(regWindowYMinusSized, regWindowYMinus, regHalfSize);
-	TRUNC			(regYMax, regWindowYMinusSized);
+	ADD				(regYMax, regYMin, regRoundedSize);
 
 	// EGL_Fixed depth = point.m_WindowCoords.depth;
 	// FractionalColor baseColor = point.m_Color;
