@@ -40,6 +40,7 @@
 
 
 #include "stdafx.h"
+#include "CodeGenerator.h"
 #include "fixed.h"
 #include "trivm.h"
 #include "Inst.h"
@@ -107,10 +108,8 @@ namespace {
 		virtual void  visit(triVM::InstructionCallType * instruction) { 
 			// always executed
 
-			RegisterList * registers = instruction->results;
-
-			for (RegisterList::iterator iter = registers->begin(); iter != registers->end(); ++iter) {
-				addRegister(*iter, instruction);
+			if (instruction->rD != -1) {
+				addRegister(instruction->rD, instruction);
 			}
 		}
 
@@ -173,18 +172,11 @@ namespace {
 			addRegister(instruction->rD, instruction);
 		}
 
-		virtual void visit(triVM::InstructionArmLoadRegImmedOffsetType * instruction) { 
-			addRegister(instruction->rD, instruction);
-		}
-
 		virtual void visit(triVM::InstructionArmStoreImmedOffsetType * instruction) { 
 		}
 
 		virtual void visit(triVM::InstructionArmStoreRegOffsetType * instruction) { 
 		}
-
-		virtual void visit(triVM::InstructionArmStoreRegImmedOffsetType * instruction) { 
-		}	
 
 
 	private:
@@ -199,7 +191,7 @@ namespace {
 }
 
 
-RegisterDefinitionMap * EGL::triVM::FindDefinitions(Module * module) {
+RegisterDefinitionMap * CodeGenerator :: FindDefinitions(Module * module) {
 	RegisterDefinitionMap * result = new RegisterDefinitionMap;
 	FindDefinitionSweep finder(result);
 	finder.sweep(module);

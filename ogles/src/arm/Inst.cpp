@@ -131,28 +131,28 @@ InstructionPhiType::InstructionPhiType(Opcode anOpcode, int _rD, RegisterList * 
 }
 
 InstructionCallType::InstructionCallType(Opcode anOpcode, int _rS, RegisterList * _args,
-	RegisterList * _results, const char * comment)  :
+	int _rD, const char * comment)  :
 	InstructionBaseType(InstructionCall, anOpcode, comment) {
 	rS = _rS;
 	args = _args;
-	results = _results;
+	rD = _rD;
 }
 
-InstructionRetType::InstructionRetType(Opcode anOpcode, RegisterList * _registers, const char * comment) :
+InstructionRetType::InstructionRetType(Opcode anOpcode, int _rS, const char * comment) :
 	InstructionBaseType(InstructionRet, anOpcode, comment) {
-	registers = _registers;
+	rS = _rS;
 }
 
 
 	InstructionArmUnaryImmediateType::InstructionArmUnaryImmediateType(Opcode anOpcode, int _rD, int _immed, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmUnaryImmediate, anOpcode, comment) {
 	rD = _rD;
 	rC = -1;
 	immed = _immed;
 }
 
 InstructionArmUnaryImmediateType::InstructionArmUnaryImmediateType(Opcode anOpcode, int _rD, int _rC, int _immed, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmUnaryImmediate, anOpcode, comment) {
 	rD = _rD;
 	rC = _rC;
 	immed = _immed;
@@ -160,7 +160,7 @@ InstructionArmUnaryImmediateType::InstructionArmUnaryImmediateType(Opcode anOpco
 
 
 InstructionArmUnaryShiftRegType::InstructionArmUnaryShiftRegType(Opcode anOpcode, int _rD, int _rS, Opcode _opShift, int _rShift, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmUnaryShiftReg, anOpcode, comment) {
 	rD = _rD;
 	rC = -1;
 	rS = _rS;
@@ -170,7 +170,7 @@ InstructionArmUnaryShiftRegType::InstructionArmUnaryShiftRegType(Opcode anOpcode
 
 
 InstructionArmUnaryShiftRegType::InstructionArmUnaryShiftRegType(Opcode anOpcode, int _rD, int _rC, int _rS, Opcode _opShift, int _rShift, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmUnaryShiftReg, anOpcode, comment) {
 	rD = _rD;
 	rC = _rC;
 	rS = _rS;
@@ -181,7 +181,7 @@ InstructionArmUnaryShiftRegType::InstructionArmUnaryShiftRegType(Opcode anOpcode
 
 
 InstructionArmUnaryShiftImmedType::InstructionArmUnaryShiftImmedType(Opcode anOpcode, int _rD, int _rS, Opcode _opShift, int _shiftBits, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmUnaryShiftImmed, anOpcode, comment) {
 	rD = _rD;
 	rC = -1;
 	rS = _rS;
@@ -191,7 +191,7 @@ InstructionArmUnaryShiftImmedType::InstructionArmUnaryShiftImmedType(Opcode anOp
 
 
 InstructionArmUnaryShiftImmedType::InstructionArmUnaryShiftImmedType(Opcode anOpcode, int _rD, int _rC, int _rS, Opcode _opShift, int _shiftBits, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmUnaryShiftImmed, anOpcode, comment) {
 	rD = _rD;
 	rC = _rC;
 	rS = _rS;
@@ -202,7 +202,7 @@ InstructionArmUnaryShiftImmedType::InstructionArmUnaryShiftImmedType(Opcode anOp
 
 
 InstructionArmBinaryImmediateType::InstructionArmBinaryImmediateType(Opcode anOpcode, int _rD, int _rS, int _immed, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmBinaryImmediate, anOpcode, comment) {
 	rD = _rD;
 	rC = -1;
 	rS = _rS;
@@ -212,7 +212,7 @@ InstructionArmBinaryImmediateType::InstructionArmBinaryImmediateType(Opcode anOp
 
 
 InstructionArmBinaryImmediateType::InstructionArmBinaryImmediateType(Opcode anOpcode, int _rD, int _rC, int _rS, int _immed, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmBinaryImmediate, anOpcode, comment) {
 	rD = _rD;
 	rC = _rC;
 	rS = _rS;
@@ -222,7 +222,7 @@ InstructionArmBinaryImmediateType::InstructionArmBinaryImmediateType(Opcode anOp
 
 
 InstructionArmBinaryShiftImmedType::InstructionArmBinaryShiftImmedType(Opcode anOpcode, int _rD, int _rS, int _rM, Opcode _opShift, int _shiftBits, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmBinaryShiftImmed, anOpcode, comment) {
 	rD = _rD;
 	rC = -1;
 	rS = _rS;
@@ -234,7 +234,7 @@ InstructionArmBinaryShiftImmedType::InstructionArmBinaryShiftImmedType(Opcode an
 
 
 InstructionArmBinaryShiftImmedType::InstructionArmBinaryShiftImmedType(Opcode anOpcode, int _rD, int _rC, int _rS, int _rM, Opcode _opShift, int _shiftBits, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmBinaryShiftImmed, anOpcode, comment) {
 	rD = _rD;
 	rC = _rC;
 	rS = _rS;
@@ -246,7 +246,7 @@ InstructionArmBinaryShiftImmedType::InstructionArmBinaryShiftImmedType(Opcode an
 
 
 InstructionArmBinaryShiftRegType::InstructionArmBinaryShiftRegType(Opcode anOpcode, int _rD, int _rS, int _rM, Opcode _opShift, int _rShift, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmBinaryShiftReg, anOpcode, comment) {
 	rD = _rD;
 	rC = -1;
 	rS = _rS;
@@ -258,7 +258,7 @@ InstructionArmBinaryShiftRegType::InstructionArmBinaryShiftRegType(Opcode anOpco
 
 
 InstructionArmBinaryShiftRegType::InstructionArmBinaryShiftRegType(Opcode anOpcode, int _rD, int _rC, int _rS, int _rM, Opcode _opShift, int _rShift, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmBinaryShiftReg, anOpcode, comment) {
 	rD = _rD;
 	rC = _rC;
 	rS = _rS;
@@ -270,7 +270,7 @@ InstructionArmBinaryShiftRegType::InstructionArmBinaryShiftRegType(Opcode anOpco
 
 
 InstructionArmLoadImmedOffsetType::InstructionArmLoadImmedOffsetType(Opcode anOpcode, int _rD, int _rS, int _immed12, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmLoadImmedOffset, anOpcode, comment) {
 	rD = _rD;
 	rS = _rS;
 	immed12 = _immed12;
@@ -279,26 +279,16 @@ InstructionArmLoadImmedOffsetType::InstructionArmLoadImmedOffsetType(Opcode anOp
 
 
 InstructionArmLoadRegOffsetType::InstructionArmLoadRegOffsetType(Opcode anOpcode, int _rD, int _rS, int _rOffset, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmLoadRegOffset, anOpcode, comment) {
 	rD = _rD;
 	rS = _rS;
 	rOffset = _rOffset;
-}
-
-
-
-InstructionArmLoadRegImmedOffsetType::InstructionArmLoadRegImmedOffsetType(Opcode anOpcode, int _rD, int _rS, int _rOffset, int _immed8, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
-	rD = _rD;
-	rS = _rS;
-	rOffset = _rOffset;
-	immed8 = _immed8;
 }
 
 
 
 InstructionArmStoreImmedOffsetType::InstructionArmStoreImmedOffsetType(Opcode anOpcode, int _rD, int _rS, int _immed12, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmStoreImmedOffset, anOpcode, comment) {
 	rD = _rD;
 	rS = _rS;
 	immed12 = _immed12;
@@ -307,20 +297,10 @@ InstructionArmStoreImmedOffsetType::InstructionArmStoreImmedOffsetType(Opcode an
 
 
 InstructionArmStoreRegOffsetType::InstructionArmStoreRegOffsetType(Opcode anOpcode, int _rD, int _rS, int _rOffset, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
+	InstructionBaseType(InstructionArmStoreRegOffset, anOpcode, comment) {
 	rD = _rD;
 	rS = _rS;
 	rOffset = _rOffset;
-}
-
-
-
-InstructionArmStoreRegImmedOffsetType::InstructionArmStoreRegImmedOffsetType(Opcode anOpcode, int _rD, int _rS, int _rOffset, int _immed8, const char * comment) :
-	InstructionBaseType(InstructionUnary, anOpcode, comment) {
-	rD = _rD;
-	rS = _rS;
-	rOffset = _rOffset;
-	immed8 = _immed8;
 }
 
 

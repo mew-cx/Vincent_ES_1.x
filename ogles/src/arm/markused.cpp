@@ -40,6 +40,7 @@
 
 
 #include "stdafx.h"
+#include "CodeGenerator.h"
 #include "fixed.h"
 #include "trivm.h"
 #include "Inst.h"
@@ -193,10 +194,9 @@ namespace {
 			// always executed
 
 			instruction->used = true;
-			RegisterList * registers = instruction->registers;
 
-			for (RegisterList::iterator iter = registers->begin(); iter != registers->end(); ++iter) {
-				addRegister(*iter);
+			if (instruction->rS != -1) {
+				addRegister(instruction->rS);
 			}
 		}
 
@@ -333,16 +333,6 @@ namespace {
 			}
 		}
 
-		virtual void visit(triVM::InstructionArmLoadRegImmedOffsetType * instruction) { 
-			if (isUsed(instruction->rD)) {
-				instruction->used = true;
-				addRegister(instruction->rS);
-				addRegister(instruction->rOffset);
-			} else {
-				instruction->used = false;
-			}
-		}
-
 		virtual void visit(triVM::InstructionArmStoreImmedOffsetType * instruction) { 
 			// always executed
 
@@ -359,15 +349,6 @@ namespace {
 			addRegister(instruction->rD);
 			addRegister(instruction->rOffset);
 		}
-
-		virtual void visit(triVM::InstructionArmStoreRegImmedOffsetType * instruction) { 
-			// always executed
-
-			instruction->used = true;
-			addRegister(instruction->rS);
-			addRegister(instruction->rD);
-			addRegister(instruction->rOffset);
-		}	
 
 	private:
 		typedef std::set<int> RegisterSet;
@@ -394,7 +375,28 @@ namespace {
 // --------------------------------------------------------------------------
 // Remove any unused instructions from the tree
 // --------------------------------------------------------------------------
-void EGL::triVM::RemoveUnusedCode(Module * module) {
+void CodeGenerator :: RemoveUnusedCode(Module * module) {
+
+	for (ProcedureList::iterator iter = module->procedures.begin();
+		iter != module->procedures.end(); ++iter) {
+
+		Procedure * procedure = *iter;
+
+		for (BlockList::iterator blockIter = procedure->blocks.begin();
+			blockIter != procedure->blocks.end(); ++blockIter) {
+
+			Block * block = *blockIter;
+			InstructionList & instructions = block->instructions;
+
+			for (InstructionList::iterator instIter = instructions.begin();
+				instIter != instructions.end(); ++instIter) {
+				Instruction * instruction = *instIter;
+
+				instruction->used = false;
+			}
+		}
+	}
+
 	MarkUsed used;
 	used.markAllUsedInstructions(module);
 

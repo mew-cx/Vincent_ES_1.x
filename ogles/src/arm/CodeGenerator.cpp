@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// CodeGenerator.cpp	Rasterizer Class for OpenGL (R) ES Implementation
+// CodeGenerator.cpp	JIT Class for OpenGL (R) ES Implementation
 //
 //						This file contains the rasterizer functions that
 //						implement the runtime code generation support
@@ -40,6 +40,7 @@
 
 
 #include "stdafx.h"
+#include "CodeGenerator.h"
 #include "Rasterizer.h"
 #include "Surface.h"
 #include "Texture.h"
@@ -64,6 +65,7 @@ using namespace triVM;
 #define PHI			new InstructionPhiType
 
 namespace {
+
 	RegisterList * REG_LIST(I32 r1) {
 		RegisterList * result = new RegisterList();
 		result->push_back(r1);
@@ -222,7 +224,7 @@ namespace EGL {
 // Actually, we could extract the scaling of the texture coordinates into the outer driving loop, 
 // and have the adjusted clipping range for tu and tv be stored in the rasterizer.
 
-void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
+void CodeGenerator :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 			Label * continuation, I32 & nextRegister, FragmentGenerationInfo & fragmentInfo) {
 	// Signature of generated function is:
 	// (I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv, EGL_Fixed fogDensity, const Color& baseColor);
@@ -2287,10 +2289,11 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 //  texture->GetHeight()
 //  texture->GetExponent()
 //	texture->GetData()
-void Rasterizer :: GenerateRasterScanLine() {
+void CodeGenerator :: GenerateRasterScanLine() {
 
 	Module * module = new Module("Scanline");
-	I32 nextRegister = 0;
+	m_Module = module;
+	I32 & nextRegister = module->registerCount;
 
 	// The signature of the generated function is:
 	//	(const RasterInfo * info, const EdgePos& start, const EdgePos& end);
@@ -2628,11 +2631,11 @@ void Rasterizer :: GenerateRasterScanLine() {
 	I32 regLoop0DiffV = nextRegister++;
 	I32 regLoop0ScaledDiffV = nextRegister++;
 
-	block1 +=		BINARY		(fsub,	regLoop0DiffZ, regLoop0EndZ, regLoop0Z);
+	block1 +=		BINARY		(fsub,	regLoop0DiffZ, regLoop0EndZ, regLoop0Z); // Entry?
 	block1 +=		BINARY		(fdiv,	regLoop0ScaledDiffZ, regLoop0DiffZ, regLinearSpan);
-	block1 +=		BINARY		(fsub,	regLoop0DiffU, regLoop0EndU, regLoop0U);
+	block1 +=		BINARY		(fsub,	regLoop0DiffU, regLoop0EndU, regLoop0U); // Entry?
 	block1 +=		BINARY		(fdiv,	regLoop0ScaledDiffU, regLoop0DiffU, regLinearSpan);
-	block1 +=		BINARY		(fsub,	regLoop0DiffV, regLoop0EndV, regLoop0V);
+	block1 +=		BINARY		(fsub,	regLoop0DiffV, regLoop0EndV, regLoop0V); // Entry?
 	block1 +=		BINARY		(fdiv,	regLoop0ScaledDiffV, regLoop0DiffV, regLinearSpan);
 
 	// also not to include phi projection for z coming from inner loop
@@ -2897,18 +2900,33 @@ void Rasterizer :: GenerateRasterScanLine() {
 	endLoop2->block.block = &block7;
 	block7.labels.push_back(endLoop2);
 
-	block7 +=		RET			(ret,	new RegisterList());
+	block7 +=		RET			(ret);
 
-	FILE * out0 = fopen("dump0.lst", "w");
-	DumpModule(out0, module);
-	fclose(out0);
+}
 
-	RemoveUnusedCode(module);
+void CodeGenerator :: CompileRasterScanLine() {
+	GenerateRasterScanLine();
 
-	FILE * out1 = fopen("dump1.lst", "w");
-	DumpModule(out1, module);
-	fclose(out1);
+	DumpModule("dump0.lst", m_Module);
+
+	RemoveUnusedCode(m_Module);
+
+	DumpModule("dump1.lst", m_Module);
+
+	RegisterDefinitionMap * definitions = FindDefinitions(m_Module);
+	SelectAddressingModes(m_Module, definitions);
+	RemoveUnusedCode(m_Module);
+	PerformDataFlowAnalysis(m_Module);
+
+	// allocation of memory and and registers
+
+	DumpModule("dump2.lst", m_Module);
 
 
+#ifdef WINCE
+	// flush data cache and clear instruction cache to make new code visible to execution unit
+	CacheSync(CACHE_SYNC_INSTRUCTIONS | CACHE_SYNC_WRITEBACK);		
+
+#endif
 }
 

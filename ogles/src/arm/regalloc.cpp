@@ -1,10 +1,16 @@
 // ==========================================================================
 //
-// stdafx.h			Precompiled headers for OpenGL (R) ES Implementation
+// triVMregisteralloc.cpp
+//				triVM Intermediate Language for OpenGL (R) ES Implementation
+//				Global register allocation
+//				
+//				This class is part of the runtime compiler infrastructure
+//				used by the OpenGL|ES implementation for compiling
+//				shader code at runtime into machine language.
 //
 // --------------------------------------------------------------------------
 //
-// 10-15-2003		Hans-Martin Will	initial version
+// 01-19-2004	Hans-Martin Will	initial version
 //
 // --------------------------------------------------------------------------
 //
@@ -35,25 +41,19 @@
 // ==========================================================================
 
 
-#pragma once
+#include "stdafx.h"
+#include "CodeGenerator.h"
+#include "fixed.h"
+#include "trivm.h"
+#include "Inst.h"
+#include "Sweep.h"
+#include "Transform.h"
 
 
-// --------------------------------------------------------------------------
-// Windows Header Files:
-// --------------------------------------------------------------------------
+using namespace EGL;
+using namespace triVM;
 
 
-#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
-
-#include <windows.h>
-
-// --------------------------------------------------------------------------
-// Standard Library Files
-// --------------------------------------------------------------------------
-
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-#include <assert.h>
+namespace {
+}
 

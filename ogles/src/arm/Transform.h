@@ -1,11 +1,11 @@
-#ifndef EGL_SWEEP_H
-#define EGL_SWEEP_H 1
+#ifndef EGL_TRANSFORM_H
+#define EGL_TRANSFORM_H 1
 
 #pragma once
 
 // ==========================================================================
 //
-// Sweep.h		Sweeps for IL for OpenGL (R) ES Implementation
+// Transform	Sweeps for IL for OpenGL (R) ES Implementation
 //				
 //				This class is part of the runtime compiler infrastructure
 //				used by the OpenGL|ES implementation for compiling
@@ -51,10 +51,10 @@ namespace EGL {
 namespace triVM {
 
 	// -------------------------------------------------------------------------
-	// Sweep	-	Base class for code sweeps across the intermediate
+	// Transform	Base class for code sweeps across the intermediate
 	//				language representation
 	// -------------------------------------------------------------------------
-	class Sweep {
+	class Transform {
 	public:
 		virtual void sweep(triVM::Module * module);
 		virtual void sweep(triVM::Procedure * procedure);
@@ -69,7 +69,7 @@ namespace triVM {
 		virtual void begin(triVM::Procedure * procedure);
 		virtual void begin(triVM::Block * block);
 
-		virtual void dispatch(triVM::Instruction * instruction);
+		virtual triVM::Instruction * dispatch(triVM::Instruction * instruction);
 
 		virtual void end(triVM::Module * module);
 		virtual void end(triVM::Procedure * procedure);
@@ -77,37 +77,35 @@ namespace triVM {
 
 	protected:
 		// base formats
-		virtual void visit(triVM::InstructionUnaryType * instruction) = 0;					
-		virtual void visit(triVM::InstructionBinaryType * instruction) = 0;					
-		virtual void visit(triVM::InstructionCompareType * instruction) = 0;				
-		virtual void visit(triVM::InstructionLoadType * instruction) = 0;					
-		virtual void visit(triVM::InstructionStoreType * instruction) = 0;					
-		virtual void visit(triVM::InstructionLoadImmediateType * instruction) = 0;			
-		virtual void visit(triVM::InstructionBranchRegType * instruction) = 0;				
-		virtual void visit(triVM::InstructionBranchLabelType * instruction) = 0;			
-		virtual void visit(triVM::InstructionBranchConditionallyType * instruction) = 0;	
-		virtual void visit(triVM::InstructionPhiType * instruction) = 0;					
-		virtual void visit(triVM::InstructionCallType * instruction) = 0;		
-		virtual void visit(triVM::InstructionRetType * instruction) = 0;
+		virtual triVM::Instruction * transform(triVM::InstructionUnaryType * instruction) = 0;					
+		virtual triVM::Instruction * transform(triVM::InstructionBinaryType * instruction) = 0;					
+		virtual triVM::Instruction * transform(triVM::InstructionCompareType * instruction) = 0;				
+		virtual triVM::Instruction * transform(triVM::InstructionLoadType * instruction) = 0;					
+		virtual triVM::Instruction * transform(triVM::InstructionStoreType * instruction) = 0;					
+		virtual triVM::Instruction * transform(triVM::InstructionLoadImmediateType * instruction) = 0;			
+		virtual triVM::Instruction * transform(triVM::InstructionBranchRegType * instruction) = 0;				
+		virtual triVM::Instruction * transform(triVM::InstructionBranchLabelType * instruction) = 0;			
+		virtual triVM::Instruction * transform(triVM::InstructionBranchConditionallyType * instruction) = 0;	
+		virtual triVM::Instruction * transform(triVM::InstructionPhiType * instruction) = 0;					
+		virtual triVM::Instruction * transform(triVM::InstructionCallType * instruction) = 0;		
+		virtual triVM::Instruction * transform(triVM::InstructionRetType * instruction) = 0;
 
 		// ARM-specific formats
-		virtual void visit(triVM::InstructionArmUnaryImmediateType * instruction) = 0;
-		virtual void visit(triVM::InstructionArmUnaryShiftRegType * instruction) = 0;	
-		virtual void visit(triVM::InstructionArmUnaryShiftImmedType * instruction) = 0;	
-		virtual void visit(triVM::InstructionArmBinaryImmediateType * instruction) = 0;	
-		virtual void visit(triVM::InstructionArmBinaryShiftRegType * instruction) = 0;	
-		virtual void visit(triVM::InstructionArmBinaryShiftImmedType * instruction) = 0;
-		virtual void visit(triVM::InstructionArmLoadImmedOffsetType * instruction) = 0;	
-		virtual void visit(triVM::InstructionArmLoadRegOffsetType * instruction) = 0;	
-		virtual void visit(triVM::InstructionArmLoadRegImmedOffsetType * instruction) = 0;
-		virtual void visit(triVM::InstructionArmStoreImmedOffsetType * instruction) = 0;	
-		virtual void visit(triVM::InstructionArmStoreRegOffsetType * instruction) = 0;		
-		virtual void visit(triVM::InstructionArmStoreRegImmedOffsetType * instruction) = 0;	
+		virtual triVM::Instruction * transform(triVM::InstructionArmUnaryImmediateType * instruction) = 0;
+		virtual triVM::Instruction * transform(triVM::InstructionArmUnaryShiftRegType * instruction) = 0;	
+		virtual triVM::Instruction * transform(triVM::InstructionArmUnaryShiftImmedType * instruction) = 0;	
+		virtual triVM::Instruction * transform(triVM::InstructionArmBinaryImmediateType * instruction) = 0;	
+		virtual triVM::Instruction * transform(triVM::InstructionArmBinaryShiftRegType * instruction) = 0;	
+		virtual triVM::Instruction * transform(triVM::InstructionArmBinaryShiftImmedType * instruction) = 0;
+		virtual triVM::Instruction * transform(triVM::InstructionArmLoadImmedOffsetType * instruction) = 0;	
+		virtual triVM::Instruction * transform(triVM::InstructionArmLoadRegOffsetType * instruction) = 0;	
+		virtual triVM::Instruction * transform(triVM::InstructionArmStoreImmedOffsetType * instruction) = 0;	
+		virtual triVM::Instruction * transform(triVM::InstructionArmStoreRegOffsetType * instruction) = 0;		
 	};
 
 } // namespace triVM
 } // namespace EGL
 
 
-#endif //ndef EGL_SWEEP_H
+#endif //ndef EGL_TRANSFORM_H
 

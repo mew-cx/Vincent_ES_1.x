@@ -1,10 +1,19 @@
+#ifndef EGL_CODE_SEGMENT_H
+#define EGL_CODE_SEGMENT_H 1
+
+#pragma once
+
 // ==========================================================================
 //
-// stdafx.h			Precompiled headers for OpenGL (R) ES Implementation
+// CodeSegment.h	A piece of runtime generated code that can be executed
+//				
+//					This class is part of the runtime compiler infrastructure
+//					used by the OpenGL|ES implementation for compiling
+//					shader code at runtime into machine language.
 //
 // --------------------------------------------------------------------------
 //
-// 10-15-2003		Hans-Martin Will	initial version
+// 11-13-2003		Hans-Martin Will	initial version
 //
 // --------------------------------------------------------------------------
 //
@@ -35,25 +44,45 @@
 // ==========================================================================
 
 
-#pragma once
+#include "OGLES.h"
 
 
-// --------------------------------------------------------------------------
-// Windows Header Files:
-// --------------------------------------------------------------------------
+namespace EGL {
 
+	// -----------------------------------------------------------------------
+	// A container for runtime generated code
+	// -----------------------------------------------------------------------
+	class OGLES_API CodeSegment {
 
-#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+		typedef void (*Function)();
 
-#include <windows.h>
+	public:
+		CodeSegment(U32 initialSize);
+		~CodeSegment();
 
-// --------------------------------------------------------------------------
-// Standard Library Files
-// --------------------------------------------------------------------------
+		void EnsureSize(U32 newSize);
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-#include <assert.h>
+		U32 * GetBase()					{ return m_Base; }
+		const U32 * GetBase() const		{ return m_Base; }
 
+		U32 GetSize() const				{ return m_Size; }
+
+		void SetOffset(U32 offset)		{ m_Offset = offset; }
+		U32 GetOffset() const			{ return m_Offset; }
+
+		Function GetEntryPoint()			{ 
+			return reinterpret_cast<Function>(
+				m_Base + (m_Offset / sizeof(U32))); 
+		}
+
+		void Execute()					{ (GetEntryPoint())(); }
+
+	private:
+		U32 * m_Base;
+		U32 m_Size;
+		U32 m_Offset;
+	};
+
+}
+
+#endif //ndef EGL_CODE_SEGMENT_H

@@ -177,7 +177,48 @@ void Sweep :: dispatch(triVM::Instruction * instruction){
 	case InstructionRet:
 		visit(static_cast<InstructionRetType *> (instruction));
 		break;
+
+	case InstructionArmUnaryImmediate:
+        visit(static_cast<triVM::InstructionArmUnaryImmediateType *> (instruction));
+		break;
+
+	case InstructionArmUnaryShiftReg:
+        visit(static_cast<triVM::InstructionArmUnaryShiftRegType *> (instruction));
+		break;
+
+	case InstructionArmUnaryShiftImmed:
+        visit(static_cast<triVM::InstructionArmUnaryShiftImmedType *> (instruction));
+		break;
+
+	case InstructionArmBinaryImmediate:
+        visit(static_cast<triVM::InstructionArmBinaryImmediateType *> (instruction));
+		break;
+
+	case InstructionArmBinaryShiftReg:
+        visit(static_cast<triVM::InstructionArmBinaryShiftRegType *> (instruction));
+		break;
+
+	case InstructionArmBinaryShiftImmed:
+        visit(static_cast<triVM::InstructionArmBinaryShiftImmedType *> (instruction));
+		break;
+
+	case InstructionArmLoadImmedOffset:
+        visit(static_cast<triVM::InstructionArmLoadImmedOffsetType *> (instruction));
+		break;
+
+	case InstructionArmLoadRegOffset:
+        visit(static_cast<triVM::InstructionArmLoadRegOffsetType *> (instruction));
+		break;
+
+	case InstructionArmStoreImmedOffset:
+        visit(static_cast<triVM::InstructionArmStoreImmedOffsetType *> (instruction));
+		break;
+
+	case InstructionArmStoreRegOffset:
+        visit(static_cast<triVM::InstructionArmStoreRegOffsetType *> (instruction));
+		break;
 	}
+
 }
 
 void Sweep :: end(triVM::Module * module){ }

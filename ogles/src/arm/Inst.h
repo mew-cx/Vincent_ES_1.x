@@ -143,18 +143,18 @@ namespace triVM {
 
 	struct InstructionCallType: public InstructionBaseType {
 		int rS;
+		int rD;
 		RegisterList * args;
-		RegisterList * results;
 
 		InstructionCallType(Opcode anOpcode, int _rS, RegisterList * _args,
-			RegisterList * _results, const char * comment = "");
+			int rD = -1, const char * comment = "");
 
 	};
 
 	struct InstructionRetType: public InstructionBaseType {
-		RegisterList * registers;
+		int rS;
 
-		InstructionRetType(Opcode anOpcode, RegisterList * _registers, const char * comment = "");
+		InstructionRetType(Opcode anOpcode, int rS = -1, const char * comment = "");
 	};
 
 
@@ -255,16 +255,6 @@ namespace triVM {
 
 	};
 
-	struct InstructionArmLoadRegImmedOffsetType: public InstructionBaseType {
-		int rS;
-		int rD;
-		int immed8;
-		int rOffset;
-
-		InstructionArmLoadRegImmedOffsetType(Opcode anOpcode, int _rD, int _rS, int _rOffset, int _immed8, const char * comment = "");
-
-	};
-
 	struct InstructionArmStoreImmedOffsetType: public InstructionBaseType {
 		int rS;
 		int rD;
@@ -282,17 +272,6 @@ namespace triVM {
 		InstructionArmStoreRegOffsetType(Opcode anOpcode, int _rD, int _rS, int _rOffset, const char * comment = "");
 
 	};
-
-	struct InstructionArmStoreRegImmedOffsetType: public InstructionBaseType {
-		int rS;
-		int rD;
-		int immed8;
-		int rOffset;
-
-		InstructionArmStoreRegImmedOffsetType(Opcode anOpcode, int _rD, int _rS, int _rOffset, int _immed8, const char * comment = "");
-
-	};
-
 
 	enum InstructionKind {
 		InstructionNone,
@@ -318,10 +297,8 @@ namespace triVM {
 		InstructionArmBinaryShiftImmed,	
 		InstructionArmLoadImmedOffset,	
 		InstructionArmLoadRegOffset,	
-		InstructionArmLoadRegImmedOffset,
 		InstructionArmStoreImmedOffset,	
 		InstructionArmStoreRegOffset,	
-		InstructionArmStoreRegImmedOffset,	
 
 		InstructionKindCount
 	};
@@ -334,7 +311,6 @@ namespace triVM {
 		trunc,	round,	fcnv,															
 		bae,	bbl,	beq,	bge,	ble,	bgt,	blt,	bne,	bra,			
 		ldb,	ldh,	ldi,	ldw,	stb,	sth,	stw,							
-		vldb,	vldh,	vldw,	vstb,	vsth,	vstw,									
 		call,	ret,	phi
 	};
 
