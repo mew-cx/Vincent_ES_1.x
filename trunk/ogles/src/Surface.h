@@ -62,9 +62,13 @@ namespace EGL {
 		~Surface();
 
 		// Is the depth value re-scaled based on near/far settings?.
-		void ClearDepthBuffer(GLclampx depth);
-		void ClearColorBuffer(const Color & rgba);
-		void ClearStencilBuffer(U32 value);
+		void ClearDepthBuffer(GLclampx depth, bool mask, const Rect& scissor);
+		void ClearColorBuffer(const Color & rgba, const Color & mask, const Rect& scissor);
+		void ClearStencilBuffer(U32 value, U32 mask, const Rect& scissor);
+
+		void ClearDepthBuffer(GLclampx depth, bool mask);
+		void ClearColorBuffer(const Color & rgba, const Color & mask);
+		void ClearStencilBuffer(U32 value, U32 mask);
 
 		U16 GetWidth();
 		U16 GetHeight();
@@ -154,6 +158,18 @@ namespace EGL {
 
 	inline const Rect& Surface :: GetRect() const {
 		return m_Rect;
+	}
+
+	inline void Surface :: ClearDepthBuffer(GLclampx depth, bool mask) {
+		ClearDepthBuffer(depth, mask, GetRect());
+	}
+
+	inline void Surface :: ClearColorBuffer(const Color & rgba, const Color & mask) {
+		ClearColorBuffer(rgba, mask, GetRect());
+	}
+
+	inline void Surface :: ClearStencilBuffer(U32 value, U32 mask) {
+		ClearStencilBuffer(value, mask, GetRect());
 	}
 
 }

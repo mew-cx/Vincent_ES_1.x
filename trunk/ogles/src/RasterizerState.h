@@ -229,8 +229,12 @@ namespace EGL {
 		void SetAlphaFunc(ComparisonFunc func, EGL_Fixed ref);
 		void SetBlendFunc(BlendFuncSrc sfactor, BlendFuncDst dfactor);
 		void SetColorMask(bool red, bool green, bool blue, bool alpha);
+		Color GetColorMask() const;
+
 		void SetDepthFunc(ComparisonFunc func);
 		void SetDepthMask(bool flag);
+		bool GetDepthMask() const;
+
 		void SetScissor(I32 x, I32 y, U32 width, U32 height);
 
 		void EnableAlphaTest(bool enabled);
@@ -241,6 +245,8 @@ namespace EGL {
 
 		void SetStencilFunc(ComparisonFunc func, I32 ref, U32 mask);
 		void SetStencilMask(U32 mask);
+		U32 GetStencilMask() const;
+
 		void SetStencilOp(StencilOp fail, StencilOp zfail, StencilOp zpass);
 		void EnableStencilTest(bool enabled);
 
@@ -422,6 +428,21 @@ namespace EGL {
 		m_MaskRed = red;
 		m_MaskGreen = green;
 		m_MaskBlue = blue;
+	}
+
+	inline Color RasterizerState :: GetColorMask() const {
+		return Color(m_MaskRed		? 0xff : 0,
+					 m_MaskGreen	? 0xff : 0,
+					 m_MaskBlue		? 0xff : 0,
+					 m_MaskAlpha	? 0xff : 0);
+	}
+
+	inline bool RasterizerState :: GetDepthMask() const {
+		return m_MaskDepth;
+	}
+
+	inline U32 RasterizerState :: GetStencilMask() const {
+		return m_StencilMask;
 	}
 
 	inline void RasterizerState :: SetDepthFunc(ComparisonFunc func) {
