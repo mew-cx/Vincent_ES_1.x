@@ -337,7 +337,7 @@ void Context :: TexParameterf (GLenum target, GLenum pname, GLfloat param) {
 		case GL_TEXTURE_MAG_FILTER:
 		case GL_TEXTURE_WRAP_S:
 		case GL_TEXTURE_WRAP_T:
-		case GL_GENERATE_MIPMAP_SGIS:
+		case GL_GENERATE_MIPMAP:
 			TexParameterx(target, pname, (GLfixed) param);
 			break;
 
@@ -348,4 +348,79 @@ void Context :: TexParameterf (GLenum target, GLenum pname, GLfloat param) {
 
 void Context :: Translatef (GLfloat x, GLfloat y, GLfloat z) {
 	Translatex(EGL_FixedFromFloat(x), EGL_FixedFromFloat(y), EGL_FixedFromFloat(z));
+}
+
+void Context :: ClipPlanef(GLenum plane, const GLfloat *equation) {
+	EGL_Fixed fixedEqn[4];
+
+	for (size_t index = 0; index < 4; ++index) {
+		fixedEqn[index] = EGL_FixedFromFloat(equation[index]);
+	}
+
+	ClipPlanex(plane, fixedEqn);
+}
+
+void Context :: DrawTexf(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height) {
+	assert(0);
+}
+
+void Context :: DrawTexfv(GLfloat *coords) {
+	assert(0);
+}
+
+void Context :: GetClipPlanef(GLenum plane, GLfloat eqn[4]) {
+	if (plane < GL_CLIP_PLANE0 || plane >= GL_CLIP_PLANE0 + NUM_CLIP_PLANES) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	size_t index = plane - GL_CLIP_PLANE0;
+	eqn[0] = EGL_FloatFromFixed(m_ClipPlanes[index].x());
+	eqn[1] = EGL_FloatFromFixed(m_ClipPlanes[index].y());
+	eqn[2] = EGL_FloatFromFixed(m_ClipPlanes[index].z());
+	eqn[3] = EGL_FloatFromFixed(m_ClipPlanes[index].w());
+}
+
+void Context :: GetFloatv(GLenum pname, GLfloat *params) {
+	assert(0);
+}
+
+void Context :: GetLightfv(GLenum light, GLenum pname, GLfloat *params) {
+	assert(0);
+}
+
+void Context :: GetMaterialfv(GLenum face, GLenum pname, GLfloat *params) {
+	assert(0);
+}
+
+void Context :: GetTexEnvfv(GLenum env, GLenum pname, GLfloat *params) {
+	assert(0);
+}
+
+void Context :: GetTexParameterfv(GLenum target, GLenum pname, GLfloat *params) {
+
+}
+
+void Context :: PointParameterf(GLenum pname, GLfloat param) {
+	PointParameterx(pname, EGL_FixedFromFloat(param));
+}
+
+void Context :: PointParameterfv(GLenum pname, const GLfloat *params) {
+	switch (pname) {
+	case GL_POINT_DISTANCE_ATTENUATION:
+		{
+			GLfixed fixedParams[3];
+
+			for (size_t index = 0; index < 3; ++index) {
+				fixedParams[index] = EGL_FixedFromFloat(params[index]);
+			}
+
+			PointParameterxv(pname, fixedParams);
+		}
+
+		break;
+
+	default:
+		PointParameterx(pname, EGL_FixedFromFloat(*params));
+	}
 }

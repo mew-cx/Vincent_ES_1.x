@@ -51,7 +51,7 @@
 	RasterPos * current;
 	int resultCount = 0;
 
-	for (int index = 0; index < inputCount; ++index) {
+	for (size_t index = 0; index < inputCount; ++index) {
 
 		current = input[index];
 

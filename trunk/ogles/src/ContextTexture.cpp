@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// matrix.cpp	Rendering Context Class for 3D Rendering Library
+// ContextTexture.cpp	Rendering Context Class for 3D Rendering Library
 //
 //				Texturing Functions
 //
@@ -51,6 +51,10 @@ using namespace EGL;
 // Allocation and selection of texture objects
 // --------------------------------------------------------------------------
 
+GLboolean Context :: IsTexture(GLuint texture) {
+	return m_Textures.IsObject(texture);
+}
+
 void Context :: BindTexture(GLenum target, GLuint texture) { 
 
 	if (target != GL_TEXTURE_2D) {
@@ -58,7 +62,7 @@ void Context :: BindTexture(GLenum target, GLuint texture) {
 		return;
 	}
 
-	MultiTexture * multiTexture = m_Textures.GetTexture(texture);
+	MultiTexture * multiTexture = m_Textures.GetObject(texture);
 
 	if (multiTexture) {
 		GetRasterizer()->SetTexture(multiTexture);
@@ -76,8 +80,8 @@ void Context :: DeleteTextures(GLsizei n, const GLuint *textures) {
 		U32 texture = *textures++;
 
 		if (texture != 0) {
-			if (m_Textures.GetTexture(texture) == GetRasterizer()->GetTexture()) {
-				GetRasterizer()->SetTexture(m_Textures.GetTexture(0));
+			if (m_Textures.GetObject(texture) == GetRasterizer()->GetTexture()) {
+				GetRasterizer()->SetTexture(m_Textures.GetObject(0));
 			}
 
 			if (texture != 0) {
@@ -1464,7 +1468,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 			}
 			break;
 
-		case GL_GENERATE_MIPMAP_SGIS:
+		case GL_GENERATE_MIPMAP:
 			{
 				m_GenerateMipmaps = (param != 0);
 			}
@@ -1482,58 +1486,88 @@ void Context :: TexEnvx(GLenum target, GLenum pname, GLfixed param) {
 		return;
 	}
 
-	switch (pname) {
-		case GL_TEXTURE_ENV_MODE:
-			switch (param) {
-				case GL_MODULATE:
-					GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeModulate);
-					break;
+	switch (target) {
+	case GL_TEXTURE_ENV:
+		switch (pname) {
+			case GL_TEXTURE_ENV_MODE:
+				switch (param) {
+					case GL_MODULATE:
+						GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeModulate);
+						break;
 
-				case GL_REPLACE:
-					GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeReplace);
-					break;
+					case GL_REPLACE:
+						GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeReplace);
+						break;
 
-				case GL_DECAL:
-					GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeDecal);
-					break;
+					case GL_DECAL:
+						GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeDecal);
+						break;
 
-				case GL_BLEND:
-					GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeBlend);
-					break;
+					case GL_BLEND:
+						GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeBlend);
+						break;
 
-				case GL_ADD:
-					GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeAdd);
-					break;
+					case GL_ADD:
+						GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeAdd);
+						break;
 
-				default:
-					RecordError(GL_INVALID_ENUM);
-					break;
-			}
+					default:
+						RecordError(GL_INVALID_ENUM);
+						break;
+				}
 
+				break;
+
+			default:
+				RecordError(GL_INVALID_ENUM);
+				break;
+		}
+
+		break;
+
+	case GL_POINT_SPRITE_OES:
+		switch (pname) {
+		case GL_COORD_REPLACE_OES:
+			GetRasterizerState()->SetPointCoordReplaceEnabled(param != 0);
 			break;
 
 		default:
-			RecordError(GL_INVALID_ENUM);
-			break;
+			RecordError(GL_INVALID_VALUE);
+		}
+		break;
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		break;
 	}
 }
 
+
 void Context :: TexEnvxv(GLenum target, GLenum pname, const GLfixed *params) { 
 
-	if (target != GL_TEXTURE_ENV) {
+	switch (target) {
+	case GL_TEXTURE_ENV:
+		switch (pname) {
+			case GL_TEXTURE_ENV_COLOR:
+				GetRasterizerState()->SetTexEnvColor(FractionalColor(params));
+				break;
+
+			default:
+				TexEnvx(target, pname, *params);
+				break;
+		}
+
+		break;
+
+	case GL_POINT_SPRITE_OES:
+		TexEnvx(target, pname, *params);
+		break;
+
+	default:
 		RecordError(GL_INVALID_ENUM);
-		return;
+		break;
 	}
 
-	switch (pname) {
-		case GL_TEXTURE_ENV_COLOR:
-			GetRasterizerState()->SetTexEnvColor(FractionalColor(params));
-			break;
-
-		default:
-			TexEnvx(target, pname, *params);
-			break;
-	}
 }
 
 // --------------------------------------------------------------------------
@@ -2042,3 +2076,21 @@ void Context :: UpdateMipmaps(void) {
 		}
 	}
 }
+
+
+void Context :: GetTexEnviv(GLenum env, GLenum pname, GLint *params) {
+	assert(0);	
+}
+
+void Context :: GetTexEnvxv(GLenum env, GLenum pname, GLfixed *params) {
+	assert(0);
+}
+
+void Context :: GetTexParameteriv(GLenum target, GLenum pname, GLint *params) {
+	assert(0);
+}
+
+void Context :: GetTexParameterxv(GLenum target, GLenum pname, GLfixed *params) {
+	assert(0);
+}
+

@@ -739,8 +739,12 @@ namespace EGL {
 		// inverse of the upper left 3x3 matrix of the receiver canconically
 		// embedded into 4-dimensional space
 		// ----------------------------------------------------------------------
-		Matrix4x4 Inverse(bool rescale) const;
+		Matrix4x4 InverseUpper3(bool rescale) const;
 
+		// ----------------------------------------------------------------------
+		// Compute general inverse of a 4 by 4 matrix
+		// ----------------------------------------------------------------------
+		Matrix4x4 Inverse() const;
 
 		// ----------------------------------------------------------------------
 		// Create a transformation matrix that scales in x, y and z direction

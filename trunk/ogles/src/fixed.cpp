@@ -51,7 +51,7 @@ EGL_Fixed EGL_Inverse(EGL_Fixed a) {
     I32 exp, i;
     EGL_Fixed x;
     /* 1/(4x) */
-    static const U16 __gl_rcp_tab[] = { /* domain 0.5 .. 1.0-1/16 */
+    static const I32 __gl_rcp_tab[] = { /* domain 0.5 .. 1.0-1/16 */
 		0x8000, 0x71c7, 0x6666, 0x5d17, 0x5555, 0x4ec4, 0x4924, 0x4444
     };
     if (a == EGL_ZERO) return 0x7fffffff;
