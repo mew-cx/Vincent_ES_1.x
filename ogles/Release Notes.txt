@@ -8,6 +8,9 @@ the bug database on sourceforge.
 Version 0.71
 ------------
 
+937517 - bug in Light::AccumulateLight 
+937524 - EGL_Power should read switch (exponen >> EGL_PRECISION) 
+937676 - the material's backward facing color is not implemented  
 944269 - clear depth is not transformed 
 944267 - glOrtho matrix incorrect 
 944265 - Color to RGBA conversion swaps channels 

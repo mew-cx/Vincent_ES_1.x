@@ -161,7 +161,8 @@ void Context :: Lightfv (GLenum light, GLenum pname, const GLfloat *params) {
 	case GL_AMBIENT:
 	case GL_DIFFUSE:
 	case GL_SPECULAR:
-	case GL_EMISSION:
+//	case GL_EMISSION:
+	case GL_POSITION:
 		for (index = 0; index < 4; ++index) {
 			fixed_params[index] = EGL_FixedFromFloat(params[index]);
 		}
@@ -169,7 +170,20 @@ void Context :: Lightfv (GLenum light, GLenum pname, const GLfloat *params) {
 		Lightxv(light, pname, fixed_params);
 		break;
 
-	case GL_SHININESS:
+	case GL_SPOT_DIRECTION:
+		for (index = 0; index < 3; ++index) {
+			fixed_params[index] = EGL_FixedFromFloat(params[index]);
+		}
+
+		Lightxv(light, pname, fixed_params);
+		break;
+
+//	case GL_SHININESS:
+	case GL_SPOT_EXPONENT:
+	case GL_SPOT_CUTOFF:
+	case GL_CONSTANT_ATTENUATION:
+	case GL_LINEAR_ATTENUATION:
+	case GL_QUADRATIC_ATTENUATION:
 		fixed_params[0] = EGL_FixedFromFloat(params[0]);
 		Lightxv(light, pname, fixed_params);
 		break;

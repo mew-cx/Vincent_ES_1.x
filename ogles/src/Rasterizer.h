@@ -82,6 +82,8 @@ namespace EGL {
 		Vec4D				m_ClipCoords;
 		ScreenCoord			m_WindowCoords;		
 		FractionalColor		m_Color;			// color in range 0..255
+//added for backcolor storage
+		FractionalColor		m_BackColor;		
 		TexCoord			m_TextureCoords;	// texture coords 0..1
 		EGL_Fixed			m_FogDensity;		// fog density at this vertex
 	};

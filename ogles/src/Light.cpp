@@ -110,11 +110,11 @@ void Light :: SetQuadraticAttenuation(EGL_Fixed attenuation) {
 	m_QuadraticAttenuation = attenuation;
 }
 
-
+/*
 void Light :: SetSpecularExponent(EGL_Fixed exponent) {
 	m_SpecularExponent = exponent;
 }
-
+*/
 
 void Light :: SetSpotExponent(EGL_Fixed exponent) {
 	m_SpotExponent = exponent;
@@ -135,63 +135,60 @@ void Light :: InitWithMaterial(const Material& material) {
 	m_EffectiveSpecularColor = material.GetSpecularColor() * m_SpecularColor;
 }
 
-
-void Light :: AccumulateLight(const Vec4D & vertexCoords, const Vec3D& vertexNormal,
-							  FractionalColor& result) {
-	// Optimize special cases later by using a pointer to member function that is updated
-	// whenever one of the parameters is changed
-	AccumulateLight(vertexCoords, vertexNormal, FractionalColor(EGL_ONE, EGL_ONE, EGL_ONE, EGL_ONE),
-		result);
-}
-
-
 void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
-							  const FractionalColor& currentColor, 
-							  FractionalColor& result) {
+							  const Material& currMaterial,
+							  FractionalColor& result, 
+							  FractionalColor& result2) {
 	// initially, do not support spotlights to simplify calculations,
 	// i.e. set spot_i from lightning equation (p. 48) to 1.0
 
-	result += currentColor * m_AmbientColor;
+	result2 = (result += currMaterial.GetAmbientColor() * m_AmbientColor);
 
 	Vec3D vp_li = EGL_Direction(vertexCoords, m_Position);
 	EGL_Fixed sqLength = vp_li.LengthSq();			// keep squared length around for later
 	vp_li.Normalize();								// can optimizer factor this out?
 	EGL_Fixed diffuseFactor = vertexNormal * vp_li;
+//	EGL_Fixed diffuseFactor_back = negVertexNormal * vp_li;
 
-	if (diffuseFactor > 0) {
-		EGL_Fixed att = EGL_ONE;
+//either front or back color have to be enabled...
+//	if (diffuseFactor > 0) {
+	EGL_Fixed att = EGL_ONE;
 
-		if (m_SpotCutoff != EGL_FixedFromInt(180)) {
-			EGL_Fixed cosine = vp_li * m_SpotDirection;
+	if (m_SpotCutoff != EGL_FixedFromInt(180)) {
+		EGL_Fixed cosine = vp_li * m_SpotDirection;
 
-			if (cosine < m_CosineSpotCutoff) {
-				return;
-			} else {
-				att = EGL_Power(cosine, m_SpotExponent);
-			}
+		if (cosine < m_CosineSpotCutoff) {
+			return;
+		} else {
+			att = EGL_Power(cosine, m_SpotExponent);
 		}
+	}
 
-		if (m_Position.w() != 0) {
-			EGL_Fixed length = EGL_Sqrt(sqLength);
+	if (m_Position.w() != 0) {
+		EGL_Fixed length = EGL_Sqrt(sqLength);
 
-			att = EGL_Mul(att, 
-				EGL_Inverse(m_ConstantAttenuation + 
-					EGL_Mul(m_LinearAttenuation, length) +
-					EGL_Mul(m_QuadraticAttenuation, sqLength)));
-		}
+		att = EGL_Mul(att, EGL_Inverse(m_ConstantAttenuation + 
+			EGL_Mul(m_LinearAttenuation, length) +
+			EGL_Mul(m_QuadraticAttenuation, sqLength)));
+	}
 
-		result.Accumulate(currentColor * m_DiffuseColor, EGL_Mul(diffuseFactor, att));
+	if (diffuseFactor > 0)
+		result.Accumulate(currMaterial.GetDiffuseColor() * m_DiffuseColor, EGL_Mul(diffuseFactor, att));
+	else
+		result2.Accumulate(currMaterial.GetDiffuseColor() * m_DiffuseColor, EGL_Mul(-diffuseFactor, att));
 
 		// add specular component
 		// calculate h^
-		Vec3D h = vp_li + Vec3D(0, 0, EGL_ONE);
-		h.Normalize();
-		EGL_Fixed specularFactor = vertexNormal * h;
+	Vec3D h = vp_li + Vec3D(0, 0, EGL_ONE);
+	h.Normalize();
+	EGL_Fixed specularFactor = vertexNormal * h;
 
-		if (specularFactor > 0) {
-			result.Accumulate(currentColor * m_SpecularColor, 
-				EGL_Mul(att, EGL_Power(specularFactor, m_SpecularExponent)));
-		}
-	}
+	if (specularFactor > 0)
+		result.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
+			EGL_Mul(att, EGL_Power(specularFactor, currMaterial.GetSpecularExponent())));
+	else
+		result2.Accumulate(currMaterial.GetSpecularColor() * m_SpecularColor, 
+			EGL_Mul(att, EGL_Power(specularFactor, currMaterial.GetSpecularExponent())));
+//	}
 }
 
