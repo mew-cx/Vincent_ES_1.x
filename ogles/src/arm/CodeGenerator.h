@@ -160,6 +160,7 @@ namespace EGL {
 #	define OFFSET_SURFACE_ALPHA_BUFFER			offsetof(RasterInfo, AlphaBuffer)
 
 #	define OFFSET_TEXTURES						offsetof(RasterInfo, Textures)
+#	define OFFSET_MIPMAP_LEVEL					offsetof(RasterInfo, MipmapLevel)
 #	define OFFSET_MAX_MIPMAP_LEVEL				offsetof(RasterInfo, MaxMipmapLevel)
 
 #	define OFFSET_TEXTURE_LOG_WIDTH				offsetof(Texture, m_LogWidth)

@@ -94,7 +94,7 @@
 
 #define EGL_NUM_TEXTURE_UNITS		2
 
-
+#define EGL_MIPMAP_PER_TEXEL		1
 
 // --------------------------------------------------------------------------
 // type definitions

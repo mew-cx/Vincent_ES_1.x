@@ -233,29 +233,34 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 	size_t unit;
 	EGL_Fixed deltaInvU[EGL_NUM_TEXTURE_UNITS],
 		deltaInvV[EGL_NUM_TEXTURE_UNITS],
-		deltaInvDu[EGL_NUM_TEXTURE_UNITS],
-		deltaInvDv[EGL_NUM_TEXTURE_UNITS],
 		invTu[EGL_NUM_TEXTURE_UNITS],
+		invTv[EGL_NUM_TEXTURE_UNITS];
+
+#if EGL_MIPMAP_PER_TEXEL
+	EGL_Fixed deltaInvDu[EGL_NUM_TEXTURE_UNITS],
+		deltaInvDv[EGL_NUM_TEXTURE_UNITS],
 		dTuDxOverInvZ2[EGL_NUM_TEXTURE_UNITS],
 		dTuDyOverInvZ2[EGL_NUM_TEXTURE_UNITS],
-		invTv[EGL_NUM_TEXTURE_UNITS],
 		dTvDxOverInvZ2[EGL_NUM_TEXTURE_UNITS],
 		dTvDyOverInvZ2[EGL_NUM_TEXTURE_UNITS];
+#endif
 
 	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		deltaInvU[unit] = delta.m_TextureCoords[unit].tu;
 		deltaInvV[unit] = delta.m_TextureCoords[unit].tv;
 
+		invTu[unit] = start.m_TextureCoords[unit].tu;
+		invTv[unit] = start.m_TextureCoords[unit].tv;
+
+#if EGL_MIPMAP_PER_TEXEL
 		deltaInvDu[unit] = delta.m_TextureCoords[unit].dtudy;
 		deltaInvDv[unit] = delta.m_TextureCoords[unit].dtvdy;
 
-		invTu[unit] = start.m_TextureCoords[unit].tu;
 		dTuDxOverInvZ2[unit] = start.m_TextureCoords[unit].dtudx;
 		dTuDyOverInvZ2[unit] = start.m_TextureCoords[unit].dtudy;
-
-		invTv[unit] = start.m_TextureCoords[unit].tv;
 		dTvDxOverInvZ2[unit] = start.m_TextureCoords[unit].dtvdx;
 		dTvDyOverInvZ2[unit] = start.m_TextureCoords[unit].dtvdy;
+#endif
 	}
 
 	EGL_Fixed invZ = start.m_WindowCoords.invZ;
@@ -279,6 +284,8 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 
 		// to get started, do mipmap selection at beginning of span
 
+#if EGL_MIPMAP_PER_TEXEL
+
 		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 			if (m_UseMipmap[unit]) {
 				EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
@@ -298,6 +305,7 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 				dTvDyOverInvZ2[unit] += deltaInvDv[unit] << LOG_LINEAR_SPAN;
 			}
 		}
+#endif
 
 		invZ += deltaInvZ << LOG_LINEAR_SPAN;
 		EGL_Fixed endZ = EGL_Inverse(invZ);
@@ -341,6 +349,7 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 
 		I32 deltaX = xEnd - x;
 
+#if EGL_MIPMAP_PER_TEXEL
 		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 			if (m_UseMipmap[unit]) {
 				EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
@@ -360,6 +369,7 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 				dTvDyOverInvZ2[unit] += deltaInvDv[unit] << LOG_LINEAR_SPAN;
 			}
 		}
+#endif
 
 		EGL_Fixed endZ = EGL_Inverse(invZ + deltaX * deltaInvZ);
 		EGL_Fixed invSpan = EGL_Inverse(EGL_FixedFromInt(xEnd - x));

@@ -60,8 +60,11 @@ namespace EGL {
 	// ----------------------------------------------------------------------
 	struct TexCoord {
 		EGL_Fixed		tu, tv;			// texture coordinates between 0 and 1
+
+#if EGL_MIPMAP_PER_TEXEL
 		EGL_Fixed		dtudx, dtvdx;	// partial derivatives
 		EGL_Fixed		dtudy, dtvdy;	// partial derivatives
+#endif
 	};
 
 	struct ScreenCoord {
@@ -326,7 +329,6 @@ namespace EGL {
 		EGL_Fixed				m_MaxY;
 
 		bool					m_UseMipmap[EGL_NUM_TEXTURE_UNITS];
-
 	};
 
 
