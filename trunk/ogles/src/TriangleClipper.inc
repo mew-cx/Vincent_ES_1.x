@@ -77,6 +77,7 @@
 				
 				EGL_Fixed factor = EGL_Div(p_w - p_x, (p_w - p_x) - (c_w - c_x)); 
 				Interpolate(newVertex, *current, *previous, factor);
+				newVertex.m_ClipCoords.SET_COORDINATE(CLIP_VALUE((&newVertex)));
 
 				output[resultCount++] = current;
 				//previous = current;
@@ -98,6 +99,7 @@
 				
 				EGL_Fixed factor = EGL_Div(p_w - p_x, (p_w - p_x) - (c_w - c_x)); 
 				Interpolate(newVertex, *current, *previous, factor);
+				newVertex.m_ClipCoords.SET_COORDINATE(CLIP_VALUE((&newVertex)));
 
 				//previous = current;
 			}

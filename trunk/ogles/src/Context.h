@@ -481,6 +481,7 @@ private:
 		return m_ReadSurface;
 	}
 
+
 	inline void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 
 		// perform depth division
@@ -502,14 +503,14 @@ private:
 
 		// Scale 1/Z by 2^10 to avoid rounding problems during prespective correct
 		// interpolation
-		// So book by LaMothe for more detailed discussion on this
+		// See book by LaMothe for more detailed discussion on this
 		pos.m_WindowCoords.invZ = invDenominator << 10;
 
 		pos.m_WindowCoords.x = 
-			EGL_Mul(x, EGL_Mul(m_ViewportScale.x(), invDenominator)) + m_ViewportOrigin.x();
+			EGL_Mul(EGL_Mul(x, invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
 
 		pos.m_WindowCoords.y = 
-			EGL_Mul(y, EGL_Mul(m_ViewportScale.y(), invDenominator)) + m_ViewportOrigin.y();
+			EGL_Mul(EGL_Mul(y, invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
 
 		pos.m_WindowCoords.depth = 
 			EGL_Mul(z, EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase;

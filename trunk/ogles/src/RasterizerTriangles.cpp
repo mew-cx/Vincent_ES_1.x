@@ -342,9 +342,7 @@ inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const Ed
 
 // ---------------------------------------------------------------------------
 // Render the triangle specified by the three transformed and lit vertices
-// passed as arguments. Before calling into the actual rasterization, the
-// triangle will be subject to the scissor test, which may subdivide it
-// into up to 3 sub-triangles.
+// passed as arguments. 
 //
 // Parameters:
 //		a, b, c		The three vertices of the triangle

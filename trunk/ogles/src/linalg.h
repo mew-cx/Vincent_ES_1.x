@@ -211,6 +211,18 @@ namespace EGL {
 		inline EGL_Fixed z() const {
 			return m_z;
 		}
+
+		inline void setX(EGL_Fixed value) {
+			m_x = value;
+		}
+
+		inline void setY(EGL_Fixed value) {
+			m_y = value;
+		}
+
+		inline void setZ(EGL_Fixed value) {
+			m_z = value;
+		}
 	};
 
 
@@ -417,6 +429,22 @@ namespace EGL {
 
 		inline EGL_Fixed w() const {
 			return m_w;
+		}
+
+		inline void setX(EGL_Fixed value) {
+			m_x = value;
+		}
+
+		inline void setY(EGL_Fixed value) {
+			m_y = value;
+		}
+
+		inline void setZ(EGL_Fixed value) {
+			m_z = value;
+		}
+
+		inline void setW(EGL_Fixed value) {
+			m_w = value;
 		}
 	};
 

@@ -233,18 +233,7 @@ namespace EGL {
 		cg_virtual_reg_t * regB; 
 		cg_virtual_reg_t * regA;	
 
-		cg_virtual_reg_t * regTextureData;
-		cg_virtual_reg_t * regTextureLogWidth;
-		cg_virtual_reg_t * regTextureLogHeight;
-		cg_virtual_reg_t * regTextureExponent;
-
-		// surface color buffer, depth buffer, alpha buffer, stencil buffer
-		cg_virtual_reg_t * regColorBuffer;
-		cg_virtual_reg_t * regDepthBuffer;
-		cg_virtual_reg_t * regAlphaBuffer;
-		cg_virtual_reg_t * regStencilBuffer;
-
-		cg_virtual_reg_t * regSurfaceWidth;
+		cg_virtual_reg_t * regInfo;
 	};
 }
 
@@ -257,6 +246,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			int weight) {
 
 	cg_block_t * block = currentBlock;
+
+	cg_virtual_reg_t * regDepthBuffer =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_DEPTH_BUFFER);
 
 	// Signature of generated function is:
 	// (I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv, EGL_Fixed fogDensity, const Color& baseColor);
@@ -301,7 +292,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	LDI		(regConstant2, 2);
 	LSL		(regOffset2, regOffset, regConstant1);
 	LSL		(regOffset4, regOffset, regConstant2);
-	ADD		(regZBufferAddr, fragmentInfo.regDepthBuffer, regOffset4);
+	ADD		(regZBufferAddr, regDepthBuffer, regOffset4);
 	LDW		(regZBufferValue, regZBufferAddr);
 	CMP		(regDepthTest, fragmentInfo.regDepth, regZBufferValue);
 
@@ -507,12 +498,17 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		DECL_REG	(regTexOffset);
 		DECL_REG	(regConstant16);
 
+		cg_virtual_reg_t * regTextureLogWidth =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_LOG_WIDTH);
+		cg_virtual_reg_t * regTextureLogHeight =	LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_LOG_HEIGHT);
+		cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_DATA);
+		cg_virtual_reg_t * regTextureExponent =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_EXPONENT);
+
 		LDI		(regConstant16, 16);
-		LSL		(regScaledU, regU0, fragmentInfo.regTextureLogWidth);
+		LSL		(regScaledU, regU0, regTextureLogWidth);
 		ASR		(regTexX, regScaledU, regConstant16);
-		LSL		(regScaledV, regV0, fragmentInfo.regTextureLogHeight);
+		LSL		(regScaledV, regV0, regTextureLogHeight);
 		ASR		(regTexY, regScaledV, regConstant16);
-		LSL		(regScaledTexY, regTexY, fragmentInfo.regTextureLogWidth);
+		LSL		(regScaledTexY, regTexY, regTextureLogWidth);
 		ADD		(regTexOffset, regScaledTexY, regTexX);
 
 		switch (m_State->m_InternalFormat) {
@@ -530,7 +526,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				DECL_REG	(regTexData);
 				
 
-				ADD		(regTexAddr, regTexOffset, fragmentInfo.regTextureData);
+				ADD		(regTexAddr, regTexOffset, regTextureData);
 				LDB		(regTexData, regTexAddr);
 				LDI		(regConstant7, 7);
 				LSR		(regShifted7, regTexData, regConstant7);
@@ -565,7 +561,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				DECL_REG	(regShiftedG);
 				DECL_REG	(regRG);
 
-				ADD		(regTexAddr, regTexOffset, fragmentInfo.regTextureData);
+				ADD		(regTexAddr, regTexOffset, regTextureData);
 				LDB		(regTexData, regTexAddr);
 				LDI		(regTexColorA, 0x100);
 				LDI		(regMask5, 0x1f);
@@ -616,7 +612,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 				LDI		(regConstantOne, 1);
 				LSL		(regScaledOffset, regTexOffset, regConstantOne);
-				ADD		(regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
+				ADD		(regTexAddr, regScaledOffset, regTextureData);
 				LDH		(regTexData, regTexAddr);
 				LDI		(regMask, 0xff);
 				LDI		(regConstant8, 8);
@@ -661,7 +657,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 				LDI		(regConstantOne, 1);
 				LSL		(regScaledOffset, regTexOffset, regConstantOne);
-				ADD		(regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
+				ADD		(regTexAddr, regScaledOffset, regTextureData);
 				LDH		(regTexColor565, regTexAddr);
 				LDI		(regTexColorA, 0x100);
 				LDI		(regConstant5, 5);
@@ -692,7 +688,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 				LDI		(regConstantOne, 1);
 				LSL		(regScaledOffset, regTexOffset, regConstantOne);
-				ADD		(regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
+				ADD		(regTexAddr, regScaledOffset, regTextureData);
 				LDH		(regTexData, regTexAddr);
 
 				DECL_REG	(regConstant7);
@@ -1676,9 +1672,11 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		DECL_REG	(regStencil);
 		DECL_FLAGS	(regStencilTest);
 
+		cg_virtual_reg_t * regStencilBuffer =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_STENCIL_BUFFER);
+
 		LDI		(regStencilRef, m_State->m_StencilReference & m_State->m_StencilMask);
 		LDI		(regStencilMask, m_State->m_StencilMask);
-		ADD		(regStencilAddr, fragmentInfo.regStencilBuffer, regOffset4);
+		ADD		(regStencilAddr, regStencilBuffer, regOffset4);
 		LDW		(regStencilValue, regStencilAddr);
 		AND		(regStencil, regStencilValue, regStencilMask);
 		CMP		(regStencilTest, regStencil, regStencilRef);
@@ -1993,6 +1991,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		labelStencilBypassed->block = block;
 	}
 
+	// surface color buffer, depth buffer, alpha buffer, stencil buffer
+	cg_virtual_reg_t * regColorBuffer =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_COLOR_BUFFER);
+	cg_virtual_reg_t * regAlphaBuffer =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_ALPHA_BUFFER);
+
 	//U16 dstValue = m_Surface->GetColorBuffer()[offset];
 	//U8 dstAlpha = m_Surface->GetAlphaBuffer()[offset];
 	DECL_REG	(regDstValue);
@@ -2011,8 +2013,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		DECL_REG	(regMask5);
 		DECL_REG	(regMask6);
 
-		ADD		(regColorAddr, fragmentInfo.regColorBuffer, regOffset2);
-		ADD		(regAlphaAddr, fragmentInfo.regAlphaBuffer, regOffset);
+		ADD		(regColorAddr, regColorBuffer, regOffset2);
+		ADD		(regAlphaAddr, regAlphaBuffer, regOffset);
 		LDH		(regDstValue, regColorAddr);
 		LDB		(regDstAlpha, regAlphaAddr);
 		LDI		(regConstant5, 5);
@@ -2795,52 +2797,17 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	LDW		(regStartColorG, regAddrStartColorG);
 	LDW		(regStartColorB, regAddrStartColorB);
 	LDW		(regStartColorA, regAddrStartColorA);
-
-	//const FractionalColor& colorIncrement = delta.m_Color;
-	DECL_REG	(regColorIncrementR);
-	DECL_REG	(regColorIncrementG);
-	DECL_REG	(regColorIncrementB);
-	DECL_REG	(regColorIncrementA);
-
-	LDW		(regColorIncrementR, regAddrEndColorR);
-	LDW		(regColorIncrementG, regAddrEndColorG);
-	LDW		(regColorIncrementB, regAddrEndColorB);
-	LDW		(regColorIncrementA, regAddrEndColorA);
-
-	//EGL_Fixed deltaInvZ = delta.m_WindowCoords.invZ;
+	
 	DECL_REG	(regStartWindowZ);
-	DECL_REG	(regDeltaInvZ);
-
-	LDW		(regDeltaInvZ, regAddrEndWindowZ);
-	LDW		(regStartWindowZ, regAddrStartWindowZ);
-
-	//EGL_Fixed deltaInvU = delta.m_TextureCoords.tu;
 	DECL_REG	(regStartTextureU);
-	DECL_REG	(regDeltaInvU);
-
-	LDW		(regDeltaInvU, regAddrEndTextureU);
-	LDW		(regStartTextureU, regAddrStartTextureU);
-
-	//EGL_Fixed deltaInvV = delta.m_TextureCoords.tv;
 	DECL_REG	(regStartTextureV);
-	DECL_REG	(regDeltaInvV);
-
-	LDW		(regDeltaInvV, regAddrEndTextureV);
-	LDW		(regStartTextureV, regAddrStartTextureV);
-
-
-	//EGL_Fixed deltaFog = delta.m_FogDensity;
 	DECL_REG	(regStartFog);
-	DECL_REG	(regDeltaFog);
-
-	LDW		(regDeltaFog, regAddrEndFog);
-	LDW		(regStartFog, regAddrStartFog);
-
-	//EGL_Fixed deltaDepth = delta.m_WindowCoords.depth;
 	DECL_REG	(regStartDepth);
-	DECL_REG	(regDeltaDepth);
 
-	LDW		(regDeltaDepth, regAddrEndWindowDepth);
+	LDW		(regStartWindowZ, regAddrStartWindowZ);
+	LDW		(regStartTextureU, regAddrStartTextureU);
+	LDW		(regStartTextureV, regAddrStartTextureV);
+	LDW		(regStartFog, regAddrStartFog);
 	LDW		(regStartDepth, regAddrStartWindowDepth);
 
 
@@ -2879,20 +2846,6 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	TRUNC	(regIntDiffX, regDiffX);
 	AND_S	(regMaskedSpan, regCompare0, regIntDiffX, regSpanMask);
 	ADD		(regXLinEnd, regX, regMaskedSpan);
-
-	// texture data, width, height, exponent
-	cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, regInfo, OFFSET_TEXTURE_DATA);
-	cg_virtual_reg_t * regTextureLogWidth =		LOAD_DATA(block, regInfo, OFFSET_TEXTURE_LOG_WIDTH);
-	cg_virtual_reg_t * regTextureLogHeight =	LOAD_DATA(block, regInfo, OFFSET_TEXTURE_LOG_HEIGHT);
-	cg_virtual_reg_t * regTextureExponent =		LOAD_DATA(block, regInfo, OFFSET_TEXTURE_EXPONENT);
-	cg_virtual_reg_t * regInverseTablePtr =		LOAD_DATA(block, regInfo, OFFSET_INVERSE_TABLE_PTR);
-
-	// surface color buffer, depth buffer, alpha buffer, stencil buffer
-	cg_virtual_reg_t * regColorBuffer =			LOAD_DATA(block, regInfo, OFFSET_SURFACE_COLOR_BUFFER);
-	cg_virtual_reg_t * regDepthBuffer =			LOAD_DATA(block, regInfo, OFFSET_SURFACE_DEPTH_BUFFER);
-	cg_virtual_reg_t * regAlphaBuffer =			LOAD_DATA(block, regInfo, OFFSET_SURFACE_ALPHA_BUFFER);
-	cg_virtual_reg_t * regStencilBuffer =		LOAD_DATA(block, regInfo, OFFSET_SURFACE_STENCIL_BUFFER);
-	cg_virtual_reg_t * regSurfaceWidth =		LOAD_DATA(block, regInfo, OFFSET_SURFACE_WIDTH);
 
 	//for (; x < xLinEnd;) {
 
@@ -2945,15 +2898,24 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regDeltaInvUTimesLinearSpan);
 	DECL_REG	(regDeltaInvVTimesLinearSpan);
 
-	LDI		(regLinearSpan, LINEAR_SPAN);
-	LDI		(regLogLinearSpan, LOG_LINEAR_SPAN);
-	LSL		(regDeltaInvZTimesLinearSpan, regDeltaInvZ, regLogLinearSpan);	
-	FADD	(regLoop0InvZ, regLoop0InvZEntry, regDeltaInvZTimesLinearSpan);
-	LSL		(regDeltaInvUTimesLinearSpan, regDeltaInvU, regLogLinearSpan);	
-	FADD	(regLoop0InvU, regLoop0InvUEntry, regDeltaInvUTimesLinearSpan);
-	LSL		(regDeltaInvVTimesLinearSpan, regDeltaInvV, regLogLinearSpan);	
-	FADD	(regLoop0InvV, regLoop0InvVEntry, regDeltaInvVTimesLinearSpan);
+	{
+		DECL_REG	(regDeltaInvZ);
+		DECL_REG	(regDeltaInvU);
+		DECL_REG	(regDeltaInvV);
 
+		LDW		(regDeltaInvZ, regAddrEndWindowZ);
+		LDW		(regDeltaInvU, regAddrEndTextureU);
+		LDW		(regDeltaInvV, regAddrEndTextureV);
+
+		LDI		(regLinearSpan, LINEAR_SPAN);
+		LDI		(regLogLinearSpan, LOG_LINEAR_SPAN);
+		LSL		(regDeltaInvZTimesLinearSpan, regDeltaInvZ, regLogLinearSpan);	
+		FADD	(regLoop0InvZ, regLoop0InvZEntry, regDeltaInvZTimesLinearSpan);
+		LSL		(regDeltaInvUTimesLinearSpan, regDeltaInvU, regLogLinearSpan);	
+		FADD	(regLoop0InvU, regLoop0InvUEntry, regDeltaInvUTimesLinearSpan);
+		LSL		(regDeltaInvVTimesLinearSpan, regDeltaInvV, regLogLinearSpan);	
+		FADD	(regLoop0InvV, regLoop0InvVEntry, regDeltaInvVTimesLinearSpan);
+	}
 		//EGL_Fixed endZ = EGL_Inverse(invZ);
 		//EGL_Fixed endTu = EGL_Mul(invTu, endZ);
 		//EGL_Fixed endTv = EGL_Mul(invTv, endZ);
@@ -3053,38 +3015,42 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	info.regR = regLoop1REntry;
 	info.regG = regLoop1GEntry;
 	info.regB = regLoop1BEntry; 
-	info.regA = regLoop1AEntry;	
-
-	info.regTextureData = regTextureData;
-	info.regTextureLogWidth = regTextureLogWidth;
-	info.regTextureLogHeight = regTextureLogHeight;
-	info.regTextureExponent = regTextureExponent;
-
-	// surface color buffer, depth buffer, alpha buffer, stencil buffer
-	info.regColorBuffer = regColorBuffer;
-	info.regDepthBuffer = regDepthBuffer;
-	info.regAlphaBuffer = regAlphaBuffer;
-	info.regStencilBuffer = regStencilBuffer;
-	info.regSurfaceWidth = regSurfaceWidth;
+	info.regA = regLoop1AEntry;
+	info.regInfo = regInfo;
 
 	GenerateFragment(procedure, block, postFragmentLoop1, info, 8); 
 
 	block = cg_block_create(procedure, 8);
 	postFragmentLoop1->block = block;
 
-			//baseColor += colorIncrement;
-	FADD	(regLoop1R, regLoop1REntry, regColorIncrementR);
-	FADD	(regLoop1G, regLoop1GEntry, regColorIncrementG);
-	FADD	(regLoop1B, regLoop1BEntry, regColorIncrementB);
-	FADD	(regLoop1A, regLoop1AEntry, regColorIncrementA);
+	{
+		//baseColor += colorIncrement;
+		//depth += deltaDepth;
+		//fogDensity += deltaFog;
 
-			//depth += deltaDepth;
-			//fogDensity += deltaFog;
+		DECL_REG	(regColorIncrementR);
+		DECL_REG	(regColorIncrementG);
+		DECL_REG	(regColorIncrementB);
+		DECL_REG	(regColorIncrementA);
+		DECL_REG	(regDeltaFog);
+		DECL_REG	(regDeltaDepth);
+
+		LDW		(regColorIncrementR, regAddrEndColorR);
+		LDW		(regColorIncrementG, regAddrEndColorG);
+		LDW		(regColorIncrementB, regAddrEndColorB);
+		FADD	(regLoop1R, regLoop1REntry, regColorIncrementR);
+		LDW		(regColorIncrementA, regAddrEndColorA);
+		FADD	(regLoop1G, regLoop1GEntry, regColorIncrementG);
+		LDW		(regDeltaFog, regAddrEndFog);
+		FADD	(regLoop1B, regLoop1BEntry, regColorIncrementB);
+		LDW		(regDeltaDepth, regAddrEndWindowDepth);
+		FADD	(regLoop1A, regLoop1AEntry, regColorIncrementA);
+		FADD	(regLoop1Fog, regLoop1FogEntry, regDeltaFog);
+		FADD	(regLoop1Depth, regLoop1DepthEntry, regDeltaDepth);
+	}
 			//z += deltaZ;
 			//tu += deltaTu;
 			//tv += deltaTv;
-	FADD	(regLoop1Depth, regLoop1DepthEntry, regDeltaDepth);
-	FADD	(regLoop1Fog, regLoop1FogEntry, regDeltaFog);
 	FADD	(regLoop1Z, regLoop1ZEntry, regLoop0ScaledDiffZ);
 	FADD	(regLoop1U, regLoop1UEntry, regLoop0ScaledDiffU);
 	FADD	(regLoop1V, regLoop1VEntry, regLoop0ScaledDiffV);
@@ -3160,23 +3126,35 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regEndU);
 	DECL_REG	(regEndV);
 
-	MUL		(regDeltaXDeltaInvZ, regBlock4DiffX, regDeltaInvZ);
-	FADD	(regEndWindowZ, regBlock4InvZ, regDeltaXDeltaInvZ);
-	FINV	(regEndZ, regEndWindowZ);
+	{
+		DECL_REG	(regDeltaInvZ);
+		DECL_REG	(regDeltaInvU);
+		DECL_REG	(regDeltaInvV);
 
-	MUL		(regDeltaXDeltaInvU, regBlock4DiffX, regDeltaInvU);
-	MUL		(regDeltaXDeltaInvV, regBlock4DiffX, regDeltaInvV);
-		
-	FADD	(regEndTextureU, regBlock4InvU, regDeltaXDeltaInvU);
-	FADD	(regEndTextureV, regBlock4InvV, regDeltaXDeltaInvV);
+		LDW		(regDeltaInvZ, regAddrEndWindowZ);
+		LDW		(regDeltaInvU, regAddrEndTextureU);
 
-	FMUL	(regEndU, regEndZ, regEndTextureU);
-	FMUL	(regEndV, regEndZ, regEndTextureV);
+		MUL		(regDeltaXDeltaInvZ, regBlock4DiffX, regDeltaInvZ);
+		FADD	(regEndWindowZ, regBlock4InvZ, regDeltaXDeltaInvZ);
+		FINV	(regEndZ, regEndWindowZ);
+
+		MUL		(regDeltaXDeltaInvU, regBlock4DiffX, regDeltaInvU);
+		LDW		(regDeltaInvV, regAddrEndTextureV);
+		MUL		(regDeltaXDeltaInvV, regBlock4DiffX, regDeltaInvV);
+			
+		FADD	(regEndTextureU, regBlock4InvU, regDeltaXDeltaInvU);
+		FADD	(regEndTextureV, regBlock4InvV, regDeltaXDeltaInvV);
+
+		FMUL	(regEndU, regEndZ, regEndTextureU);
+		FMUL	(regEndV, regEndZ, regEndTextureV);
+	}
 
 		//invSpan = EGL_Inverse(EGL_FixedFromInt(deltaX));
 	DECL_REG	(regShiftedBlock4DiffX);
 	DECL_REG	(regConstant2);
 	DECL_REG	(regInverseAddr);
+
+	cg_virtual_reg_t * regInverseTablePtr =		LOAD_DATA(block, regInfo, OFFSET_INVERSE_TABLE_PTR);
 
 	LDI			(regConstant2, 2);
 	LSL			(regShiftedBlock4DiffX, regBlock4DiffX, regConstant2);
@@ -3259,40 +3237,42 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	info2.regG = regLoop2GEntry;
 	info2.regB = regLoop2BEntry; 
 	info2.regA = regLoop2AEntry;	
-
-	info2.regTextureData = regTextureData;
-	info2.regTextureLogWidth = regTextureLogWidth;
-	info2.regTextureLogHeight = regTextureLogHeight;
-	info2.regTextureExponent = regTextureExponent;
-
-	// surface color buffer, depth buffer, alpha buffer, stencil buffer
-	info2.regColorBuffer = regColorBuffer;
-	info2.regDepthBuffer = regDepthBuffer;
-	info2.regAlphaBuffer = regAlphaBuffer;
-	info2.regStencilBuffer = regStencilBuffer;
-	info2.regSurfaceWidth = regSurfaceWidth;
+	info2.regInfo = regInfo;
 
 	GenerateFragment(procedure, block, postFragmentLoop2, info2, 4); 
 
 	block = cg_block_create(procedure, 4);
 	postFragmentLoop2->block = block;
 
-			//baseColor += colorIncrement;
-	FADD	(regLoop2R, regLoop2REntry, regColorIncrementR);
-	FADD	(regLoop2G, regLoop2GEntry, regColorIncrementG);
-	FADD	(regLoop2B, regLoop2BEntry, regColorIncrementB);
-	FADD	(regLoop2A, regLoop2AEntry, regColorIncrementA);
+	{
+		DECL_REG	(regColorIncrementR);
+		DECL_REG	(regColorIncrementG);
+		DECL_REG	(regColorIncrementB);
+		DECL_REG	(regColorIncrementA);
+		DECL_REG	(regDeltaFog);
+		DECL_REG	(regDeltaDepth);
 
-			//depth += deltaDepth;
-			//fogDensity += deltaFog;
-			//z += deltaZ;
-			//tu += deltaTu;
-			//tv += deltaTv;
-	FADD	(regLoop2Depth, regLoop2DepthEntry, regDeltaDepth);
-	FADD	(regLoop2Fog, regLoop2FogEntry, regDeltaFog);
-	FADD	(regLoop2U, regLoop2UEntry, regLoop2ScaledDiffU);
-	FADD	(regLoop2V, regLoop2VEntry, regLoop2ScaledDiffV);
-
+				//baseColor += colorIncrement;
+				//depth += deltaDepth;
+				//fogDensity += deltaFog;
+				//z += deltaZ;
+				//tu += deltaTu;
+				//tv += deltaTv;
+		LDW		(regDeltaDepth, regAddrEndWindowDepth);
+		FADD	(regLoop2V, regLoop2VEntry, regLoop2ScaledDiffV);
+		LDW		(regColorIncrementR, regAddrEndColorR);
+		FADD	(regLoop2Depth, regLoop2DepthEntry, regDeltaDepth);
+		FADD	(regLoop2U, regLoop2UEntry, regLoop2ScaledDiffU);
+		LDW		(regColorIncrementG, regAddrEndColorG);
+		FADD	(regLoop2R, regLoop2REntry, regColorIncrementR);
+		LDW		(regColorIncrementB, regAddrEndColorB);
+		FADD	(regLoop2G, regLoop2GEntry, regColorIncrementG);
+		LDW		(regColorIncrementA, regAddrEndColorA);
+		FADD	(regLoop2B, regLoop2BEntry, regColorIncrementB);
+		LDW		(regDeltaFog, regAddrEndFog);
+		FADD	(regLoop2A, regLoop2AEntry, regColorIncrementA);
+		FADD	(regLoop2Fog, regLoop2FogEntry, regDeltaFog);
+	}
 			//++x;
 	ADD		(regLoop2X, regLoop2XEntry, regConstant1);
 
