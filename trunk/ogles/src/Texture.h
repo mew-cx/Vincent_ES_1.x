@@ -59,6 +59,9 @@ namespace EGL {
 		U32 GetWidth() const				{ return m_Width; }
 		U32 GetHeight() const				{ return m_Height; }
 		U32 GetExponent() const				{ return m_Exponent; }
+		U32 GetLogWidth() const;
+		U32 GetLogHeight() const;
+		U32 GetLogBytesPerPixel() const;
 
 		RasterizerState::TextureFormat 
 			GetInternalFormat() const		{ return m_InternalFormat; }

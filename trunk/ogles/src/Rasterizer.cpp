@@ -192,7 +192,7 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 		I32 texY = EGL_IntFromFixed(texture->GetHeight() * tv0);	// can become a shift
 
 		// do wrapping mode here
-		I32 texOffset = texX + (texY << texture->GetExponent());
+		I32 texOffset = texX + (texY << texture->GetLogWidth());
 
 		Fragment(offset, depth, texOffset, baseColor.ConvertToRGBA(), fogDensity);
 	} else {
@@ -746,8 +746,9 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 
 	if (texture)
 	{
-		rasterInfo.TextureWidth = texture->GetWidth();
-		rasterInfo.TextureHeight = texture->GetHeight();
+		rasterInfo.TextureLogWidth = texture->GetLogWidth();
+		rasterInfo.TextureLogHeight = texture->GetLogHeight();
+		rasterInfo.TextureLogBytesPerPixel = texture->GetLogBytesPerPixel();
 		rasterInfo.TextureExponent = texture->GetExponent();
 		rasterInfo.TextureData = texture->GetData();
 	}

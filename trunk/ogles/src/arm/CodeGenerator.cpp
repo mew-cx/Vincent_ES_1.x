@@ -162,16 +162,17 @@ namespace {
 	// Offsets of structure members within info structure
 	// -------------------------------------------------------------------------
 
-#	define OFFSET_SURFACE_WIDTH				offsetof(RasterInfo, SurfaceWidth)
-#	define OFFSET_SURFACE_HEIGHT			offsetof(RasterInfo, SurfaceHeight)
-#	define OFFSET_SURFACE_DEPTH_BUFFER		offsetof(RasterInfo, DepthBuffer)
-#	define OFFSET_SURFACE_COLOR_BUFFER		offsetof(RasterInfo, ColorBuffer)
-#	define OFFSET_SURFACE_STENCIL_BUFFER	offsetof(RasterInfo, StencilBuffer)
-#	define OFFSET_SURFACE_ALPHA_BUFFER		offsetof(RasterInfo, AlphaBuffer)
-#	define OFFSET_TEXTURE_WIDTH				offsetof(RasterInfo, TextureWidth)
-#	define OFFSET_TEXTURE_HEIGHT			offsetof(RasterInfo, TextureHeight)
-#	define OFFSET_TEXTURE_EXPONENT			offsetof(RasterInfo, TextureExponent)
-#	define OFFSET_TEXTURE_DATA				offsetof(RasterInfo, TextureData)
+#	define OFFSET_SURFACE_WIDTH					offsetof(RasterInfo, SurfaceWidth)
+#	define OFFSET_SURFACE_HEIGHT				offsetof(RasterInfo, SurfaceHeight)
+#	define OFFSET_SURFACE_DEPTH_BUFFER			offsetof(RasterInfo, DepthBuffer)
+#	define OFFSET_SURFACE_COLOR_BUFFER			offsetof(RasterInfo, ColorBuffer)
+#	define OFFSET_SURFACE_STENCIL_BUFFER		offsetof(RasterInfo, StencilBuffer)
+#	define OFFSET_SURFACE_ALPHA_BUFFER			offsetof(RasterInfo, AlphaBuffer)
+#	define OFFSET_TEXTURE_LOG_WIDTH				offsetof(RasterInfo, TextureLogWidth)
+#	define OFFSET_TEXTURE_LOG_HEIGHT			offsetof(RasterInfo, TextureLogHeight)
+#	define OFFSET_TEXTURE_LOG_BYTES_PER_PIXEL	offsetof(RasterInfo, TextureLogBytesPerPixel)
+#	define OFFSET_TEXTURE_EXPONENT				offsetof(RasterInfo, TextureExponent)
+#	define OFFSET_TEXTURE_DATA					offsetof(RasterInfo, TextureData)
 
 	// -------------------------------------------------------------------------
 	// For FractionalColor
@@ -232,8 +233,8 @@ namespace EGL {
 		cg_virtual_reg_t * regA;	
 
 		cg_virtual_reg_t * regTextureData;
-		cg_virtual_reg_t * regTextureWidth;
-		cg_virtual_reg_t * regTextureHeight;
+		cg_virtual_reg_t * regTextureLogWidth;
+		cg_virtual_reg_t * regTextureLogHeight;
 		cg_virtual_reg_t * regTextureExponent;
 
 		// surface color buffer, depth buffer, alpha buffer, stencil buffer
@@ -383,6 +384,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		DECL_REG	(regU0);
 		DECL_REG	(regV0);
 
+		cg_virtual_reg_t * regMask = 0;
+
 		switch (m_State->m_WrappingModeS) {
 			case RasterizerState::WrappingModeClampToEdge:
 				//tu0 = EGL_CLAMP(tu, 0, EGL_ONE);
@@ -426,8 +429,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			case RasterizerState::WrappingModeRepeat:
 				//tu0 = tu & 0xffff;
 				{
-					DECL_REG(regMask);
-
+					regMask = cg_virtual_reg_create(block->proc, cg_reg_type_general);
 					LDI		(regMask, 0xffff);
 					AND		(regU0, fragmentInfo.regU, regMask);
 				}
@@ -473,9 +475,11 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			case RasterizerState::WrappingModeRepeat:
 				//tv0 = tv & 0xffff;
 				{
-					DECL_REG	(regMask);
+					if (!regMask) {
+						regMask = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+						LDI		(regMask, 0xffff);
+					}
 
-					LDI		(regMask, 0xffff);
 					AND		(regV0, fragmentInfo.regV, regMask);
 				}
 				break;
@@ -500,13 +504,15 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		DECL_REG	(regTexY);
 		DECL_REG	(regScaledTexY);
 		DECL_REG	(regTexOffset);
+		DECL_REG	(regConstant16);
 
-		MUL		(regScaledU, regU0, fragmentInfo.regTextureWidth);
-		TRUNC	(regTexX, regScaledU);
-		MUL		(regScaledV, regV0, fragmentInfo.regTextureHeight);
-		TRUNC	(regTexY, regScaledV);
-		LSL		(regScaledTexY, regTexY, fragmentInfo.regTextureExponent);
-		ADD		(regTexOffset, regTexX, regScaledTexY);
+		LDI		(regConstant16, 16);
+		LSL		(regScaledU, regU0, fragmentInfo.regTextureLogWidth);
+		ASR		(regTexX, regScaledU, regConstant16);
+		LSL		(regScaledV, regV0, fragmentInfo.regTextureLogHeight);
+		ASR		(regTexY, regScaledV, regConstant16);
+		LSL		(regScaledTexY, regTexY, fragmentInfo.regTextureLogWidth);
+		ADD		(regTexOffset, regScaledTexY, regTexX);
 
 		switch (m_State->m_InternalFormat) {
 			case RasterizerState::TextureFormatAlpha:				// 8
@@ -2916,8 +2922,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	// texture data, width, height, exponent
 	cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, regInfo, OFFSET_TEXTURE_DATA);
-	cg_virtual_reg_t * regTextureWidth =		LOAD_DATA(block, regInfo, OFFSET_TEXTURE_WIDTH);
-	cg_virtual_reg_t * regTextureHeight =		LOAD_DATA(block, regInfo, OFFSET_TEXTURE_HEIGHT);
+	cg_virtual_reg_t * regTextureLogWidth =		LOAD_DATA(block, regInfo, OFFSET_TEXTURE_LOG_WIDTH);
+	cg_virtual_reg_t * regTextureLogHeight =	LOAD_DATA(block, regInfo, OFFSET_TEXTURE_LOG_HEIGHT);
 	cg_virtual_reg_t * regTextureExponent =		LOAD_DATA(block, regInfo, OFFSET_TEXTURE_EXPONENT);
 
 
@@ -3090,8 +3096,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	info.regA = regLoop1AEntry;	
 
 	info.regTextureData = regTextureData;
-	info.regTextureWidth = regTextureWidth;
-	info.regTextureHeight = regTextureHeight;
+	info.regTextureLogWidth = regTextureLogWidth;
+	info.regTextureLogHeight = regTextureLogHeight;
 	info.regTextureExponent = regTextureExponent;
 
 	// surface color buffer, depth buffer, alpha buffer, stencil buffer
@@ -3264,8 +3270,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	info2.regA = regLoop2AEntry;	
 
 	info2.regTextureData = regTextureData;
-	info2.regTextureWidth = regTextureWidth;
-	info2.regTextureHeight = regTextureHeight;
+	info2.regTextureLogWidth = regTextureLogWidth;
+	info2.regTextureLogHeight = regTextureLogHeight;
 	info2.regTextureExponent = regTextureExponent;
 
 	// surface color buffer, depth buffer, alpha buffer, stencil buffer

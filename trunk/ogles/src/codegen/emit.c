@@ -1830,6 +1830,49 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 		assign_reg(gen, physical_reg, reg);
 	}
 
+#if 0
+	/*
+	** At this point, we might want to check for potential preloads
+	*/
+
+	if (inst->base.next) 
+	{
+		/********************************************************************/
+		/* At this point, we might want to check for potential preloads		*/
+		/********************************************************************/
+
+		cg_inst_t * next = inst->base.next;
+		cg_virtual_reg_t * buffer_next[64];
+		cg_virtual_reg_t **iter_next, ** end_next = 
+			cg_inst_use(next, buffer_next, buffer_next + 64);
+
+		// check if this instruction has dependencies on values that are
+		// not defined by the present instruction, and that currently do
+		// not reside in registers.
+
+		for (iter_next = buffer_next; iter_next != end_next; ++iter_next)
+		{
+			cg_virtual_reg_t * reg = *iter_next;
+
+			if (reg->type != cg_reg_type_general || reg->def == inst) 
+			{
+				/* not general register or direct dependency on current		*/
+				/* instruction -> skip										*/
+				continue;	
+			}
+
+			if (reg->physical_reg != NULL && reg->physical_reg->virtual_reg != 0 &&
+				reg->physical_reg->virtual_reg->representative == reg->representative)
+			{
+				/* value already/still in physical register -> skip			*/
+				continue;
+			}
+
+			load_reg(gen, reg, 0);					/* mask == 0?			*/
+		}
+	}
+#endif
+
 	dispatch_inst(gen, inst, update_flags);
 
 	/************************************************************************/

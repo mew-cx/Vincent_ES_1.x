@@ -107,6 +107,21 @@ void Texture :: Initialize(U32 width, U32 height, RasterizerState::TextureFormat
 }
 
 
+U32 Texture :: GetLogWidth() const {
+	return Log(m_Width);
+}
+
+
+U32 Texture :: GetLogHeight() const {
+	return Log(m_Height);
+}
+
+
+U32 Texture :: GetLogBytesPerPixel() const {
+	return Log(GetBytesPerPixel());
+}
+
+
 // --------------------------------------------------------------------------
 // Class MultiTexture
 // --------------------------------------------------------------------------
