@@ -409,32 +409,60 @@ static void emit_unary_negate(cg_codegen_t * gen, cg_inst_unary_t * inst,
 	switch (inst->base.kind)
 	{
 		case cg_inst_unary:
-			ARM_MVN_REG_REG(gen->cseg,
-							inst->dest_value->physical_reg->regno,
-							inst->operand.source->physical_reg->regno);
+			if (update_flags)
+				ARM_MVNS_REG_REG(gen->cseg,
+								 inst->dest_value->physical_reg->regno,
+								 inst->operand.source->physical_reg->regno);
+			else
+				ARM_MVN_REG_REG(gen->cseg,
+								inst->dest_value->physical_reg->regno,
+								inst->operand.source->physical_reg->regno);
+
 			break;
 			
 		case cg_inst_arm_unary_immed:
 			assert(inst->operand.immed >= 0 && inst->operand.immed <= 0xff);
-			ARM_MVN_REG_IMM(gen->cseg,
-							inst->dest_value->physical_reg->regno,
-							inst->operand.immed, 0);
+
+			if (update_flags)
+				ARM_MVNS_REG_IMM(gen->cseg,
+								 inst->dest_value->physical_reg->regno,
+								 inst->operand.immed, 0);
+			else
+				ARM_MVN_REG_IMM(gen->cseg,
+								inst->dest_value->physical_reg->regno,
+								inst->operand.immed, 0);
+
 			break;
 			
 		case cg_inst_arm_unary_shift_reg:
-			ARM_MVN_REG_REGSHIFT(gen->cseg,
-								 inst->dest_value->physical_reg->regno,
-								 inst->operand.shift_reg.source->physical_reg->regno, 
-								 arm_shift_type(inst->operand.shift_reg.op),
-								 inst->operand.shift_reg.shift->physical_reg->regno);
+			if (update_flags)
+				ARM_MVNS_REG_REGSHIFT(gen->cseg,
+									 inst->dest_value->physical_reg->regno,
+									 inst->operand.shift_reg.source->physical_reg->regno, 
+									 arm_shift_type(inst->operand.shift_reg.op),
+									 inst->operand.shift_reg.shift->physical_reg->regno);
+			else
+				ARM_MVN_REG_REGSHIFT(gen->cseg,
+									inst->dest_value->physical_reg->regno,
+									inst->operand.shift_reg.source->physical_reg->regno, 
+									arm_shift_type(inst->operand.shift_reg.op),
+									inst->operand.shift_reg.shift->physical_reg->regno);
 			break;
 			
 		case cg_inst_arm_unary_shift_immed:
-			ARM_MVN_REG_IMMSHIFT(gen->cseg,
-								 inst->dest_value->physical_reg->regno,
-								 inst->operand.shift_immed.source->physical_reg->regno, 
-								 arm_shift_type(inst->operand.shift_immed.op),
-								 inst->operand.shift_immed.shift);
+			if (update_flags)
+				ARM_MVNS_REG_IMMSHIFT(gen->cseg,
+									 inst->dest_value->physical_reg->regno,
+									 inst->operand.shift_immed.source->physical_reg->regno, 
+									 arm_shift_type(inst->operand.shift_immed.op),
+									 inst->operand.shift_immed.shift);
+			else
+				ARM_MVN_REG_IMMSHIFT(gen->cseg,
+									inst->dest_value->physical_reg->regno,
+									inst->operand.shift_immed.source->physical_reg->regno, 
+									arm_shift_type(inst->operand.shift_immed.op),
+									inst->operand.shift_immed.shift);
+
 			break;
 			
 		default:
@@ -447,10 +475,18 @@ static void emit_unary_complement(cg_codegen_t * gen, cg_inst_unary_t * inst,
 								  int update_flags)
 {
 	emit_unary_negate(gen, inst, 0);
-	ARM_SUB_REG_IMM(gen->cseg,
-					inst->dest_value->physical_reg->regno,
-					inst->dest_value->physical_reg->regno,
-					1, 0);
+
+	if (update_flags)
+		ARM_SUBS_REG_IMM(gen->cseg,
+						 inst->dest_value->physical_reg->regno,
+						 inst->dest_value->physical_reg->regno,
+						 1, 0);
+	else
+		ARM_SUB_REG_IMM(gen->cseg,
+						inst->dest_value->physical_reg->regno,
+						inst->dest_value->physical_reg->regno,
+						1, 0);
+
 }
 
 
@@ -459,10 +495,17 @@ static void emit_unary_trunc(cg_codegen_t * gen, cg_inst_unary_t * inst,
 {
 	assert(inst->base.kind == cg_inst_unary);
 	
-	ARM_MOV_REG_IMMSHIFT(gen->cseg,
-						 inst->dest_value->physical_reg->regno,
-						 inst->operand.source->physical_reg->regno,
-						 ARMSHIFT_ASR, 16);						 
+	if (update_flags)
+		ARM_MOVS_REG_IMMSHIFT(gen->cseg,
+							  inst->dest_value->physical_reg->regno,
+							  inst->operand.source->physical_reg->regno,
+							  ARMSHIFT_ASR, 16);						 
+	else
+		ARM_MOV_REG_IMMSHIFT(gen->cseg,
+							 inst->dest_value->physical_reg->regno,
+							 inst->operand.source->physical_reg->regno,
+							 ARMSHIFT_ASR, 16);						 
+
 }
 
 
@@ -476,10 +519,17 @@ static void emit_unary_round(cg_codegen_t * gen, cg_inst_unary_t * inst,
 					inst->operand.source->physical_reg->regno,
 					1, 0);
 	
-	ARM_MOV_REG_IMMSHIFT(gen->cseg,
-						 inst->dest_value->physical_reg->regno,
-						 inst->dest_value->physical_reg->regno,
-						 ARMSHIFT_ASR, 16);						 
+	if (update_flags)
+		ARM_MOVS_REG_IMMSHIFT(gen->cseg,
+							  inst->dest_value->physical_reg->regno,
+							  inst->dest_value->physical_reg->regno,
+							  ARMSHIFT_ASR, 16);						 
+	else
+		ARM_MOV_REG_IMMSHIFT(gen->cseg,
+							 inst->dest_value->physical_reg->regno,
+							 inst->operand.source->physical_reg->regno,
+							 ARMSHIFT_ASR, 16);						 
+
 }
 
 
@@ -488,10 +538,16 @@ static void emit_unary_fcnv(cg_codegen_t * gen, cg_inst_unary_t * inst,
 {
 	assert(inst->base.kind == cg_inst_unary);
 	
-	ARM_MOV_REG_IMMSHIFT(gen->cseg,
-						 inst->dest_value->physical_reg->regno,
-						 inst->operand.source->physical_reg->regno,
-						 ARMSHIFT_LSL, 16);						 
+	if (update_flags)
+		ARM_MOVS_REG_IMMSHIFT(gen->cseg,
+							  inst->dest_value->physical_reg->regno,
+							  inst->operand.source->physical_reg->regno,
+							  ARMSHIFT_LSL, 16);						 
+	else
+		ARM_MOV_REG_IMMSHIFT(gen->cseg,
+							 inst->dest_value->physical_reg->regno,
+							 inst->operand.source->physical_reg->regno,
+							 ARMSHIFT_LSL, 16);						 
 }
 
 
@@ -556,19 +612,35 @@ static void emit_binary_shifter(cg_codegen_t * gen, cg_inst_binary_t * inst,
 	switch (inst->base.kind)
 	{
 		case cg_inst_binary:
-			ARM_MOV_REG_REGSHIFT(gen->cseg,
-								 inst->dest_value->physical_reg->regno,
-								 inst->source->physical_reg->regno,
-								 shift_type,
-								 inst->operand.source->physical_reg->regno);
+			if (update_flags)
+				ARM_MOVS_REG_REGSHIFT(gen->cseg,
+									  inst->dest_value->physical_reg->regno,
+									  inst->source->physical_reg->regno,
+									  shift_type,
+									  inst->operand.source->physical_reg->regno);
+			else
+				ARM_MOV_REG_REGSHIFT(gen->cseg,
+									 inst->dest_value->physical_reg->regno,
+									 inst->source->physical_reg->regno,
+									 shift_type,
+									 inst->operand.source->physical_reg->regno);
+
 			break;
 			
 		case cg_inst_arm_binary_immed:
-			ARM_MOV_REG_IMMSHIFT(gen->cseg,
-								 inst->dest_value->physical_reg->regno,
-								 inst->source->physical_reg->regno,
-								 shift_type,
-								 inst->operand.immed);
+			if (update_flags)
+				ARM_MOVS_REG_IMMSHIFT(gen->cseg,
+									  inst->dest_value->physical_reg->regno,
+									  inst->source->physical_reg->regno,
+									  shift_type,
+									  inst->operand.immed);
+			else
+				ARM_MOV_REG_IMMSHIFT(gen->cseg,
+									 inst->dest_value->physical_reg->regno,
+									 inst->source->physical_reg->regno,
+									 shift_type,
+									 inst->operand.immed);
+
 			break;
 			
 		default:
@@ -583,44 +655,84 @@ static void emit_binary_regular(cg_codegen_t * gen, cg_inst_binary_t * inst,
 	switch (inst->base.kind)
 	{
 		case cg_inst_binary:
-			ARM_DPIOP_REG_REG_COND(gen->cseg, 
-								   opcode, 
-								   inst->dest_value->physical_reg->regno, 
-								   inst->source->physical_reg->regno, 
-								   inst->operand.source->physical_reg->regno, 
-								   ARMCOND_AL);
+			if (update_flags)
+				ARM_DPIOP_S_REG_REG_COND(gen->cseg, 
+										 opcode, 
+										 inst->dest_value->physical_reg->regno, 
+										 inst->source->physical_reg->regno, 
+										 inst->operand.source->physical_reg->regno, 
+										 ARMCOND_AL);
+			else
+				ARM_DPIOP_REG_REG_COND(gen->cseg, 
+									   opcode, 
+									   inst->dest_value->physical_reg->regno, 
+									   inst->source->physical_reg->regno, 
+									   inst->operand.source->physical_reg->regno, 
+									   ARMCOND_AL);
+
 			break;
 			
 		case cg_inst_arm_binary_immed:
 			assert(inst->operand.immed >= 0 && inst->operand.immed <= 0xff);
-			ARM_DPIOP_REG_IMM8ROT_COND(gen->cseg, 
-									   opcode, 
-									   inst->dest_value->physical_reg->regno, 
-									   inst->source->physical_reg->regno, 
-									   inst->operand.immed, 0,
-									   ARMCOND_AL);
+			if (update_flags)
+				ARM_DPIOP_S_REG_IMM8ROT_COND(gen->cseg, 
+											 opcode, 
+											 inst->dest_value->physical_reg->regno, 
+											 inst->source->physical_reg->regno, 
+											 inst->operand.immed, 0,
+											 ARMCOND_AL);
+			else
+				ARM_DPIOP_REG_IMM8ROT_COND(gen->cseg, 
+										   opcode, 
+										   inst->dest_value->physical_reg->regno, 
+										   inst->source->physical_reg->regno, 
+										   inst->operand.immed, 0,
+										   ARMCOND_AL);
+
 			break;
 			
 		case cg_inst_arm_binary_shift_reg:
-			ARM_DPIOP_REG_REGSHIFT_COND(gen->cseg, 
-										opcode, 
-										inst->dest_value->physical_reg->regno, 
-										inst->source->physical_reg->regno, 
-										inst->operand.shift_reg.source->physical_reg->regno, 
-										arm_shift_type(inst->operand.shift_reg.op),
-										inst->operand.shift_reg.shift->physical_reg->regno, 
-										ARMCOND_AL);
+			if (update_flags)
+				ARM_DPIOP_S_REG_REGSHIFT_COND(gen->cseg, 
+											  opcode, 
+											  inst->dest_value->physical_reg->regno, 
+											  inst->source->physical_reg->regno, 
+											  inst->operand.shift_reg.source->physical_reg->regno, 
+											  arm_shift_type(inst->operand.shift_reg.op),
+											  inst->operand.shift_reg.shift->physical_reg->regno, 
+											  ARMCOND_AL);
+			else
+				ARM_DPIOP_REG_REGSHIFT_COND(gen->cseg, 
+											opcode, 
+											inst->dest_value->physical_reg->regno, 
+											inst->source->physical_reg->regno, 
+											inst->operand.shift_reg.source->physical_reg->regno, 
+											arm_shift_type(inst->operand.shift_reg.op),
+											inst->operand.shift_reg.shift->physical_reg->regno, 
+											ARMCOND_AL);
+
 			break;
 			
 		case cg_inst_arm_binary_shift_immed:
-			ARM_DPIOP_REG_IMMSHIFT_COND(gen->cseg, 
-										opcode, 
-										inst->dest_value->physical_reg->regno, 
-										inst->source->physical_reg->regno, 
-										inst->operand.shift_immed.source->physical_reg->regno, 
-										arm_shift_type(inst->operand.shift_immed.op),
-										inst->operand.shift_immed.shift, 
-										ARMCOND_AL);
+			if (update_flags)
+				ARM_DPIOP_S_REG_IMMSHIFT_COND(gen->cseg, 
+											  opcode, 
+											  inst->dest_value->physical_reg->regno, 
+											  inst->source->physical_reg->regno, 
+											  inst->operand.shift_immed.source->physical_reg->regno, 
+											  arm_shift_type(inst->operand.shift_immed.op),
+											  inst->operand.shift_immed.shift, 
+											  ARMCOND_AL);
+			else
+				ARM_DPIOP_REG_IMMSHIFT_COND(gen->cseg, 
+											opcode, 
+											inst->dest_value->physical_reg->regno, 
+											inst->source->physical_reg->regno, 
+											inst->operand.shift_immed.source->physical_reg->regno, 
+											arm_shift_type(inst->operand.shift_immed.op),
+											inst->operand.shift_immed.shift, 
+											ARMCOND_AL);
+
 			break;
 			
 		default:
@@ -634,10 +746,17 @@ static void emit_binary_multiply_int(cg_codegen_t * gen, cg_inst_binary_t * inst
 {
 	assert(inst->base.kind == cg_inst_binary);
 	
-	ARM_MUL(gen->cseg, 
-			inst->dest_value->physical_reg->regno, 
-			inst->source->physical_reg->regno, 
-			inst->operand.source->physical_reg->regno);
+	if (update_flags)
+		ARM_MULS(gen->cseg, 
+				 inst->dest_value->physical_reg->regno, 
+				 inst->source->physical_reg->regno, 
+				 inst->operand.source->physical_reg->regno);
+	else
+		ARM_MUL(gen->cseg, 
+				inst->dest_value->physical_reg->regno, 
+				inst->source->physical_reg->regno, 
+				inst->operand.source->physical_reg->regno);
+
 }
 
 
@@ -674,12 +793,21 @@ static void emit_binary_multiply_fixed(cg_codegen_t * gen, cg_inst_binary_t * in
 						 ARMSHIFT_LSR,
 						 16);
 	
-	ARM_ORR_REG_IMMSHIFT(gen->cseg,
-						 inst->dest_value->physical_reg->regno,
-						 inst->dest_value->physical_reg->regno,
-						 temp_physical_reg->regno, 
-						 ARMSHIFT_LSL,
-						 16);
+	if (update_flags)
+		ARM_ORRS_REG_IMMSHIFT(gen->cseg,
+							  inst->dest_value->physical_reg->regno,
+							  inst->dest_value->physical_reg->regno,
+							  temp_physical_reg->regno, 
+							  ARMSHIFT_LSL,
+							  16);
+	else
+		ARM_ORR_REG_IMMSHIFT(gen->cseg,
+							inst->dest_value->physical_reg->regno,
+							inst->dest_value->physical_reg->regno,
+							temp_physical_reg->regno, 
+							ARMSHIFT_LSL,
+							16);
+
 	
 	// release the temporary register
 	deallocate_reg(gen, &temp_reg);
