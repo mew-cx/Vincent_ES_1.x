@@ -897,10 +897,10 @@ namespace {
 	};
 
 	template <class SrcAccessor> inline void CreatePalette(const U8 *& data,
-		size_t numberOfColors, Color * colors, SrcAccessor& accessor) {
+		size_t numberOfColors, Color * colors, const SrcAccessor& accessor) {
 
 		for (size_t index = 0; index < numberOfColors; ++index) {
-			colors[index] = accessor(data);
+			colors[index] = const_cast<SrcAccessor&>(accessor)(data);
 		}
 	}
 

@@ -137,7 +137,7 @@ void Surface :: SetCurrentContext(Context * context) {
 
 namespace {
 
-	template <class T> FillRect(T * base, const Rect & bufferRect, const Rect & fillRect,
+	template <class T> void FillRect(T * base, const Rect & bufferRect, const Rect & fillRect,
 		const T& value, const T& mask) {
 		Rect rect = Rect::Intersect(fillRect, bufferRect);
 
@@ -158,7 +158,7 @@ namespace {
 		}
 	}
 
-	template <class T> FillRect(T * base, const Rect & bufferRect, const Rect & fillRect,
+	template <class T> void FillRect(T * base, const Rect & bufferRect, const Rect & fillRect,
 		const T& value) {
 		Rect rect = Rect::Intersect(fillRect, bufferRect);
 

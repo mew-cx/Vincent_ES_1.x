@@ -51,11 +51,19 @@
 
 
 extern "C" {
+#ifdef __GCC32__
+    struct cg_module_t;
+    struct cg_proc_t;
+    struct cg_block_t;
+    struct cg_block_ref_t;
+    struct cg_virtual_reg_t;
+#else
 	typedef struct cg_module_t cg_module_t;
 	typedef struct cg_proc_t cg_proc_t;
 	typedef struct cg_block_t cg_block_t;
 	typedef struct cg_block_ref_t cg_block_ref_t;
 	typedef struct cg_virtual_reg_t cg_virtual_reg_t;
+#endif
 }
 
 

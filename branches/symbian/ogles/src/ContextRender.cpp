@@ -606,19 +606,19 @@ void Context :: PrepareRendering() {
 	if (m_LightingEnabled) {
 		if (m_ColorMaterialEnabled) {
 			if (m_TwoSidedLightning) {
-				m_GeometryFunction = CurrentValuesToRasterPosTwoSidedTrack;
+                m_GeometryFunction = &Context::CurrentValuesToRasterPosTwoSidedTrack;
 			} else {
-				m_GeometryFunction = CurrentValuesToRasterPosOneSidedTrack;
+				m_GeometryFunction = &Context::CurrentValuesToRasterPosOneSidedTrack;
 			}
 		} else {
 			if (m_TwoSidedLightning) {
-				m_GeometryFunction = CurrentValuesToRasterPosTwoSidedNoTrack;
+				m_GeometryFunction = &Context::CurrentValuesToRasterPosTwoSidedNoTrack;
 			} else {
-				m_GeometryFunction = CurrentValuesToRasterPosOneSidedNoTrack;
+				m_GeometryFunction = &Context::CurrentValuesToRasterPosOneSidedNoTrack;
 			}
 		}
 	} else {
-		m_GeometryFunction = CurrentValuesToRasterPosNoLight;
+		m_GeometryFunction = &Context::CurrentValuesToRasterPosNoLight;
 	}
 
 	PrepareArray(m_VertexArray,   m_VertexArrayEnabled);
