@@ -582,7 +582,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	EGL_Fixed yPreStep2 = yRounded2 + (EGL_ONE/2) - pos2.m_WindowCoords.y;
 	I32 y2 = EGL_IntFromFixed(yRounded2);
 
-	EGL_Fixed yRounded3 = EGL_NearestInt(pos3.m_WindowCoords.y + 1);
+	EGL_Fixed yRounded3 = EGL_NearestInt(pos3.m_WindowCoords.y);
 	I32 y3 = EGL_IntFromFixed(yRounded3);
 
 	RasterInfo rasterInfo(m_Surface, y);
@@ -665,7 +665,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			EGL_Fixed xStepped1R = pos2.m_WindowCoords.x + EGL_Mul(pos1.m_WindowCoords.y - pos2.m_WindowCoords.y + yPreStep1, dXdY23);
 
 			delta.m_WindowCoords.x = 
-				xStepped1R + ((EGL_ONE/2) /*- 1*/);	// added offset so round down will be round to nearest
+				xStepped1R + ((EGL_ONE/2) - 1);	// added offset so round down will be round to nearest
 
 			// ------------------------------------------------------------------
 			// initialize the x-step error
@@ -734,7 +734,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 			EGL_Fixed xStepped1R = pos1.m_WindowCoords.x + EGL_Mul(pos2.m_WindowCoords.y - pos1.m_WindowCoords.y + yPreStep2, dXdY3);
 			delta.m_WindowCoords.x = 
-				xStepped1R + ((EGL_ONE/2) /*- 1*/);	// added offset so round down will be round to nearest
+				xStepped1R + ((EGL_ONE/2) - 1);	// added offset so round down will be round to nearest
 
 			// ------------------------------------------------------------------
 			// initialize the x-step error
@@ -811,7 +811,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		// ------------------------------------------------------------------
 
 		delta.m_WindowCoords.x = 
-			xStepped1R + ((EGL_ONE/2) /*- 1*/);	// added offset so round down will be round to nearest
+			xStepped1R + ((EGL_ONE/2) - 1);	// added offset so round down will be round to nearest
 
 
 		// ------------------------------------------------------------------
@@ -939,7 +939,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		EGL_Fixed xStepped1R = pos1.m_WindowCoords.x + EGL_Mul(yPreStep1, dXdY2);
 		delta.m_WindowCoords.x = 
-			xStepped1R + ((EGL_ONE/2) /*- 1*/);	// added offset so round down will be round to nearest
+			xStepped1R + ((EGL_ONE/2) - 1);	// added offset so round down will be round to nearest
 
 		// ------------------------------------------------------------------
 		// initialize the x-step error
@@ -987,7 +987,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		EGL_Fixed xStepped2R = pos2.m_WindowCoords.x + EGL_Mul(yPreStep2, dXdY23);
 
 		delta.m_WindowCoords.x = 
-			xStepped2R + ((EGL_ONE/2) /*- 1*/);	// added offset so round down will be round to nearest
+			xStepped2R + ((EGL_ONE/2) - 1);	// added offset so round down will be round to nearest
 
 		for (; y < y3; ++y) {
 			if (!m_State->m_ScissorTestEnabled || (y >= yScissorStart && y < yScissorEnd))
