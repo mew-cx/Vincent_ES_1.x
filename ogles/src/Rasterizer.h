@@ -232,6 +232,49 @@ namespace EGL {
 		void RasterScanLine(RasterInfo & info, const EdgePos & start, const EdgePos & end);
 
 		// ----------------------------------------------------------------------
+		// Rasterization of triangle
+		//
+		// Variations are: All, +/- color [Cc], +/- texture [Tt], +/- depth [Dd], +/- fog [Ff], +/- scissor [Ss]
+		// combination ct does not exist
+		// ----------------------------------------------------------------------
+		void RasterTriangleAll(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+
+		enum RasterTriangleBits {
+			RasterTriangleColor,
+			RasterTriangleTexture,
+			RasterTriangleDepth,
+			RasterTriangleFog,
+			RasterTriangleScissor,
+			RasterTriangleStencil,
+			RasterTriangleCount,
+		};
+
+		void RasterTriangle_cTdfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_cTdFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_cTDfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_cTDFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_Ctdfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CtdFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CtDfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CtDFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CTdfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CTdFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CTDfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CTDFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_cTdfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_cTdFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_cTDfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_cTDFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CtdfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CtdFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CtDfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CtDFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CTdfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CTdFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CTDfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+		void RasterTriangle_CTDFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
+
+		// ----------------------------------------------------------------------
 		// Rasterization of fragment
 		// ----------------------------------------------------------------------
 
@@ -270,6 +313,8 @@ namespace EGL {
 		RasterLineFunction		m_RasterLineFunction;
 		RasterTriangleFunction	m_RasterTriangleFunction;
 
+		RasterTriangleFunction	m_RasterTriangleFunctions[1 << RasterTriangleCount];
+
 		// ----------------------------------------------------------------------
 		// internal state
 		// ----------------------------------------------------------------------
@@ -297,6 +342,10 @@ namespace EGL {
 		return m_Surface;
 	}
 
+
+	inline void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b, const RasterPos& c) {
+		(this->*m_RasterTriangleFunction)(a, b, c);
+	}
 }
 
 

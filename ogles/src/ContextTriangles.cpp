@@ -468,7 +468,7 @@ void Context :: RenderTriangleFan(GLsizei count, const GLushort * indices) {
 namespace {
 
 	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed x1, EGL_Fixed num, EGL_Fixed denom) {
-		return x1 + (EGL_Fixed)((((I64)(x0-x1))*num)/denom);
+		return static_cast<EGL_Fixed>(x1 + (((I64)(x0-x1))*num)/denom);
 	}
 
 	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, EGL_Fixed num, EGL_Fixed denom) {
