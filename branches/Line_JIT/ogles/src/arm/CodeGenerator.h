@@ -101,7 +101,7 @@ namespace EGL {
 	private:
 		void GenerateFragment(cg_proc_t * procedure, cg_block_t * currentBlock,
 			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
-			int weight);
+			int weight, bool forceScissor = false);
 
 		void GenerateFetchTexColor(cg_proc_t * proc, cg_block_t * currentBlock,
 								   FragmentGenerationInfo & fragmentInfo,

@@ -808,7 +808,7 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 
 void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * currentBlock,
 			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
-			int weight) {
+			int weight, bool forceScissor) {
 
 	cg_block_t * block = currentBlock;
 
@@ -822,7 +822,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	//	return;
 	//}
 
-	if (m_State->m_ScissorTest.Enabled) {
+	if (forceScissor || m_State->m_ScissorTest.Enabled) {
 		DECL_REG	(regConstXStart);
 		DECL_REG	(regConstXEnd);
 		DECL_FLAGS	(regXStartTest);
