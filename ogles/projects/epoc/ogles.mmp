@@ -31,7 +31,7 @@ SOURCE FunctionCache.cpp
 SOURCE CodeGenerator.cpp
 SOURCE GenFragment.cpp
 SOURCE GenPoint.cpp
-SOURCE GenLine.cpp
+SOURCE GenLline.cpp
 SOURCE GenTriangle.cpp
 SOURCE GenScanline.cpp
 SOURCEPATH ..\..\src\Epoc
@@ -43,6 +43,7 @@ USERINCLUDE ..\..\src\codegen
 USERINCLUDE ..\..\src\ARM
 USERINCLUDE ..\..\src\Epoc
 USERINCLUDE ..\..\src
+USERINCLUDE ..\..\include
 SYSTEMINCLUDE ..\..\src
 SYSTEMINCLUDE \epoc32\include\libc
 SYSTEMINCLUDE \epoc32\include
