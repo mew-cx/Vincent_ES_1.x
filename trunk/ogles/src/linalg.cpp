@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// linalg.cpp	Implementation of Linaear Algebra using Fixed Point Arithmetic
+// linalg.cpp	Implementation of Linear Algebra using Fixed Point Arithmetic
 //
 // --------------------------------------------------------------------------
 //
@@ -141,7 +141,7 @@ Matrix4x4 Matrix4x4 :: CreateRotate(EGL_Fixed angle, EGL_Fixed x,
 	EGL_Fixed one_minus_cosine = EGL_ONE - cosine;
 
 	matrix.Element(0, 0) = cosine + EGL_Mul(one_minus_cosine, EGL_Mul(r_x, r_x));
-	matrix.Element(0, 1) = one_minus_cosine + EGL_Mul(r_x, r_y) - EGL_Mul(r_z, sine);
+	matrix.Element(0, 1) = EGL_Mul(one_minus_cosine, EGL_Mul(r_x, r_y)) - EGL_Mul(r_z, sine);
 	matrix.Element(0, 2) = EGL_Mul(EGL_Mul(one_minus_cosine, r_x), r_z) + EGL_Mul(r_y, sine);
 
 	matrix.Element(1, 0) = EGL_Mul(EGL_Mul(one_minus_cosine, r_x),  r_y) + EGL_Mul(r_z, sine);
