@@ -1411,7 +1411,7 @@ extern "C" void PaintProc(HWND hWnd) {
 
 	//glDisable(GL_TEXTURE_2D);
 	glEnable(GL_TEXTURE_2D);
-	glTexEnvx(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL); 
+	glTexEnvx(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE); 
 
 	glEnable(GL_CULL_FACE);
 	//glDisable(GL_CULL_FACE);

@@ -47,6 +47,7 @@
 
 #include <windows.h>
 #include <Cmnintrin.h>
+#include <armintr.h>
 
 // --------------------------------------------------------------------------
 // Standard Library Files

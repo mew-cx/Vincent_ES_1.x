@@ -48,7 +48,7 @@
 //	a		-	the number whose inverse should be calculated
 // --------------------------------------------------------------------------
 EGL_Fixed EGL_Inverse(EGL_Fixed a) {
-    I32 exp, i;
+    I32 exp;
     EGL_Fixed x;
     /* 1/(4x) */
     static const I32 __gl_rcp_tab[] = { /* domain 0.5 .. 1.0-1/16 */
@@ -81,10 +81,8 @@ EGL_Fixed EGL_Inverse(EGL_Fixed a) {
 		x <<= exp;
 //printf("est %f\n", __GL_F_2_FLOAT(x));
     /* two iterations of newton-raphson  x = x(2-ax) */
-    i = 2;
-    do {
-		x = EGL_Mul(x,(EGL_ONE*2 - EGL_Mul(a,x)));
-    } while (--i > 0);
+	x = EGL_Mul(x,(EGL_ONE*2 - EGL_Mul(a,x)));
+	x = EGL_Mul(x,(EGL_ONE*2 - EGL_Mul(a,x)));
 //printf("recip %f %f\n", __GL_F_2_FLOAT(a), __GL_F_2_FLOAT(x));
 
 	if (sign)

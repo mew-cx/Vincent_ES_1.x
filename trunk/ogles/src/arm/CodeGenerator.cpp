@@ -157,7 +157,7 @@ void CodeGenerator :: Compile(FunctionCache * target, FunctionCache::FunctionTyp
 
 	cg_processor_info_t processor;
 
-#ifdef EGL_USE_CLZ
+#ifdef EGL_XSCALE
 	processor.useV5 = 1;
 #else
 	processor.useV5 = 0;

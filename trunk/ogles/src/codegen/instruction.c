@@ -864,9 +864,6 @@ void cg_module_amode(cg_module_t * module)
 }
 
 
-#define SAVE_AREA_SIZE (10 * sizeof(U32))		/* this really depends on the function prolog */
-
-
 static void proc_allocate_variables(cg_proc_t * proc)
 {
 	cg_virtual_reg_t * reg;
@@ -879,6 +876,7 @@ static void proc_allocate_variables(cg_proc_t * proc)
 	for (reg = proc->registers; reg; reg = reg->next)
 	{
 		reg->fp_offset = ~0;
+		reg->reg_no = ~0;
 	}
 
 	for (reg = proc->registers; reg && arg_count; reg = reg->next, arg_count--)
@@ -888,17 +886,14 @@ static void proc_allocate_variables(cg_proc_t * proc)
 		arg_offset += sizeof(U32);
 	}
 
-	for (; reg; reg = reg->next)
+	for (; reg ; reg = reg->next)
 	{
-		if (reg->representative->fp_offset == ~0)
+		if (reg->representative->reg_no == ~0)
 		{
 			reg->representative->reg_no = proc->num_registers++;
-			proc->local_storage += sizeof(U32);
-			reg->representative->fp_offset = - (int) proc->local_storage - SAVE_AREA_SIZE;	
 		}
 
 		reg->reg_no = reg->representative->reg_no;
-		reg->fp_offset = reg->representative->fp_offset;
 	}
 }
 

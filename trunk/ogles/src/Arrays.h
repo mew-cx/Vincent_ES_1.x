@@ -71,6 +71,11 @@ namespace EGL {
 			do {
 				*buffer++ = EGL_FixedFromInt(*byteBase++);
 			} while (--count);
+
+#ifdef EGL_XSCALE
+			_PreLoad(const_cast<unsigned long *>(reinterpret_cast<const unsigned long *>(base + stride)));
+#endif
+
 		}
 
 		void FetchUnsignedByteValues(int row, GLfixed * buffer) {
@@ -83,6 +88,11 @@ namespace EGL {
 			do {
 				*buffer++ = EGL_FixedFromInt(*byteBase++);
 			} while (--count);
+
+#ifdef EGL_XSCALE
+			_PreLoad(const_cast<unsigned long *>(reinterpret_cast<const unsigned long *>(base + stride)));
+#endif
+
 		}
 
 		void FetchUnsignedByteValues(int row, GLubyte * buffer) {
@@ -95,6 +105,11 @@ namespace EGL {
 			do {
 				*buffer++ = *byteBase++;
 			} while (--count);
+
+#ifdef EGL_XSCALE
+			_PreLoad(const_cast<unsigned long *>(reinterpret_cast<const unsigned long *>(base + stride)));
+#endif
+
 		}
 
 		void FetchByteColorValues(int row, GLfixed * buffer) {
@@ -108,6 +123,11 @@ namespace EGL {
 				U8 byteValue = *byteBase++;
 				*buffer++ = static_cast<GLfixed>(((byteValue << 8) | byteValue) + (byteValue >> 7));
 			} while (--count);
+
+#ifdef EGL_XSCALE
+			_PreLoad(const_cast<unsigned long *>(reinterpret_cast<const unsigned long *>(base + stride)));
+#endif
+
 		}
 
 		void FetchShortValues(int row, GLfixed * buffer) {
@@ -120,6 +140,11 @@ namespace EGL {
 			do {
 				*buffer++ = EGL_FixedFromInt(*shortBase++);
 			} while (--count);
+
+#ifdef EGL_XSCALE
+			_PreLoad(const_cast<unsigned long *>(reinterpret_cast<const unsigned long *>(base + stride)));
+#endif
+
 		}
 
 		void FetchFixedValues(int row, GLfixed * buffer) {
@@ -132,6 +157,11 @@ namespace EGL {
 			do {
 				*buffer++ = *fixedBase++;
 			} while (--count);
+
+#ifdef EGL_XSCALE
+			_PreLoad(const_cast<unsigned long *>(reinterpret_cast<const unsigned long *>(base + stride)));
+#endif
+
 		}
 
 		void FetchFloatValues(int row, GLfixed * buffer) {
@@ -144,6 +174,11 @@ namespace EGL {
 			do {
 				*buffer++ = EGL_FixedFromFloat(*floatBase++);
 			} while (--count);
+
+#ifdef EGL_XSCALE
+			_PreLoad(const_cast<unsigned long *>(reinterpret_cast<const unsigned long *>(base + stride)));
+#endif
+
 		}
 
 		void PrepareFetchValues(bool colorMode) {
