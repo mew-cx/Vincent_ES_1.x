@@ -74,10 +74,24 @@ void Context :: Fogx(GLenum pname, GLfixed param) {
 
 		case GL_FOG_START:
 			m_FogStart = param;
-			break;
+			goto calculateFog;
 
 		case GL_FOG_END:
 			m_FogEnd = param;
+
+calculateFog:
+			if (m_FogStart != m_FogEnd) {
+				EGL_Fixed diff = m_FogEnd - m_FogStart;
+
+				if ((diff >> 24) && (diff >> 24) + 1) {
+					m_FogGradient = EGL_Inverse(diff >> 8);
+					m_FogGradientShift = 8;
+				} else {
+					m_FogGradient = EGL_Inverse(diff);
+					m_FogGradientShift = 0;
+				}
+			}
+
 			break;
 
 		case GL_FOG_DENSITY:

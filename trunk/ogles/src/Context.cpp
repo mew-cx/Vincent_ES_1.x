@@ -85,6 +85,8 @@ Context :: Context(const Config & config)
 	m_FogMode(FogModeExp),
 	m_FogStart(0),
 	m_FogEnd(EGL_ONE),
+	m_FogGradient(EGL_ONE),
+	m_FogGradientShift(0),
 	m_FogDensity(EGL_ONE),
 
 	// client flags

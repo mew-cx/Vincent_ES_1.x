@@ -431,6 +431,8 @@ private:
 
 		FogMode				m_FogMode;			// the fog color is still in the
 		EGL_Fixed			m_FogStart, m_FogDensity, m_FogEnd;	// rasterizer state
+		EGL_Fixed			m_FogGradient;
+		U8					m_FogGradientShift;
 
 		EGL_Fixed			m_DepthRangeBase, m_DepthRangeFactor;
 
