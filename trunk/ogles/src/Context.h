@@ -500,7 +500,7 @@ private:
 		if (z >= w)	z = w - 1;
 
 		// keep this value around for perspective-correct texturing
-		EGL_Fixed invDenominator = EGL_Inverse(w);
+		EGL_Fixed invDenominator = w ? EGL_Inverse(w) : 0;
 
 		// Scale 1/Z by 2^10 to avoid rounding problems during prespective correct
 		// interpolation
