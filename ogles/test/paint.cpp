@@ -1404,8 +1404,8 @@ extern "C" void PaintProc(HWND hWnd) {
 	glFogxv(GL_FOG_COLOR, fogColor);
 	glFogx(GL_FOG_MODE, GL_LINEAR);
 	glFogx(GL_FOG_END, EGL_FixedFromInt(600)); 
-	glDisable(GL_FOG);
-	//glEnable(GL_FOG);
+	//glDisable(GL_FOG);
+	glEnable(GL_FOG);
 
 	//glLineWidth(0x10000);
 

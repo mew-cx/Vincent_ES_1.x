@@ -924,43 +924,11 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		LDI		(regFogColorG, m_State->m_Fog.Color.g);
 		LDI		(regFogColorB, m_State->m_Fog.Color.b);
 
-		DECL_REG	(regDeltaR);
-		DECL_REG	(regDeltaG);
-		DECL_REG	(regDeltaB);
+		cg_virtual_reg_t * regFog = ClampTo255(block, fragmentInfo.regFog);
 
-		SUB		(regDeltaR, regColorR, regFogColorR);
-		SUB		(regDeltaG, regColorG, regFogColorG);
-		SUB		(regDeltaB, regColorB, regFogColorB);
-
-		DECL_REG	(regProductR);
-		DECL_REG	(regProductG);
-		DECL_REG	(regProductB);
-
-		MUL		(regProductR, regDeltaR, fragmentInfo.regFog);
-		MUL		(regProductG, regDeltaG, fragmentInfo.regFog);
-		MUL		(regProductB, regDeltaB, fragmentInfo.regFog);
-
-		DECL_REG	(regConstant16);
-		DECL_REG	(regShiftedProductR);
-		DECL_REG	(regShiftedProductG);
-		DECL_REG	(regShiftedProductB);
-
-		LDI		(regConstant16, 16);
-		ASR		(regShiftedProductR, regProductR, regConstant16);
-		ASR		(regShiftedProductG, regProductG, regConstant16);
-		ASR		(regShiftedProductB, regProductB, regConstant16);
-
-		//DECL_REG	(regNewColorR);
-		//DECL_REG	(regNewColorG);
-		//DECL_REG	(regNewColorB);
-
-		//ADD		(regNewColorR, regShiftedProductR, regFogColorR);
-		//ADD		(regNewColorG, regShiftedProductG, regFogColorG);
-		//ADD		(regNewColorB, regShiftedProductB, regFogColorB);
-
-		regColorR = AddSaturate255(block, regShiftedProductR, regFogColorR);
-		regColorG = AddSaturate255(block, regShiftedProductG, regFogColorG);
-		regColorB = AddSaturate255(block, regShiftedProductB, regFogColorB);
+		regColorR = Blend255(block, regFogColorR, regColorR, regFog);
+		regColorG = Blend255(block, regFogColorG, regColorG, regFog);
+		regColorB = Blend255(block, regFogColorB, regColorB, regFog);
 
 		// create RGB 565 representation
 		regColor565 = Color565FromRGB(block, regColorR,	regColorG, regColorB);

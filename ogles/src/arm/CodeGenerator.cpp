@@ -407,7 +407,7 @@ cg_virtual_reg_t * CodeGenerator :: Blend255(cg_block_t * block, cg_virtual_reg_
 
 	cg_virtual_reg_t *	regProd = Mul255(block, regDiff, alpha);	//	alpha * (second - first)
 
-	return Add(block, first, regDiff);					// first + alpha * (second - first)
+	return Add(block, first, regProd);					// first + alpha * (second - first)
 }
 
 
