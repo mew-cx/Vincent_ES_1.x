@@ -541,35 +541,3 @@ const GLubyte * Context :: GetString(GLenum name) {
 
 void Context :: Finish(void) { }
 void Context :: Flush(void) { }
-
-// --------------------------------------------------------------------------
-// Context Management
-// --------------------------------------------------------------------------
-
-
-void Context :: SetCurrentContext(Context * context) {
-
-	extern DWORD s_TlsIndexContext;
-
-	Context * oldContext = GetCurrentContext();
-
-	if (oldContext != context) {
-
-		if (oldContext != 0) 
-			oldContext->SetCurrent(false);
-
-		TlsSetValue(s_TlsIndexContext, reinterpret_cast<void *>(context));
-
-		if (context != 0)
-			context->SetCurrent(true);
-	}
-}
-
-
-Context * Context :: GetCurrentContext() {
-
-	extern DWORD s_TlsIndexContext;
-
-	return reinterpret_cast<EGLContext> (TlsGetValue(s_TlsIndexContext));
-}
-

@@ -1,10 +1,10 @@
 // ==========================================================================
 //
-// stdafx.h			Precompiled headers for 3D Rendering Library
+// context.cpp	Rendering Context Class for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //
-// 10-15-2003		Hans-Martin Will	initial version
+// 08-07-2003	Hans-Martin Will	initial version
 //
 // --------------------------------------------------------------------------
 //
@@ -35,57 +35,43 @@
 // ==========================================================================
 
 
-#if defined(__SYMBIAN32__)
-#	define EGL_ON_SYMBIAN
-#elif defined(WIN32) || defined(_WIN32_WCE)
-#	define EGL_ON_WINCE
-#else
-#	error "Unsupported Operating System"
-#endif
+#include "stdafx.h"
+#include "Context.h"
+#include "Surface.h"
+#include "Rasterizer.h"
+
+
+using namespace EGL;
 
 
 // --------------------------------------------------------------------------
-// Windows Header Files:
+// Context Management
 // --------------------------------------------------------------------------
 
-#ifdef EGL_ON_WINCE
-//#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 
-#	pragma warning (disable:4786)
-#	pragma warning (disable:4244)
+void Context :: SetCurrentContext(Context * context) {
 
-#	include <windows.h>
-#	include <Cmnintrin.h>
+	extern DWORD s_TlsIndexContext;
 
-#endif //ndef EGL_ON_WINCE
+	Context * oldContext = GetCurrentContext();
 
-// --------------------------------------------------------------------------
-// Symbian Header Files:
-// --------------------------------------------------------------------------
+	if (oldContext != context) {
 
-#ifdef EGL_ON_SYMBIAN
+		if (oldContext != 0) 
+			oldContext->SetCurrent(false);
 
-#	include <e32def.h>
+		TlsSetValue(s_TlsIndexContext, reinterpret_cast<void *>(context));
 
-#endif // ndef EGL_ON_SYMBIAN
+		if (context != 0)
+			context->SetCurrent(true);
+	}
+}
 
-// --------------------------------------------------------------------------
-// Standard Library Files
-// --------------------------------------------------------------------------
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-#include <assert.h>
-#include <limits.h>
+Context * Context :: GetCurrentContext() {
 
-// --------------------------------------------------------------------------
-// Intel Header Files
-// --------------------------------------------------------------------------
+	extern DWORD s_TlsIndexContext;
 
-#ifdef EGL_USE_GPP
-#	include <gpp.h>
-#endif
-
+	return reinterpret_cast<EGLContext> (TlsGetValue(s_TlsIndexContext));
+}
 

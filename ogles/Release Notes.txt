@@ -5,6 +5,16 @@ This document collects changes on a release to release base. For open known issu
 the bug database on sourceforge. 
 
 
+Version 0.80
+------------
+
+This version constitutes a major milestone for Vincent. First of all, Vincent has become
+feature complete and can pass the full OpenGL ES conformance test in internal runs.
+
+Second, initial support for Symbian has been added; specifically support for implementations
+of Nokia's Series 60 platform.
+
+
 Version 0.79
 ------------
 
