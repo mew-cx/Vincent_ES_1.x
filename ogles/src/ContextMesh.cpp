@@ -81,7 +81,7 @@ void Context :: DrawMesh(GLsizei count, GLenum type, GLsizei stride,
 	
 			pointer = reinterpret_cast<const U8 *>(pointer) + stride;
 		}
-	} else if (type = GL_UNSIGNED_SHORT) {
+	} else if (type == GL_UNSIGNED_SHORT) {
 		while (count-- > 0) {
 			const U8 * pVertexIndex = reinterpret_cast<const U8 *>(pointer) + offsetVertex; 
 			const U8 * pNormalIndex = reinterpret_cast<const U8 *>(pointer) + offsetNormal; 
