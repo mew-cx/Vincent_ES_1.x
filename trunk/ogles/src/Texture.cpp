@@ -94,14 +94,8 @@ void Texture :: Initialize(U32 width, U32 height, RasterizerState::TextureFormat
 		free(m_Data);
 	}
 
-	m_Width = width;
-	m_Height = height;
-
-	if (width > height) {
-		m_Exponent = Log(width);
-	} else {
-		m_Exponent = Log(height);
-	}
+	m_LogWidth = Log(width);
+	m_LogHeight = Log(height);
 
 	U32 pixels = width * height;
 	m_InternalFormat = format;
@@ -109,15 +103,6 @@ void Texture :: Initialize(U32 width, U32 height, RasterizerState::TextureFormat
 	m_Data = malloc(bytes);
 }
 
-
-U32 Texture :: GetLogWidth() const {
-	return Log(m_Width);
-}
-
-
-U32 Texture :: GetLogHeight() const {
-	return Log(m_Height);
-}
 
 
 U32 Texture :: GetLogBytesPerPixel() const {
@@ -137,16 +122,10 @@ MultiTexture :: MultiTexture():
 	m_WrappingModeS(RasterizerState::WrappingModeRepeat),
 	m_WrappingModeT(RasterizerState::WrappingModeRepeat)
 {
-	for (int index = 0; index < MAX_LEVELS; ++index) {
-		m_TextureLevels[index] = new Texture();
-	}
 }
 
 
 MultiTexture :: ~MultiTexture() {
-	for (int index = 0; index < MAX_LEVELS; ++index) {
-		delete m_TextureLevels[index];
-	}
 }
 
 
@@ -160,13 +139,9 @@ MultiTexture :: ~MultiTexture() {
 // --------------------------------------------------------------------------
 bool MultiTexture :: IsComplete() const {
 
-	if (m_TextureLevels[0] == 0) {
-		return false;
-	}
-
-	U32 width = m_TextureLevels[0]->GetWidth();
-	U32 height = m_TextureLevels[0]->GetHeight();
-	RasterizerState::TextureFormat format = m_TextureLevels[0]->GetInternalFormat();
+	U32 width = m_TextureLevels[0].GetWidth();
+	U32 height = m_TextureLevels[0].GetHeight();
+	RasterizerState::TextureFormat format = m_TextureLevels[0].GetInternalFormat();
 
 	for (int index = 1; index < MAX_LEVELS; ++index) {
 		if (width == 1 && height == 1) {
@@ -181,13 +156,9 @@ bool MultiTexture :: IsComplete() const {
 			height = height / 2;
 		}
 
-		if (m_TextureLevels[index] == 0) {
-			return false;
-		}
-
-		if (m_TextureLevels[index]->GetWidth() != width ||
-			m_TextureLevels[index]->GetHeight() != height ||
-			m_TextureLevels[index]->GetInternalFormat() != format) {
+		if (m_TextureLevels[index].GetWidth() != width ||
+			m_TextureLevels[index].GetHeight() != height ||
+			m_TextureLevels[index].GetInternalFormat() != format) {
 			return false;
 		}
 	}

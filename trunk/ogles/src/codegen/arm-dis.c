@@ -399,7 +399,7 @@ void dump_swi(ARMDis* dis, ARMInstr i) {
 
 
 void dump_clz(ARMDis* dis, ARMInstr i) {
-	fprintf(dis->dis_out, "clz%s\t");
+	fprintf(dis->dis_out, "clz%s\t", cond[i.generic.cond]);
 	dump_reg(dis, i.clz.rd);
 	fprintf(dis->dis_out, ", ");
 	dump_reg(dis, i.clz.rm);
@@ -422,7 +422,7 @@ void armdis_decode(ARMDis* dis, cg_segment_t * segment) {
 
 	for (i=0; i<size; ++i) {
 		instr.raw = cg_segment_get_u32(segment, offset);
-		fprintf(dis->dis_out, "%p:\t%08x\t", offset, instr.raw);
+		fprintf(dis->dis_out, "%p:\t%08x\t", (void *) offset, instr.raw);
 		dis->offset = offset;
 		offset += sizeof(U32);
 

@@ -155,7 +155,7 @@ void Rasterizer :: PrepareTriangle() {
 		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeScanline, 
 									 *m_State);
 
-	m_MipMapLevel = 0;
+	m_RasterInfo.MipmapLevel = 0;
 }
 
 
@@ -234,7 +234,7 @@ inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const Ed
 
 			// we start with nearest/minification only selection; will add LINEAR later
 
-			m_MipMapLevel = EGL_Min(EGL_Max(0, Log2((I32) (rho64 >> 16))), m_MaxMipmapLevel);
+			rasterInfo.MipmapLevel = EGL_Min(EGL_Max(0, Log2((I32) (rho64 >> 16))), m_MaxMipmapLevel);
 
 			dTuDyOverInvZ2 += deltaInvDu << LOG_LINEAR_SPAN;
 			dTvDyOverInvZ2 += deltaInvDv << LOG_LINEAR_SPAN;
@@ -283,7 +283,7 @@ inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const Ed
 
 			// we start with nearest/minification only selection; will add LINEAR later
 
-			m_MipMapLevel = EGL_Min(EGL_Max(0, Log2((I32) (rho64 >> 16))), m_MaxMipmapLevel);
+			rasterInfo.MipmapLevel = EGL_Min(EGL_Max(0, Log2((I32) (rho64 >> 16))), m_MaxMipmapLevel);
 		}
 
 		EGL_Fixed endZ = EGL_Inverse(invZ + deltaX * deltaInvZ);
@@ -668,21 +668,6 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 	I32 yScissorStart = m_State->m_ScissorY;
 	I32 yScissorEnd = yScissorStart + m_State->m_ScissorHeight;
-
-	// ----------------------------------------------------------------------
-	// texture info
-	// ----------------------------------------------------------------------
-
-	Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
-
-	if (texture)
-	{
-		m_RasterInfo.TextureLogWidth			= texture->GetLogWidth();
-		m_RasterInfo.TextureLogHeight			= texture->GetLogHeight();
-		m_RasterInfo.TextureLogBytesPerPixel	= texture->GetLogBytesPerPixel();
-		m_RasterInfo.TextureExponent			= texture->GetExponent();
-		m_RasterInfo.TextureData				= texture->GetData();
-	}
 
 	// ----------------------------------------------------------------------
 	// Determine edge increments and scanline starting point

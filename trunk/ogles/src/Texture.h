@@ -46,7 +46,15 @@
 
 
 namespace EGL {
+
+	class Rasterizer;
+	class CodeGenerator;
+
 	class Texture { 
+
+		friend Rasterizer;
+		friend CodeGenerator;
+
 	public:
 
 		Texture();
@@ -54,11 +62,10 @@ namespace EGL {
 
 		void Initialize(U32 width, U32 height, RasterizerState::TextureFormat format);
 
-		U32 GetWidth() const				{ return m_Width; }
-		U32 GetHeight() const				{ return m_Height; }
-		U32 GetExponent() const				{ return m_Exponent; }
-		U32 GetLogWidth() const;
-		U32 GetLogHeight() const;
+		U32 GetWidth() const				{ return m_LogWidth; }
+		U32 GetHeight() const				{ return m_LogHeight; }
+		U32 GetLogWidth() const				{ return 1 << m_LogWidth; }
+		U32 GetLogHeight() const			{ return 1 << m_LogHeight; }
 		U32 GetLogBytesPerPixel() const;
 
 		RasterizerState::TextureFormat 
@@ -70,9 +77,8 @@ namespace EGL {
 
 	private:
 		void *							m_Data;
-		U32								m_Width;
-		U32								m_Height;
-		U32								m_Exponent;
+		U32								m_LogWidth;
+		U32								m_LogHeight;
 		RasterizerState::TextureFormat	m_InternalFormat;
 
 		const static U8 s_BytesPerPixel[];
@@ -80,6 +86,9 @@ namespace EGL {
 
 
 	class MultiTexture {
+
+		friend Rasterizer;
+
 	public:
 		enum {
 			MAX_LEVELS = 20
@@ -88,8 +97,8 @@ namespace EGL {
 		MultiTexture();
 		~MultiTexture();
 
-		Texture * GetTexture(int level)				{ return m_TextureLevels[level]; }
-		const Texture * GetTexture(int level) const	{ return m_TextureLevels[level]; }
+		Texture * GetTexture(int level)				{ return m_TextureLevels + level; }
+		const Texture * GetTexture(int level) const	{ return m_TextureLevels + level; }
 
 		void SetMinFilterMode(RasterizerState::FilterMode mode)		{ m_MinFilterMode = mode; }
 		void SetMagFilterMode(RasterizerState::FilterMode mode)		{ m_MagFilterMode = mode; }
@@ -104,14 +113,14 @@ namespace EGL {
 		RasterizerState::WrappingMode GetWrappingModeT() const		{ return m_WrappingModeT; }
 
 		RasterizerState::TextureFormat 
-			GetInternalFormat() const				{ return m_TextureLevels[0]->GetInternalFormat(); }
+			GetInternalFormat() const				{ return m_TextureLevels[0].GetInternalFormat(); }
 
 		bool IsComplete() const;
 
 		bool IsMipMap() const;
 
 	private:
-		Texture	*						m_TextureLevels[MAX_LEVELS];
+		Texture							m_TextureLevels[MAX_LEVELS];
 		RasterizerState::FilterMode		m_MinFilterMode;
 		RasterizerState::FilterMode		m_MagFilterMode;
 		RasterizerState::FilterMode		m_MipmapFilterMode;

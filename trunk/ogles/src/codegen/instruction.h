@@ -93,7 +93,7 @@ typedef enum cg_opcode_t {
 	cg_op_not,		cg_op_or,		cg_op_sub,		cg_op_xor,				
 	cg_op_min,		cg_op_max,
 	cg_op_fadd,		cg_op_fcmp,		cg_op_fdiv,		cg_op_fmul,		cg_op_fneg,		
-	cg_op_fsub,		cg_op_finv,		cg_op_fsqrt,					
+	cg_op_fsub,		cg_op_finv,		cg_op_fsqrt,	cg_op_abs,		cg_op_log2,
 	cg_op_trunc,	cg_op_round,	cg_op_fcnv,															
 	cg_op_beq,		cg_op_bge,		cg_op_ble,		cg_op_bgt,		cg_op_blt,		
 	cg_op_bne,		cg_op_bra,			
@@ -438,6 +438,8 @@ cg_inst_t * cg_create_inst_unary(cg_block_t * block,
 #define TRUNC(dest, source)				cg_create_inst_unary(block, cg_op_trunc, dest, source CG_INST_DEBUG_ARGS)
 #define ROUND(dest, source)				cg_create_inst_unary(block, cg_op_round, dest, source CG_INST_DEBUG_ARGS)
 #define FCNV(dest, source)				cg_create_inst_unary(block, cg_op_fcnv, dest, source CG_INST_DEBUG_ARGS)
+#define ABS(dest, source)				cg_create_inst_unary(block, cg_op_abs, dest, source CG_INST_DEBUG_ARGS)
+#define LOG2(dest, source)				cg_create_inst_unary(block, cg_op_log2, dest, source CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_unary_s(cg_block_t * block, 
 								   cg_opcode_t op, 

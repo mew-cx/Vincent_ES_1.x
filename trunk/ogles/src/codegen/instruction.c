@@ -1486,7 +1486,7 @@ static const char * const opcodes[] =
 	"not",		"or",		"sub",		"xor",	
 	"min",		"max",
 	"fadd",		"fcmp",		"fdiv",		"fmul",		"fneg",		
-	"fsub",		"finv",		"fsqrt",					
+	"fsub",		"finv",		"fsqrt",	"abs",		"log2",					
 	"trunc",	"round",	"fcnv",															
 	"beq",		"bge",		"ble",		"bgt",		"blt",		
 	"bne",		"bra",			

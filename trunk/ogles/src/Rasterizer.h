@@ -129,11 +129,10 @@ namespace EGL {
 		// TODO: 
 
 		// texture info
-		I32		TextureLogWidth;
-		I32		TextureLogHeight;
-		I32		TextureLogBytesPerPixel;
-		I32		TextureExponent;
-		void *	TextureData;
+		Texture *	Textures;
+		U32			MipmapLevel;
+		U32			MaxMipmapLevel;
+
 
 		void Init(Surface * surface, I32 y) {
 			size_t offset = y * surface->GetWidth();
@@ -279,9 +278,7 @@ namespace EGL {
 		EGL_Fixed				m_MinY;
 		EGL_Fixed				m_MaxY;
 
-		I32						m_MipMapLevel;
 		bool					m_UseMipmap;
-		I32						m_MaxMipmapLevel;
 
 	};
 
