@@ -53,6 +53,7 @@ using namespace EGL;
 
 void Context :: BindTexture(GLenum target, GLuint texture) { 
 	if (target != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
 		return;
 	}
 

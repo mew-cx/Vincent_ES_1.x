@@ -19,6 +19,7 @@ In addition, a couple of defects that showed up in those examples have been addr
 1001351 - alpha3d example does not render correctly
 1001354 - Stray red pixels in examples
 1001356 - Polyoff example shows stippling
+ 960543 - BindTexture should record an error for invalid targets
 
 
 Version 0.80
