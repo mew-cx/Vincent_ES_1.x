@@ -26,8 +26,6 @@
 'token' TYPE_NAME
 'token' FLOATCONSTANT
 'token' INTCONSTANT
-'token' BOOLCONSTANT
-'token' FIELD_SELECTION
 
 'root' translation_unit
 
@@ -38,9 +36,13 @@
 	'rule' primary_expression: variable_identifier
 	'rule' primary_expression: INTCONSTANT
 	'rule' primary_expression: FLOATCONSTANT
-	'rule' primary_expression: BOOLCONSTANT
+	'rule' primary_expression: bool_const
 	'rule' primary_expression: "(" expression ")"
 
+'nonterm' bool_const
+	'rule' bool_const: "true"
+	'rule' bool_const: "false"
+	
 'nonterm' postfix_expression
 	'rule' postfix_expression: primary_expression
 	'rule' postfix_expression: postfix_expression "[" integer_expression "]"
