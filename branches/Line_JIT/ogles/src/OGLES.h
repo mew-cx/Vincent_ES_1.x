@@ -56,6 +56,17 @@
 #endif
 
 
+#if (defined(ARM) || defined(_ARM_)) && !defined(EGL_NO_COMPILE)
+#	define EGL_USE_JIT	1
+#else
+#	define EGL_USE_JIT  0
+#endif
+
+
+#ifndef EGL_RELEASE
+#	define EGL_RELEASE				"x.yy"
+#endif
+
 #define EGL_CONFIG_VENDOR			"Hans-Martin Will"
 #define EGL_CONFIG_VERSION			"OpenGL ES-CL 1.0"
 #define EGL_CONFIG_EXTENSIONS		"GL_OES_fixed_point "\
@@ -71,7 +82,13 @@
 #	define EGL_CONFIG_RENDERER		"Software"
 #endif
 
-#define EGL_VERSION_NUMBER			"0.79 " EGL_CONFIG_RENDERER
+#if EGL_USE_JIT
+#	define	EGL_JIT_VERSION			" JIT"
+#else
+#	define	EGL_JIT_VERSION			" No JIT"
+#endif
+
+#define EGL_VERSION_NUMBER			EGL_RELEASE " " EGL_CONFIG_RENDERER EGL_JIT_VERSION
 
 
 // --------------------------------------------------------------------------
