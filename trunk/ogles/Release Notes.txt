@@ -21,6 +21,7 @@ This version addresses the following issues:
 1001371 - Use CLZ for XScale and retire GPP
 1033799 - Under-/overflow in fog calculation
 1034326 - use CLZ in emit_unary_log2 for XScale builds
+1034149 - Addressing mode for min/max operations
 
 
 Version 0.82

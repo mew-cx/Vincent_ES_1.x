@@ -523,6 +523,8 @@ static int is_arm_binary_data_opcode(cg_opcode_t opcode) {
 		case cg_op_xor:
 		case cg_op_fadd:
 		case cg_op_fsub:
+		case cg_op_min:
+		case cg_op_max:
 			return 1;
 
 		default:
