@@ -371,10 +371,10 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regLoop0ScaledDiffU);
 	DECL_REG	(regLoop0DiffV);
 	DECL_REG	(regLoop0ScaledDiffV);
-	DECL_REG	(regLoop0ScaledDiffUOver2);
-	DECL_REG	(regLoop0ScaledDiffVOver2);
-	DECL_REG	(regAdjustedU0);
-	DECL_REG	(regAdjustedV0);
+	//DECL_REG	(regLoop0ScaledDiffUOver2);
+	//DECL_REG	(regLoop0ScaledDiffVOver2);
+	//DECL_REG	(regAdjustedU0);
+	//DECL_REG	(regAdjustedV0);
 
 
 	FSUB	(regLoop0DiffZ, regLoop0EndZ, regLoop0ZEntry); // Entry?
@@ -382,13 +382,13 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	FSUB	(regLoop0DiffU, regLoop0EndU, regLoop0UEntry); // Entry?
 	ASR		(regLoop0ScaledDiffU, regLoop0DiffU, regLogLinearSpan);
-	ASR		(regLoop0ScaledDiffUOver2, regLoop0ScaledDiffU, regConstant1);
-	FADD	(regAdjustedU0, regLoop0UEntry, regLoop0ScaledDiffUOver2);
+	//ASR		(regLoop0ScaledDiffUOver2, regLoop0ScaledDiffU, regConstant1);
+	//FADD	(regAdjustedU0, regLoop0UEntry, regLoop0ScaledDiffUOver2);
 
 	FSUB	(regLoop0DiffV, regLoop0EndV, regLoop0VEntry); // Entry?
 	ASR		(regLoop0ScaledDiffV, regLoop0DiffV, regLogLinearSpan);
-	ASR		(regLoop0ScaledDiffVOver2, regLoop0ScaledDiffV, regConstant1);
-	FADD	(regAdjustedV0, regLoop0VEntry, regLoop0ScaledDiffVOver2);
+	//ASR		(regLoop0ScaledDiffVOver2, regLoop0ScaledDiffV, regConstant1);
+	//FADD	(regAdjustedV0, regLoop0VEntry, regLoop0ScaledDiffVOver2);
 
 	// also not to include phi projection for z coming from inner loop
 
@@ -430,8 +430,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	PHI		(regLoop1CountEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Count, regLinearSpan, NULL));
 	PHI		(regLoop1XEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1X, regX, NULL));
 	PHI		(regLoop1ZEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Z, regZ, NULL));
-	PHI		(regLoop1UEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1U, regAdjustedU0, NULL));
-	PHI		(regLoop1VEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1V, regAdjustedV0, NULL));
+	PHI		(regLoop1UEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1U, regLoop0UEntry, NULL));
+	PHI		(regLoop1VEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1V, regLoop0VEntry, NULL));
 	PHI		(regLoop1FogEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Fog, regStartFog, NULL));
 	PHI		(regLoop1DepthEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Depth, regStartDepth, NULL));
 	PHI		(regLoop1REntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1R, regStartColorR, NULL));
@@ -500,14 +500,14 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	block = cg_block_create(procedure, 2);
 
-	DECL_REG	(regLoop1UExit);
-	DECL_REG	(regLoop1VExit);
+	//DECL_REG	(regLoop1UExit);
+	//DECL_REG	(regLoop1VExit);
 
-	PHI		(regLoop1UExit, cg_create_virtual_reg_list(procedure->module->heap, regLoop1U, regAdjustedU0, NULL));
-	PHI		(regLoop1VExit, cg_create_virtual_reg_list(procedure->module->heap, regLoop1V, regAdjustedV0, NULL));
+	PHI		(regLoop0U, cg_create_virtual_reg_list(procedure->module->heap, regLoop1U, regLoop0UEntry, NULL));
+	PHI		(regLoop0V, cg_create_virtual_reg_list(procedure->module->heap, regLoop1V, regLoop0VEntry, NULL));
 	
-	FSUB		(regLoop0U, regLoop1UExit, regLoop0ScaledDiffUOver2);
-	FSUB		(regLoop0V, regLoop1VExit, regLoop0ScaledDiffVOver2);
+	//FSUB		(regLoop0U, regLoop1UExit, regLoop0ScaledDiffUOver2);
+	//FSUB		(regLoop0V, regLoop1VExit, regLoop0ScaledDiffVOver2);
 
 	DECL_FLAGS	(regLoop0Condition);
 
