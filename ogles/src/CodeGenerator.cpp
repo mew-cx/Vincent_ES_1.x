@@ -448,7 +448,8 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 		I32 regTexColorR;			
 		I32 regTexColorG;			
 		I32 regTexColorB;			
-		I32 regTexColorA;			
+		I32 regTexColorA;
+		I32 regTexColor565;
 
 		//I32 texX = EGL_IntFromFixed(texture->GetWidth() * tu0);
 		//I32 texY = EGL_IntFromFixed(texture->GetHeight() * tv0);
@@ -472,13 +473,25 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 			case Texture::TextureFormatAlpha:				// 8
 				{
 				//texColor = Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
-				regTexColorR = regTexColorB = regTexColorG = nextRegister++;
+				regTexColorR = regTexColorB = nextRegister++;
+				regTexColorG = nextRegister++;
 				regTexColorA = nextRegister++;
+				regTexColor565 = nextRegister++;
 				I32 regTexAddr = nextRegister++;
+				I32 regConstant7 = nextRegister++;
+				I32 regShifted7 = nextRegister++;
+				I32 regTexData = nextRegister++;
+				
 
 				*block +=	BINARY		(add,	regTexAddr, regTexOffset, fragmentInfo.regTextureData);
-				*block +=	LOAD		(ldb,	regTexColorA, regTexAddr);
-				*block +=	IMMEDIATE	(ldi,	regTexColorR, Constant::createInt(0xff));
+				*block +=	LOAD		(ldb,	regTexData, regTexAddr);
+				*block +=	IMMEDIATE	(ldi,	regConstant7, Constant::createInt(7));
+				*block +=	BINARY		(lsr,	regShifted7, regTexData, regConstant7);
+				*block +=	BINARY		(add,	regTexColorA, regTexData, regShifted7);
+				*block +=	IMMEDIATE	(ldi,	regTexColorR, Constant::createInt(0x1f));
+				*block +=	IMMEDIATE	(ldi,	regTexColorG, Constant::createInt(0x3f));
+				*block +=	IMMEDIATE	(ldi,	regTexColor565, Constant::createInt(0xffff));
+
 				}
 				break;
 
@@ -486,13 +499,41 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 				{
 				//U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset];
 				//texColor = Color (luminance, luminance, luminance, 0xff);
-				regTexColorR = regTexColorB = regTexColorG = nextRegister++;
+				regTexColorR = regTexColorB = nextRegister++;
+				regTexColorG = nextRegister++;
 				regTexColorA = nextRegister++;
+				regTexColor565 = nextRegister++;
 				I32 regTexAddr = nextRegister++;
+				I32 regTexData = nextRegister++;
+				I32 regMask5 = nextRegister++;
+				I32 regMask6 = nextRegister++;
+				I32 regConstant2 = nextRegister++;
+				I32 regConstant3 = nextRegister++;
+				I32 regConstant5 = nextRegister++;
+				I32 regConstant11 = nextRegister++;
+				I32 regColor5 = nextRegister++;
+				I32 regColor6 = nextRegister++;
+				I32 regShiftedB = nextRegister++;
+				I32 regShiftedG = nextRegister++;
+				I32 regRG = nextRegister++;
 
 				*block +=	BINARY		(add,	regTexAddr, regTexOffset, fragmentInfo.regTextureData);
-				*block +=	LOAD		(ldb,	regTexColorR, regTexAddr);
-				*block +=	IMMEDIATE	(ldi,	regTexColorA, Constant::createInt(0xff));
+				*block +=	LOAD		(ldb,	regTexData, regTexAddr);
+				*block +=	IMMEDIATE	(ldi,	regTexColorA, Constant::createInt(0x100));
+				*block +=	IMMEDIATE	(ldi,	regMask5, Constant::createInt(0x1f));
+				*block +=	IMMEDIATE	(ldi,	regMask6, Constant::createInt(0x3f));
+				*block +=	IMMEDIATE	(ldi,	regConstant2, Constant::createInt(2));
+				*block +=	IMMEDIATE	(ldi,	regConstant3, Constant::createInt(3));
+				*block +=	BINARY		(lsl,	regColor5, regTexData, regConstant3);
+				*block +=	BINARY		(and,	regTexColorR, regColor5, regMask5);
+				*block +=	BINARY		(lsl,	regColor6, regTexData, regConstant2);
+				*block +=	BINARY		(and,	regTexColorG, regColor6, regMask6);
+				*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+				*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+				*block +=	BINARY		(lsl,	regShiftedB, regTexColorB, regConstant11);
+				*block +=	BINARY		(lsl,	regShiftedG, regTexColorG, regConstant5);
+				*block +=	BINARY		(or,	regRG, regTexColorR, regShiftedG);
+				*block +=	BINARY		(or,	regTexColor565, regRG, regShiftedB);
 				}
 				break;
 
@@ -501,25 +542,57 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 				//U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset * 2];
 				//U8 alpha = reinterpret_cast<const U8 *>(data)[texOffset * 2 + 1];
 				//texColor = Color (luminance, luminance, luminance, alpha);
-				regTexColorR = regTexColorB = regTexColorG = nextRegister++;
+				regTexColorR = regTexColorB = nextRegister++;
+				regTexColorG = nextRegister++;
 				regTexColorA = nextRegister++;
+				regTexColor565 = nextRegister++;
+				I32 regTexAddr = nextRegister++;
 				I32 regTexData = nextRegister++;
+				I32 regMask5 = nextRegister++;
+				I32 regMask6 = nextRegister++;
+				I32 regConstant2 = nextRegister++;
+				I32 regConstant3 = nextRegister++;
+				I32 regConstant5 = nextRegister++;
+				I32 regConstant11 = nextRegister++;
+				I32 regColor5 = nextRegister++;
+				I32 regColor6 = nextRegister++;
+				I32 regShiftedB = nextRegister++;
+				I32 regShiftedG = nextRegister++;
+				I32 regRG = nextRegister++;
 				I32 regScaledOffset = nextRegister++;
 				I32 regConstantOne = nextRegister++;
-				I32 regTexAddr = nextRegister++;
 				I32 regMask = nextRegister++;
 				I32 regConstant8 = nextRegister++;
 				I32 regAlpha = nextRegister++;
+				I32 regMaskedAlphaByte = nextRegister++;
+				I32 regConstant7 = nextRegister++;
+				I32 regShifted7 = nextRegister++;
 
 				*block +=	IMMEDIATE	(ldi,	regConstantOne, Constant::createInt(1));
 				*block +=	BINARY		(lsl,	regScaledOffset, regTexOffset, regConstantOne);
 				*block +=	BINARY		(add,	regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
 				*block +=	LOAD		(ldh,	regTexData, regTexAddr);
 				*block +=	IMMEDIATE	(ldi,	regMask, Constant::createInt(0xff));
-				*block +=   BINARY		(and,	regTexColorR, regTexData, regMask);
 				*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
 				*block +=	BINARY		(lsr,	regAlpha, regTexData, regConstant8);
-				*block +=	BINARY		(and,	regTexColorA, regAlpha, regMask);
+				*block +=	BINARY		(and,	regMaskedAlphaByte, regAlpha, regMask);
+				*block +=	IMMEDIATE	(ldi,	regConstant7, Constant::createInt(7));
+				*block +=	BINARY		(lsr,	regShifted7, regMaskedAlphaByte, regConstant7);
+				*block +=	BINARY		(add,	regTexColorA, regMaskedAlphaByte, regShifted7);
+				*block +=	IMMEDIATE	(ldi,	regMask5, Constant::createInt(0x1f));
+				*block +=	IMMEDIATE	(ldi,	regMask6, Constant::createInt(0x3f));
+				*block +=	IMMEDIATE	(ldi,	regConstant2, Constant::createInt(2));
+				*block +=	IMMEDIATE	(ldi,	regConstant3, Constant::createInt(3));
+				*block +=	BINARY		(lsl,	regColor5, regTexData, regConstant3);
+				*block +=	BINARY		(and,	regTexColorR, regColor5, regMask5);
+				*block +=	BINARY		(lsl,	regColor6, regTexData, regConstant2);
+				*block +=	BINARY		(and,	regTexColorG, regColor6, regMask6);
+				*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+				*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+				*block +=	BINARY		(lsl,	regShiftedB, regTexColorB, regConstant11);
+				*block +=	BINARY		(lsl,	regShiftedG, regTexColorG, regConstant5);
+				*block +=	BINARY		(or,	regRG, regTexColorR, regShiftedG);
+				*block +=	BINARY		(or,	regTexColor565, regRG, regShiftedB);
 
 				}
 				break;
@@ -531,49 +604,134 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 				regTexColorB = nextRegister++;
 				regTexColorG = nextRegister++;
 				regTexColorA = nextRegister++;
-				I32 regTexData = nextRegister++;
+				regTexColor565 = nextRegister++;
 				I32 regScaledOffset = nextRegister++;
 				I32 regConstantOne = nextRegister++;
 				I32 regTexAddr = nextRegister++;
-				I32 regMask = nextRegister++;
+				I32 regMask5 = nextRegister++;
+				I32 regMask6 = nextRegister++;
+				I32 regConstant5 = nextRegister++;
+				I32 regShifted5 = nextRegister++;
+				I32 regConstant11 = nextRegister++;
+				I32 regShifted11 = nextRegister++;
 
 				*block +=	IMMEDIATE	(ldi,	regConstantOne, Constant::createInt(1));
 				*block +=	BINARY		(lsl,	regScaledOffset, regTexOffset, regConstantOne);
 				*block +=	BINARY		(add,	regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
-				*block +=	LOAD		(ldh,	regTexData, regTexAddr);
-				*block +=	IMMEDIATE	(ldi,	regMask, Constant::createInt(0xff));
+				*block +=	LOAD		(ldh,	regTexColor565, regTexAddr);
+				*block +=	IMMEDIATE	(ldi,	regTexColorA, Constant::createInt(0x100));
+				*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+				*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+				*block +=	BINARY		(lsr,	regShifted5, regTexColor565, regConstant5);
+				*block +=	BINARY		(lsr,	regShifted11, regTexColor565, regConstant11);
+				*block +=	IMMEDIATE	(ldi,	regMask5, Constant::createInt(0x1f));
+				*block +=	IMMEDIATE	(ldi,	regMask6, Constant::createInt(0x3f));
+				*block +=	BINARY		(and,	regTexColorR, regTexColor565, regMask5);
+				*block +=	BINARY		(and,	regTexColorG, regShifted5, regMask6);
+				*block +=	BINARY		(and,	regTexColorB, regShifted11, regMask5);
 
-				// TO DO: continue here
 				}
 				break;
 
 			case Texture::TextureFormatRGBA:					// 5-5-5-1
 				//texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
 				{
+				I32 regTexData = nextRegister++;
+				I32 regScaledOffset = nextRegister++;
+				I32 regConstantOne = nextRegister++;
+				I32 regTexAddr = nextRegister++;
+
+				*block +=	IMMEDIATE	(ldi,	regConstantOne, Constant::createInt(1));
+				*block +=	BINARY		(lsl,	regScaledOffset, regTexOffset, regConstantOne);
+				*block +=	BINARY		(add,	regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
+				*block +=	LOAD		(ldh,	regTexData, regTexAddr);
+
+				regTexColorA = nextRegister++;
+				I32 regConstant7 = nextRegister++;
+				I32 regShifted7 = nextRegister++;
+				I32 regMask100 = nextRegister++;
+
+				*block +=	IMMEDIATE	(ldi,	regConstant7, Constant::createInt(7));
+				*block +=	IMMEDIATE	(ldi,	regMask100, Constant::createInt(0x100));
+				*block +=	BINARY		(lsr,	regShifted7, regTexData, regConstant7);
+				*block +=	BINARY		(and,	regTexColorA, regShifted7, regMask100);
+
+				I32 regMask5 = nextRegister++;
+				regTexColorR = nextRegister++;
+				regTexColorG = nextRegister++;
+				regTexColorB = nextRegister++;
+				I32 regMask51 = nextRegister++;
+				I32 regConstant4 = nextRegister++;
+				I32 regConstant10 = nextRegister++;
+				I32 regShifted4 = nextRegister++;
+				I32 regShifted10 = nextRegister++;
+
+				*block +=	IMMEDIATE	(ldi,	regMask5, Constant::createInt(0x1f));
+				*block +=	BINARY		(and,	regTexColorR, regTexData, regMask5);
+				*block +=	IMMEDIATE	(ldi,	regMask51, Constant::createInt(0x3e));
+				*block +=	IMMEDIATE	(ldi,	regConstant4, Constant::createInt(4));
+				*block +=	IMMEDIATE	(ldi,	regConstant10, Constant::createInt(10));
+				*block +=	BINARY		(lsr,	regShifted4, regTexData, regConstant4);
+				*block +=	BINARY		(and,	regTexColorG, regShifted4, regMask51);
+				*block +=	BINARY		(lsr,	regShifted10, regTexData, regConstant10);
+				*block +=	BINARY		(and,	regTexColorB, regShifted10, regMask5);
+
+				regTexColor565 = nextRegister++;
+				I32 regConstant5 = nextRegister++;
+				I32 regConstant11 = nextRegister++;
+				I32 regShiftedB = nextRegister++;
+				I32 regShiftedG = nextRegister++;
+				I32 regRG = nextRegister++;
+
+				*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+				*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+				*block +=	BINARY		(lsl,	regShiftedB, regTexColorB, regConstant11);
+				*block +=	BINARY		(lsl,	regShiftedG, regTexColorG, regConstant5);
+				*block +=	BINARY		(or,	regRG, regTexColorR, regShiftedG);
+				*block +=	BINARY		(or,	regTexColor565, regRG, regShiftedB);
 				}
 				break;
 
 			default:
-				//texColor = Color(0xff, 0xff, 0xff, 0xff);
+				//texColor = Color(0xff, 0xff, 0xff, 0x100);
 				{
-				regTexColorR = regTexColorB = regTexColorG = regTexColorA = nextRegister++;
-				*block +=	IMMEDIATE	(ldi,	regTexColorR, Constant::createInt(0xff));
+				regTexColorR = regTexColorB = nextRegister++;
+				regTexColorG = nextRegister++;
+				regTexColorA = nextRegister++;
+				regTexColor565 = nextRegister++;
+
+				*block +=	IMMEDIATE	(ldi,	regTexColorR, Constant::createInt(0x1f));
+				*block +=	IMMEDIATE	(ldi,	regTexColorG, Constant::createInt(0x3f));
+				*block +=	IMMEDIATE	(ldi,	regTexColorA, Constant::createInt(0x100));
+				*block +=	IMMEDIATE	(ldi,	regTexColor565, Constant::createInt(0xffff));
 				}
 				break;
 		}
+
+		I32 regColorR;
+		I32 regColorG;
+		I32 regColorB;
+		I32 regColorA;
+		I32 regColor565;
 
 		switch (m_Texture->GetInternalFormat()) {
 			default:
 			case Texture::TextureFormatAlpha:
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeReplace:
+						{
 						//color = Color(color.r, color.g, color.b, texColor.a);
+						}
+
 						break;
 
 					case RasterizerState::TextureModeModulate:
 					case RasterizerState::TextureModeBlend:
 					case RasterizerState::TextureModeAdd:
+						{
 						//color = Color(color.r, color.g, color.b, MulU8(color.a, texColor.a));
+						}
+
 						break;
 				}
 				break;
@@ -583,30 +741,42 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeDecal:
 					case RasterizerState::TextureModeReplace:
+						{
 						//color = Color(texColor.r, texColor.g, texColor.b, color.a);
+						}
+
 						break;
 
 					case RasterizerState::TextureModeModulate:
+						{
 						//color = Color(MulU8(color.r, texColor.r), 
 						//	MulU8(color.g, texColor.g), MulU8(color.b, texColor.b), color.a);
+						}
+
 						break;
 
 					case RasterizerState::TextureModeBlend:
+						{
 						//color = 
 						//	Color(
 						//		MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
 						//		MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
 						//		MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
 						//		color.a);
+						}
+
 						break;
 
 					case RasterizerState::TextureModeAdd:
+						{
 						//color =
 						//	Color(
 						//		ClampU8(color.r + texColor.r),
 						//		ClampU8(color.g + texColor.g),
 						//		ClampU8(color.b + texColor.b),
 						//		color.a);
+						}
+
 						break;
 				}
 				break;
@@ -615,44 +785,66 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 			case Texture::TextureFormatRGBA:
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeReplace:
+						{
 						//color = texColor;
+						regColorR = regTexColorR;
+						regColorG = regTexColorG;
+						regColorB = regTexColorB;
+						regColorA = regTexColorA;
+						regColor565 = regTexColor565;
+						}
+
 						break;
 
 					case RasterizerState::TextureModeModulate:
+						{
 						//color = color * texColor;
+						}
+
 						break;
 
 					case RasterizerState::TextureModeDecal:
+						{
 						//color = 
 						//	Color(
 						//		MulU8(color.r, 0xff - texColor.a) + MulU8(texColor.r, texColor.a),
 						//		MulU8(color.g, 0xff - texColor.a) + MulU8(texColor.g, texColor.a),
 						//		MulU8(color.b, 0xff - texColor.a) + MulU8(texColor.b, texColor.a),
 						//		color.a);
+						}
+
 						break;
 
 					case RasterizerState::TextureModeBlend:
+						{
 						//color = 
 						//	Color(
 						//		MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
 						//		MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
 						//		MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
 						//		MulU8(color.a, texColor.a));
+						}
+
 						break;
 
 					case RasterizerState::TextureModeAdd:
+						{
 						//color =
 						//	Color(
 						//		ClampU8(color.r + texColor.r),
 						//		ClampU8(color.g + texColor.g),
 						//		ClampU8(color.b + texColor.b),
 						//		MulU8(color.a, texColor.a));
+						}
+
 						break;
 				}
 				break;
 		}
 	} else {
 		// color = baseColor
+
+		// TO DO: needs to be converted to 565 format, alpha to 8 bits
 		colorR = fragmentInfo.regR;
 		colorG = fragmentInfo.regG;
 		colorB = fragmentInfo.regB;
