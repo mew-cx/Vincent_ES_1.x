@@ -27,6 +27,8 @@
 #include "GLES/glext.h"
 #include "Color.h"
 
+GLAPI EGLBoolean APIENTRY eglSaveSurfaceHM(EGLSurface surface, const TCHAR * filename);
+
 #ifndef _WIN32_WCE
 using namespace Gdiplus;
 
@@ -181,7 +183,7 @@ namespace {
 		DeleteDC(memDC);
 		DeleteDC(targetDC);
 
-		glTexParameterx(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+		glTexParameterx(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 
 #if 1
 		//Here we can bitmap bits: pBuffer. Note:
@@ -1409,13 +1411,14 @@ extern "C" void PaintProc(HWND hWnd) {
 	//glScissor(30, 30, 100, 100);
 	//glEnable(GL_SCISSOR_TEST);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
-//	glDrawArrays(GL_LINE_STRIP, 0, SIZE);
-	glDrawArrays(GL_TRIANGLES, 0, SIZE);
+	glDrawArrays(GL_LINE_STRIP, 0, SIZE);
+//	glDrawArrays(GL_TRIANGLES, 0, SIZE);
 
 	glFinish();
 	eglWaitGL();
 
 	DWORD endRaster = GetTickCount();
+	//eglSaveSurfaceHM(g_surface, L"image.bmp");
     eglSwapBuffers(display, g_surface);
 	DWORD endSwap = GetTickCount();
 
