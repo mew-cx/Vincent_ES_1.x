@@ -143,20 +143,11 @@ namespace EGL {
 			WrappingModeRepeat
 		};
 
-		enum MinFilterMode {
-			MinFilterModeInvalid = -1,
-			MinFilterModeNearest,
-			MinFilterModeLinear,
-			MinFilterModeNearestMipmapNearest,
-			MinFilterModeNearestMipmapLinear,
-			MinFilterModeLinearMipmapNearest,
-			MinFilterModeLinearMipmapLinear,
-		};
-
-		enum MagFilterMode {
-			MagFilterModeInvalid = -1,
-			MagFilterModeNearest,
-			MagFilterModeLinear
+		enum FilterMode {
+			FilterModeInvalid = -1,
+			FilterModeNone,
+			FilterModeNearest,
+			FilterModeLinear
 		};
 
 		enum TextureFormat {
@@ -189,13 +180,15 @@ namespace EGL {
 		void SetTexEnvColor(const Color& color);
 		void SetTextureMode(TextureMode mode);
 
-		void SetMinFilterMode(MinFilterMode mode);
-		void SetMagFilterMode(MagFilterMode mode);
+		void SetMinFilterMode(FilterMode mode);
+		void SetMagFilterMode(FilterMode mode);
+		void SetMipmapFilterMode(FilterMode mode);
 		void SetWrappingModeS(WrappingMode mode);
 		void SetWrappingModeT(WrappingMode mode);
 
-		MinFilterMode GetMinFilterMode() const		{ return m_MinFilterMode; }
-		MagFilterMode GetMagFilterMode() const		{ return m_MagFilterMode; }
+		FilterMode GetMinFilterMode() const			{ return m_MinFilterMode; }
+		FilterMode GetMagFilterMode() const			{ return m_MagFilterMode; }
+		FilterMode GetMipmapFilterMode() const		{ return m_MipmapFilterMode; }
 		WrappingMode GetWrappingModeS() const		{ return m_WrappingModeS; }
 		WrappingMode GetWrappingModeT() const		{ return m_WrappingModeT; }
 
@@ -282,8 +275,9 @@ namespace EGL {
 		Color					m_TexEnvColor;
 		bool					m_TextureEnabled;
 		TextureMode				m_TextureMode;
-		MinFilterMode			m_MinFilterMode;
-		MagFilterMode			m_MagFilterMode;
+		FilterMode				m_MinFilterMode;
+		FilterMode				m_MagFilterMode;
+		FilterMode				m_MipmapFilterMode;
 		WrappingMode			m_WrappingModeS;
 		WrappingMode			m_WrappingModeT;
 		TextureFormat			m_InternalFormat;
@@ -345,12 +339,16 @@ namespace EGL {
 		m_TextureMode = mode;
 	}
 
-	inline void RasterizerState :: SetMinFilterMode(MinFilterMode mode) {
+	inline void RasterizerState :: SetMinFilterMode(FilterMode mode) {
 		m_MinFilterMode = mode;
 	}
 
-	inline void RasterizerState :: SetMagFilterMode(MagFilterMode mode) {
+	inline void RasterizerState :: SetMagFilterMode(FilterMode mode) {
 		m_MagFilterMode = mode;
+	}
+
+	inline void RasterizerState :: SetMipmapFilterMode(FilterMode mode) {
+		m_MipmapFilterMode = mode;
 	}
 
 	inline void RasterizerState :: SetWrappingModeS(WrappingMode mode) {

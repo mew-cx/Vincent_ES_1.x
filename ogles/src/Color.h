@@ -218,6 +218,15 @@ namespace EGL {
 				src.A());
 		}
 
+		static inline Color BlendAlpha(const Color& src, const Color& dst, U32 alpha) {
+			U32 oneMinusAlpha = 0x100 - alpha;
+
+			return Color((src.R() * alpha + dst.R() * oneMinusAlpha) >> 8,
+				(src.G() * alpha + dst.G() * oneMinusAlpha) >> 8,
+				(src.B() * alpha + dst.B() * oneMinusAlpha) >> 8,
+				(src.A() * alpha + dst.A() * oneMinusAlpha) >> 8);
+		}
+
 		static inline Color Blend(const Color& src, const Color& dst) {
 			return Blend(src, dst, s_alphaFactor[src.A()]);
 		}

@@ -131,8 +131,9 @@ U32 Texture :: GetLogBytesPerPixel() const {
 
 
 MultiTexture :: MultiTexture():
-	m_MinFilterMode(RasterizerState::MinFilterModeNearest),
-	m_MagFilterMode(RasterizerState::MagFilterModeNearest),
+	m_MinFilterMode(RasterizerState::FilterModeNearest),
+	m_MagFilterMode(RasterizerState::FilterModeNearest),
+	m_MipmapFilterMode(RasterizerState::FilterModeNone),
 	m_WrappingModeS(RasterizerState::WrappingModeRepeat),
 	m_WrappingModeT(RasterizerState::WrappingModeRepeat)
 {

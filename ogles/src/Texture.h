@@ -93,13 +93,15 @@ namespace EGL {
 		Texture * GetTexture(int level)				{ return m_TextureLevels[level]; }
 		const Texture * GetTexture(int level) const	{ return m_TextureLevels[level]; }
 
-		void SetMinFilterMode(RasterizerState::MinFilterMode mode)	{ m_MinFilterMode = mode; }
-		void SetMagFilterMode(RasterizerState::MagFilterMode mode)	{ m_MagFilterMode = mode; }
+		void SetMinFilterMode(RasterizerState::FilterMode mode)		{ m_MinFilterMode = mode; }
+		void SetMagFilterMode(RasterizerState::FilterMode mode)		{ m_MagFilterMode = mode; }
+		void SetMipmapFilterMode(RasterizerState::FilterMode mode)	{ m_MipmapFilterMode = mode; }
 		void SetWrappingModeS(RasterizerState::WrappingMode mode)	{ m_WrappingModeS = mode; }
 		void SetWrappingModeT(RasterizerState::WrappingMode mode)	{ m_WrappingModeT = mode; }
 
-		RasterizerState::MinFilterMode GetMinFilterMode() const		{ return m_MinFilterMode; }
-		RasterizerState::MagFilterMode GetMagFilterMode() const		{ return m_MagFilterMode; }
+		RasterizerState::FilterMode GetMinFilterMode() const		{ return m_MinFilterMode; }
+		RasterizerState::FilterMode GetMagFilterMode() const		{ return m_MagFilterMode; }
+		RasterizerState::FilterMode GetMipmapFilterMode() const		{ return m_MipmapFilterMode; }
 		RasterizerState::WrappingMode GetWrappingModeS() const		{ return m_WrappingModeS; }
 		RasterizerState::WrappingMode GetWrappingModeT() const		{ return m_WrappingModeT; }
 
@@ -112,8 +114,9 @@ namespace EGL {
 
 	private:
 		Texture	*						m_TextureLevels[MAX_LEVELS];
-		RasterizerState::MinFilterMode	m_MinFilterMode;
-		RasterizerState::MagFilterMode	m_MagFilterMode;
+		RasterizerState::FilterMode		m_MinFilterMode;
+		RasterizerState::FilterMode		m_MagFilterMode;
+		RasterizerState::FilterMode		m_MipmapFilterMode;
 		RasterizerState::WrappingMode	m_WrappingModeS;
 		RasterizerState::WrappingMode	m_WrappingModeT;
 		U32								m_Levels;
@@ -121,10 +124,8 @@ namespace EGL {
 
 	inline bool MultiTexture :: IsMipMap() const {
 		return 
-			m_MinFilterMode == RasterizerState::MinFilterModeNearestMipmapNearest ||
-			m_MinFilterMode == RasterizerState::MinFilterModeNearestMipmapLinear ||
-			m_MinFilterMode == RasterizerState::MinFilterModeLinearMipmapNearest ||
-			m_MinFilterMode == RasterizerState::MinFilterModeLinearMipmapLinear;
+			m_MipmapFilterMode == RasterizerState::FilterModeNearest ||
+			m_MipmapFilterMode == RasterizerState::FilterModeLinear;
 	}
 
 }

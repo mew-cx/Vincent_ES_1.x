@@ -98,6 +98,23 @@ namespace EGL {
 			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
 			int weight);
 
+		void GenerateFetchTexColor(cg_proc_t * proc, cg_block_t * currentBlock,
+								   FragmentGenerationInfo & fragmentInfo,
+								   cg_virtual_reg_t *& regTexColorR,
+								   cg_virtual_reg_t *& regTexColorG,			
+								   cg_virtual_reg_t *& regTexColorB,			
+								   cg_virtual_reg_t *& regTexColorA,
+								   cg_virtual_reg_t *& regTexColor565);
+
+		void FetchTexColor(cg_proc_t * proc, cg_block_t * currentBlock,
+								   cg_virtual_reg_t * regTexData, 
+								   cg_virtual_reg_t * regTexOffset,
+								   cg_virtual_reg_t *& regTexColorR,
+								   cg_virtual_reg_t *& regTexColorG,			
+								   cg_virtual_reg_t *& regTexColorB,			
+								   cg_virtual_reg_t *& regTexColorA,
+								   cg_virtual_reg_t *& regTexColor565);
+
 	private:
 		const RasterizerState *	m_State;
 		struct cg_module_t *m_Module;
