@@ -52,11 +52,10 @@
 //#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 
 #	pragma warning (disable:4786)
+#	pragma warning (disable:4244)
 
 #	include <windows.h>
 #	include <Cmnintrin.h>
-#	include <vector>
-#	include <map>
 
 #endif //ndef EGL_ON_WINCE
 
@@ -67,8 +66,6 @@
 #ifdef EGL_ON_SYMBIAN
 
 #	include <e32def.h>
-#	include <vector.h>
-#	include <map.h>
 
 #endif // ndef EGL_ON_SYMBIAN
 

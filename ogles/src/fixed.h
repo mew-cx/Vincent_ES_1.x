@@ -363,7 +363,7 @@ inline EGL_Fixed EGL_Cos(EGL_Fixed value) {
 //	value		-	the basis; assume 0 <= value <= 1
 //	exponent	-	the exponent, exponent >= 0
 // --------------------------------------------------------------------------
-OGLES_API EGL_Power(EGL_Fixed value, EGL_Fixed exponent);
+OGLES_API EGL_Fixed EGL_Power(EGL_Fixed value, EGL_Fixed exponent);
 
 
 // --------------------------------------------------------------------------
