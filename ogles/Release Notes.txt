@@ -10,6 +10,7 @@ Version 0.77
 
 This version addresses the following issues:
 
+970908 - Point Rasterization test failed.
 970909 - Horizontal and Vertical Line test failed.
 970906 - Depth Buffer Clear test failed.
 970900 - Clip test failed.
