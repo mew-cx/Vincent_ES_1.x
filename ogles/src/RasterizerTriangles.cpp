@@ -622,7 +622,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		EGL_Fixed depthSlope = gradX > gradY ? gradX : gradY;
 
-		I32 offset = EGL_IntFromFixed(EGL_Mul(factor, depthSlope) + units * PolygonOffsetUnitSize);
+		I32 offset = EGL_Mul(factor, depthSlope) + EGL_IntFromFixed(units * PolygonOffsetUnitSize);
 
 		if (offset > 0) {
 			depth1 = depth1 < DepthRangeMax - offset ? depth1 + offset : DepthRangeMax;
