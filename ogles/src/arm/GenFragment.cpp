@@ -523,31 +523,37 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				ADD		(regTexAddr, regScaledOffset, regTextureData);
 				LDH		(regTexData, regTexAddr);
 
-				DECL_REG	(regConstant7);
-				DECL_REG	(regShifted7);
+				DECL_REG	(regConstant8);
+				DECL_REG	(regShifted8);
 				DECL_REG	(regMask100);
 
-				LDI		(regConstant7, 7);
+				LDI		(regConstant8, 8);
 				LDI		(regMask100, 0x100);
-				LSR		(regShifted7, regTexData, regConstant7);
-				AND		(regTexColorA, regShifted7, regMask100);
+				LSL		(regShifted8, regTexData, regConstant8);
+				AND		(regTexColorA, regShifted8, regMask100);
 
 				DECL_REG	(regMask5);
 				DECL_REG	(regMask51);
-				DECL_REG	(regConstant4);
-				DECL_REG	(regConstant10);
-				DECL_REG	(regShifted4);
-				DECL_REG	(regShifted10);
+				DECL_REG	(regConstant5);
+				DECL_REG	(regConstant11);
+				DECL_REG	(regShifted5);
+				DECL_REG	(regShifted11);
+				DECL_REG	(regShifted1);
+				DECL_REG	(regBaseG);
+				DECL_REG	(regShiftedG);
 
 				LDI		(regMask5, 0x1f);
-				AND		(regTexColorB, regTexData, regMask5);
+				LSR		(regShifted1, regTexData, regConstant1);
+				AND		(regTexColorB, regShifted1, regMask5);
 				LDI		(regMask51, 0x3e);
-				LDI		(regConstant4, 4);
-				LDI		(regConstant10, 10);
-				LSR		(regShifted4, regTexData, regConstant4);
-				AND		(regTexColorG, regShifted4, regMask51);
-				LSR		(regShifted10, regTexData, regConstant10);
-				AND		(regTexColorR, regShifted10, regMask5);
+				LDI		(regConstant5, 5);
+				LDI		(regConstant11, 11);
+				LSR		(regShifted5, regTexData, regConstant5);
+				AND		(regBaseG, regShifted5, regMask51);
+				LSR		(regShiftedG, regBaseG, regConstant5);
+				OR		(regTexColorG, regBaseG, regShiftedG);
+				LSR		(regShifted11, regTexData, regConstant11);
+				AND		(regTexColorR, regShifted11, regMask5);
 
 				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 

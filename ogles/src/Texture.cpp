@@ -51,8 +51,11 @@ U8 Texture :: s_BytesPerPixel[] = {
 	1,				// ALPHA
 	1,				// LUMINANCE
 	2,				// LUMINANCE_ALPHA
-	2,				// RGB
-	2				// RGBA
+	3,				// RGB8
+	4,				// RGBA8
+	2,				// RGB565
+	2,				// RGBA4444
+	2				// RGBA5551
 };
 
 

@@ -119,7 +119,7 @@ namespace EGL {
 		}
 
 		inline U16 ConvertTo5551() const {
-			return b >> 3 | (g & 0xF8) << 2 | (r & 0xF8) << 7 | (a & 0x80) << 8;
+			return (b & 0xF8) >> 2 | (g & 0xF8) << 3 | (r & 0xF8) << 8 | (a & 0x80) >> 7;
 		}
 
 		inline U16 ConvertTo4444() const {
@@ -177,10 +177,10 @@ namespace EGL {
 		}
 
 		static inline Color From5551(U16 u5551) {
-			U8 b = (u5551 & 0x001Fu) << 3;
-			U8 g = (u5551 & 0x03E0u) >> 2;
-			U8 r = (u5551 & 0x7C00u) >> 7;
-			U8 a = (u5551 & 0x8000u) >> 8;
+			U8 b = (u5551 & 0x003Eu) << 2;
+			U8 g = (u5551 & 0x07C0u) >> 3;
+			U8 r = (u5551 & 0xF800u) >> 8;
+			U8 a = (u5551 & 0x0001u) << 7;
 
 			r |= r >> 5;
 			g |= g >> 5;
