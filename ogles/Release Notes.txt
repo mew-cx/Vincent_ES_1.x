@@ -10,6 +10,7 @@ Version 0.77
 
 This version addresses the following issues:
 
+970906 - Depth Buffer Clear test failed.
 970900 - Clip test failed.
 970899 - Transform Homogenous Coordinates test failed.
 968663 - Divide By Zero Test Hangs

@@ -705,7 +705,7 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 			EGL_Mul(EGL_Mul(y, invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
 
 		pos.m_WindowCoords.depth = 
-			EGL_Mul(z, EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase;
+			EGL_Mul(EGL_Mul(z, invDenominator), m_DepthRangeFactor)  + m_DepthRangeBase;
 
 	}
 }
