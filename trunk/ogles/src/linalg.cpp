@@ -116,10 +116,12 @@ Matrix4x4 Matrix4x4 :: Inverse(bool rescale) const {
 			EGL_Mul(result.Element(2, 1), result.Element(2, 1)) +
 			EGL_Mul(result.Element(2, 2), result.Element(2, 2));
 
-		EGL_Fixed factor = EGL_InvSqrt(sumOfSquares);
+		if (sumOfSquares != EGL_ONE) {
+			EGL_Fixed factor = EGL_InvSqrt(sumOfSquares);
 
-		for (size_t index = 0; index < 16; ++index) {
-			result.Element(index) *= factor;
+			for (size_t index = 0; index < 16; ++index) {
+				result.Element(index) = EGL_Mul(result.Element(index), factor);
+			}
 		}
 	}
 

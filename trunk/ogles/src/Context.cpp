@@ -98,6 +98,10 @@ Context :: Context(const Config & config)
 	m_Disposed(false),
 	m_ViewportInitialized(false),
 
+	// pixel store state
+	m_PixelStorePackAlignment(4),
+	m_PixelStoreUnpackAlignment(4),
+
 	// SGIS_generate_mipmap extension
 	m_GenerateMipmaps(false)
 {
