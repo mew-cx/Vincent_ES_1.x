@@ -47,7 +47,7 @@ namespace EGL {
 	class Buffer { 
 
 	public:
-		Buffer() { }
+		Buffer(): m_Data(0), m_Size(0) { }
 
 		~Buffer() { 
 			Deallocate();

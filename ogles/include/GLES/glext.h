@@ -57,8 +57,13 @@ extern "C" {
 #define APIENTRY
 #endif
 
-#ifndef GLAPI
-#define GLAPI
+#ifdef EGL_ON_SYMBIAN
+#	undef GLAPI
+#	define GLAPI EXPORT_C
+#else
+#	ifndef GLAPI
+#	define GLAPI
+#	endif
 #endif
 
 

@@ -669,20 +669,28 @@ inline bool Context :: IsCulled(RasterPos& a, RasterPos& b, RasterPos& c) {
 	EGL_Fixed z1 = c.m_ClipCoords.x();
 	EGL_Fixed z2 = c.m_ClipCoords.y();
 
-	I64 sign;
+	I64 sign,t;
 	
 	if (((x0 & 0xff000000) == 0 || (x0 & 0xff000000) == 0xff000000) &&
 		((y0 & 0xff000000) == 0 || (y0 & 0xff000000) == 0xff000000) &&
 		((z0 & 0xff000000) == 0 || (z0 & 0xff000000) == 0xff000000)) {
-		sign = 
-			+ Round(x0) * (MulLong(Round(y1), Round(z2)) - MulLong(Round(z1), Round(y2)))
-			- Round(y0) * (MulLong(Round(x1), Round(z2)) - MulLong(Round(z1), Round(x2)))
-			+ Round(z0) * (MulLong(Round(x1), Round(y2)) - MulLong(Round(y1), Round(x2)));
+         sign=Round(x0);
+         sign*=MulLong(Round(y1), Round(z2)) - MulLong(Round(z1), Round(y2));
+         t=Round(y0);
+         t*=MulLong(Round(x1), Round(z2)) - MulLong(Round(z1), Round(x2));
+         sign-=t;
+         t=Round(z0);
+         t*=MulLong(Round(x1), Round(y2)) - MulLong(Round(y1), Round(x2));
+         sign+=t;
 	} else {
-		sign = 
-			+ Round(x0 >> 6) * (MulLong(Round(y1), Round(z2)) - MulLong(Round(z1), Round(y2)))
-			- Round(y0 >> 6) * (MulLong(Round(x1), Round(z2)) - MulLong(Round(z1), Round(x2)))
-			+ Round(z0 >> 6) * (MulLong(Round(x1), Round(y2)) - MulLong(Round(y1), Round(x2)));
+         sign=Round(x0>>6);
+         sign*=MulLong(Round(y1), Round(z2)) - MulLong(Round(z1), Round(y2));
+         t=Round(y0>>6);
+         t*=MulLong(Round(x1), Round(z2)) - MulLong(Round(z1), Round(x2));
+         sign-=t;
+         t=Round(z0>>6);
+         t*=MulLong(Round(x1), Round(y2)) - MulLong(Round(y1), Round(x2));
+         sign+=t;
 	}
 
 	switch (m_CullMode) {

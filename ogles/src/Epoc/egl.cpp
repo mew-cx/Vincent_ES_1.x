@@ -289,7 +289,7 @@ extern "C" {
 		Context::GetCurrentContext()->Flush();
 		NativeDisplayType nativeDisplay = reinterpret_cast<NativeDisplayType>(dpy);
 
-		nativeDisplay->DrawBitmap(TPoint(0, 0), draw->GetBitmap());
+		nativeDisplay->BitBlt(TPoint(0, 0), draw->GetBitmap());
 
 		return EGL_TRUE;
 	}

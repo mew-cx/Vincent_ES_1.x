@@ -44,12 +44,21 @@ extern "C" {
 
 #ifndef EGL_USE_GPP		// define only if not including Intel's GPP library
 
-typedef signed char 		I8;
-typedef unsigned char 		U8;
-typedef short 				I16;
-typedef unsigned short 		U16;
-typedef int 				I32;
-typedef unsigned int 		U32;
+#	ifdef EGL_ON_SYMBIAN
+	    typedef TInt8	 I8;
+        typedef TUint8  U8;
+        typedef TInt16  I16;
+        typedef TUint16 U16;
+        typedef TInt    I32;
+        typedef TUint   U32;
+#	else
+	    typedef signed char 		I8;
+	    typedef unsigned char 		U8;
+	    typedef short 				I16;
+	    typedef unsigned short 		U16;
+	    typedef int 				I32;
+	    typedef unsigned int 		U32;
+#	endif
 
 #endif
 
