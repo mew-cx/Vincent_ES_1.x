@@ -52,13 +52,21 @@ namespace EGL {
 		friend CodeGenerator;
 
 	public:
+		enum FunctionType {
+			FunctionTypeScanline,
+			FunctionTypePoint,
+			FunctionTypeLine,
+			FunctionTypeTriangle
+		};
+
+	public:
 		FunctionCache(size_t totalSize = 65536, float percentageKeep = 0.6);
 		~FunctionCache();
 
-		ScanlineFunction * GetFunction(const RasterizerState & state);
+		ScanlineFunction * GetFunction(FunctionType type, const RasterizerState & state);
 
 	private:
-		void * AddFunction(const RasterizerState & state, size_t size);
+		void * AddFunction(FunctionType type, const RasterizerState & state, size_t size);
 		void CompactCode();
 
 	private:

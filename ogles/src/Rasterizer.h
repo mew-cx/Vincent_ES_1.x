@@ -135,7 +135,7 @@ namespace EGL {
 		I32		TextureExponent;
 		void *	TextureData;
 
-		RasterInfo(Surface * surface, I32 y) {
+		void Init(Surface * surface, I32 y) {
 			size_t offset = y * surface->GetWidth();
 			
 			SurfaceWidth = surface->GetWidth();
@@ -259,6 +259,7 @@ namespace EGL {
 		// other settings
 		// ----------------------------------------------------------------------
 
+		RasterInfo				m_RasterInfo;
 		Surface *				m_Surface;			// rendering surface
 		MultiTexture *			m_Texture;			// current texture 
 		RasterizerState *		m_State;			// current rasterization settings
@@ -278,7 +279,9 @@ namespace EGL {
 		EGL_Fixed				m_MinY;
 		EGL_Fixed				m_MaxY;
 
-		int						m_MipMapLevel;
+		I32						m_MipMapLevel;
+		bool					m_UseMipmap;
+		I32						m_MaxMipmapLevel;
 
 	};
 

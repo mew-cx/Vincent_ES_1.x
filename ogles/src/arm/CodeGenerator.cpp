@@ -193,7 +193,10 @@ void CodeGenerator :: CompileRasterScanLine(FunctionCache * target) {
 	armdis_dump(&dis, "dump5.txt", cseg);
 #endif
 
-	void * targetBuffer = target->AddFunction(*m_State, cg_segment_size(cseg));
+	void * targetBuffer = 
+		target->AddFunction(FunctionCache::FunctionTypeScanline, 
+							*m_State, cg_segment_size(cseg));
+
 	cg_segment_get_block(cseg, 0, targetBuffer, cg_segment_size(cseg));
 
 #if defined(EGL_ON_WINCE) && (defined(ARM) || defined(_ARM_))

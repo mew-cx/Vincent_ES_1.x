@@ -43,7 +43,7 @@
 using namespace EGL;
 
 // ----------------------------------------------------------------------
-// Info-Block to manage a single compiled functions
+// Info-Block to manage a single compiled function
 // ----------------------------------------------------------------------
 
 namespace EGL {
@@ -54,6 +54,8 @@ namespace EGL {
 		size_t			m_Offset;		// offset of function in code segment
 		size_t			m_Size;			// size of function in code segment
 		U32				m_Flags;		// flags for garbage collection
+
+		FunctionCache::FunctionType m_Type;	// what kind of function is this?
 	};
 }
 
@@ -86,10 +88,10 @@ FunctionCache :: ~FunctionCache() {
 }
 
 
-ScanlineFunction * FunctionCache :: GetFunction(const RasterizerState & state) {
+ScanlineFunction * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & state) {
 
 	for (FunctionInfo * function = m_MostRecentlyUsed; function; function = function->m_Next) {
-		if (!state.Compare(function->m_State)) {
+		if (function->m_Type == type && !state.Compare(function->m_State)) {
 			// move to front
 			if (function->m_Prev) {
 				function->m_Prev->m_Next = function->m_Next;
@@ -114,13 +116,20 @@ ScanlineFunction * FunctionCache :: GetFunction(const RasterizerState & state) {
 
 	CodeGenerator generator;
 	generator.SetState(&state);
-	generator.CompileRasterScanLine(this);
+
+	switch (type) {
+	case FunctionTypeScanline:
+		generator.CompileRasterScanLine(this);
+
+	default:
+		;
+	}
 
 	return reinterpret_cast<ScanlineFunction *>(m_Code + m_MostRecentlyUsed->m_Offset); 
 }
 
 
-void * FunctionCache :: AddFunction(const RasterizerState & state, size_t size) {
+void * FunctionCache :: AddFunction(FunctionType type, const RasterizerState & state, size_t size) {
 
 	if (size + m_Used >= m_Total || m_UsedFunctions >= m_MaxFunctions) {
 		CompactCode();
@@ -147,6 +156,7 @@ void * FunctionCache :: AddFunction(const RasterizerState & state, size_t size) 
 	function->m_Size = size;
 	m_Used += size;
 	function->m_State = state;
+	function->m_Type = type;
 
 	return reinterpret_cast<void *>(m_Code + m_MostRecentlyUsed->m_Offset); 
 }

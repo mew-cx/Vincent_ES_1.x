@@ -102,6 +102,16 @@ static inline I32 EGL_Abs(I32 value) {
 }
 
 
+static inline I32 EGL_Min(I32 first, I32 second) {
+	return first < second ? first : second;
+}
+
+
+static inline I32 EGL_Max(I32 first, I32 second) {
+	return first > second ? first : second;
+}
+
+
 // --------------------------------------------------------------------------
 // Convert integer value to fixed point number
 //
