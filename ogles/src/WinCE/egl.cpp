@@ -337,5 +337,3 @@ GLAPI EGLBoolean APIENTRY eglCopyBuffers (EGLDisplay dpy, EGLSurface surface, Na
 	eglRecordError(EGL_SUCCESS);
 	return EGL_TRUE;
 }
-
-

@@ -15,18 +15,20 @@ This version addresses the following issues:
 1010509 - specular exponent in material not initialized
 1010508 - EGL_Power on x86 buggy
 1010510 - specular color incorrect
+1010824 - Provide utility function to save screenshots
+1011519 - Improve rasterizer state comparisons
 
 
 Version 0.81
 ------------
 
 This version adds the redbook examples that are distributed with the reference implementation. To
-do so, a version of the gu library (the mini GLUT included in the reference implementation) has
+do so, a version of the ug library (the mini GLUT included in the reference implementation) has
 been added.
 
 In addition, a couple of defects that showed up in those examples have been addressed:
 
- 863654  - Create specialized pipeline functions for geometry stage 
+ 863654 - Create specialized pipeline functions for geometry stage 
  960543 - BindTexture should record an error for invalid targets
 1001348 - By default, smooth shading should be enabled
 1001352 - movelight example is rendered incorrectly

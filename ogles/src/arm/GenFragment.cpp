@@ -132,7 +132,7 @@ void CodeGenerator :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentB
 
 	cg_block_t * block = currentBlock;
 
-	switch (m_State->m_InternalFormat) {
+	switch (m_State->m_Texture.InternalFormat) {
 		case RasterizerState::TextureFormatAlpha:				// 8
 			{
 			//texColor = Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
@@ -625,8 +625,8 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 
 		LDI		(regMask, 0xffff);
 
-		WrapOrClamp(procedure, block, regU, regU0, regMask, m_State->m_WrappingModeS);
-		WrapOrClamp(procedure, block, regV, regV0, regMask, m_State->m_WrappingModeT);
+		WrapOrClamp(procedure, block, regU, regU0, regMask, m_State->m_Texture.WrappingModeS);
+		WrapOrClamp(procedure, block, regV, regV0, regMask, m_State->m_Texture.WrappingModeT);
 
 		// get the pixel color
 		//Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
@@ -722,10 +722,10 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 		ADD			(regTexX1, regTexX, regConstant1);
 		ADD			(regTexY1, regTexY, regConstant1);
 
-		WrapOrClamp(procedure, block, regTexX, regI0, regIntMaskU, m_State->m_WrappingModeS);
-		WrapOrClamp(procedure, block, regTexX1, regI1, regIntMaskU, m_State->m_WrappingModeS);
-		WrapOrClamp(procedure, block, regTexY, regJ0, regIntMaskV, m_State->m_WrappingModeT);
-		WrapOrClamp(procedure, block, regTexY1, regJ1, regIntMaskV, m_State->m_WrappingModeT);
+		WrapOrClamp(procedure, block, regTexX, regI0, regIntMaskU, m_State->m_Texture.WrappingModeS);
+		WrapOrClamp(procedure, block, regTexX1, regI1, regIntMaskU, m_State->m_Texture.WrappingModeS);
+		WrapOrClamp(procedure, block, regTexY, regJ0, regIntMaskV, m_State->m_Texture.WrappingModeT);
+		WrapOrClamp(procedure, block, regTexY1, regJ1, regIntMaskV, m_State->m_Texture.WrappingModeT);
 
 		DECL_REG	(regScaledJ0);
 		DECL_REG	(regScaledJ1);
@@ -824,14 +824,14 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	//	return;
 	//}
 
-	if (m_State->m_ScissorTestEnabled) {
+	if (m_State->m_ScissorTest.Enabled) {
 		DECL_REG	(regConstXStart);
 		DECL_REG	(regConstXEnd);
 		DECL_FLAGS	(regXStartTest);
 		DECL_FLAGS	(regXEndTest);
 
-		LDI			(regConstXStart, m_State->m_ScissorX);
-		LDI			(regConstXEnd, m_State->m_ScissorX + m_State->m_ScissorWidth);
+		LDI			(regConstXStart, m_State->m_ScissorTest.X);
+		LDI			(regConstXEnd, m_State->m_ScissorTest.X + m_State->m_ScissorTest.Width);
 
 		CMP			(regXStartTest, fragmentInfo.regX, regConstXStart);
 		BLT			(regXStartTest, continuation);
@@ -878,7 +878,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 	cg_opcode_t branchOnDepthTestPassed, branchOnDepthTestFailed;
 
-	switch (m_State->m_DepthFunc) {
+	switch (m_State->m_DepthTest.Func) {
 		default:
 		case RasterizerState::CompFuncNever:	
 			//depthTest = false;						
@@ -929,7 +929,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			break;
 	}
 
-	if (!m_State->m_StencilTestEnabled && m_State->m_DepthTestEnabled) {
+	if (!m_State->m_Stencil.Enabled && m_State->m_DepthTest.Enabled) {
 		//if (!depthTest)
 		//	return;
 
@@ -949,7 +949,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	cg_virtual_reg_t * regColorA;
 	cg_virtual_reg_t * regColor565;
 
-	if (m_State->m_TextureEnabled) {
+	if (m_State->m_Texture.Enabled) {
 
 		//Color texColor; 
 		cg_virtual_reg_t * regTexColorR;			
@@ -961,10 +961,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		GenerateFetchTexColor(procedure, block, fragmentInfo, 
 							  regTexColorR, regTexColorG, regTexColorB, regTexColorA, regTexColor565);
 
-		switch (m_State->m_InternalFormat) {
+		switch (m_State->m_Texture.InternalFormat) {
 			default:
 			case RasterizerState::TextureFormatAlpha:
-				switch (m_State->m_TextureMode) {
+				switch (m_State->m_Texture.Mode) {
 					case RasterizerState::TextureModeReplace:
 						{
 						//color = Color(color.r, color.g, color.b, texColor.a);
@@ -1044,7 +1044,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			case RasterizerState::TextureFormatLuminance:
 			case RasterizerState::TextureFormatRGB565:
 			case RasterizerState::TextureFormatRGB8:
-				switch (m_State->m_TextureMode) {
+				switch (m_State->m_Texture.Mode) {
 					case RasterizerState::TextureModeDecal:
 					case RasterizerState::TextureModeReplace:
 						{
@@ -1136,7 +1136,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
-							LDI		(regTexEnv, m_State->m_TexEnvColor.r);
+							LDI		(regTexEnv, m_State->m_Texture.EnvColor.r);
 							SUB		(regDiff, regShiftedAdjusted, regTexEnv);
 							MUL		(regProduct, regDiff, regTexColorR);
 							SUB		(regDifference, regColorAdjusted, regProduct);
@@ -1162,7 +1162,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
-							LDI		(regTexEnv, m_State->m_TexEnvColor.g);
+							LDI		(regTexEnv, m_State->m_Texture.EnvColor.g);
 							SUB		(regDiff, regShiftedAdjusted, regTexEnv);
 							MUL		(regProduct, regDiff, regTexColorG);
 							SUB		(regDifference, regColorAdjusted, regProduct);
@@ -1188,7 +1188,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
-							LDI		(regTexEnv, m_State->m_TexEnvColor.b);
+							LDI		(regTexEnv, m_State->m_Texture.EnvColor.b);
 							SUB		(regDiff, regShiftedAdjusted, regTexEnv);
 							MUL		(regProduct, regDiff, regTexColorB);
 							SUB		(regDifference, regColorAdjusted, regProduct);
@@ -1320,7 +1320,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			case RasterizerState::TextureFormatRGBA5551:
 			case RasterizerState::TextureFormatRGBA4444:
 			case RasterizerState::TextureFormatRGBA8:
-				switch (m_State->m_TextureMode) {
+				switch (m_State->m_Texture.Mode) {
 					case RasterizerState::TextureModeReplace:
 						{
 						//color = texColor;
@@ -1516,7 +1516,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
-							LDI		(regTexEnv, m_State->m_TexEnvColor.r);
+							LDI		(regTexEnv, m_State->m_Texture.EnvColor.r);
 							SUB		(regDiff, regShiftedAdjusted, regTexEnv);
 							MUL		(regProduct, regDiff, regTexColorR);
 							SUB		(regDifference, regColorAdjusted, regProduct);
@@ -1542,7 +1542,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
-							LDI		(regTexEnv, m_State->m_TexEnvColor.g);
+							LDI		(regTexEnv, m_State->m_Texture.EnvColor.g);
 							SUB		(regDiff, regShiftedAdjusted, regTexEnv);
 							MUL		(regProduct, regDiff, regTexColorG);
 							SUB		(regDifference, regColorAdjusted, regProduct);
@@ -1568,7 +1568,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
-							LDI		(regTexEnv, m_State->m_TexEnvColor.b);
+							LDI		(regTexEnv, m_State->m_Texture.EnvColor.b);
 							SUB		(regDiff, regShiftedAdjusted, regTexEnv);
 							MUL		(regProduct, regDiff, regTexColorB);
 							SUB		(regDifference, regColorAdjusted, regProduct);
@@ -1782,15 +1782,15 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	}
 
 	// fog
-	if (m_State->m_FogEnabled) {
+	if (m_State->m_Fog.Enabled) {
 		//color = Color::Blend(color, m_State->m_FogColor, fogDensity);
 		DECL_REG	(regFogColorR);
 		DECL_REG	(regFogColorG);
 		DECL_REG	(regFogColorB);
 
-		LDI		(regFogColorR, m_State->m_FogColor.r >> 3);
-		LDI		(regFogColorG, m_State->m_FogColor.g >> 2);
-		LDI		(regFogColorB, m_State->m_FogColor.b >> 3);
+		LDI		(regFogColorR, m_State->m_Fog.Color.r >> 3);
+		LDI		(regFogColorG, m_State->m_Fog.Color.g >> 2);
+		LDI		(regFogColorB, m_State->m_Fog.Color.b >> 3);
 
 		DECL_REG	(regDeltaR);
 		DECL_REG	(regDeltaG);
@@ -1837,19 +1837,19 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			regColorG, regColorB);
 	}
 
-	if (m_State->m_AlphaTestEnabled) {
+	if (m_State->m_Alpha.Enabled) {
 		//bool alphaTest;
 		//U8 alpha = color.A();
 		//U8 alphaRef = EGL_IntFromFixed(m_State->m_AlphaReference * 255);
 		DECL_REG	(regAlphaRef);
 		DECL_FLAGS	(regAlphaTest);
 
-		LDI		(regAlphaRef, m_State->m_AlphaReference >> 8);
+		LDI		(regAlphaRef, m_State->m_Alpha.Reference >> 8);
 		CMP		(regAlphaTest, regColorA, regAlphaRef);
 
 		cg_opcode_t failedTest;
 		
-		switch (m_State->m_AlphaFunc) {
+		switch (m_State->m_Alpha.Func) {
 			default:
 			case RasterizerState::CompFuncNever:	
 				//alphaTest = false;					
@@ -1904,7 +1904,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		}
 	}
 
-	if (m_State->m_StencilTestEnabled) {
+	if (m_State->m_Stencil.Enabled) {
 
 		//bool stencilTest;
 		//U32 stencilRef = m_State->m_StencilReference & m_State->m_StencilMask;
@@ -1919,8 +1919,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 		cg_virtual_reg_t * regStencilBuffer =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_STENCIL_BUFFER);
 
-		LDI		(regStencilRef, m_State->m_StencilReference & m_State->m_StencilMask);
-		LDI		(regStencilMask, m_State->m_StencilMask);
+		LDI		(regStencilRef, m_State->m_Stencil.Reference & m_State->m_Stencil.Mask);
+		LDI		(regStencilMask, m_State->m_Stencil.Mask);
 		ADD		(regStencilAddr, regStencilBuffer, regOffset4);
 		LDW		(regStencilValue, regStencilAddr);
 		AND		(regStencil, regStencilValue, regStencilMask);
@@ -1928,7 +1928,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 		cg_opcode_t passedTest;
 
-		switch (m_State->m_StencilFunc) {
+		switch (m_State->m_Stencil.Func) {
 			default:
 			case RasterizerState::CompFuncNever:	
 				//stencilTest = false;				
@@ -1983,7 +1983,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		{
 			cg_virtual_reg_t * regNewStencilValue;
 
-			switch (m_State->m_StencilFail) {
+			switch (m_State->m_Stencil.Fail) {
 				default:
 				case RasterizerState::StencilOpKeep: 
 					regNewStencilValue = regStencilValue;
@@ -2072,7 +2072,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			{
 				cg_virtual_reg_t * regNewStencilValue;
 
-				switch (m_State->m_StencilZFail) {
+				switch (m_State->m_Stencil.ZFail) {
 					default:
 					case RasterizerState::StencilOpKeep: 
 						regNewStencilValue = regStencilValue;
@@ -2103,7 +2103,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							LDI		(regConstant1, 1);
 							ADD_S	(regNewStencilValue, regFlag, regStencilValue, regConstant1);
 
-							if (m_State->m_DepthTestEnabled) {
+							if (m_State->m_DepthTest.Enabled) {
 								BEQ		(regFlag, continuation);
 							} else {
 								BEQ		(regFlag, labelStencilBypassed);
@@ -2126,7 +2126,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							LDI		(regConstant0, 0);
 							CMP		(regFlag, regStencilValue, regConstant0);
 
-							if (m_State->m_DepthTestEnabled) {
+							if (m_State->m_DepthTest.Enabled) {
 								BEQ		(regFlag, continuation);
 							} else {
 								BEQ		(regFlag, labelStencilBypassed);
@@ -2151,7 +2151,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			//}
 			}
 
-			if (m_State->m_DepthTestEnabled) {
+			if (m_State->m_DepthTest.Enabled) {
 				// return;
 				BRA		(continuation);
 			}
@@ -2163,7 +2163,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			{
 				cg_virtual_reg_t * regNewStencilValue;
 
-				switch (m_State->m_StencilZPass) {
+				switch (m_State->m_Stencil.ZPass) {
 					default:
 					case RasterizerState::StencilOpKeep: 
 						regNewStencilValue = regStencilValue;
@@ -2274,7 +2274,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	}
 
 	// Blending
-	if (m_State->m_BlendingEnabled) {
+	if (m_State->m_Blend.Enabled) {
 
 		cg_virtual_reg_t * regSrcBlendR = 0;
 		cg_virtual_reg_t * regSrcBlendG = 0;
@@ -2310,7 +2310,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		// be modulated is R:5, G:6, B:5, A:8 bits format
 		// ------------------------------------------------------------------
 
-		switch (m_State->m_BlendFuncSrc) {
+		switch (m_State->m_Blend.FuncSrc) {
 			default:
 			case RasterizerState::BlendFuncSrcZero:
 				//srcCoeff = Color(0, 0, 0, 0);
@@ -2483,7 +2483,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				break;
 		}
 
-		switch (m_State->m_BlendFuncDst) {
+		switch (m_State->m_Blend.FuncDst) {
 			default:
 			case RasterizerState::BlendFuncDstZero:
 				//dstCoeff = Color(0, 0, 0, 0);
@@ -2711,7 +2711,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	}
 
 	// Masking and write to framebuffer
-	if (m_State->m_MaskDepth) {
+	if (m_State->m_Mask.Depth) {
 		//m_Surface->GetDepthBuffer()[offset] = depth;
 		STH		(fragmentInfo.regDepth, regZBufferAddr);
 	}
@@ -2731,7 +2731,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		regColorA = regAdjustedA;
 	}
 
-	if (m_State->m_LogicOpEnabled) {
+	if (m_State->m_LogicOp.Enabled) {
 
 		//U32 newValue = maskedColor.ConvertToRGBA();
 		//U32 oldValue = Color::From565A(dstValue, dstAlpha).ConvertToRGBA();
@@ -2744,7 +2744,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 		regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 		
-		switch (m_State->m_LogicOpcode) {
+		switch (m_State->m_LogicOp.Opcode) {
 			default:
 			case RasterizerState:: LogicOpClear:		
 				//value = 0;						
@@ -2897,7 +2897,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	
 	//Color maskedColor = 
 	//	color.Mask(m_State->m_MaskRed, m_State->m_MaskGreen, m_State->m_MaskBlue, m_State->m_MaskAlpha);
-	if (m_State->m_MaskRed & m_State->m_MaskGreen & m_State->m_MaskBlue) {
+	if (m_State->m_Mask.Red & m_State->m_Mask.Green & m_State->m_Mask.Blue) {
 		//m_Surface->GetColorBuffer()[offset] = maskedColor.ConvertTo565();
 		STH		(regColor565, regColorAddr);
 	} else {
@@ -2908,9 +2908,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		DECL_REG	(regMaskedDst);
 		DECL_REG	(regCombined);
 
-		U32 mask = (m_State->m_MaskBlue ? 0x001f : 0) |
-			(m_State->m_MaskGreen ? 0x07e0 : 0) |
-			(m_State->m_MaskRed ? 0xF800 : 0);
+		U32 mask = (m_State->m_Mask.Blue ? 0x001f : 0) |
+			(m_State->m_Mask.Green ? 0x07e0 : 0) |
+			(m_State->m_Mask.Red ? 0xF800 : 0);
 
 		LDI		(regSrcMask, mask);
 		LDI		(regDstMask, ~mask);
@@ -2920,7 +2920,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		STH		(regCombined, regColorAddr);
 	}
 
-	if (m_State->m_MaskAlpha) {
+	if (m_State->m_Mask.Alpha) {
 		//m_Surface->GetAlphaBuffer()[offset] = maskedColor.A();
 		STB		(regColorA, regAlphaAddr);
 	}

@@ -206,9 +206,9 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 	}
 
 	// fragment level clipping (for now)
-	if (m_State->m_ScissorTestEnabled) {
-		if (x < m_State->m_ScissorX || x - m_State->m_ScissorX >= m_State->m_ScissorWidth ||
-			y < m_State->m_ScissorY || y - m_State->m_ScissorY >= m_State->m_ScissorHeight) {
+	if (m_State->m_ScissorTest.Enabled) {
+		if (x < m_State->m_ScissorTest.X || x - m_State->m_ScissorTest.X >= m_State->m_ScissorTest.Width ||
+			y < m_State->m_ScissorTest.Y || y - m_State->m_ScissorTest.Y >= m_State->m_ScissorTest.Height) {
 			return;
 		}
 	}
@@ -351,8 +351,8 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 	bool depthTest;
 
 	// fragment level clipping (for now)
-	if (m_State->m_ScissorTestEnabled) {
-		if (x < m_State->m_ScissorX || x - m_State->m_ScissorX >= m_State->m_ScissorWidth) {
+	if (m_State->m_ScissorTest.Enabled) {
+		if (x < m_State->m_ScissorTest.X || x - m_State->m_ScissorTest.X >= m_State->m_ScissorTest.Width) {
 			return;
 		}
 	}
@@ -363,7 +363,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 	assert(depth >= 0 && depth <= 0xffff);
 	I32 zBufferValue = rasterInfo->DepthBuffer[offset];
 
-	switch (m_State->m_DepthFunc) {
+	switch (m_State->m_DepthTest.Func) {
 		default:
 		case RasterizerState::CompFuncNever:	depthTest = false;						break;
 		case RasterizerState::CompFuncLess:		depthTest = depth < zBufferValue;		break;
@@ -375,7 +375,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 		case RasterizerState::CompFuncAlways:	depthTest = true;						break;
 	}
 
-	if (!m_State->m_StencilTestEnabled && m_State->m_DepthTestEnabled && !depthTest) {
+	if (!m_State->m_Stencil.Enabled && m_State->m_DepthTest.Enabled && !depthTest) {
 		return;
 	}
 
@@ -383,7 +383,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 	// have offset, color, texOffset, texture
 
-	if (m_State->m_TextureEnabled) {
+	if (m_State->m_Texture.Enabled) {
 
 		Texture * texture = rasterInfo->Textures + rasterInfo->MipmapLevel;
 		Color texColor = GetTexColor(texture, tu, tv, m_State->GetMinFilterMode());
@@ -391,7 +391,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 		switch (m_Texture->GetInternalFormat()) {
 			default:
 			case RasterizerState::TextureFormatAlpha:
-				switch (m_State->m_TextureMode) {
+				switch (m_State->m_Texture.Mode) {
 					case RasterizerState::TextureModeReplace:
 						color = Color(color.r, color.g, color.b, texColor.a);
 						break;
@@ -405,7 +405,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 				break;
 
 			case RasterizerState::TextureFormatLuminance:
-				switch (m_State->m_TextureMode) {
+				switch (m_State->m_Texture.Mode) {
 					case RasterizerState::TextureModeDecal:
 					case RasterizerState::TextureModeReplace:
 						color = Color(texColor.r, texColor.g, texColor.b, color.a);
@@ -419,9 +419,9 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					case RasterizerState::TextureModeBlend:
 						color = 
 							Color(
-								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
-								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
-								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
+								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture.EnvColor.r, texColor.r),
+								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture.EnvColor.g, texColor.g),
+								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_Texture.EnvColor.b, texColor.b),
 								color.a);
 						break;
 
@@ -438,7 +438,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 			case RasterizerState::TextureFormatRGB565:
 			case RasterizerState::TextureFormatRGB8:
-				switch (m_State->m_TextureMode) {
+				switch (m_State->m_Texture.Mode) {
 					case RasterizerState::TextureModeDecal:
 					case RasterizerState::TextureModeReplace:
 						color = Color(texColor.r, texColor.g, texColor.b, color.a);
@@ -452,9 +452,9 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					case RasterizerState::TextureModeBlend:
 						color = 
 							Color(
-								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
-								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
-								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
+								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture.EnvColor.r, texColor.r),
+								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture.EnvColor.g, texColor.g),
+								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_Texture.EnvColor.b, texColor.b),
 								color.a);
 						break;
 
@@ -470,7 +470,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 				break;
 
 			case RasterizerState::TextureFormatLuminanceAlpha:
-				switch (m_State->m_TextureMode) {
+				switch (m_State->m_Texture.Mode) {
 					case RasterizerState::TextureModeReplace:
 						color = texColor;
 						break;
@@ -491,9 +491,9 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					case RasterizerState::TextureModeBlend:
 						color = 
 							Color(
-								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
-								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
-								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
+								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture.EnvColor.r, texColor.r),
+								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture.EnvColor.g, texColor.g),
+								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_Texture.EnvColor.b, texColor.b),
 								MulU8(color.a, texColor.a));
 						break;
 
@@ -511,7 +511,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 			case RasterizerState::TextureFormatRGBA5551:
 			case RasterizerState::TextureFormatRGBA4444:
 			case RasterizerState::TextureFormatRGBA8:
-				switch (m_State->m_TextureMode) {
+				switch (m_State->m_Texture.Mode) {
 					case RasterizerState::TextureModeReplace:
 						color = texColor;
 						break;
@@ -532,9 +532,9 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					case RasterizerState::TextureModeBlend:
 						color = 
 							Color(
-								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
-								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
-								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
+								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture.EnvColor.r, texColor.r),
+								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture.EnvColor.g, texColor.g),
+								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_Texture.EnvColor.b, texColor.b),
 								MulU8(color.a, texColor.a));
 						break;
 
@@ -552,18 +552,18 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 	}
 
 	// fog
-	if (m_State->m_FogEnabled) {
-		color = Color::Blend(color, m_State->m_FogColor, fogDensity >> 8);
+	if (m_State->m_Fog.Enabled) {
+		color = Color::Blend(color, m_State->m_Fog.Color, fogDensity >> 8);
 	}
 
 	// have color
 
-	if (m_State->m_AlphaTestEnabled) {
+	if (m_State->m_Alpha.Enabled) {
 		bool alphaTest;
 		U8 alpha = color.A();
-		U8 alphaRef = EGL_IntFromFixed(m_State->m_AlphaReference * 255);
+		U8 alphaRef = EGL_IntFromFixed(m_State->m_Alpha.Reference * 255);
 
-		switch (m_State->m_AlphaFunc) {
+		switch (m_State->m_Alpha.Func) {
 			default:
 			case RasterizerState::CompFuncNever:	alphaTest = false;					break;
 			case RasterizerState::CompFuncLess:		alphaTest = alpha < alphaRef;		break;
@@ -582,14 +582,14 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 	// have offset, depth
 
-	if (m_State->m_StencilTestEnabled) {
+	if (m_State->m_Stencil.Enabled) {
 
 		bool stencilTest;
-		U32 stencilRef = m_State->m_StencilReference & m_State->m_StencilMask;
+		U32 stencilRef = m_State->m_Stencil.Reference & m_State->m_Stencil.Mask;
 		U32 stencilValue = rasterInfo->StencilBuffer[offset];
-		U32 stencil = stencilValue & m_State->m_StencilMask;
+		U32 stencil = stencilValue & m_State->m_Stencil.Mask;
 
-		switch (m_State->m_StencilFunc) {
+		switch (m_State->m_Stencil.Func) {
 			default:
 			case RasterizerState::CompFuncNever:	stencilTest = false;				break;
 			case RasterizerState::CompFuncLess:		stencilTest = stencilRef < stencil;	break;
@@ -603,7 +603,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 		if (!stencilTest) {
 
-			switch (m_State->m_StencilFail) {
+			switch (m_State->m_Stencil.Fail) {
 				default:
 				case RasterizerState::StencilOpKeep: 
 					break;
@@ -613,7 +613,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					break;
 
 				case RasterizerState::StencilOpReplace: 
-					stencilValue = m_State->m_StencilReference; 
+					stencilValue = m_State->m_Stencil.Reference; 
 					break;
 
 				case RasterizerState::StencilOpIncr: 
@@ -640,7 +640,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 		}
 
 		if (depthTest) {
-			switch (m_State->m_StencilZPass) {
+			switch (m_State->m_Stencil.ZPass) {
 				default:
 				case RasterizerState::StencilOpKeep: 
 					break;
@@ -650,7 +650,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					break;
 
 				case RasterizerState::StencilOpReplace: 
-					stencilValue = m_State->m_StencilReference; 
+					stencilValue = m_State->m_Stencil.Reference; 
 					break;
 
 				case RasterizerState::StencilOpIncr: 
@@ -674,7 +674,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 			rasterInfo->StencilBuffer[offset] = stencilValue;
 		} else {
-			switch (m_State->m_StencilZFail) {
+			switch (m_State->m_Stencil.ZFail) {
 				default:
 				case RasterizerState::StencilOpKeep: 
 					break;
@@ -684,7 +684,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					break;
 
 				case RasterizerState::StencilOpReplace: 
-					stencilValue = m_State->m_StencilReference; 
+					stencilValue = m_State->m_Stencil.Reference; 
 					break;
 
 				case RasterizerState::StencilOpIncr: 
@@ -710,7 +710,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 		}
 	}
 
-	if (m_State->m_StencilTestEnabled && !depthTest && m_State->m_DepthTestEnabled) {
+	if (m_State->m_Stencil.Enabled && !depthTest && m_State->m_DepthTest.Enabled) {
 		// otherwise we returned at the top
 		return;
 	}
@@ -718,7 +718,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 	// have color, offset 
 
 	// Blending
-	if (m_State->m_BlendingEnabled) {
+	if (m_State->m_Blend.Enabled) {
 
 		U16 dstValue = rasterInfo->ColorBuffer[offset];
 		U8 dstAlpha = rasterInfo->AlphaBuffer[offset];
@@ -727,7 +727,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 		Color srcCoeff, dstCoeff;
 
-		switch (m_State->m_BlendFuncSrc) {
+		switch (m_State->m_Blend.FuncSrc) {
 			default:
 			case RasterizerState::BlendFuncSrcZero:
 				srcCoeff = Color(0, 0, 0, 0);
@@ -770,7 +770,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 				break;
 		}
 
-		switch (m_State->m_BlendFuncDst) {
+		switch (m_State->m_Blend.FuncDst) {
 			default:
 			case RasterizerState::BlendFuncDstZero:
 				dstCoeff = Color(0, 0, 0, 0);
@@ -812,14 +812,14 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 	// have offset, depth, color
 
 	// Masking and write to framebuffer
-	if (m_State->m_MaskDepth) {
+	if (m_State->m_Mask.Depth) {
 		rasterInfo->DepthBuffer[offset] = depth;
 	}
 
 	Color maskedColor = 
-		color.Mask(m_State->m_MaskRed, m_State->m_MaskGreen, m_State->m_MaskBlue, m_State->m_MaskAlpha);
+		color.Mask(m_State->m_Mask.Red, m_State->m_Mask.Green, m_State->m_Mask.Blue, m_State->m_Mask.Alpha);
 
-	if (m_State->m_LogicOpEnabled) {
+	if (m_State->m_LogicOp.Enabled) {
 
 		U16 oldValue = rasterInfo->ColorBuffer[offset];
 		U8 oldAlpha = rasterInfo->AlphaBuffer[offset];
@@ -830,7 +830,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 		U16 value;
 		U8 alpha;
 
-		switch (m_State->m_LogicOpcode) {
+		switch (m_State->m_LogicOp.Opcode) {
 			default:
 			case RasterizerState:: LogicOpClear:		
 				value = 0; 
@@ -919,7 +919,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 	} else {
 		rasterInfo->ColorBuffer[offset] = maskedColor.ConvertTo565();
 
-		if (m_State->m_MaskAlpha) {
+		if (m_State->m_Mask.Alpha) {
 			rasterInfo->AlphaBuffer[offset] = maskedColor.A();
 		}
 	}
@@ -932,7 +932,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 void Rasterizer :: PreparePoint() {
 
-	if (m_State->m_TextureEnabled) {
+	if (m_State->m_Texture.Enabled) {
 		SetTexture(m_Texture);
 	}
 
@@ -941,7 +941,7 @@ void Rasterizer :: PreparePoint() {
 
 
 void Rasterizer :: PrepareLine() {
-	if (m_State->m_TextureEnabled) {
+	if (m_State->m_Texture.Enabled) {
 		SetTexture(m_Texture);
 	}
 

@@ -508,10 +508,10 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 #if HasDepth
 
-	if (m_State->m_PolygonOffsetFillEnabled) {
+	if (m_State->m_Polygon.OffsetFillEnabled) {
 
-		EGL_Fixed factor = m_State->m_PolygonOffsetFactor;
-		EGL_Fixed units = m_State->m_PolygonOffsetUnits;
+		EGL_Fixed factor = m_State->m_Polygon.OffsetFactor;
+		EGL_Fixed units = m_State->m_Polygon.OffsetUnits;
 
 		// calculation here
 
@@ -567,8 +567,8 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 	m_RasterInfo.Init(m_Surface, y);
 
-	I32 yScissorStart = m_State->m_ScissorY;
-	I32 yScissorEnd = yScissorStart + m_State->m_ScissorHeight;
+	I32 yScissorStart = m_State->m_ScissorTest.Y;
+	I32 yScissorEnd = yScissorStart + m_State->m_ScissorTest.Height;
 
 	// ----------------------------------------------------------------------
 	// Determine edge increments and scanline starting point
@@ -655,7 +655,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			for (; y < y3; ++y) {
 
 #if HasScissor
-				if (!m_State->m_ScissorTestEnabled || (y >= yScissorStart && y < yScissorEnd))
+				if (!m_State->m_ScissorTest.Enabled || (y >= yScissorStart && y < yScissorEnd))
 #endif
 					RasterScanLine(m_RasterInfo, start, delta);												
 
@@ -725,7 +725,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 			for (; y < y3; ++y) {
 #if HasScissor
-				if (!m_State->m_ScissorTestEnabled || (y >= yScissorStart && y < yScissorEnd))
+				if (!m_State->m_ScissorTest.Enabled || (y >= yScissorStart && y < yScissorEnd))
 #endif
 					RasterScanLine(m_RasterInfo, start, delta);												
 
@@ -807,7 +807,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		for (; y < y2; ++y) {
 #if HasScissor
-			if (!m_State->m_ScissorTestEnabled || (y >= yScissorStart && y < yScissorEnd))
+			if (!m_State->m_ScissorTest.Enabled || (y >= yScissorStart && y < yScissorEnd))
 #endif
 				RasterScanLine(m_RasterInfo, start, delta);												
 
@@ -871,7 +871,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		for (; y < y3; ++y) {
 #if HasScissor
-			if (!m_State->m_ScissorTestEnabled || (y >= yScissorStart && y < yScissorEnd))
+			if (!m_State->m_ScissorTest.Enabled || (y >= yScissorStart && y < yScissorEnd))
 #endif
 				RasterScanLine(m_RasterInfo, start, delta);												
 
@@ -936,7 +936,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		for (; y < y2; ++y) {
 #if HasScissor
-			if (!m_State->m_ScissorTestEnabled || (y >= yScissorStart && y < yScissorEnd))
+			if (!m_State->m_ScissorTest.Enabled || (y >= yScissorStart && y < yScissorEnd))
 #endif
 				RasterScanLine(m_RasterInfo, start, delta);												
 
@@ -966,7 +966,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		for (; y < y3; ++y) {
 #if HasScissor
-			if (!m_State->m_ScissorTestEnabled || (y >= yScissorStart && y < yScissorEnd))
+			if (!m_State->m_ScissorTest.Enabled || (y >= yScissorStart && y < yScissorEnd))
 #endif
 				RasterScanLine(m_RasterInfo, start, delta);												
 

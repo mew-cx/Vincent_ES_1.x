@@ -44,6 +44,32 @@
 using namespace EGL;
 
 
+namespace {
+	struct InfoHeader {
+		BITMAPINFOHEADER bmiHeader;
+		DWORD            bmiColors[3];
+
+		InfoHeader(U32 width, U32 height) {
+			bmiHeader.biSize = sizeof(bmiHeader); 
+			bmiHeader.biWidth = width; 
+			bmiHeader.biHeight = height; 
+			bmiHeader.biPlanes = 1; 
+			bmiHeader.biBitCount = 16; 
+			bmiHeader.biCompression = BI_BITFIELDS; 
+			bmiHeader.biSizeImage = width * height * sizeof(U16); 
+			bmiHeader.biXPelsPerMeter = 72 * 25; 
+			bmiHeader.biYPelsPerMeter = 72 * 25; 
+			bmiHeader.biClrUsed = 0; 
+			bmiHeader.biClrImportant = 0; 
+
+			bmiColors[0] = 0xF800;
+			bmiColors[1] = 0x07E0;
+			bmiColors[2] = 0x001F;
+		}
+	};
+}
+
+
 Surface :: Surface(const Config & config, HDC hdc) 
 :	m_Config(config),
 	m_Rect (0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
@@ -62,26 +88,7 @@ Surface :: Surface(const Config & config, HDC hdc)
 		m_HDC = CreateCompatibleDC(hdc);
 	}
 
-	struct {
-		BITMAPINFOHEADER bmiHeader;
-		DWORD            bmiColors[3];
-	} info;
-
-	info.bmiHeader.biSize = sizeof(info.bmiHeader); 
-	info.bmiHeader.biWidth = width; 
-	info.bmiHeader.biHeight = height; 
-	info.bmiHeader.biPlanes = 1; 
-	info.bmiHeader.biBitCount = 16; 
-	info.bmiHeader.biCompression = BI_BITFIELDS; 
-	info.bmiHeader.biSizeImage = width * height * sizeof(U16); 
-	info.bmiHeader.biXPelsPerMeter = 72 * 25; 
-	info.bmiHeader.biYPelsPerMeter = 72 * 25; 
-	info.bmiHeader.biClrUsed = 0; 
-	info.bmiHeader.biClrImportant = 0; 
-
-	info.bmiColors[0] = 0xF800;
-	info.bmiColors[1] = 0x07E0;
-	info.bmiColors[2] = 0x001F;
+	InfoHeader info(width, height);;
 
 	m_Bitmap = CreateDIBSection(m_HDC, reinterpret_cast<BITMAPINFO *>(&info), DIB_RGB_COLORS, 
 		reinterpret_cast<void **>(&m_ColorBuffer), NULL, 0);
@@ -229,3 +236,46 @@ void Surface :: ClearColorBuffer(const Color & rgba, const Color & mask, const R
 
 }
 
+
+bool Surface :: Save(const TCHAR * filename) {
+
+	InfoHeader info(GetWidth(), GetHeight());
+
+    BITMAPFILEHEADER header;
+    header.bfType      = 0x4d42;
+    header.bfSize      = sizeof(BITMAPFILEHEADER) + sizeof(info) + info.bmiHeader.biSizeImage;
+    header.bfReserved1 = 0;
+    header.bfReserved2 = 0;
+    header.bfOffBits   = sizeof(BITMAPFILEHEADER) + sizeof(info);
+        
+    // Create the file
+    HANDLE hFile = ::CreateFile(filename, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+    
+    DWORD temp;
+    
+    // Write the header + bitmap info
+    ::WriteFile(hFile, &header, sizeof(header), &temp, 0);
+    ::WriteFile(hFile, &info, sizeof(info), &temp, 0);
+    
+    // Write the image (must flip image vertically)
+    U16 * pixels = m_ColorBuffer;
+    
+    for (int h = GetHeight(); h; --h)
+    {
+        ::WriteFile(hFile, pixels, GetWidth() * sizeof(U16), &temp, 0 );
+        pixels += GetWidth();
+    }
+    
+    ::CloseHandle(hFile);
+    
+    return true;
+}
+
+
+GLAPI EGLBoolean APIENTRY eglSaveSurfaceHM(EGLSurface surface, const TCHAR * filename) {
+	return surface->Save(filename);
+}
