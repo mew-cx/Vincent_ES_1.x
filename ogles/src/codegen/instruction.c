@@ -506,8 +506,7 @@ void cg_module_dataflow(cg_module_t * module)
 
 static int is_arm_unary_data_opcode(cg_opcode_t opcode) {
 	switch (opcode) {
-		case cg_op_neg:
-		case cg_op_fneg:
+		case cg_op_not:
 			return 1;
 
 		default:
