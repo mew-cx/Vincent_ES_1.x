@@ -98,13 +98,17 @@ namespace EGL {
 
 		void ActiveTexture(GLenum texture);
 		void AlphaFuncx(GLenum func, GLclampx ref);
+		void BindBuffer(GLenum target, GLuint buffer);
 		void BindTexture(GLenum target, GLuint texture);
 		void BlendFunc(GLenum sfactor, GLenum dfactor);
+		void BufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage);
+		void BufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid *data);
 		void Clear(GLbitfield mask);
 		void ClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
 		void ClearDepthx(GLclampx depth);
 		void ClearStencil(GLint s);
 		void ClientActiveTexture(GLenum texture);
+		void ClipPlanex(GLenum plane, const GLfixed *equation);
 		void Color4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
 		void ColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
 		void ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
@@ -113,6 +117,7 @@ namespace EGL {
 		void CopyTexImage2D(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
 		void CopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
 		void CullFace(GLenum mode);
+		void DeleteBuffers(GLsizei n, const GLuint *buffers);
 		void DeleteTextures(GLsizei n, const GLuint *textures);
 		void DepthFunc(GLenum func);
 		void DepthMask(GLboolean flag);
@@ -129,11 +134,26 @@ namespace EGL {
 		void Fogxv(GLenum pname, const GLfixed *params);
 		void FrontFace(GLenum mode);
 		void Frustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
+		void GetBooleanv(GLenum pname, GLboolean *params);
+		void GetBufferParameteriv(GLenum target, GLenum pname, GLint *params);
+		void GetClipPlanex(GLenum pname, GLfixed eqn[4]);
+		void GenBuffers(GLsizei n, GLuint *buffers);
 		void GenTextures(GLsizei n, GLuint *textures);
 		GLenum GetError(void);
+		void GetFixedv(GLenum pname, GLfixed *params);
 		void GetIntegerv(GLenum pname, GLint *params);
+		void GetLightxv(GLenum light, GLenum pname, GLfixed *params);
+		void GetMaterialxv(GLenum face, GLenum pname, GLfixed *params);
+		void GetPointerv(GLenum pname, void **params);
+		void GetTexEnviv(GLenum env, GLenum pname, GLint *params);
+		void GetTexEnvxv(GLenum env, GLenum pname, GLfixed *params);
+		void GetTexParameteriv(GLenum target, GLenum pname, GLint *params);
+		void GetTexParameterxv(GLenum target, GLenum pname, GLfixed *params);
 		const GLubyte * GetString(GLenum name);
 		void Hint(GLenum target, GLenum mode);
+		GLboolean IsBuffer(GLuint buffer);
+		GLboolean IsEnabled(GLenum cap);
+		GLboolean IsTexture(GLuint texture);
 		void LightModelx(GLenum pname, GLfixed param);
 		void LightModelxv(GLenum pname, const GLfixed *params);
 		void Lightx(GLenum light, GLenum pname, GLfixed param);
@@ -151,6 +171,8 @@ namespace EGL {
 		void NormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer);
 		void Orthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
 		void PixelStorei(GLenum pname, GLint param);
+		void PointParameterx(GLenum pname, GLfixed param);
+		void PointParameterxv(GLenum pname, const GLfixed *params);
 		void PointSizex(GLfixed size);
 		void PolygonOffsetx(GLfixed factor, GLfixed units);
 		void PopMatrix(void);
@@ -182,11 +204,20 @@ namespace EGL {
 		void AlphaFunc(GLenum func, GLclampf ref);
 		void ClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 		void ClearDepthf(GLclampf depth);
+		void ClipPlanef(GLenum plane, const GLfloat *equation);
 		void Color4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 		void DepthRangef(GLclampf zNear, GLclampf zFar);
+		void DrawTexf(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height);
+		void DrawTexfv(GLfloat *coords);
 		void Fogf(GLenum pname, GLfloat param);
 		void Fogfv(GLenum pname, const GLfloat *params);
 		void Frustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
+		void GetClipPlanef(GLenum pname, GLfloat eqn[4]);
+		void GetFloatv(GLenum pname, GLfloat *params);
+		void GetLightfv(GLenum light, GLenum pname, GLfloat *params);
+		void GetMaterialfv(GLenum face, GLenum pname, GLfloat *params);
+		void GetTexEnvfv(GLenum env, GLenum pname, GLfloat *params);
+		void GetTexParameterfv(GLenum target, GLenum pname, GLfloat *params);
 		void LightModelf(GLenum pname, GLfloat param);
 		void LightModelfv(GLenum pname, const GLfloat *params);
 		void Lightf(GLenum light, GLenum pname, GLfloat param);
@@ -200,6 +231,8 @@ namespace EGL {
 		void MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
 		void Normal3f(GLfloat nx, GLfloat ny, GLfloat nz);
 		void Orthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
+		void PointParameterf(GLenum pname, GLfloat param);
+		void PointParameterfv(GLenum pname, const GLfloat *params);
 		void PointSize(GLfloat size);
 		void PolygonOffset(GLfloat factor, GLfloat units);
 		void Rotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
@@ -213,12 +246,23 @@ namespace EGL {
 		// Extensions
 		// ----------------------------------------------------------------------
 
-		void DrawMesh(GLsizei count, GLenum type, GLsizei stride,
-					  GLsizei offsetVertex, GLsizei strideVertex,
-					  GLsizei offsetNormal, GLsizei strideNormal,
-					  GLsizei offsetTexture, GLsizei strideTexture,
-					  GLsizei offsetColor, GLsizei strideColor, 
-					  const GLvoid *pointer);
+		/* OES_matrix_palette */
+		void CurrentPaletteMatrix(GLint index);
+		void LoadPaletteFromModelViewMatrix();
+		void MatrixIndexPointer(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
+		void WeightPointer(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
+
+		/* OES_point_size_array */
+		void PointSizePointer(GLenum type, GLsizei stride, const GLvoid *pointer);
+
+		/* OES_draw_texture */
+		void DrawTexs(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height);
+		void DrawTexi(GLint x, GLint y, GLint z, GLint width, GLint height);
+		void DrawTexx(GLfixed x, GLfixed y, GLfixed z, GLfixed width, GLfixed height);
+
+		void DrawTexsv(GLshort *coords);
+		void DrawTexiv(GLint *coords);
+		void DrawTexxv(GLfixed *coords);
 
 		// ----------------------------------------------------------------------
 		// Context Management Functions
@@ -321,11 +365,7 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 
 private:
-		void SelectArrayElement(int vertexIndex, int normalIndex, int textureIndex, int colorIndex);
-
-		void SelectArrayElement(int index) {
-			SelectArrayElement(index, index, index, index);
-		}
+		void SelectArrayElement(int index);
 
 		void CurrentValuesToRasterPos(RasterPos * rasterPos);
 

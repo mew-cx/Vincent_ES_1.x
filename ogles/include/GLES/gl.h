@@ -82,8 +82,8 @@ typedef unsigned int GLuint;
 typedef float GLfloat;
 typedef float GLclampf;
 typedef void GLvoid;
-typedef int GLintptrARB;
-typedef int GLsizeiptrARB;
+typedef int GLintptr;
+typedef int GLsizeiptr;
 typedef int GLfixed;
 typedef int GLclampx;
 /* Internal convenience typedefs */
@@ -91,10 +91,18 @@ typedef void (*_GLfuncptr)();
 
 /*************************************************************/
 
-/* Extensions */
+/* OpenGL ES core versions */
 #define GL_OES_VERSION_1_0                1
-#define GL_OES_read_format                1
+#define GL_OES_VERSION_1_1                1
+
+/* Extensions */
 #define GL_OES_compressed_paletted_texture 1
+#define GL_OES_draw_texture               1
+#define GL_OES_matrix_get                 1
+#define GL_OES_matrix_palette             1
+#define GL_OES_point_size_array           1
+#define GL_OES_point_sprite               1
+#define GL_OES_read_format                1
 
 /* ClearBufferMask */
 #define GL_DEPTH_BUFFER_BIT               0x00000100
@@ -144,6 +152,14 @@ typedef void (*_GLfuncptr)();
 /*      GL_ONE_MINUS_SRC_ALPHA */
 /*      GL_DST_ALPHA */
 /*      GL_ONE_MINUS_DST_ALPHA */
+
+/* ClipPlaneName */
+#define GL_CLIP_PLANE0                    0x3000
+#define GL_CLIP_PLANE1                    0x3001
+#define GL_CLIP_PLANE2                    0x3002
+#define GL_CLIP_PLANE3                    0x3003
+#define GL_CLIP_PLANE4                    0x3004
+#define GL_CLIP_PLANE5                    0x3005
 
 /* ColorMaterialFace */
 /*      GL_FRONT_AND_BACK */
@@ -232,13 +248,53 @@ typedef void (*_GLfuncptr)();
 #define GL_CCW                            0x0901
 
 /* GetPName */
+#define GL_CURRENT_COLOR                  0x0B00
+#define GL_CURRENT_NORMAL                 0x0B02
+#define GL_CURRENT_TEXTURE_COORDS         0x0B03
+#define GL_POINT_SIZE_MIN                 0x8126
+#define GL_POINT_SIZE_MAX                 0x8127
+#define GL_POINT_FADE_THRESHOLD_SIZE      0x8128
+#define GL_POINT_DISTANCE_ATTENUATION     0x8129
 #define GL_SMOOTH_POINT_SIZE_RANGE        0x0B12
 #define GL_SMOOTH_LINE_WIDTH_RANGE        0x0B22
 #define GL_ALIASED_POINT_SIZE_RANGE       0x846D
 #define GL_ALIASED_LINE_WIDTH_RANGE       0x846E
-#define GL_IMPLEMENTATION_COLOR_READ_TYPE_OES 0x8B9A
-#define GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES 0x8B9B
+#define GL_CULL_FACE_MODE                 0x0B45
+#define GL_FRONT_FACE                     0x0B46
+#define GL_SHADE_MODEL                    0x0B54
+#define GL_DEPTH_RANGE                    0x0B70
+#define GL_DEPTH_WRITEMASK                0x0B72
+#define GL_DEPTH_CLEAR_VALUE              0x0B73
+#define GL_DEPTH_FUNC                     0x0B74
+#define GL_STENCIL_CLEAR_VALUE            0x0B91
+#define GL_STENCIL_FUNC                   0x0B92
+#define GL_STENCIL_VALUE_MASK             0x0B93
+#define GL_STENCIL_FAIL                   0x0B94
+#define GL_STENCIL_PASS_DEPTH_FAIL        0x0B95
+#define GL_STENCIL_PASS_DEPTH_PASS        0x0B96
+#define GL_STENCIL_REF                    0x0B97
+#define GL_STENCIL_WRITEMASK              0x0B98
+#define GL_MATRIX_MODE                    0x0BA0
+#define GL_VIEWPORT                       0x0BA2
+#define GL_MODELVIEW_STACK_DEPTH          0x0BA3
+#define GL_PROJECTION_STACK_DEPTH         0x0BA4
+#define GL_TEXTURE_STACK_DEPTH            0x0BA5
+#define GL_MODELVIEW_MATRIX               0x0BA6
+#define GL_PROJECTION_MATRIX              0x0BA7
+#define GL_TEXTURE_MATRIX                 0x0BA8
+#define GL_ALPHA_TEST_FUNC                0x0BC1
+#define GL_ALPHA_TEST_REF                 0x0BC2
+#define GL_BLEND_DST                      0x0BE0
+#define GL_BLEND_SRC                      0x0BE1
+#define GL_LOGIC_OP_MODE                  0x0BF0
+#define GL_SCISSOR_BOX                    0x0C10
+#define GL_SCISSOR_TEST                   0x0C11
+#define GL_COLOR_CLEAR_VALUE              0x0C22
+#define GL_COLOR_WRITEMASK                0x0C23
+#define GL_UNPACK_ALIGNMENT               0x0CF5
+#define GL_PACK_ALIGNMENT                 0x0D05
 #define GL_MAX_LIGHTS                     0x0D31
+#define GL_MAX_CLIP_PLANES                0x0D32
 #define GL_MAX_TEXTURE_SIZE               0x0D33
 #define GL_MAX_MODELVIEW_STACK_DEPTH      0x0D36
 #define GL_MAX_PROJECTION_STACK_DEPTH     0x0D38
@@ -247,8 +303,6 @@ typedef void (*_GLfuncptr)();
 #define GL_MAX_ELEMENTS_VERTICES          0x80E8
 #define GL_MAX_ELEMENTS_INDICES           0x80E9
 #define GL_MAX_TEXTURE_UNITS              0x84E2
-#define GL_NUM_COMPRESSED_TEXTURE_FORMATS 0x86A2
-#define GL_COMPRESSED_TEXTURE_FORMATS     0x86A3
 #define GL_SUBPIXEL_BITS                  0x0D50
 #define GL_RED_BITS                       0x0D52
 #define GL_GREEN_BITS                     0x0D53
@@ -256,6 +310,45 @@ typedef void (*_GLfuncptr)();
 #define GL_ALPHA_BITS                     0x0D55
 #define GL_DEPTH_BITS                     0x0D56
 #define GL_STENCIL_BITS                   0x0D57
+#define GL_POLYGON_OFFSET_UNITS           0x2A00
+#define GL_POLYGON_OFFSET_FILL            0x8037
+#define GL_POLYGON_OFFSET_FACTOR          0x8038
+#define GL_TEXTURE_BINDING_2D             0x8069
+#define GL_VERTEX_ARRAY_SIZE              0x807A
+#define GL_VERTEX_ARRAY_TYPE              0x807B
+#define GL_VERTEX_ARRAY_STRIDE            0x807C
+#define GL_NORMAL_ARRAY_TYPE              0x807E
+#define GL_NORMAL_ARRAY_STRIDE            0x807F
+#define GL_COLOR_ARRAY_SIZE               0x8081
+#define GL_COLOR_ARRAY_TYPE               0x8082
+#define GL_COLOR_ARRAY_STRIDE             0x8083
+#define GL_TEXTURE_COORD_ARRAY_SIZE       0x8088
+#define GL_TEXTURE_COORD_ARRAY_TYPE       0x8089
+#define GL_TEXTURE_COORD_ARRAY_STRIDE     0x808A
+#define GL_VERTEX_ARRAY_POINTER           0x808E
+#define GL_NORMAL_ARRAY_POINTER           0x808F
+#define GL_COLOR_ARRAY_POINTER            0x8090
+#define GL_TEXTURE_COORD_ARRAY_POINTER    0x8092
+#define GL_SAMPLE_BUFFERS                 0x80A8
+#define GL_SAMPLES                        0x80A9
+#define GL_SAMPLE_COVERAGE_VALUE          0x80AA
+#define GL_SAMPLE_COVERAGE_INVERT         0x80AB
+
+/* GetTextureParameter */
+/*      GL_TEXTURE_MAG_FILTER */
+/*      GL_TEXTURE_MIN_FILTER */
+/*      GL_TEXTURE_WRAP_S */
+/*      GL_TEXTURE_WRAP_T */
+
+#define GL_IMPLEMENTATION_COLOR_READ_TYPE_OES   0x8B9A
+#define GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES 0x8B9B
+#define GL_NUM_COMPRESSED_TEXTURE_FORMATS       0x86A2
+#define GL_COMPRESSED_TEXTURE_FORMATS           0x86A3
+
+/* OES_matrix_get */
+#define GL_MODELVIEW_MATRIX_FLOAT_AS_INT_BITS   0x898D
+#define GL_PROJECTION_MATRIX_FLOAT_AS_INT_BITS  0x898E
+#define GL_TEXTURE_MATRIX_FLOAT_AS_INT_BITS     0x898F
 
 /* HintMode */
 #define GL_DONT_CARE                      0x1100
@@ -268,6 +361,7 @@ typedef void (*_GLfuncptr)();
 #define GL_LINE_SMOOTH_HINT               0x0C52
 #define GL_POLYGON_SMOOTH_HINT            0x0C53
 #define GL_FOG_HINT                       0x0C54
+#define GL_GENERATE_MIPMAP_HINT           0x8192
 
 /* LightModelParameter */
 #define GL_LIGHT_MODEL_AMBIENT            0x0B53
@@ -415,6 +509,7 @@ typedef void (*_GLfuncptr)();
 #define GL_TEXTURE_MIN_FILTER             0x2801
 #define GL_TEXTURE_WRAP_S                 0x2802
 #define GL_TEXTURE_WRAP_T                 0x2803
+#define GL_GENERATE_MIPMAP                0x8191
 
 /* TextureTarget */
 /*      GL_TEXTURE_2D */
@@ -452,6 +547,8 @@ typedef void (*_GLfuncptr)();
 #define GL_TEXTURE29                      0x84DD
 #define GL_TEXTURE30                      0x84DE
 #define GL_TEXTURE31                      0x84DF
+#define GL_ACTIVE_TEXTURE                 0x84E0
+#define GL_CLIENT_ACTIVE_TEXTURE          0x84E1
 
 /* TextureWrapMode */
 #define GL_REPEAT                         0x2901
@@ -485,14 +582,103 @@ typedef void (*_GLfuncptr)();
 #define GL_LIGHT6                         0x4006
 #define GL_LIGHT7                         0x4007
 
+/* Buffer Objects */
+#define GL_ARRAY_BUFFER                   0x8892
+#define GL_ELEMENT_ARRAY_BUFFER           0x8893
+
+#define GL_ARRAY_BUFFER_BINDING           0x8894
+#define GL_ELEMENT_ARRAY_BUFFER_BINDING   0x8895
+#define GL_VERTEX_ARRAY_BUFFER_BINDING    0x8896
+#define GL_NORMAL_ARRAY_BUFFER_BINDING    0x8897
+#define GL_COLOR_ARRAY_BUFFER_BINDING     0x8898
+#define GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING 0x889A
+
+#define GL_STATIC_DRAW                    0x88E4
+#define GL_DYNAMIC_DRAW                   0x88E8
+
+#define GL_WRITE_ONLY                     0x88B9
+
+#define GL_BUFFER_SIZE                    0x8764
+#define GL_BUFFER_USAGE                   0x8765
+#define GL_BUFFER_ACCESS                  0x88BB
+
+
+/* Texture combine + dot3 */
+#define GL_SUBTRACT                       0x84E7
+#define GL_COMBINE                        0x8570
+#define GL_COMBINE_RGB                    0x8571
+#define GL_COMBINE_ALPHA                  0x8572
+#define GL_RGB_SCALE                      0x8573
+#define GL_ADD_SIGNED                     0x8574
+#define GL_INTERPOLATE                    0x8575
+#define GL_CONSTANT                       0x8576
+#define GL_PRIMARY_COLOR                  0x8577
+#define GL_PREVIOUS                       0x8578
+#define GL_OPERAND0_RGB                   0x8590
+#define GL_OPERAND1_RGB                   0x8591
+#define GL_OPERAND2_RGB                   0x8592
+#define GL_OPERAND0_ALPHA                 0x8598
+#define GL_OPERAND1_ALPHA                 0x8599
+#define GL_OPERAND2_ALPHA                 0x859A
+
+#define GL_ALPHA_SCALE                    0x0D1C
+
+#define GL_SRC0_RGB                       0x8580
+#define GL_SRC1_RGB                       0x8581
+#define GL_SRC2_RGB                       0x8582
+#define GL_SRC0_ALPHA                     0x8588
+#define GL_SRC1_ALPHA                     0x8589
+#define GL_SRC2_ALPHA                     0x858A
+
+#define GL_DOT3_RGB                       0x86AE
+#define GL_DOT3_RGBA                      0x86AF
+
+/*****************************************************************************************/
+/*                                 OES extension functions                               */
+/*****************************************************************************************/
+/* OES_point_sprite */
+#define GL_POINT_SPRITE_OES               0x8861
+#define GL_COORD_REPLACE_OES              0x8862
+
+/* OES_point_size_array */
+#define GL_POINT_SIZE_ARRAY_OES           0x8B9C
+#define GL_POINT_SIZE_ARRAY_TYPE_OES      0x898A
+#define GL_POINT_SIZE_ARRAY_STRIDE_OES    0x898B
+#define GL_POINT_SIZE_ARRAY_POINTER_OES   0x898C
+#define GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES 0x8B9F
+
+/* OES_matrix_palette */
+#define GL_MAX_VERTEX_UNITS_OES           0x86A4
+#define GL_MAX_PALETTE_MATRICES_OES       0x8842
+#define GL_MATRIX_PALETTE_OES             0x8840
+#define GL_MATRIX_INDEX_ARRAY_OES         0x8844
+#define GL_WEIGHT_ARRAY_OES               0x86AD
+
+#define GL_MATRIX_INDEX_ARRAY_SIZE_OES    0x8846
+#define GL_MATRIX_INDEX_ARRAY_TYPE_OES    0x8847
+#define GL_MATRIX_INDEX_ARRAY_STRIDE_OES  0x8848
+#define GL_MATRIX_INDEX_ARRAY_POINTER_OES 0x8849
+#define GL_MATRIX_INDEX_ARRAY_BUFFER_BINDING_OES 0x8B9E
+
+#define GL_WEIGHT_ARRAY_SIZE_OES          0x86AB
+#define GL_WEIGHT_ARRAY_TYPE_OES          0x86A9
+#define GL_WEIGHT_ARRAY_STRIDE_OES        0x86AA
+#define GL_WEIGHT_ARRAY_POINTER_OES       0x86AC
+#define GL_WEIGHT_ARRAY_BUFFER_BINDING_OES 0x889E
+
+/* OES_draw_texture */
+#define GL_TEXTURE_CROP_RECT_OES          0x8B9D
 
 /*************************************************************/
 
 GLAPI void APIENTRY glActiveTexture (GLenum texture);
 GLAPI void APIENTRY glAlphaFunc (GLenum func, GLclampf ref);
 GLAPI void APIENTRY glAlphaFuncx (GLenum func, GLclampx ref);
+GLAPI void APIENTRY glBindBuffer(GLenum target, GLuint buffer);
 GLAPI void APIENTRY glBindTexture (GLenum target, GLuint texture);
 GLAPI void APIENTRY glBlendFunc (GLenum sfactor, GLenum dfactor);
+GLAPI void APIENTRY glBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage);
+GLAPI void APIENTRY glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid *data);
 GLAPI void APIENTRY glClear (GLbitfield mask);
 GLAPI void APIENTRY glClearColor (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 GLAPI void APIENTRY glClearColorx (GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
@@ -500,6 +686,8 @@ GLAPI void APIENTRY glClearDepthf (GLclampf depth);
 GLAPI void APIENTRY glClearDepthx (GLclampx depth);
 GLAPI void APIENTRY glClearStencil (GLint s);
 GLAPI void APIENTRY glClientActiveTexture (GLenum texture);
+GLAPI void APIENTRY glClipPlanex(GLenum plane, const GLfixed *equation);
+GLAPI void APIENTRY glClipPlanef(GLenum plane, const GLfloat *equation);
 GLAPI void APIENTRY glColor4f (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 GLAPI void APIENTRY glColor4x (GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
 GLAPI void APIENTRY glColorMask (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
@@ -509,6 +697,7 @@ GLAPI void APIENTRY glCompressedTexSubImage2D (GLenum target, GLint level, GLint
 GLAPI void APIENTRY glCopyTexImage2D (GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
 GLAPI void APIENTRY glCopyTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
 GLAPI void APIENTRY glCullFace (GLenum mode);
+GLAPI void APIENTRY glDeleteBuffers(GLsizei n, const GLuint *buffers);
 GLAPI void APIENTRY glDeleteTextures (GLsizei n, const GLuint *textures);
 GLAPI void APIENTRY glDepthFunc (GLenum func);
 GLAPI void APIENTRY glDepthMask (GLboolean flag);
@@ -529,11 +718,32 @@ GLAPI void APIENTRY glFogxv (GLenum pname, const GLfixed *params);
 GLAPI void APIENTRY glFrontFace (GLenum mode);
 GLAPI void APIENTRY glFrustumf (GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
 GLAPI void APIENTRY glFrustumx (GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
+GLAPI void APIENTRY glGetBooleanv(GLenum pname, GLboolean *params);
+GLAPI void APIENTRY glGetBufferParameteriv(GLenum target, GLenum pname, GLint *params);
+GLAPI void APIENTRY glGetClipPlanef(GLenum pname, GLfloat eqn[4]);
+GLAPI void APIENTRY glGetClipPlanex(GLenum pname, GLfixed eqn[4]);
+GLAPI void APIENTRY glGenBuffers(GLsizei n, GLuint *buffers);
 GLAPI void APIENTRY glGenTextures (GLsizei n, GLuint *textures);
 GLAPI GLenum APIENTRY glGetError (void);
+GLAPI void APIENTRY glGetFixedv(GLenum pname, GLfixed *params);
+GLAPI void APIENTRY glGetFloatv(GLenum pname, GLfloat *params);
 GLAPI void APIENTRY glGetIntegerv (GLenum pname, GLint *params);
+GLAPI void APIENTRY glGetLightfv(GLenum light, GLenum pname, GLfloat *params);
+GLAPI void APIENTRY glGetLightxv(GLenum light, GLenum pname, GLfixed *params);
+GLAPI void APIENTRY glGetMaterialfv(GLenum face, GLenum pname, GLfloat *params);
+GLAPI void APIENTRY glGetMaterialxv(GLenum face, GLenum pname, GLfixed *params);
+GLAPI void APIENTRY glGetPointerv(GLenum pname, void **params);
 GLAPI const GLubyte * APIENTRY glGetString (GLenum name);
+GLAPI void APIENTRY glGetTexEnviv(GLenum env, GLenum pname, GLint *params);
+GLAPI void APIENTRY glGetTexEnvfv(GLenum env, GLenum pname, GLfloat *params);
+GLAPI void APIENTRY glGetTexEnvxv(GLenum env, GLenum pname, GLfixed *params);
+GLAPI void APIENTRY glGetTexParameteriv(GLenum target, GLenum pname, GLint *params);
+GLAPI void APIENTRY glGetTexParameterfv(GLenum target, GLenum pname, GLfloat *params);
+GLAPI void APIENTRY glGetTexParameterxv(GLenum target, GLenum pname, GLfixed *params);
 GLAPI void APIENTRY glHint (GLenum target, GLenum mode);
+GLAPI GLboolean APIENTRY glIsBuffer(GLuint buffer);
+GLAPI GLboolean APIENTRY glIsEnabled(GLenum cap);
+GLAPI GLboolean APIENTRY glIsTexture(GLuint texture);
 GLAPI void APIENTRY glLightModelf (GLenum pname, GLfloat param);
 GLAPI void APIENTRY glLightModelfv (GLenum pname, const GLfloat *params);
 GLAPI void APIENTRY glLightModelx (GLenum pname, GLfixed param);
@@ -563,6 +773,10 @@ GLAPI void APIENTRY glNormalPointer (GLenum type, GLsizei stride, const GLvoid *
 GLAPI void APIENTRY glOrthof (GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
 GLAPI void APIENTRY glOrthox (GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
 GLAPI void APIENTRY glPixelStorei (GLenum pname, GLint param);
+GLAPI void APIENTRY glPointParameterf(GLenum pname, GLfloat param);
+GLAPI void APIENTRY glPointParameterfv(GLenum pname, const GLfloat *params);
+GLAPI void APIENTRY glPointParameterx(GLenum pname, GLfixed param);
+GLAPI void APIENTRY glPointParameterxv(GLenum pname, const GLfixed *params);
 GLAPI void APIENTRY glPointSize (GLfloat size);
 GLAPI void APIENTRY glPointSizex (GLfixed size);
 GLAPI void APIENTRY glPolygonOffset (GLfloat factor, GLfloat units);
@@ -594,6 +808,29 @@ GLAPI void APIENTRY glTranslatef (GLfloat x, GLfloat y, GLfloat z);
 GLAPI void APIENTRY glTranslatex (GLfixed x, GLfixed y, GLfixed z);
 GLAPI void APIENTRY glVertexPointer (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
 GLAPI void APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height);
+
+/*****************************************************************************************/
+/*                                 OES extension functions                               */
+/*****************************************************************************************/
+/* OES_matrix_palette */
+GLAPI void APIENTRY glCurrentPaletteMatrixOES(GLint index);
+GLAPI void APIENTRY glLoadPaletteFromModelViewMatrixOES(void);
+GLAPI void APIENTRY glMatrixIndexPointerOES(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
+GLAPI void APIENTRY glWeightPointerOES(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
+
+/* OES_point_size_array */
+GLAPI void APIENTRY glPointSizePointerOES(GLenum type, GLsizei stride, const GLvoid *pointer);
+
+/* OES_draw_texture */
+GLAPI void APIENTRY glDrawTexsOES(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height);
+GLAPI void APIENTRY glDrawTexiOES(GLint x, GLint y, GLint z, GLint width, GLint height);
+GLAPI void APIENTRY glDrawTexfOES(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height);
+GLAPI void APIENTRY glDrawTexxOES(GLfixed x, GLfixed y, GLfixed z, GLfixed width, GLfixed height);
+
+GLAPI void APIENTRY glDrawTexsvOES(GLshort *coords);
+GLAPI void APIENTRY glDrawTexivOES(GLint *coords);
+GLAPI void APIENTRY glDrawTexfvOES(GLfloat *coords);
+GLAPI void APIENTRY glDrawTexxvOES(GLfixed *coords);
 
 
 #ifdef __cplusplus

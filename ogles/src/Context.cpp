@@ -567,3 +567,21 @@ const GLubyte * Context :: GetString(GLenum name) {
 
 void Context :: Finish(void) { }
 void Context :: Flush(void) { }
+
+
+void Context :: GetBooleanv(GLenum pname, GLboolean *params) {
+	assert(0);
+}
+
+void Context :: GetFixedv(GLenum pname, GLfixed *params) {
+	assert(0);
+}
+
+void Context :: GetPointerv(GLenum pname, void **params) {
+	assert(0);
+}
+
+GLboolean Context :: IsEnabled(GLenum cap) {
+	assert(0);
+	return false;
+}

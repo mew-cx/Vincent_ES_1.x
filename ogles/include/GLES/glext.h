@@ -67,25 +67,6 @@ extern "C" {
 /* OES_query_matrix */
 GLAPI GLbitfield APIENTRY glQueryMatrixxOES(GLfixed *mantissa, GLint *exponent);
 
-/****************************************************************************/
-/* Extension: SGIS_generate_mipmap											*/
-/****************************************************************************/
-
-
-#define GL_GENERATE_MIPMAP_SGIS			0x8191
-#define GL_GENERATE_MIPMAP_HINT_SGIS	0x8192
-
-
-/****************************************************************************/
-/* Extension: HM_render_mesh												*/
-/****************************************************************************/
-
-GLAPI void APIENTRY glDrawMeshHM(GLsizei count, GLenum type, GLsizei stride,
-								 GLsizei offsetVertex, GLsizei strideVertex,
-								 GLsizei offsetNormal, GLsizei strideNormal,
-								 GLsizei offsetTexture, GLsizei strideTexture,
-								 GLsizei offsetColor, GLsizei strideColor, 
-								 const GLvoid *pointer);
 
 #ifdef __cplusplus
 }

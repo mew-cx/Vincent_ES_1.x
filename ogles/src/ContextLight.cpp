@@ -224,6 +224,7 @@ void Context :: Lightxv(GLenum light, GLenum pname, const GLfixed *params) {
 	}
 }
 
-
-
+void Context :: GetLightxv(GLenum light, GLenum pname, GLfixed *params) {
+	assert(0);
+}
 
