@@ -41,6 +41,7 @@
 
 #ifndef EGL_USE_GPP
 
+
 // --------------------------------------------------------------------------
 // Calculate inverse of fixed point number
 //
@@ -62,6 +63,9 @@ OGLES_API EGL_Fixed EGL_Inverse(EGL_Fixed a) {
 		a = -a;
 	}
 
+#ifdef EGL_USE_CLZ
+	exp = _CountLeadingZeros(a);
+#else
     x = a;
     exp = 31;
     if (x & 0xffff0000) { exp -= 16; x >>= 16; }
@@ -69,6 +73,7 @@ OGLES_API EGL_Fixed EGL_Inverse(EGL_Fixed a) {
     if (x & 0xf0) { exp -= 4; x >>= 4; }
     if (x & 0xc) { exp -= 2; x >>= 2; }
     if (x & 0x2) { exp -= 1; }
+#endif
     x = __gl_rcp_tab[(a>>(28-exp))&0x7]<<2;
     exp -= 16;
     if (exp <= 0)
@@ -106,6 +111,10 @@ OGLES_API EGL_Fixed EGL_InvSqrt(EGL_Fixed a) {
     I32 i, exp;
     if (a == EGL_ZERO) return 0x7fffffff;
     if (a == EGL_ONE) return a;
+
+#ifdef EGL_USE_CLZ
+	exp = _CountLeadingZeros(a);
+#else
     x = a;
     exp = 31;
     if (x & 0xffff0000) { exp -= 16; x >>= 16; }
@@ -113,6 +122,7 @@ OGLES_API EGL_Fixed EGL_InvSqrt(EGL_Fixed a) {
     if (x & 0xf0) { exp -= 4; x >>= 4; }
     if (x & 0xc) { exp -= 2; x >>= 2; }
     if (x & 0x2) { exp -= 1; }
+#endif
     x = __gl_rsq_tab[(a>>(28-exp))&0x7]<<1;
 //printf("t %f %x %f %d %d\n", __GL_F_2_FLOAT(a), a, __GL_F_2_FLOAT(x), exp, 28-exp);
     exp -= 16;

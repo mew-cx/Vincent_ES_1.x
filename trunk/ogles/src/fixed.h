@@ -174,12 +174,6 @@ inline OGLES_API float EGL_FloatFromFixed(EGL_Fixed value) {
 }
 
 
-#ifndef EGL_USE_GPP
-// ==========================================================================
-// Implementation if GPP is not available
-// ==========================================================================
-
-
 // --------------------------------------------------------------------------
 // Calculate product of two fixed point numbers
 //
@@ -190,6 +184,12 @@ inline OGLES_API float EGL_FloatFromFixed(EGL_Fixed value) {
 inline OGLES_API EGL_Fixed EGL_Mul(EGL_Fixed a, EGL_Fixed b) {
 	return (EGL_Fixed) (((I64) a * (I64) b)  >> EGL_PRECISION);
 }
+
+
+#ifndef EGL_USE_GPP
+// ==========================================================================
+// Implementation if GPP is not available
+// ==========================================================================
 
 
 // --------------------------------------------------------------------------
@@ -254,20 +254,6 @@ OGLES_API EGL_Fixed EGL_Cos(EGL_Fixed value);
 // ==========================================================================
 // Implementation if GPP is available
 // ==========================================================================
-
-
-// --------------------------------------------------------------------------
-// Calculate product of two fixed point numbers
-//
-// Parameters:
-//	a			-	first operand
-//	b			-	second operand
-// --------------------------------------------------------------------------
-inline OGLES_API EGL_Fixed EGL_Mul(EGL_Fixed a, EGL_Fixed b) {
-	I32 result;
-	gppMul_16_32s(a, b, &result);
-	return result;
-}
 
 
 // --------------------------------------------------------------------------
