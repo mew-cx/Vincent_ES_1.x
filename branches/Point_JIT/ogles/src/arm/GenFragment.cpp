@@ -812,8 +812,6 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 	cg_block_t * block = currentBlock;
 
-	cg_virtual_reg_t * regDepthBuffer =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_DEPTH_BUFFER);
-
 	// Signature of generated function is:
 	// (I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv, EGL_Fixed fogDensity, const Color& baseColor);
 	
@@ -837,12 +835,40 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		BLT			(regXStartTest, continuation);
 		CMP			(regXEndTest, fragmentInfo.regX, regConstXEnd);
 		BGE			(regXEndTest, continuation);
+
+		if (fragmentInfo.regY) {
+			DECL_REG	(regConstYStart);
+			DECL_REG	(regConstYEnd);
+			DECL_FLAGS	(regYStartTest);
+			DECL_FLAGS	(regYEndTest);
+
+			LDI			(regConstYStart, m_State->m_ScissorTest.Y);
+			LDI			(regConstYEnd, m_State->m_ScissorTest.Y + m_State->m_ScissorTest.Height);
+
+			CMP			(regYStartTest, fragmentInfo.regY, regConstYStart);
+			BLT			(regYStartTest, continuation);
+			CMP			(regYEndTest, fragmentInfo.regY, regConstYEnd);
+			BGE			(regYEndTest, continuation);
+		}
 	}
 
 	//bool depthTest;
 	//U32 offset = x + y * m_Surface->GetWidth();
 	//I32 zBufferValue = m_Surface->GetDepthBuffer()[offset];
-	cg_virtual_reg_t * regOffset = fragmentInfo.regX;
+	cg_virtual_reg_t * regOffset;
+	
+	if (fragmentInfo.regY) {
+		cg_virtual_reg_t * regWidth = LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_WIDTH);
+		cg_virtual_reg_t * regOffset = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		DECL_REG	(regScaledY);
+
+		MUL		(regScaledY, fragmentInfo.regY, regWidth);
+		ADD		(regOffset, regScaledY, fragmentInfo.regX);
+	} else {
+		regOffset = fragmentInfo.regX;
+	}
+
+	cg_virtual_reg_t * regDepthBuffer =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_DEPTH_BUFFER);
 
 	DECL_FLAGS	(regDepthTest);
 	DECL_REG	(regScaledY);
