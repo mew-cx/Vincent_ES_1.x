@@ -963,8 +963,8 @@ static void emit_binary_multiply_fixed(cg_codegen_t * gen, cg_inst_binary_t * in
 	assign_reg(gen, temp_physical_reg, &temp_reg);
 	
 	ARM_SMULL(gen->cseg, 
-			  temp_physical_reg->regno, 
 			  inst->dest_value->physical_reg->regno, 
+			  temp_physical_reg->regno, 
 			  inst->source->physical_reg->regno, 
 			  inst->operand.source->physical_reg->regno);
 	
@@ -1575,9 +1575,12 @@ static void assign_reg(cg_codegen_t * gen,
 
 	if (physical_reg->virtual_reg != reg)
 	{
+		cg_virtual_reg_t * old_reg = physical_reg->virtual_reg;
+
 		physical_reg->virtual_reg = reg;
 
-		physical_reg->defined = physical_reg->dirty = 0;
+		if (old_reg == NULL || reg->representative != old_reg->representative)
+			physical_reg->defined = physical_reg->dirty = 0;
 	}
 
 	if (reg->physical_reg == (cg_physical_reg_t *) 0 ||
