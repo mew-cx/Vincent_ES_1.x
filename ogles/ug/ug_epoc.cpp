@@ -228,6 +228,8 @@ ugSwapBuffers(UGWindow uwin) {
 
 extern "C" int main(int argc, const char* argv[]);
 
+extern "C" void __gccmain() {}
+
 //TODO proxi: add debugging macros, handle panics
 TInt E32Main()
 {
@@ -249,6 +251,7 @@ TInt E32Main()
     char** argv = 0;
     char** envp = 0;
     __crt0(argc, argv, envp);	
+
     TRAPD(err, main(argc, const_cast<const char**>(argv)));
 
     CloseSTDLIB();
