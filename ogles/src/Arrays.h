@@ -122,7 +122,7 @@ namespace EGL {
 			} while (--count);
 		}
 
-		void PrepareFetchValues(bool colorMode = false) {
+		void PrepareFetchValues(bool colorMode) {
 			switch (type) {
 			case GL_BYTE:
 				if (colorMode) {
