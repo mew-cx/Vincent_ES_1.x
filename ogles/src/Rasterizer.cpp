@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// Rasterizer.cpp	Rasterizer Class for OpenGL (R) ES Implementation
+// Rasterizer.cpp	Rasterizer Class for 3D Rendering Library
 //
 //					The rasterizer converts transformed and lit 
 //					primitives and creates a raster image in the
@@ -132,28 +132,7 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 		return;
 	}
 
-	bool depthTest;
-	
-	U32 offset = x + y * m_Surface->GetWidth();
-	I32 zBufferValue = m_Surface->GetDepthBuffer()[offset];
-
-	switch (m_State->m_DepthFunc) {
-		default:
-		case RasterizerState::CompFuncNever:	depthTest = false;						break;
-		case RasterizerState::CompFuncLess:		depthTest = depth < zBufferValue;		break;
-		case RasterizerState::CompFuncEqual:	depthTest = depth == zBufferValue;		break;
-		case RasterizerState::CompFuncLEqual:	depthTest = depth <= zBufferValue;		break;
-		case RasterizerState::CompFuncGreater:	depthTest = depth > zBufferValue;		break;
-		case RasterizerState::CompFuncNotEqual:	depthTest = depth != zBufferValue;		break;
-		case RasterizerState::CompFuncGEqual:	depthTest = depth >= zBufferValue;		break;
-		case RasterizerState::CompFuncAlways:	depthTest = true;						break;
-	}
-
-	if (!m_State->m_StencilTestEnabled && m_State->m_DepthTestEnabled && !depthTest) {
-		return;
-	}
-
-	Color color = baseColor;
+	I32 offset = x + y * m_Surface->GetWidth();
 
 	if (m_State->m_TextureEnabled) {
 
@@ -185,51 +164,56 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 
 		// get the pixel color
 		Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
-		Color texColor; 
 
-		I32 texX = EGL_IntFromFixed(texture->GetWidth() * tu0);
-		I32 texY = EGL_IntFromFixed(texture->GetHeight() * tv0);
+		I32 texX = EGL_IntFromFixed(texture->GetWidth() * tu0);		// can become a shift
+		I32 texY = EGL_IntFromFixed(texture->GetHeight() * tv0);	// can become a shift
 
 		// do wrapping mode here
 		I32 texOffset = texX + (texY << texture->GetExponent());
+
+		Fragment(offset, depth, texOffset, baseColor.ConvertToRGBA(), fogDensity);
+	} else {
+		Fragment(offset, depth, 0, baseColor.ConvertToRGBA(), fogDensity);
+	}
+}
+
+inline void Rasterizer :: Fragment(I32 offset, EGL_Fixed depth, I32 texOffset, 
+								   U32 baseColor, EGL_Fixed fogDensity) {
+	bool depthTest;
+	
+	I32 zBufferValue = m_Surface->GetDepthBuffer()[offset];
+
+	switch (m_State->m_DepthFunc) {
+		default:
+		case RasterizerState::CompFuncNever:	depthTest = false;						break;
+		case RasterizerState::CompFuncLess:		depthTest = depth < zBufferValue;		break;
+		case RasterizerState::CompFuncEqual:	depthTest = depth == zBufferValue;		break;
+		case RasterizerState::CompFuncLEqual:	depthTest = depth <= zBufferValue;		break;
+		case RasterizerState::CompFuncGreater:	depthTest = depth > zBufferValue;		break;
+		case RasterizerState::CompFuncNotEqual:	depthTest = depth != zBufferValue;		break;
+		case RasterizerState::CompFuncGEqual:	depthTest = depth >= zBufferValue;		break;
+		case RasterizerState::CompFuncAlways:	depthTest = true;						break;
+	}
+
+	if (!m_State->m_StencilTestEnabled && m_State->m_DepthTestEnabled && !depthTest) {
+		return;
+	}
+
+	Color color(baseColor);
+
+	// have offset, color, texOffset, texture
+
+	if (m_State->m_TextureEnabled) {
+
+		Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
 		void * data = texture->GetData();
-
-		switch (m_Texture->GetInternalFormat()) {
-			case Texture::TextureFormatAlpha:				// 8
-				texColor = Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
-				break;
-
-			case Texture::TextureFormatLuminance:			// 8
-				{
-				U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset];
-				texColor = Color (luminance, luminance, luminance, 0xff);
-				}
-				break;
-
-			case Texture::TextureFormatLuminanceAlpha:		// 8-8
-				{
-				U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset * 2];
-				U8 alpha = reinterpret_cast<const U8 *>(data)[texOffset * 2 + 1];
-				texColor = Color (luminance, luminance, luminance, alpha);
-				}
-				break;
-
-			case Texture::TextureFormatRGB:					// 5-6-5
-				texColor = Color::From565(reinterpret_cast<const U16 *>(data)[texOffset]);
-				break;
-
-			case Texture::TextureFormatRGBA:					// 5-5-5-1
-				texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
-				break;
-
-			default:
-				texColor = Color(0xff, 0xff, 0xff, 0xff);
-				break;
-		}
+		Color texColor;
 
 		switch (m_Texture->GetInternalFormat()) {
 			default:
 			case Texture::TextureFormatAlpha:
+				texColor = Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
+
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeReplace:
 						color = Color(color.r, color.g, color.b, texColor.a);
@@ -244,7 +228,45 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 				break;
 
 			case Texture::TextureFormatLuminance:
+				{
+				U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset];
+				texColor = Color (luminance, luminance, luminance, 0xff);
+				}
+
+				switch (m_State->m_TextureMode) {
+					case RasterizerState::TextureModeDecal:
+					case RasterizerState::TextureModeReplace:
+						color = Color(texColor.r, texColor.g, texColor.b, color.a);
+						break;
+
+					case RasterizerState::TextureModeModulate:
+						color = Color(MulU8(color.r, texColor.r), 
+							MulU8(color.g, texColor.g), MulU8(color.b, texColor.b), color.a);
+						break;
+
+					case RasterizerState::TextureModeBlend:
+						color = 
+							Color(
+								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
+								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
+								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
+								color.a);
+						break;
+
+					case RasterizerState::TextureModeAdd:
+						color =
+							Color(
+								ClampU8(color.r + texColor.r),
+								ClampU8(color.g + texColor.g),
+								ClampU8(color.b + texColor.b),
+								color.a);
+						break;
+				}
+				break;
+
 			case Texture::TextureFormatRGB:
+				texColor = Color::From565(reinterpret_cast<const U16 *>(data)[texOffset]);
+
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeDecal:
 					case RasterizerState::TextureModeReplace:
@@ -277,7 +299,53 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 				break;
 
 			case Texture::TextureFormatLuminanceAlpha:
+				{
+				U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset * 2];
+				U8 alpha = reinterpret_cast<const U8 *>(data)[texOffset * 2 + 1];
+				texColor = Color (luminance, luminance, luminance, alpha);
+				}
+
+				switch (m_State->m_TextureMode) {
+					case RasterizerState::TextureModeReplace:
+						color = texColor;
+						break;
+
+					case RasterizerState::TextureModeModulate:
+						color = color * texColor;
+						break;
+
+					case RasterizerState::TextureModeDecal:
+						color = 
+							Color(
+								MulU8(color.r, 0xff - texColor.a) + MulU8(texColor.r, texColor.a),
+								MulU8(color.g, 0xff - texColor.a) + MulU8(texColor.g, texColor.a),
+								MulU8(color.b, 0xff - texColor.a) + MulU8(texColor.b, texColor.a),
+								color.a);
+						break;
+
+					case RasterizerState::TextureModeBlend:
+						color = 
+							Color(
+								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
+								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
+								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
+								MulU8(color.a, texColor.a));
+						break;
+
+					case RasterizerState::TextureModeAdd:
+						color =
+							Color(
+								ClampU8(color.r + texColor.r),
+								ClampU8(color.g + texColor.g),
+								ClampU8(color.b + texColor.b),
+								MulU8(color.a, texColor.a));
+						break;
+				}
+				break;
+
 			case Texture::TextureFormatRGBA:
+				texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
+
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeReplace:
 						color = texColor;
@@ -323,6 +391,8 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 		color = Color::Blend(color, m_State->m_FogColor, fogDensity);
 	}
 
+	// have color
+
 	if (m_State->m_AlphaTestEnabled) {
 		bool alphaTest;
 		U8 alpha = color.A();
@@ -344,6 +414,8 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 			return;
 		}
 	}
+
+	// have offset, depth
 
 	if (m_State->m_StencilTestEnabled) {
 
@@ -478,11 +550,13 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 		return;
 	}
 
-	U16 dstValue = m_Surface->GetColorBuffer()[offset];
-	U8 dstAlpha = m_Surface->GetAlphaBuffer()[offset];
+	// have color, offset 
 
 	// Blending
 	if (m_State->m_BlendingEnabled) {
+
+		U16 dstValue = m_Surface->GetColorBuffer()[offset];
+		U8 dstAlpha = m_Surface->GetAlphaBuffer()[offset];
 
 		Color dstColor = Color::From565A(dstValue, dstAlpha);
 
@@ -569,6 +643,8 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 		color = srcCoeff * color + dstCoeff * dstColor;
 	}
 
+	// have offset, depth, color
+
 	// Masking and write to framebuffer
 	if (m_State->m_MaskDepth) {
 		m_Surface->GetDepthBuffer()[offset] = depth;
@@ -578,6 +654,9 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 		color.Mask(m_State->m_MaskRed, m_State->m_MaskGreen, m_State->m_MaskBlue, m_State->m_MaskAlpha);
 
 	if (m_State->m_LogicOpEnabled) {
+
+		U16 dstValue = m_Surface->GetColorBuffer()[offset];
+		U8 dstAlpha = m_Surface->GetAlphaBuffer()[offset];
 
 		U32 newValue = maskedColor.ConvertToRGBA();
 		U32 oldValue = Color::From565A(dstValue, dstAlpha).ConvertToRGBA();

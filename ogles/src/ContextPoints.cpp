@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// points.cpp	Rendering Context Class for OpenGL (R) ES Implementation
+// points.cpp	Rendering Context Class for 3D Rendering Library
 //
 //				Rendering Operations for Points
 //

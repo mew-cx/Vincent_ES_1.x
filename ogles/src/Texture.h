@@ -5,7 +5,7 @@
 
 // ==========================================================================
 //
-// Texture.h		Texture Class for OpenGL (R) ES Implementation
+// Texture.h		Texture Class for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //

@@ -61,6 +61,12 @@ namespace EGL {
 			r = g = b = a = 0;
 		}
 
+		Color(U32 rgba) { 
+			r = (rgba >> 24) & 0xff;
+			g = (rgba >> 16) & 0xff;
+			b = (rgba >>  8) & 0xff;
+			a = rgba & 0xff;
+		}
 
 		Color(U8 R, U8 G, U8 B, U8 A) {
 			r = R;

@@ -7,7 +7,7 @@
 
 // ==========================================================================
 //
-// Rasterizer.h		Rasterizer Class for OpenGL (R) ES Implementation
+// Rasterizer.h		Rasterizer Class for 3D Rendering Library
 //
 //					The rasterizer converts transformed and lit 
 //					primitives and creates a raster image in the
@@ -175,6 +175,11 @@ namespace EGL {
 
 		void Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv, 
 			EGL_Fixed fogDensity, const Color& baseColor);
+			// will have special cases based on settings
+			// the coordinates are integer coordinates
+
+		void Fragment(I32 offset, EGL_Fixed depth, EGL_Fixed texOffset, U32 baseColor,
+			EGL_Fixed fogDensity);
 			// will have special cases based on settings
 			// the coordinates are integer coordinates
 

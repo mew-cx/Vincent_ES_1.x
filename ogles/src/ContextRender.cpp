@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// render.cpp	Rendering Context Class for OpenGL (R) ES Implementation
+// render.cpp	Rendering Context Class for 3D Rendering Library
 //
 //				Rendering Operations
 //

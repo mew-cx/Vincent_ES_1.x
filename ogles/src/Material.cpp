@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// material.cpp	Rendering Context Class for OpenGL (R) ES Implementation
+// material.cpp	Rendering Context Class for 3D Rendering Library
 //
 //				Coloring and Material Related Operations
 //

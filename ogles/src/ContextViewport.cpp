@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// viewport.cpp	Rendering Context Class for OpenGL (R) ES Implementation
+// viewport.cpp	Rendering Context Class for 3D Rendering Library
 //
 //				Viewport Configuration
 //

@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// Texture.cpp		Texture Class for OpenGL (R) ES Implementation
+// Texture.cpp		Texture Class for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //

@@ -5,7 +5,7 @@
 
 // ==========================================================================
 //
-// CodeGenerator.h		JIT Class for OpenGL (R) ES Implementation
+// CodeGenerator.h		JIT Class for 3D Rendering Library
 //
 //						This file contains the rasterizer functions that
 //						implement the runtime code generation support

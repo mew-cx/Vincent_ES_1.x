@@ -6,7 +6,7 @@
 // ==========================================================================
 //
 // Config.h			Configuration Management Class
-//					for OpenGL (R) ES Implementation
+//					for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //

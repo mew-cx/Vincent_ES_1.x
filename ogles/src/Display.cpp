@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// Display.cpp		Display Class for OpenGL (R) ES Implementation
+// Display.cpp		Display Class for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //

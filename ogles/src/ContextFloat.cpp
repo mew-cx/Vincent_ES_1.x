@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// ContextFloat.cpp	Rendering Context Class for OpenGL (R) ES Implementation
+// ContextFloat.cpp	Rendering Context Class for 3D Rendering Library
 //
 //					Emulation of EGL Floating Point Primitives
 //
