@@ -3050,9 +3050,9 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 			//baseColor += colorIncrement;
 	FADD	(regLoop1R, regLoop1REntry, regColorIncrementR);
-	FADD	(regLoop1G, regLoop1REntry, regColorIncrementG);
-	FADD	(regLoop1B, regLoop1REntry, regColorIncrementB);
-	FADD	(regLoop1A, regLoop1REntry, regColorIncrementA);
+	FADD	(regLoop1G, regLoop1GEntry, regColorIncrementG);
+	FADD	(regLoop1B, regLoop1BEntry, regColorIncrementB);
+	FADD	(regLoop1A, regLoop1AEntry, regColorIncrementA);
 
 			//fogDensity += deltaFog;
 			//z += deltaZ;
@@ -3201,9 +3201,9 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 			//baseColor += colorIncrement;
 	FADD	(regLoop2R, regLoop2REntry, regColorIncrementR);
-	FADD	(regLoop2G, regLoop2REntry, regColorIncrementG);
-	FADD	(regLoop2B, regLoop2REntry, regColorIncrementB);
-	FADD	(regLoop2A, regLoop2REntry, regColorIncrementA);
+	FADD	(regLoop2G, regLoop2GEntry, regColorIncrementG);
+	FADD	(regLoop2B, regLoop2BEntry, regColorIncrementB);
+	FADD	(regLoop2A, regLoop2AEntry, regColorIncrementA);
 
 			//fogDensity += deltaFog;
 			//z += deltaZ;
