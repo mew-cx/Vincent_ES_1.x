@@ -144,10 +144,10 @@ namespace EGL {
 			U8 b = (u4444 & 0x00F0u);
 			U8 a = (u4444 & 0x000Fu) << 4;
 
-			if (r) r |= 15;
-			if (g) g |= 15;
-			if (b) b |= 15;
-			if (a) a |= 15;
+			r |= r >> 4;
+			g |= g >> 4;
+			b |= b >> 4;
+			a |= a >> 4;
 
 			return Color(r, g, b, a);
 		}
@@ -157,9 +157,9 @@ namespace EGL {
 			U8 g = (u565 & 0x07E0u) >> 3;
 			U8 r = (u565 & 0xF800u) >> 8;
 
-			if (r) r |= 7;
-			if (g) g |= 3;
-			if (b) b |= 7;
+			r |= r >> 5;
+			g |= g >> 6;
+			b |= b >> 5;
 
 			return Color(r, g, b, 0xFF);
 		}
@@ -169,9 +169,9 @@ namespace EGL {
 			U8 g = (u565 & 0x07E0u) >> 3;
 			U8 r = (u565 & 0xF800u) >> 8;
 
-			if (r) r |= 7;
-			if (g) g |= 3;
-			if (b) b |= 7;
+			r |= r >> 5;
+			g |= g >> 6;
+			b |= b >> 5;
 
 			return Color(r, g, b, alpha);
 		}
@@ -182,9 +182,9 @@ namespace EGL {
 			U8 r = (u5551 & 0x7C00u) >> 7;
 			U8 a = (u5551 & 0x8000u) >> 8;
 
-			if (r) r |= 7;
-			if (g) g |= 7;
-			if (b) b |= 7;
+			r |= r >> 5;
+			g |= g >> 5;
+			b |= b >> 5;
 			if (a) a |= 0x7f;
 
 			return Color(r, g, b, a);

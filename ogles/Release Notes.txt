@@ -10,6 +10,7 @@ Version 0.77
 
 This version addresses the following issues:
 
+970907 - LogicOp Function test failed.
 970902 - Stencil Plane Clear test failed.
 970903 - Stencil Plane Corners test failed.
 970905 - Stencil Plane Operation test failed.
