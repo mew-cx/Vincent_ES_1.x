@@ -797,12 +797,11 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 	}
 
 	MultiTexture * multiTexture = GetCurrentTexture();
-	int intParam = EGL_IntFromFixed(param);
 
 	switch (pname) {
 		case GL_TEXTURE_MIN_FILTER:
 			{
-				RasterizerState::MinFilterMode mode = MinFilterModeFromEnum(intParam);
+				RasterizerState::MinFilterMode mode = MinFilterModeFromEnum(param);
 
 				if (mode != RasterizerState::MinFilterModeInvalid) {
 					multiTexture->SetMinFilterMode(mode);
@@ -815,7 +814,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 		case GL_TEXTURE_MAG_FILTER:
 			{
-				RasterizerState::MagFilterMode mode = MagFilterModeFromEnum(intParam);
+				RasterizerState::MagFilterMode mode = MagFilterModeFromEnum(param);
 
 				if (mode != RasterizerState::MagFilterModeInvalid) {
 					multiTexture->SetMagFilterMode(mode);
@@ -828,7 +827,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 		case GL_TEXTURE_WRAP_S:
 			{
-				RasterizerState::WrappingMode mode = WrappingModeFromEnum(intParam);
+				RasterizerState::WrappingMode mode = WrappingModeFromEnum(param);
 
 				if (mode != RasterizerState::WrappingModeInvalid) {
 					multiTexture->SetWrappingModeS(mode);
@@ -841,7 +840,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 		case GL_TEXTURE_WRAP_T:
 			{
-				RasterizerState::WrappingMode mode = WrappingModeFromEnum(intParam);
+				RasterizerState::WrappingMode mode = WrappingModeFromEnum(param);
 
 				if (mode != RasterizerState::WrappingModeInvalid) {
 					multiTexture->SetWrappingModeT(mode);
@@ -854,7 +853,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 		case GL_GENERATE_MIPMAP_SGIS:
 			{
-				m_GenerateMipmaps = (intParam != 0);
+				m_GenerateMipmaps = (param != 0);
 			}
 
 		default:
