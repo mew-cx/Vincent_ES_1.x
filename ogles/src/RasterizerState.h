@@ -98,22 +98,21 @@ namespace EGL {
 			BlendFuncDstSrcColor,
 			BlendFuncDstOneMinusSrcColor,
 			BlendFuncDstSrcAlpha,
-			BlendFuncDstSrcOneMinusSrcAlpha,
+			BlendFuncDstOneMinusSrcAlpha,
 			BlendFuncDstDstAlpha,
-			BlendFuncDstOneMinusDstAlpha,
-			BlendFuncDstSrcAlphaSaturate
+			BlendFuncDstOneMinusDstAlpha
 		};
 
 		enum BlendFuncSrc {
 			BlendFuncSrcZero,
 			BlendFuncSrcOne,
-			BlendFuncSrcSrcColor,
-			BlendFuncSrcOneMinusSrcColor,
+			BlendFuncSrcDstColor,
 			BlendFuncSrcOneMinusDstColor,
-			BlendFuncSrcOneMinusSrcAlpha,
 			BlendFuncSrcSrcAlpha,
+			BlendFuncSrcOneMinusSrcAlpha,
 			BlendFuncSrcDstAlpha,
-			BlendFuncSrcOneMinusDstAlpha
+			BlendFuncSrcOneMinusDstAlpha,
+			BlendFuncSrcSrcAlphaSaturate
 		};
 
 		enum StencilOp {
