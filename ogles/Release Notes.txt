@@ -11,6 +11,7 @@ Version 0.77
 This version addresses the following issues:
 
 863638 - rescale normal vs. normalize
+864273 - PixelStorei is not implemented
 
 
 Version 0.76
