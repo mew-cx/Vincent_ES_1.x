@@ -109,10 +109,12 @@ void Rasterizer :: SetTexture(MultiTexture * texture) {
 		m_State->SetMagFilterMode(m_Texture->GetMagFilterMode());
 		m_State->SetInternalFormat(m_Texture->GetInternalFormat());
 
+		m_RasterInfo.Textures = m_Texture->m_TextureLevels;
 		m_UseMipmap = m_Texture->IsMipMap() && m_Texture->IsComplete();
-		m_MaxMipmapLevel = EGL_Max(m_Texture->GetTexture(0)->GetLogWidth(), m_Texture->GetTexture(0)->GetLogHeight());
+		m_RasterInfo.MaxMipmapLevel = EGL_Max(m_Texture->GetTexture(0)->GetLogWidth(), m_Texture->GetTexture(0)->GetLogHeight());
 	} else {
 		m_UseMipmap = false;
+		m_RasterInfo.Textures = 0;
 	}
 }
 
@@ -135,18 +137,6 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 	}
 
 	m_RasterInfo.Init(m_Surface, y);
-
-	// texture info
-	Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
-
-	if (texture)
-	{
-		m_RasterInfo.TextureLogWidth = texture->GetLogWidth();
-		m_RasterInfo.TextureLogHeight = texture->GetLogHeight();
-		m_RasterInfo.TextureLogBytesPerPixel = texture->GetLogBytesPerPixel();
-		m_RasterInfo.TextureExponent = texture->GetExponent();
-		m_RasterInfo.TextureData = texture->GetData();
-	}
 
 	Fragment(&m_RasterInfo, x, depth, tu, tv, baseColor, fogDensity);
 }
@@ -316,7 +306,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 	if (m_State->m_TextureEnabled) {
 
-		Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
+		Texture * texture = rasterInfo->Textures + rasterInfo->MipmapLevel;
 		Color texColor = GetTexColor(texture, tu, tv, m_State->GetMinFilterMode());
 
 		switch (m_Texture->GetInternalFormat()) {
@@ -867,7 +857,7 @@ void Rasterizer :: PreparePoint() {
 		SetTexture(m_Texture);
 	}
 
-	m_MipMapLevel = 0;
+	m_RasterInfo.MipmapLevel = 0;
 }
 
 
@@ -876,7 +866,7 @@ void Rasterizer :: PrepareLine() {
 		SetTexture(m_Texture);
 	}
 
-	m_MipMapLevel = 0;
+	m_RasterInfo.MipmapLevel = 0;
 }
 
 

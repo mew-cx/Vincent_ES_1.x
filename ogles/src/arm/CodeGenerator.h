@@ -72,6 +72,7 @@ namespace EGL {
 		cg_virtual_reg_t * regA;	
 
 		cg_virtual_reg_t * regInfo;
+		cg_virtual_reg_t * regTexture;
 	};
 
 	class FunctionCache;
@@ -130,11 +131,16 @@ namespace EGL {
 #	define OFFSET_SURFACE_COLOR_BUFFER			offsetof(RasterInfo, ColorBuffer)
 #	define OFFSET_SURFACE_STENCIL_BUFFER		offsetof(RasterInfo, StencilBuffer)
 #	define OFFSET_SURFACE_ALPHA_BUFFER			offsetof(RasterInfo, AlphaBuffer)
-#	define OFFSET_TEXTURE_LOG_WIDTH				offsetof(RasterInfo, TextureLogWidth)
-#	define OFFSET_TEXTURE_LOG_HEIGHT			offsetof(RasterInfo, TextureLogHeight)
-#	define OFFSET_TEXTURE_LOG_BYTES_PER_PIXEL	offsetof(RasterInfo, TextureLogBytesPerPixel)
-#	define OFFSET_TEXTURE_EXPONENT				offsetof(RasterInfo, TextureExponent)
-#	define OFFSET_TEXTURE_DATA					offsetof(RasterInfo, TextureData)
+
+#	define OFFSET_TEXTURES						offsetof(RasterInfo, Textures)
+#	define OFFSET_MAX_MIPMAP_LEVEL				offsetof(RasterInfo, MaxMipmapLevel)
+
+#	define OFFSET_TEXTURE_LOG_WIDTH				offsetof(Texture, m_LogHeight)
+#	define OFFSET_TEXTURE_LOG_HEIGHT			offsetof(Texture, m_LogWidth)
+#	define OFFSET_TEXTURE_DATA					offsetof(Texture, m_Data)
+#	define SIZE_TEXTURE							sizeof(Texture)
+
+
 #	define OFFSET_INVERSE_TABLE_PTR				offsetof(RasterInfo, InversionTablePtr)
 
 	// -------------------------------------------------------------------------
@@ -160,6 +166,10 @@ namespace EGL {
 
 #	define OFFSET_TEX_COORD_TU				offsetof(TexCoord, tu)
 #	define OFFSET_TEX_COORD_TV				offsetof(TexCoord, tv)
+#	define OFFSET_TEX_COORD_DTUDX			offsetof(TexCoord, dtudx)
+#	define OFFSET_TEX_COORD_DTUDY			offsetof(TexCoord, dtudy)
+#	define OFFSET_TEX_COORD_DTVDX			offsetof(TexCoord, dtvdx)
+#	define OFFSET_TEX_COORD_DTVDY			offsetof(TexCoord, dtvdy)
 
 	// -------------------------------------------------------------------------
 	// For EdgeBuffer
@@ -181,6 +191,10 @@ namespace EGL {
 
 #	define OFFSET_EDGE_BUFFER_TEX_TU		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_TU)
 #	define OFFSET_EDGE_BUFFER_TEX_TV		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_TV)
+#	define OFFSET_EDGE_BUFFER_TEX_DTUDX		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_DTUDX)
+#	define OFFSET_EDGE_BUFFER_TEX_DTUDY		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_DTUDY)
+#	define OFFSET_EDGE_BUFFER_TEX_DTVDX		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_DTVDX)
+#	define OFFSET_EDGE_BUFFER_TEX_DTVDY		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_DTVDY)
 
 
 #endif //ndef EGL_CODE_GENERATOR_H

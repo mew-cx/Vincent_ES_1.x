@@ -639,10 +639,9 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 		DECL_REG	(regTexOffset);
 		DECL_REG	(regConstant16);
 
-		cg_virtual_reg_t * regTextureLogWidth =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_LOG_WIDTH);
-		cg_virtual_reg_t * regTextureLogHeight =	LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_LOG_HEIGHT);
-		cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_DATA);
-		cg_virtual_reg_t * regTextureExponent =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_EXPONENT);
+		cg_virtual_reg_t * regTextureLogWidth =		LOAD_DATA(block, fragmentInfo.regTexture, OFFSET_TEXTURE_LOG_WIDTH);
+		cg_virtual_reg_t * regTextureLogHeight =	LOAD_DATA(block, fragmentInfo.regTexture, OFFSET_TEXTURE_LOG_HEIGHT);
+		cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, fragmentInfo.regTexture, OFFSET_TEXTURE_DATA);
 
 		LSL		(regScaledU, regU0, regTextureLogWidth);
 		LSL		(regScaledV, regV0, regTextureLogHeight);

@@ -727,6 +727,116 @@ static void emit_unary_fcnv(cg_codegen_t * gen, cg_inst_unary_t * inst,
 }
 
 
+static void emit_unary_abs(cg_codegen_t * gen, cg_inst_unary_t * inst, int update_flags)
+{
+	assert(!update_flags);
+	assert(inst->base.kind == cg_inst_unary);
+
+	ARM_CMP_REG_IMM8(gen->cseg, 
+					inst->operand.source->physical_reg->regno,
+					0);
+
+	ARM_MOV_REG_REG_COND(gen->cseg,
+						 inst->dest_value->physical_reg->regno,
+						 inst->operand.source->physical_reg->regno,
+						 ARMCOND_GT);
+					
+	ARM_MVN_REG_REG_COND(gen->cseg,
+						 inst->dest_value->physical_reg->regno,
+						 inst->operand.source->physical_reg->regno,
+						 ARMCOND_LT);
+}
+
+
+static void emit_unary_log2(cg_codegen_t * gen, cg_inst_unary_t * inst, int update_flags)
+{
+	// allocate a temporary register
+	cg_virtual_reg_t temp_reg0, temp_reg1;
+	cg_physical_reg_t * temp_physical_reg0, *temp_physical_reg1;
+	U32 mask;
+
+	assert(!update_flags);
+	assert(inst->base.kind == cg_inst_unary);
+
+	memset(&temp_reg0, 0, sizeof temp_reg0);
+	memset(&temp_reg1, 0, sizeof temp_reg1);
+	
+	/* may need to create a mask based on the registers allocated for		*/
+	/* the other operands													*/
+	mask = ~((1u << inst->dest_value->physical_reg->regno)  |
+			 (1u << inst->operand.source->physical_reg->regno));
+	
+	temp_physical_reg0 = allocate_reg(gen, &temp_reg0, mask);
+	assign_reg(gen, temp_physical_reg0, &temp_reg0);
+
+	mask &= ~(1u << temp_physical_reg0->regno);
+	
+	temp_physical_reg1 = allocate_reg(gen, &temp_reg1, mask);
+	assign_reg(gen, temp_physical_reg1, &temp_reg1);
+
+    //exp = 0;
+	ARM_MOV_REG_IMM8(gen->cseg,
+					 inst->dest_value->physical_reg->regno,
+					 0);
+
+    //if (f & 0xff00) { exp += 8; f >>= 8; }
+	ARM_ANDS_REG_IMM(gen->cseg,
+					 temp_physical_reg1->regno,
+					 inst->operand.source->physical_reg->regno,
+					 0xff, 
+					 calc_arm_mov_const_shift(0xff00));
+	ARM_MOV_REG_IMM8_COND(gen->cseg,
+						  inst->dest_value->physical_reg->regno,
+						  8, ARMCOND_NE);
+	ARM_MOV_REG_IMMSHIFT_COND(gen->cseg,
+						 temp_physical_reg0->regno,
+						 inst->operand.source->physical_reg->regno,
+						 ARMSHIFT_ASR, 8, ARMCOND_NE);	    
+	
+	//if (f & 0xf0) { exp += 4; f >>= 4; }
+	ARM_ANDS_REG_IMM8(gen->cseg,
+					  temp_physical_reg1->regno,
+					  temp_physical_reg0->regno,
+					  0xf0);
+	ARM_ADD_REG_IMM8_COND(gen->cseg,
+						  inst->dest_value->physical_reg->regno,
+						  inst->dest_value->physical_reg->regno,
+						  4, ARMCOND_NE);
+	ARM_MOV_REG_IMMSHIFT_COND(gen->cseg,
+						 temp_physical_reg0->regno,
+						 temp_physical_reg0->regno,
+						 ARMSHIFT_ASR, 4, ARMCOND_NE);	    
+
+    //if (f & 0xc) { exp += 2; f >>= 2; }
+	ARM_ANDS_REG_IMM8(gen->cseg,
+					  temp_physical_reg1->regno,
+					  temp_physical_reg0->regno,
+					  0xc);
+	ARM_ADD_REG_IMM8_COND(gen->cseg,
+						  inst->dest_value->physical_reg->regno,
+						  inst->dest_value->physical_reg->regno,
+						  2, ARMCOND_NE);
+	ARM_MOV_REG_IMMSHIFT_COND(gen->cseg,
+						 temp_physical_reg0->regno,
+						 temp_physical_reg0->regno,
+						 ARMSHIFT_ASR, 2, ARMCOND_NE);	    
+
+    //if (f & 0x2) { exp += 1; }
+	ARM_ANDS_REG_IMM8(gen->cseg,
+					  temp_physical_reg1->regno,
+					  temp_physical_reg0->regno,
+					  0x2);
+	ARM_ADD_REG_IMM8_COND(gen->cseg,
+						  inst->dest_value->physical_reg->regno,
+						  inst->dest_value->physical_reg->regno,
+						  1, ARMCOND_NE);
+
+	// release the temporary register
+	deallocate_reg(gen, temp_physical_reg0);
+	deallocate_reg(gen, temp_physical_reg1);
+}
+
+
 static void emit_unary(cg_codegen_t * gen, cg_inst_unary_t * inst,
 					   int update_flags)
 {
@@ -757,6 +867,14 @@ static void emit_unary(cg_codegen_t * gen, cg_inst_unary_t * inst,
 			
 		case cg_op_fcnv:															
 			emit_unary_fcnv(gen, inst, update_flags);
+			break;
+
+		case cg_op_abs:
+			emit_unary_abs(gen, inst, update_flags);
+			break;
+
+		case cg_op_log2:
+			emit_unary_log2(gen, inst, update_flags);
 			break;
 
 		default:
