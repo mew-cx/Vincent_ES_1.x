@@ -52,6 +52,7 @@ using namespace EGL;
 // --------------------------------------------------------------------------
 
 void Context :: BindTexture(GLenum target, GLuint texture) { 
+
 	if (target != GL_TEXTURE_2D) {
 		RecordError(GL_INVALID_ENUM);
 		return;
@@ -241,6 +242,10 @@ namespace {
 			dstPtr += dstGap;
 		} while (--copyHeight);
 	}
+
+	// -------------------------------------------------------------------------
+	// Declarations of the different texture conversions that are supported
+	// -------------------------------------------------------------------------
 
 	struct RGB2Color {
 		enum {
@@ -1315,12 +1320,6 @@ void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat
 		return;
 	}
 
-	if (!ValidateFormats(internalFormat, RasterizerState::TextureFormatRGB565, GL_UNSIGNED_SHORT_5_6_5) &&
-		!ValidateFormats(internalFormat, RasterizerState::TextureFormatRGBA8, GL_UNSIGNED_BYTE)) {
-		RecordError(GL_INVALID_OPERATION);
-		return;
-	}
-
 	MultiTexture * multiTexture = GetCurrentTexture();
 	Texture * texture = multiTexture->GetTexture(level);
 
@@ -1334,7 +1333,7 @@ void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat
 				InternalTypeForInternalFormat(internalFormat), 1);
 
 	if (!result) {
-		RecordError(GL_INVALID_VALUE);
+		RecordError(GL_INVALID_OPERATION);
 		return;
 	}
 

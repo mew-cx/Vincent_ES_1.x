@@ -83,6 +83,7 @@ namespace EGL {
 
 		Config * GetConfig();
 
+		bool Save(const TCHAR * filename);
 		void Dispose();
 
 		// Windows integration

@@ -90,8 +90,26 @@ FunctionCache :: ~FunctionCache() {
 
 ScanlineFunction * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & state) {
 
+	RasterizerState::CompareFunction comparison = 0;
+
+	switch (type) {
+	case FunctionTypePoint:
+		comparison = RasterizerState::ComparePoint;
+		break;
+
+	case FunctionTypeLine:
+		comparison = RasterizerState::CompareLine;
+		break;
+
+	case FunctionTypeScanline:
+	case FunctionTypeTriangle:
+		comparison = RasterizerState::ComparePolygon;
+		break;
+
+	}
+
 	for (FunctionInfo * function = m_MostRecentlyUsed; function; function = function->m_Next) {
-		if (function->m_Type == type && !state.Compare(function->m_State)) {
+		if (function->m_Type == type && (state.*comparison)(function->m_State)) {
 			// move to front
 			if (function->m_Prev) {
 				function->m_Prev->m_Next = function->m_Next;

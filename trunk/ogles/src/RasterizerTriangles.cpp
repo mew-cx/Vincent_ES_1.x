@@ -165,7 +165,7 @@ namespace {
 // ---------------------------------------------------------------------------
 
 void Rasterizer :: PrepareTriangle() {
-	if (m_State->m_TextureEnabled) {
+	if (m_State->m_Texture.Enabled) {
 		SetTexture(m_Texture);
 	}
 
@@ -173,14 +173,14 @@ void Rasterizer :: PrepareTriangle() {
 		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeScanline, 
 									 *m_State);
 
-	bool needsColor = !m_State->m_TextureEnabled || 
-					  m_State->m_TextureMode != RasterizerState::TextureModeReplace;
+	bool needsColor = !m_State->m_Texture.Enabled || 
+					  m_State->m_Texture.Mode != RasterizerState::TextureModeReplace;
 
-	bool needsTexture = m_State->m_TextureEnabled;
-	bool needsFog = m_State->m_FogEnabled;
-	bool needsDepth = m_State->m_DepthTestEnabled || m_State->m_MaskDepth || m_State->m_StencilTestEnabled;
-	bool needsScissor = m_State->m_ScissorTestEnabled;
-	bool needsStencil = m_State->m_StencilTestEnabled;
+	bool needsTexture = m_State->m_Texture.Enabled;
+	bool needsFog = m_State->m_Fog.Enabled;
+	bool needsDepth = m_State->m_DepthTest.Enabled || m_State->m_Mask.Depth || m_State->m_Stencil.Enabled;
+	bool needsScissor = m_State->m_ScissorTest.Enabled;
+	bool needsStencil = m_State->m_Stencil.Enabled;
 
 	U32 selector =
 		((needsColor	? 1 : 0) << RasterTriangleColor		) |

@@ -88,6 +88,10 @@ namespace EGL {
 			return *this;
 		}
 
+		bool operator==(const Color& other) const {
+			return ConvertToRGBA() == other.ConvertToRGBA();
+		}
+
 		inline U8 A() const {
 			return a;
 		}
