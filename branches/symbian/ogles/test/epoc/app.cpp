@@ -11,7 +11,7 @@
 #include "app.h"
 #include "doc.h"
 
-const TUid KUidTest = {0x101f6163};
+const TUid KUidTest = {0x10202DA0};
 
 TUid CApp::AppDllUid() const
 {
