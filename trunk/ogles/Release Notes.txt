@@ -10,6 +10,7 @@ Version 0.71
 
 This version incorporates critical fixes for 0.7.
 
+930264 - Texture loading raises an exception 
 930207 - enums incorrectly mapped to fixed 
 929529 - instruction selection raises exception 
 929528 - assertion raised in instruction selection 

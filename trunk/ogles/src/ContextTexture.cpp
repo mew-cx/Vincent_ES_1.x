@@ -198,9 +198,9 @@ namespace {
 	// against the src and target rectangles
 	// -------------------------------------------------------------------------
 	template<class PixelType> 
-	void CopyPixels(const void * src, U32 srcWidth, U32 srcHeight, 
+	void CopyPixels(const PixelType * src, U32 srcWidth, U32 srcHeight, 
 					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
-					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY) {
+					PixelType * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY) {
 
 		U32 srcGap = srcWidth - copyWidth;	// how many pixels to skip for next line
 		U32 dstGap = dstWidth - copyWidth;	// how many pixels to skip for next line
@@ -364,7 +364,8 @@ namespace {
 	template<class SrcAccessor, class DstAccessor> 
 	void CopyPixelsA(const void * src, U32 srcWidth, U32 srcHeight, 
 					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
-					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY) {
+					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
+					const SrcAccessor&, const DstAccessor&) {
 
 		typedef typename SrcAccessor::BaseType SrcBaseType;
 		typedef typename DstAccessor::BaseType DstBaseType;
@@ -442,13 +443,13 @@ namespace {
 		switch (format) {
 			case RasterizerState::TextureFormatAlpha:
 			case RasterizerState::TextureFormatLuminance:
-				CopyPixels<U8>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-					dst, dstWidth, dstHeight, dstX, dstY);
+				CopyPixels(reinterpret_cast<const U8 *>(src), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+					reinterpret_cast<U8 *>(dst), dstWidth, dstHeight, dstX, dstY);
 				break;
 
 			case RasterizerState::TextureFormatLuminanceAlpha:
-				CopyPixels<U16>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-					dst, dstWidth, dstHeight, dstX, dstY);
+				CopyPixels(reinterpret_cast<const U16 *>(src), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+					reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY);
 				break;
 
 			case RasterizerState::TextureFormatRGB:
@@ -456,13 +457,15 @@ namespace {
 					case GL_UNSIGNED_BYTE:
 						switch (dstType) {
 							case GL_UNSIGNED_BYTE:
-								CopyPixelsA<RGB2Color, Color2RGB>(src, srcWidth, srcHeight, srcX, srcY, 
-									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+									RGB2Color(), Color2RGB());
 								break;
 
 							case GL_UNSIGNED_SHORT_5_6_5:
-								CopyPixelsA<RGB2Color, Color2RGB565>(src, srcWidth, srcHeight, srcX, srcY, 
-									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+									RGB2Color(), Color2RGB565());
 								break;
 						}
 						break;
@@ -470,13 +473,14 @@ namespace {
 					case GL_UNSIGNED_SHORT_5_6_5:
 						switch (dstType) {
 							case GL_UNSIGNED_BYTE:
-								CopyPixelsA<RGB5652Color, Color2RGB>(src, srcWidth, srcHeight, srcX, srcY, 
-									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+									RGB5652Color(), Color2RGB());
 								break;
 
 							case GL_UNSIGNED_SHORT_5_6_5:
-								CopyPixels<U16>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-									dst, dstWidth, dstHeight, dstX, dstY);
+								CopyPixels(reinterpret_cast<const U16 *>(src), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+									reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY);
 								break;
 						}
 						break;
@@ -489,16 +493,19 @@ namespace {
 					case GL_UNSIGNED_BYTE:
 						switch (dstType) {
 							case GL_UNSIGNED_BYTE:
-								CopyPixelsA<RGBA2Color, Color2RGBA>(src, srcWidth, srcHeight, srcX, srcY, 
-									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+									RGBA2Color(), Color2RGBA());
 								break;
 							case GL_UNSIGNED_SHORT_5_5_5_1:
-								CopyPixelsA<RGBA2Color, Color2RGBA5551>(src, srcWidth, srcHeight, srcX, srcY, 
-									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+									RGBA2Color(), Color2RGBA5551());
 								break;
 							case GL_UNSIGNED_SHORT_4_4_4_4:
-								CopyPixelsA<RGBA2Color, Color2RGBA4444>(src, srcWidth, srcHeight, srcX, srcY, 
-									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+									RGBA2Color(), Color2RGBA4444());
 								break;
 						}
 						break;
@@ -506,16 +513,18 @@ namespace {
 					case GL_UNSIGNED_SHORT_5_5_5_1:
 						switch (dstType) {
 							case GL_UNSIGNED_BYTE:
-								CopyPixelsA<RGBA55512Color, Color2RGBA>(src, srcWidth, srcHeight, srcX, srcY, 
-									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+									RGBA55512Color(), Color2RGBA());
 								break;
 							case GL_UNSIGNED_SHORT_5_5_5_1:
-								CopyPixels<U16>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-									dst, dstWidth, dstHeight, dstX, dstY);
+								CopyPixels(reinterpret_cast<const U16 *>(src), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+									reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY);
 								break;
 							case GL_UNSIGNED_SHORT_4_4_4_4:
-								CopyPixelsA<RGBA55512Color, Color2RGBA4444>(src, srcWidth, srcHeight, srcX, srcY, 
-									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+									RGBA55512Color(), Color2RGBA4444());
 								break;
 						}
 						break;
@@ -523,16 +532,18 @@ namespace {
 					case GL_UNSIGNED_SHORT_4_4_4_4:
 						switch (dstType) {
 							case GL_UNSIGNED_BYTE:
-								CopyPixelsA<RGBA44442Color, Color2RGBA>(src, srcWidth, srcHeight, srcX, srcY, 
-									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+									RGBA44442Color(), Color2RGBA());
 								break;
 							case GL_UNSIGNED_SHORT_5_5_5_1:
-								CopyPixelsA<RGBA44442Color, Color2RGBA5551>(src, srcWidth, srcHeight, srcX, srcY, 
-									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+									RGBA44442Color(), Color2RGBA5551());
 								break;
 							case GL_UNSIGNED_SHORT_4_4_4_4:
-								CopyPixels<U16>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-									dst, dstWidth, dstHeight, dstX, dstY);
+								CopyPixels(reinterpret_cast<const U16 *>(src), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+									reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY);
 								break;
 						}
 						break;
