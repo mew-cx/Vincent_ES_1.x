@@ -150,3 +150,16 @@ void Context :: Orthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top,
 	RebuildMatrices();
 }
 
+// --------------------------------------------------------------------------
+// Matrix querying extension
+// --------------------------------------------------------------------------
+
+void Context :: QueryMatrixx(GLfixed mantissa[16], GLint exponent[16]) {
+
+	const Matrix4x4& currentMatrix = CurrentMatrixStack()->CurrentMatrix();
+
+	for (int index = 0; index < 16; ++index) {
+		mantissa[index] = currentMatrix.Element(index);
+		exponent[index] = 0;
+	}
+}

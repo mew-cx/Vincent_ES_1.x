@@ -36,6 +36,7 @@
 
 
 #include "stdafx.h"
+#include "GLES/gl.h"
 #include "GLES/egl.h"
 #include "Context.h"
 #include "Rasterizer.h"
@@ -94,7 +95,29 @@ GLAPI const char * APIENTRY eglQueryString (EGLDisplay dpy, EGLint name) {
 	return 0;
 }
 
+
+static struct {
+	const char * name;
+	void * ptr;
+
+} FunctionTable[] = {
+	{ "glQueryMatrixxOES", glQueryMatrixxOES },
+};
+
+
 GLAPI void (* APIENTRY eglGetProcAddress (const char *procname))() {
+
+	if (!procname) {
+		return 0;
+	}
+
+	size_t functions = sizeof(FunctionTable) / sizeof(FunctionTable[0]);
+
+	for (size_t index = 0; index < functions; ++index) {
+		if (!strcmp(FunctionTable[index].name, procname))
+			return (void (APIENTRY *)(void)) FunctionTable[index].ptr;
+	}
+
 	return 0;
 }
 
@@ -126,7 +149,8 @@ GLAPI EGLSurface APIENTRY eglCreateWindowSurface (EGLDisplay dpy, EGLConfig conf
 }
 
 GLAPI EGLSurface APIENTRY eglCreatePixmapSurface (EGLDisplay dpy, EGLConfig config, NativePixmapType pixmap, const EGLint *attrib_list) {
-	return 0;
+	// Cannot support rendering to arbitrary native surfaces; use pbuffer surface and eglCopySurfaces instead
+	return EGL_NO_SURFACE;
 }
 
 GLAPI EGLSurface APIENTRY eglCreatePbufferSurface (EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list) {
@@ -236,7 +260,32 @@ GLAPI EGLBoolean APIENTRY eglSwapBuffers (EGLDisplay dpy, EGLSurface draw) {
 }
 
 GLAPI EGLBoolean APIENTRY eglCopyBuffers (EGLDisplay dpy, EGLSurface surface, NativePixmapType target) {
+
+	if (!target) {
+		return EGL_BAD_NATIVE_PIXMAP;
+	}
+
 	Context::GetCurrentContext()->Flush();
+
+	HDC nativeDisplay = GetNativeDisplay(dpy);
+	HDC memoryDC = surface->GetMemoryDC();
+	HDC targetDC = CreateCompatibleDC(nativeDisplay);;
+
+	if (memoryDC == INVALID_HANDLE_VALUE) {
+		memoryDC = CreateCompatibleDC(nativeDisplay);
+	}
+
+	SelectObject(memoryDC, surface->GetBitmap());
+	SelectObject(targetDC, target);
+
+	if (!BitBlt(targetDC, 0, 0, surface->GetWidth(), surface->GetHeight(), memoryDC, 0, 0, SRCCOPY))
+		return EGL_BAD_MATCH;
+
+	if (memoryDC != surface->GetMemoryDC()) {
+		DeleteDC(memoryDC);
+	}
+
+	DeleteDC(targetDC);
 
 	return EGL_TRUE;
 }

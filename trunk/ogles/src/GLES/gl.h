@@ -582,6 +582,15 @@ GLAPI void APIENTRY glTranslatex (GLfixed x, GLfixed y, GLfixed z);
 GLAPI void APIENTRY glVertexPointer (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
 GLAPI void APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height);
 
+
+/****************************************************************************/
+/* Extension: GL_OES_query_matrix											*/
+/****************************************************************************/
+
+
+GLAPI void APIENTRY glQueryMatrixxOES(GLfixed mantissa[16], GLint exponent[16]);
+
+
 /****************************************************************************/
 /* Extension: SGIS_generate_mipmap											*/
 /****************************************************************************/

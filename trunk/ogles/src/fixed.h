@@ -62,7 +62,13 @@
 
 #define EGL_PRECISION 16					// number of fractional bits
 #define EGL_ONE		  (1 << EGL_PRECISION)	// representation of 1
+#define EGL_ZERO	  0						// representation of 0
+#define EGL_HALF	  0x08000				// S15.16 0.5 
+#define EGL_PINF	  0x7fffffff			// +inf 
+#define EGL_MINF	  0x80000000			// -inf 
 
+#define EGL_2PI			EGL_FixedFromFloat(6.28318530717958647692f)
+#define EGL_R2PI		EGL_FixedFromFloat(1.0f/6.28318530717958647692f)
 
 typedef I32 EGL_Fixed;
 
@@ -123,6 +129,18 @@ inline OGLES_API I32 EGL_IntFromFixed(EGL_Fixed value) {
 
 
 // --------------------------------------------------------------------------
+// Retrieve fractional part from fixed point number 
+//
+// Parameters:
+//	value		-	Fractional part from fixed point number 
+// --------------------------------------------------------------------------
+inline OGLES_API I32 EGL_FractionFromFixed(EGL_Fixed value) {
+	return value & ((1 << EGL_PRECISION) - 1);
+}
+
+
+
+// --------------------------------------------------------------------------
 // Convert fixed point number to integer value by round to nearest
 //
 // Parameters:
@@ -175,6 +193,15 @@ inline OGLES_API EGL_Fixed EGL_Mul(EGL_Fixed a, EGL_Fixed b) {
 
 
 // --------------------------------------------------------------------------
+// Calculate inverse of fixed point number
+//
+// Parameters:
+//	value		-	the number whose inverse should be calculated
+// --------------------------------------------------------------------------
+OGLES_API EGL_Fixed EGL_Inverse(EGL_Fixed value);
+
+
+// --------------------------------------------------------------------------
 // Perform division of two fixed point numbers
 //
 // Parameters:
@@ -182,25 +209,7 @@ inline OGLES_API EGL_Fixed EGL_Mul(EGL_Fixed a, EGL_Fixed b) {
 //	b			-	divisor
 // --------------------------------------------------------------------------
 inline OGLES_API EGL_Fixed EGL_Div(EGL_Fixed a, EGL_Fixed b) {
-	assert(b);
-	return (EGL_Fixed) ((((I64) a) << EGL_PRECISION) / ((I64) b));
-}
-
-
-// --------------------------------------------------------------------------
-// Calculate inverse of fixed point number
-//
-// Parameters:
-//	value		-	the number whose inverse should be calculated
-// --------------------------------------------------------------------------
-inline OGLES_API EGL_Fixed EGL_Inverse(EGL_Fixed value) {
-	assert(value);
-	assert(-value);
-	if (value == 0) {
-		return EGL_ONE;
-	} else {
-		return EGL_Div(EGL_ONE, value);
-	}
+	return EGL_Mul(a, EGL_Inverse(b));
 }
 
 
@@ -210,9 +219,7 @@ inline OGLES_API EGL_Fixed EGL_Inverse(EGL_Fixed value) {
 // Parameters:
 //	value		-	the number whose square root should be calculated
 // --------------------------------------------------------------------------
-inline OGLES_API EGL_Fixed EGL_Sqrt(EGL_Fixed value) {
-	return EGL_FixedFromFloat((float) sqrt(EGL_FloatFromFixed(value)));
-}
+OGLES_API EGL_Fixed EGL_Sqrt(EGL_Fixed value);
 
 
 // --------------------------------------------------------------------------
@@ -222,10 +229,7 @@ inline OGLES_API EGL_Fixed EGL_Sqrt(EGL_Fixed value) {
 //	value		-	the numbers whose inverse of square root should be 
 //					calculated
 // --------------------------------------------------------------------------
-inline OGLES_API EGL_Fixed EGL_InvSqrt(EGL_Fixed value) {
-	assert(value);
-	return EGL_FixedFromFloat(1.0f / (float) sqrt(EGL_FloatFromFixed(value)));
-}
+OGLES_API EGL_Fixed EGL_InvSqrt(EGL_Fixed value);
 
 
 // --------------------------------------------------------------------------
@@ -234,9 +238,7 @@ inline OGLES_API EGL_Fixed EGL_InvSqrt(EGL_Fixed value) {
 // Parameters:
 //	value		-	the numbers whose sine should be calculated
 // --------------------------------------------------------------------------
-inline OGLES_API EGL_Fixed EGL_Sin(EGL_Fixed value) {
-	return EGL_FixedFromFloat((float) sin(EGL_FloatFromFixed(value)));
-}
+OGLES_API EGL_Fixed EGL_Sin(EGL_Fixed value);
 
 
 // --------------------------------------------------------------------------
@@ -245,9 +247,7 @@ inline OGLES_API EGL_Fixed EGL_Sin(EGL_Fixed value) {
 // Parameters:
 //	value		-	the numbers whose cosine should be calculated
 // --------------------------------------------------------------------------
-inline OGLES_API EGL_Fixed EGL_Cos(EGL_Fixed value) {
-	return EGL_FixedFromFloat((float) cos(EGL_FloatFromFixed(value)));
-}
+OGLES_API EGL_Fixed EGL_Cos(EGL_Fixed value);
 
 
 #else 
@@ -361,22 +361,10 @@ inline OGLES_API EGL_Fixed EGL_Cos(EGL_Fixed value) {
 // Poor man's exponentiation, only exponents of 0, 1 and 2 are supported
 //
 // Parameters:
-//	value		-	the basis
-//	exponent	-	the exponent, one of 0, 1, 2
+//	value		-	the basis; assume 0 <= value <= 1
+//	exponent	-	the exponent, exponent >= 0
 // --------------------------------------------------------------------------
-inline static EGL_Fixed EGL_Power(EGL_Fixed value, EGL_Fixed exponent) {
-	switch (exponent >> EGL_PRECISION) {
-		default:
-		case 0:
-			return EGL_ONE;
-
-		case 1:
-			return value;
-
-		case 2:
-			return EGL_Mul(value, value);
-	}
-}
+OGLES_API EGL_Fixed EGL_Power(EGL_Fixed value, EGL_Fixed exponent);
 
 
 // --------------------------------------------------------------------------

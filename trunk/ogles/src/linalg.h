@@ -470,6 +470,14 @@ namespace EGL {
 			return m_elements[row + column * ROWS]; 
 		}
 
+		inline EGL_Fixed& Element(int index) {
+			return m_elements[index]; 
+		}
+
+		inline const EGL_Fixed& Element(int index) const {
+			return m_elements[index]; 
+		}
+
 		inline bool IsIdentity() const {
 			return m_identity;
 		}

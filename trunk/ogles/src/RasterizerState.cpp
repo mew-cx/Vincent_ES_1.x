@@ -48,6 +48,12 @@ using namespace EGL;
 
 RasterizerState :: RasterizerState():
 
+	// point and line rasterization
+	m_PointSize(EGL_ONE),
+	m_LineWidth(EGL_ONE),
+	m_PointSmoothEnabled(false),
+	m_LineSmoothEnabled(false),
+
 	// fog
 	m_FogEnabled(false),
 	m_FogColor(Color(0, 0, 0, 0)),
@@ -111,6 +117,11 @@ RasterizerState :: RasterizerState():
 
 
 RasterizerState :: RasterizerState(const RasterizerState& other):
+
+	m_PointSize(other.m_PointSize),
+	m_LineWidth(other.m_LineWidth),
+	m_PointSmoothEnabled(other.m_PointSmoothEnabled),
+	m_LineSmoothEnabled(other.m_LineSmoothEnabled),
 
 	// fog
 	m_FogEnabled(other.m_FogEnabled),
@@ -178,6 +189,11 @@ RasterizerState :: ~RasterizerState() {
 
 
 RasterizerState& RasterizerState :: operator=(const RasterizerState& other) {
+
+	m_PointSize = other.m_PointSize;
+	m_LineWidth = other.m_LineWidth;
+	m_PointSmoothEnabled = other.m_PointSmoothEnabled;
+	m_LineSmoothEnabled = other.m_LineSmoothEnabled;
 
 	// fog
 	m_FogEnabled = other.m_FogEnabled;
