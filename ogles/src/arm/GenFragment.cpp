@@ -1315,6 +1315,8 @@ no_write:
 			if (m_State->m_DepthTest.Enabled) {
 				// return;
 				BRA		(continuation);
+			} else {
+				BRA		(labelStencilBypassed);
 			}
 		//} else {
 		// stencil nad z-test passed
@@ -1412,12 +1414,6 @@ no_write:
 		block = cg_block_create(procedure, weight);
 		labelStencilBypassed->block = block;
 	}
-
-/*******************************************
-
-CONTINUE HERE WITH CONVERSION
-
-*******************************************/
 
 	// surface color buffer, depth buffer, alpha buffer, stencil buffer
 	cg_virtual_reg_t * regColorBuffer =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_COLOR_BUFFER);

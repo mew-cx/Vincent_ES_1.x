@@ -337,6 +337,7 @@ cg_virtual_reg_t * CodeGenerator :: BitFieldFrom255(cg_block_t * block, cg_virtu
 
 	size_t bits = high - low + 1;
 	assert(bits <= 8);
+	size_t lowBit = 8 - bits;
 
 	if (bits != 8) {
 		static const U8 mask[9] = { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
@@ -348,11 +349,17 @@ cg_virtual_reg_t * CodeGenerator :: BitFieldFrom255(cg_block_t * block, cg_virtu
 		value = regMasked;
 	}
 	
-	if (low) {
-		DECL_CONST_REG		(constantShift,	low);
+	if (low > lowBit) {
+		DECL_CONST_REG		(constantShift,	low - lowBit);
 		DECL_REG			(regShifted);
 
 		LSL					(regShifted,	value, constantShift);
+		value = regShifted;
+	} else if (low < lowBit) {
+		DECL_CONST_REG		(constantShift,	lowBit - low);
+		DECL_REG			(regShifted);
+
+		LSR					(regShifted,	value, constantShift);
 		value = regShifted;
 	}
 
