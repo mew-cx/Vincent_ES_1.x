@@ -393,7 +393,7 @@ private:
 		// ----------------------------------------------------------------------
 		// Current values for setup
 		// ----------------------------------------------------------------------
-		Vec3D				m_CurrentVertex;	// don't support vertex at inf
+		Vec4D				m_CurrentVertex;	
 		Vec3D				m_CurrentNormal;
 		FractionalColor		m_CurrentRGBA;
 		TexCoord			m_CurrentTextureCoords;
@@ -480,42 +480,6 @@ private:
 
 	inline Surface * Context :: GetReadSurface() const {
 		return m_ReadSurface;
-	}
-
-
-	inline void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
-
-		// perform depth division
-		EGL_Fixed x = pos.m_ClipCoords.x();
-		EGL_Fixed y = pos.m_ClipCoords.y();
-		EGL_Fixed z = pos.m_ClipCoords.z();
-		EGL_Fixed w = pos.m_ClipCoords.w();
-
-		// fix possible rounding problems
-		if (x < -w)	x = -w;
-		if (x >= w)	x = w - 1;
-		if (y < -w)	y = -w;
-		if (y >= w)	y = w - 1;
-		if (z < -w)	z = -w;
-		if (z >= w)	z = w - 1;
-
-		// keep this value around for perspective-correct texturing
-		EGL_Fixed invDenominator = w ? EGL_Inverse(w) : 0;
-
-		// Scale 1/Z by 2^10 to avoid rounding problems during prespective correct
-		// interpolation
-		// See book by LaMothe for more detailed discussion on this
-		pos.m_WindowCoords.invZ = invDenominator << 10;
-
-		pos.m_WindowCoords.x = 
-			EGL_Mul(EGL_Mul(x, invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
-
-		pos.m_WindowCoords.y = 
-			EGL_Mul(EGL_Mul(y, invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
-
-		pos.m_WindowCoords.depth = 
-			EGL_Mul(z, EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase;
-
 	}
 
 }
