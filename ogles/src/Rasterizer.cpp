@@ -1195,7 +1195,8 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	EGL_Fixed invZ3 = pos3.m_WindowCoords.invZ;
 
 	EdgePos start, end;
-	start.m_WindowCoords.x = end.m_WindowCoords.x = pos1.m_WindowCoords.x;
+	start.m_WindowCoords.x = pos1.m_WindowCoords.x;
+	end.m_WindowCoords.x = pos1.m_WindowCoords.x + EGL_ONE;
 	start.m_WindowCoords.invZ = end.m_WindowCoords.invZ = invZ1;
 	start.m_WindowCoords.depth = end.m_WindowCoords.depth = depth1;
 	start.m_Color = end.m_Color = pos1.m_Color;
@@ -1486,7 +1487,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 			yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
 
-			end.m_WindowCoords.x = pos2.m_WindowCoords.x;
+			end.m_WindowCoords.x = pos2.m_WindowCoords.x + EGL_ONE;
 			end.m_Color = pos2.m_Color;
 			end.m_WindowCoords.invZ = invZ2;
 			end.m_WindowCoords.depth = depth2;
@@ -1641,7 +1642,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 			yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
 
-			end.m_WindowCoords.x = pos2.m_WindowCoords.x;
+			end.m_WindowCoords.x = pos2.m_WindowCoords.x + EGL_ONE;
 			end.m_Color = pos2.m_Color;
 			end.m_WindowCoords.invZ = invZ2;
 			end.m_WindowCoords.depth = depth2;

@@ -72,19 +72,35 @@ public:
 
 	void SetQuadraticAttenuation(EGL_Fixed attenuation);
 
-//	void SetSpecularExponent(EGL_Fixed exponent);
-
 	void SetSpotExponent(EGL_Fixed exponent);
 
 	void SetSpotCutoff(EGL_Fixed cutoff);
 
 	void InitWithMaterial(const Material& material);
 
+	// one-sided lightning
+	// TO DO:
+	// create version for: light at infinity or light at location
+	// spot light vs. point light
+	// color material vs. material color
 	void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
 		const Material& currMaterial, FractionalColor& result);
 
 	void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
+		const Material& currMaterial, const FractionalColor& currentColor, FractionalColor& result);
+
+
+	// two-sided lightning
+	// TO DO:
+	// create version for: light at infinity or light at location
+	// spot light vs. point light
+	// color material vs. material color
+	void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
 		const Material& currMaterial, FractionalColor& result, 
+		FractionalColor& result2);
+
+	void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
+		const Material& currMaterial, const FractionalColor& currentColor, FractionalColor& result, 
 		FractionalColor& result2);
 
 private:
@@ -96,7 +112,6 @@ private:
 	EGL_Fixed				m_ConstantAttenuation;
 	EGL_Fixed				m_LinearAttenuation;
 	EGL_Fixed				m_QuadraticAttenuation;
-//	EGL_Fixed				m_SpecularExponent;
 	EGL_Fixed				m_SpotExponent;
 	EGL_Fixed				m_SpotCutoff;
 	EGL_Fixed				m_CosineSpotCutoff;
