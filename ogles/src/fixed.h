@@ -152,6 +152,17 @@ inline OGLES_API I32 EGL_Round(EGL_Fixed value) {
 
 
 // --------------------------------------------------------------------------
+// Round fixed point number to nearest integer value by round to nearest
+//
+// Parameters:
+//	value		-	Fixed point number to be rounded to integer value
+// --------------------------------------------------------------------------
+inline OGLES_API EGL_Fixed EGL_NearestInt(EGL_Fixed value) {
+	return (value + (EGL_ONE/2 - 1)) & 0xffff0000;
+}
+
+
+// --------------------------------------------------------------------------
 // Convert floating point value to fixed point number
 //
 // Parameters:
