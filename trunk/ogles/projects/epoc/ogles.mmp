@@ -29,6 +29,9 @@ SOURCEPATH ..\..\src\ARM
 SOURCE FunctionCache.cpp
 SOURCE CodeGenerator.cpp
 SOURCE GenFragment.cpp
+SOURCE GenPoint.cpp
+SOURCE GenLine.cpp
+SOURCE GenTriangle.cpp
 SOURCE GenScanline.cpp
 SOURCEPATH ..\..\src\Epoc
 SOURCE ContextEpoc.cpp

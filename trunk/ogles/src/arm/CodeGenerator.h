@@ -47,6 +47,7 @@
 #include "linalg.h"
 #include "Rasterizer.h"
 #include "RasterizerState.h"
+#include "FunctionCache.h"
 
 
 extern "C" {
@@ -85,13 +86,18 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		// Code generation of triangle scan line
 		// ----------------------------------------------------------------------
-		void CompileRasterScanLine(FunctionCache * target);
+		void Compile(FunctionCache * target, FunctionCache::FunctionType type,
+			void (CodeGenerator::*function)());
 
 		void SetState(const RasterizerState * state)	{ m_State = state; }
 		const RasterizerState * GetState()				{ return m_State; }
 
-	private:
 		void GenerateRasterScanLine();
+		void GenerateRasterLine();
+		void GenerateRasterPoint();
+		void GenerateRasterTriangle();
+
+	private:
 		void GenerateFragment(cg_proc_t * procedure, cg_block_t * currentBlock,
 			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
 			int weight);

@@ -127,14 +127,15 @@ namespace {
 
 }
 
-void CodeGenerator :: CompileRasterScanLine(FunctionCache * target) {
+void CodeGenerator :: Compile(FunctionCache * target, FunctionCache::FunctionType type,
+	void (CodeGenerator::*function)()) {
 
 	cg_heap_t * heap = cg_heap_create(4096);
 	cg_module_t * module = cg_module_create(heap);
 
 	m_Module = module;
 
-	GenerateRasterScanLine();
+	(this->*function)();
 
 #ifndef NDEBEUG
 	Dump("dump1.txt", m_Module);
@@ -194,7 +195,7 @@ void CodeGenerator :: CompileRasterScanLine(FunctionCache * target) {
 #endif
 
 	void * targetBuffer = 
-		target->AddFunction(FunctionCache::FunctionTypeScanline, 
+		target->AddFunction(type, 
 							*m_State, cg_segment_size(cseg));
 
 	cg_segment_get_block(cseg, 0, targetBuffer, cg_segment_size(cseg));
