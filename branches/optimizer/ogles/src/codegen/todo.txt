@@ -35,10 +35,42 @@ scheduled at this point. This will
 ensure that data will be available (given it resides in
 on-chip cache).
 	
-Multiplications: Rewrite fixed point multiplies as
-instructions that can be scheduled individually
-	
 Have general instruction scheduling on intermediate code: 
 Assuming all data is available, just take instuction
 execution cycles and next use into consideration.
 	
+----------------------------------------------------------------------------
+
+List scheduling for single block:
+
+loop for each segment of the current block
+a segments starts after any possible phi instructions and extends until
+the first branch instruction
+
+Have set of ready instructions; for each ready instruction, maintain stall if
+executed at the current cycle
+
+Initialize ready instructions with set of instructions that do not have any
+register in use set that is defined in the current block. Initially, all those
+instructions have a stall of 0.
+
+init cycle count to 0
+
+Repeat until (e.g. set of ready instructions is empty):
+	Select an instruction with minimum stall from the pool of ready instructions
+	--> in case of ties, use an instruction which has minimum impact on register use
+
+	delta = number of stalls + instruction 
+	update cycle count adding delta
+
+	for each ready instruction:
+		decrease set stall to maximum (old stall - delta, 0)
+		if resource conflict with current instruction (e.g. multiplier), increase
+			stall to time shared resource is busy
+
+	for each variable in def set of instruction:
+		for each instruction in use chain for this variable
+			decrease count of pending variables
+			if pending variables reaches 0:
+				add instruction to ready pool
+				initialize stall based on latencies of use variables

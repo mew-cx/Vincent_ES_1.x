@@ -110,8 +110,11 @@ typedef struct cg_inst_base_t
 	cg_block_t *		block;
 	cg_inst_kind_t		kind;
 	cg_opcode_t			opcode;
+	int					dependencies : 8;
 	int					used : 1;
-	int					sequence;
+	int					scheduled : 1;
+	short				sequence;
+	void *				user;
 #ifndef NDEBUG
 	const char *		file;
 	int					line;
