@@ -8,6 +8,12 @@ the bug database on sourceforge.
 Version 0.71
 ------------
 
+935473 - Add support for (Strong)ARM 
+
+
+Version 0.70a
+-------------
+
 This version incorporates critical fixes for 0.7.
 
 930264 - Texture loading raises an exception 

@@ -3,7 +3,7 @@ Microsoft eMbedded Visual Tools Workspace File, Format Version 4.00
 
 ###############################################################################
 
-Project: "3dsViewer"="..\..\..\3dsViewer\3dsViewer.vcp" - Package Owner=<4>
+Project: "Bubble"="..\..\..\Bubble\Bubble.vcp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -11,9 +11,6 @@ Package=<5>
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name evc4
-    End Project Dependency
     Begin Project Dependency
     Project_Dep_Name OGLES
     End Project Dependency
@@ -48,6 +45,84 @@ Package=<4>
 
 ###############################################################################
 
+Project: "conformshell"=".\conformshell.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "covegl"=".\covegl.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name ctk
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name fixed
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name OGLES
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name platform
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "covgl"=".\covgl.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name ctk
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name fixed
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name OGLES
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name platform
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "ctk"=".\ctk.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name OGLES
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name platform
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "evc4"="..\..\..\LIB3DS-1.2.0\evc4\evc4.vcp" - Package Owner=<4>
 
 Package=<5>
@@ -56,6 +131,72 @@ Package=<5>
 
 Package=<4>
 {{{
+}}}
+
+###############################################################################
+
+Project: "fixed"=".\fixed.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name platform
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "innercity"="..\..\..\innercity\innercity.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name OGLES
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "platform"=".\platform.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "primtest"=".\primtest.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name ctk
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name fixed
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name OGLES
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name platform
+    End Project Dependency
 }}}
 
 ###############################################################################

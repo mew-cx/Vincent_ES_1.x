@@ -22,6 +22,8 @@ CFG=codegen - Win32 (WCE emulator) Debug
 !MESSAGE "codegen - Win32 (WCE emulator) Debug" (based on "Win32 (WCE emulator) Static Library")
 !MESSAGE "codegen - Win32 (WCE ARMV4) Release" (based on "Win32 (WCE ARMV4) Static Library")
 !MESSAGE "codegen - Win32 (WCE ARMV4) Debug" (based on "Win32 (WCE ARMV4) Static Library")
+!MESSAGE "codegen - Win32 (WCE ARMV4) Debug StrongARM" (based on "Win32 (WCE ARMV4) Static Library")
+!MESSAGE "codegen - Win32 (WCE ARMV4) Release StrongARM" (based on "Win32 (WCE ARMV4) Static Library")
 !MESSAGE 
 
 # Begin Project
@@ -93,8 +95,8 @@ BSC32=bscmake.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "..\..\bin\arm\Release"
-# PROP Intermediate_Dir "..\..\obj\codegen\arm\Release"
+# PROP Output_Dir "..\..\bin\xscale\Release"
+# PROP Intermediate_Dir "..\..\obj\codegen\xscale\Release"
 # PROP CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
 # PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
 # PROP Target_Dir ""
@@ -119,6 +121,32 @@ BSC32=bscmake.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
+# PROP Output_Dir "..\..\bin\xscale\Debug"
+# PROP Intermediate_Dir "..\..\obj\codegen\xscale\Debug"
+# PROP CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xicle42
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /M$(CECrtMTDebug) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Debug StrongARM"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "ARMV4Debug StrongARM"
+# PROP BASE Intermediate_Dir "ARMV4Debug StrongARM"
+# PROP BASE CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
 # PROP Output_Dir "..\..\bin\arm\Debug"
 # PROP Intermediate_Dir "..\..\obj\codegen\arm\Debug"
 # PROP CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
@@ -134,6 +162,32 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Release StrongARM"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "ARMV4Release StrongARM"
+# PROP BASE Intermediate_Dir "ARMV4Release StrongARM"
+# PROP BASE CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "..\..\bin\arm\Release"
+# PROP Intermediate_Dir "..\..\obj\codegen\arm\Release"
+# PROP CPU_ID "{ECBEA43D-CD7B-4852-AD55-D4227B5D624B}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xicle42
+# ADD BASE CPP /nologo /W3 /Zi /Oxt /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "NDEBUG" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /Zi /Oxt /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "NDEBUG" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /M$(CECrtMT) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
 !ENDIF 
 
 # Begin Target
@@ -142,6 +196,8 @@ BSC32=bscmake.exe
 # Name "codegen - Win32 (WCE emulator) Debug"
 # Name "codegen - Win32 (WCE ARMV4) Release"
 # Name "codegen - Win32 (WCE ARMV4) Debug"
+# Name "codegen - Win32 (WCE ARMV4) Debug StrongARM"
+# Name "codegen - Win32 (WCE ARMV4) Release StrongARM"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
@@ -177,6 +233,24 @@ DEP_CPP_ARM_C=\
 	
 
 !ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_ARM_C=\
+	"..\..\src\codegen\arm-codegen.h"\
+	"..\..\src\codegen\arm_dpimacros.h"\
+	"..\..\src\codegen\codegen.h"\
+	"..\..\src\codegen\segment.h"\
+	
+
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Debug StrongARM"
+
+DEP_CPP_ARM_C=\
+	"..\..\src\codegen\arm-codegen.h"\
+	"..\..\src\codegen\arm_dpimacros.h"\
+	"..\..\src\codegen\codegen.h"\
+	"..\..\src\codegen\segment.h"\
+	
+
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Release StrongARM"
 
 DEP_CPP_ARM_C=\
 	"..\..\src\codegen\arm-codegen.h"\
@@ -232,6 +306,26 @@ DEP_CPP_ARM_D=\
 	"..\..\src\codegen\segment.h"\
 	
 
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Debug StrongARM"
+
+DEP_CPP_ARM_D=\
+	"..\..\src\codegen\arm-codegen.h"\
+	"..\..\src\codegen\arm-dis.h"\
+	"..\..\src\codegen\arm_dpimacros.h"\
+	"..\..\src\codegen\codegen.h"\
+	"..\..\src\codegen\segment.h"\
+	
+
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Release StrongARM"
+
+DEP_CPP_ARM_D=\
+	"..\..\src\codegen\arm-codegen.h"\
+	"..\..\src\codegen\arm-dis.h"\
+	"..\..\src\codegen\arm_dpimacros.h"\
+	"..\..\src\codegen\codegen.h"\
+	"..\..\src\codegen\segment.h"\
+	
+
 !ENDIF 
 
 # End Source File
@@ -264,6 +358,22 @@ DEP_CPP_BITSE=\
 	
 
 !ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_BITSE=\
+	"..\..\src\codegen\bitset.h"\
+	"..\..\src\codegen\codegen.h"\
+	"..\..\src\codegen\heap.h"\
+	
+
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Debug StrongARM"
+
+DEP_CPP_BITSE=\
+	"..\..\src\codegen\bitset.h"\
+	"..\..\src\codegen\codegen.h"\
+	"..\..\src\codegen\heap.h"\
+	
+
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Release StrongARM"
 
 DEP_CPP_BITSE=\
 	"..\..\src\codegen\bitset.h"\
@@ -330,6 +440,32 @@ DEP_CPP_EMIT_=\
 	"..\..\src\codegen\segment.h"\
 	
 
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Debug StrongARM"
+
+DEP_CPP_EMIT_=\
+	"..\..\src\codegen\arm-codegen.h"\
+	"..\..\src\codegen\arm_dpimacros.h"\
+	"..\..\src\codegen\bitset.h"\
+	"..\..\src\codegen\codegen.h"\
+	"..\..\src\codegen\emit.h"\
+	"..\..\src\codegen\heap.h"\
+	"..\..\src\codegen\instruction.h"\
+	"..\..\src\codegen\segment.h"\
+	
+
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Release StrongARM"
+
+DEP_CPP_EMIT_=\
+	"..\..\src\codegen\arm-codegen.h"\
+	"..\..\src\codegen\arm_dpimacros.h"\
+	"..\..\src\codegen\bitset.h"\
+	"..\..\src\codegen\codegen.h"\
+	"..\..\src\codegen\emit.h"\
+	"..\..\src\codegen\heap.h"\
+	"..\..\src\codegen\instruction.h"\
+	"..\..\src\codegen\segment.h"\
+	
+
 !ENDIF 
 
 # End Source File
@@ -359,6 +495,20 @@ DEP_CPP_HEAP_=\
 	
 
 !ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_HEAP_=\
+	"..\..\src\codegen\codegen.h"\
+	"..\..\src\codegen\heap.h"\
+	
+
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Debug StrongARM"
+
+DEP_CPP_HEAP_=\
+	"..\..\src\codegen\codegen.h"\
+	"..\..\src\codegen\heap.h"\
+	
+
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Release StrongARM"
 
 DEP_CPP_HEAP_=\
 	"..\..\src\codegen\codegen.h"\
@@ -420,6 +570,30 @@ DEP_CPP_INSTR=\
 	"..\..\src\codegen\segment.h"\
 	
 
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Debug StrongARM"
+
+DEP_CPP_INSTR=\
+	"..\..\src\codegen\arm-codegen.h"\
+	"..\..\src\codegen\arm_dpimacros.h"\
+	"..\..\src\codegen\bitset.h"\
+	"..\..\src\codegen\codegen.h"\
+	"..\..\src\codegen\heap.h"\
+	"..\..\src\codegen\instruction.h"\
+	"..\..\src\codegen\segment.h"\
+	
+
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Release StrongARM"
+
+DEP_CPP_INSTR=\
+	"..\..\src\codegen\arm-codegen.h"\
+	"..\..\src\codegen\arm_dpimacros.h"\
+	"..\..\src\codegen\bitset.h"\
+	"..\..\src\codegen\codegen.h"\
+	"..\..\src\codegen\heap.h"\
+	"..\..\src\codegen\instruction.h"\
+	"..\..\src\codegen\segment.h"\
+	
+
 !ENDIF 
 
 # End Source File
@@ -449,6 +623,20 @@ DEP_CPP_SEGME=\
 	
 
 !ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_SEGME=\
+	"..\..\src\codegen\codegen.h"\
+	"..\..\src\codegen\segment.h"\
+	
+
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Debug StrongARM"
+
+DEP_CPP_SEGME=\
+	"..\..\src\codegen\codegen.h"\
+	"..\..\src\codegen\segment.h"\
+	
+
+!ELSEIF  "$(CFG)" == "codegen - Win32 (WCE ARMV4) Release StrongARM"
 
 DEP_CPP_SEGME=\
 	"..\..\src\codegen\codegen.h"\

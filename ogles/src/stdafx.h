@@ -61,6 +61,6 @@
 // Intel Header Files
 // --------------------------------------------------------------------------
 
-#if defined(ARM) || defined(_ARM_)
+#if defined(EGL_USE_GPP)
 #include <gpp.h>
 #endif
