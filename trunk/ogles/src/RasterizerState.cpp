@@ -47,7 +47,6 @@ using namespace EGL;
 
 
 RasterizerState :: RasterizerState():
-	m_Version(0),
 
 	// fog
 	m_FogEnabled(false),
@@ -85,13 +84,23 @@ RasterizerState :: RasterizerState():
 
 	// initial values for logic op
 	m_LogicOpEnabled(false),
-	m_LogicOpcode(LogicOpCopy)
+	m_LogicOpcode(LogicOpCopy),
+
+	// texture
+	m_TexEnvColor(Color(0, 0, 0, 0)),
+	m_TextureEnabled(false),
+	m_TextureMode(TextureModeModulate),
+	m_MinFilterMode(MinFilterModeNearest),
+	m_MagFilterMode(MagFilterModeNearest),
+	m_WrappingModeS(WrappingModeRepeat),
+	m_WrappingModeT(WrappingModeRepeat),
+	m_InternalFormat(TextureFormatLuminance)
+
 {
 }
 
 
 RasterizerState :: RasterizerState(const RasterizerState& other):
-	m_Version(other.m_Version),
 
 	// fog
 	m_FogEnabled(other.m_FogEnabled),
@@ -129,7 +138,18 @@ RasterizerState :: RasterizerState(const RasterizerState& other):
 
 	// initial values for logic op
 	m_LogicOpEnabled(other.m_LogicOpEnabled),
-	m_LogicOpcode(other.m_LogicOpcode)
+	m_LogicOpcode(other.m_LogicOpcode),
+
+	// texture
+	m_TexEnvColor(other.m_TexEnvColor),
+	m_TextureEnabled(other.m_TextureEnabled),
+	m_TextureMode(other.m_TextureMode),
+	m_MinFilterMode(other.m_MinFilterMode),
+	m_MagFilterMode(other.m_MagFilterMode),
+	m_WrappingModeS(other.m_WrappingModeS),
+	m_WrappingModeT(other.m_WrappingModeT),
+	m_InternalFormat(other.m_InternalFormat)
+
 {
 }
 
@@ -139,7 +159,6 @@ RasterizerState :: ~RasterizerState() {
 
 
 RasterizerState& RasterizerState :: operator=(const RasterizerState& other) {
-	m_Version = other.m_Version;
 
 	// fog
 	m_FogEnabled = other.m_FogEnabled;
@@ -178,6 +197,16 @@ RasterizerState& RasterizerState :: operator=(const RasterizerState& other) {
 	// initial values for logic op
 	m_LogicOpEnabled = other.m_LogicOpEnabled;
 	m_LogicOpcode = other.m_LogicOpcode;
+
+	// texture
+	m_TexEnvColor = other.m_TexEnvColor;
+	m_TextureEnabled = other.m_TextureEnabled;
+	m_TextureMode = other.m_TextureMode;
+	m_MinFilterMode = other.m_MinFilterMode;
+	m_MagFilterMode = other.m_MagFilterMode;
+	m_WrappingModeS = other.m_WrappingModeS;
+	m_WrappingModeT = other.m_WrappingModeT;
+	m_InternalFormat = other.m_InternalFormat;
 
 	return *this;
 }

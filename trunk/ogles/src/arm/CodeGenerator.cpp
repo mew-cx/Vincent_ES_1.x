@@ -321,7 +321,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		DECL_REG	(regU0);
 		DECL_REG	(regV0);
 
-		switch (m_Texture->GetWrappingModeS()) {
+		switch (m_State->m_WrappingModeS) {
 			case RasterizerState::WrappingModeClampToEdge:
 				//tu0 = EGL_CLAMP(tu, 0, EGL_ONE);
 				{
@@ -372,7 +372,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				break;
 		}
 
-		switch (m_Texture->GetWrappingModeT()) {
+		switch (m_State->m_WrappingModeT) {
 			case RasterizerState::WrappingModeClampToEdge:
 				//tv0 = EGL_CLAMP(tv, 0, EGL_ONE);
 				{
@@ -446,7 +446,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		LSL		(regScaledTexY, regTexY, fragmentInfo.regTextureExponent);
 		ADD		(regTexOffset, regTexX, regScaledTexY);
 
-		switch (m_Texture->GetInternalFormat()) {
+		switch (m_State->m_InternalFormat) {
 			case RasterizerState::TextureFormatAlpha:				// 8
 				{
 				//texColor = Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
@@ -691,7 +691,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				break;
 		}
 
-		switch (m_Texture->GetInternalFormat()) {
+		switch (m_State->m_InternalFormat) {
 			default:
 			case RasterizerState::TextureFormatAlpha:
 				switch (m_State->m_TextureMode) {

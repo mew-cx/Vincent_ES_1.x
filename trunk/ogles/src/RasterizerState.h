@@ -180,9 +180,6 @@ namespace EGL {
 		int Compare(const RasterizerState& other) const;
 		size_t HashCode() const;
 
-		U32 GetVersion() const;
-		void VersionChanged();
-
 		// ----------------------------------------------------------------------
 		// Primitive rendering state
 		// ----------------------------------------------------------------------
@@ -195,7 +192,7 @@ namespace EGL {
 		void SetWrappingModeS(WrappingMode mode);
 		void SetWrappingModeT(WrappingMode mode);
 
-		void SetInternalFormat(TextureFormat format) const;
+		void SetInternalFormat(TextureFormat format);
 
 		void SetDepthRange(EGL_Fixed zNear, EGL_Fixed zFar);
 
@@ -313,9 +310,6 @@ namespace EGL {
 
 		StencilOp				m_StencilFail, m_StencilZFail, m_StencilZPass;
 
-		U32						m_Version;			// version numbers gets
-													// incremented with each 
-													// state change
 	};
 
 
@@ -323,71 +317,71 @@ namespace EGL {
 	// Inline member definitions
 	// ----------------------------------------------------------------------
 
-	inline U32 RasterizerState :: GetVersion() const { 
-		return m_Version;
-	}
-
-
-	inline void RasterizerState :: VersionChanged() { 
-		++m_Version; 
-	};
-
 
 	inline void RasterizerState :: SetTexEnvColor(const Color& color) {
 		m_TexEnvColor = color;
-		VersionChanged();
+	}
+
+	inline void RasterizerState :: SetTextureMode(TextureMode mode) {
+		m_TextureMode = mode;
+	}
+
+	inline void RasterizerState :: SetMinFilterMode(MinFilterMode mode) {
+		m_MinFilterMode = mode;
+	}
+
+	inline void RasterizerState :: SetMagFilterMode(MagFilterMode mode) {
+		m_MagFilterMode = mode;
+	}
+
+	inline void RasterizerState :: SetWrappingModeS(WrappingMode mode) {
+		m_WrappingModeS = mode;
+	}
+
+	inline void RasterizerState :: SetWrappingModeT(WrappingMode mode) {
+		m_WrappingModeT = mode;
+	}
+
+	inline void RasterizerState :: SetInternalFormat(TextureFormat format) {
+		m_InternalFormat = format;
 	}
 
 	inline void RasterizerState :: SetFogColor(const Color& color) {
 		m_FogColor = color;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: EnableFog(bool enabled) {
 		m_FogEnabled = enabled;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetLineWidth(EGL_Fixed width) {
 		m_LineWidth = width;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetLogicOp(LogicOp opcode) {
 		m_LogicOpcode = opcode;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetShadeModel(ShadingModel mode) {
 		m_ShadingModel = mode;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: EnableTexture(bool enabled) {
 		m_TextureEnabled = enabled;
-		VersionChanged();
-	}
-
-	inline void RasterizerState :: SetTextureMode(const TextureMode mode) {
-		m_TextureMode = mode;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetPointSize(EGL_Fixed size) {
 		m_PointSize = size;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetPolygonOffset(EGL_Fixed factor, EGL_Fixed units) {
 		m_PolygonOffsetFactor = factor;
 		m_PolygonOffsetUnits = units;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetSampleCoverage(EGL_Fixed value, bool invert) {
 		m_SampleCoverage = value;
 		m_InvertSampleCoverage = invert;
-		VersionChanged();
 	}
 
 	// ----------------------------------------------------------------------
@@ -397,13 +391,11 @@ namespace EGL {
 	inline void RasterizerState :: SetAlphaFunc(ComparisonFunc func, EGL_Fixed ref) {
 		m_AlphaFunc = func;
 		m_AlphaReference = ref;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetBlendFunc(BlendFuncSrc sfactor, BlendFuncDst dfactor) {
 		m_BlendFuncSrc = sfactor;
 		m_BlendFuncDst = dfactor;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetColorMask(bool red, bool green, bool blue, bool alpha) {
@@ -411,17 +403,14 @@ namespace EGL {
 		m_MaskRed = red;
 		m_MaskGreen = green;
 		m_MaskBlue = blue;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetDepthFunc(ComparisonFunc func) {
 		m_DepthFunc = func;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetDepthMask(bool flag) {
 		m_MaskDepth = flag;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetScissor(I32 x, I32 y, U32 width, U32 height) {
@@ -429,66 +418,54 @@ namespace EGL {
 		m_ScissorY = y;
 		m_ScissorWidth = width;
 		m_ScissorHeight = height;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: EnableAlphaTest(bool enabled) {
 		m_AlphaTestEnabled = enabled;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: EnableDepthTest(bool enabled) {
 		m_DepthTestEnabled = enabled;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: EnableLogicOp(bool enabled) {
 		m_LogicOpEnabled = enabled;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: EnableScissorTest(bool enabled) {
 		m_ScissorTestEnabled = enabled;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: EnableBlending(bool enabled) {
 		m_BlendingEnabled = enabled;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetStencilFunc(ComparisonFunc func, I32 ref, U32 mask) {
 		m_StencilFunc = func;
 		m_StencilReference = ref;
 		m_StencilComparisonMask = mask;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetStencilMask(U32 mask) {
 		m_StencilMask = mask;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetStencilOp(StencilOp fail, StencilOp zfail, StencilOp zpass) {
 		m_StencilFail = fail;
 		m_StencilZFail = zfail;
 		m_StencilZPass = zpass;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: EnableStencilTest(bool enabled) {
 		m_StencilTestEnabled = enabled;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetLineSmoothEnabled(bool enabled) {
 		m_LineSmoothEnabled = enabled;
-		VersionChanged();
 	}
 
 	inline void RasterizerState :: SetPointSmoothEnabled(bool enabled) {
 		m_PointSmoothEnabled = enabled;
-		VersionChanged();
 	}
 
 	class RasterizerStateCompare {

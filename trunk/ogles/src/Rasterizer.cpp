@@ -121,11 +121,25 @@ Rasterizer :: ~Rasterizer() {
 
 void Rasterizer :: SetState(RasterizerState * state) {
 	m_State = state;
+	m_Texture = 0;
 }
 
 
 RasterizerState * Rasterizer :: GetState() const {
 	return m_State;
+}
+
+
+void Rasterizer :: SetTexture(MultiTexture * texture) {
+	m_Texture = texture; 
+
+	if (m_Texture && m_State) {
+		m_State->SetWrappingModeS(m_Texture->GetWrappingModeS());
+		m_State->SetWrappingModeT(m_Texture->GetWrappingModeT());
+		m_State->SetMinFilterMode(m_Texture->GetMinFilterMode());
+		m_State->SetMagFilterMode(m_Texture->GetMagFilterMode());
+		m_State->SetInternalFormat(m_Texture->GetInternalFormat());
+	}
 }
 
 
@@ -850,7 +864,6 @@ void Rasterizer :: PrepareTriangle() {
 	if (!m_IsPrepared) {
 		CodeGenerator generator;
 		generator.SetState(m_State);
-		generator.SetTexture(m_Texture);
 
 		generator.CompileRasterScanLine(m_CodeSegment);
 	}

@@ -97,9 +97,6 @@ namespace EGL {
 		void SetState(RasterizerState * state)	{ m_State = state; }
 		RasterizerState * GetState()			{ return m_State; }
 
-		void SetTexture(MultiTexture * texture)	{ m_Texture = texture; }
-		MultiTexture * GetTexture()				{ return m_Texture; }
-
 	private:
 		void GenerateRasterScanLine();
 		void GenerateFragment(cg_proc_t * procedure, cg_block_t * currentBlock,
@@ -108,7 +105,6 @@ namespace EGL {
 
 	private:
 		RasterizerState *	m_State;
-		MultiTexture *		m_Texture;
 		struct cg_module_t *m_Module;
 	};
 

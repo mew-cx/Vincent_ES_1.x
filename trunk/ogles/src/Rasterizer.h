@@ -126,7 +126,7 @@ namespace EGL {
 		void SetSurface(Surface * surface);
 		Surface * GetSurface() const;
 
-		void SetTexture(MultiTexture * texture)		{ m_Texture = texture; }
+		void SetTexture(MultiTexture * texture);
 		MultiTexture * GetTexture()					{ return m_Texture; }
 		const MultiTexture * GetTexture() const		{ return m_Texture; }
 
