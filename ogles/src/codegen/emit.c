@@ -1411,13 +1411,16 @@ static void assign_reg(cg_codegen_t * gen,
 {
 	// associate the physical register with the virtual register
 	// but mark the register as no holding the value yet
-	
-	physical_reg->virtual_reg = reg;
 
-	if (reg->physical_reg == (cg_physical_reg_t *) 0)
-		reg->physical_reg = physical_reg;
-	
-	physical_reg->defined = physical_reg->dirty = 0;
+	if (physical_reg->virtual_reg != reg)
+	{
+		physical_reg->virtual_reg = reg;
+
+		if (reg->physical_reg == (cg_physical_reg_t *) 0)
+			reg->physical_reg = physical_reg;
+		
+		physical_reg->defined = physical_reg->dirty = 0;
+	}
 }
 
 
@@ -1524,6 +1527,7 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 	/* the current instruction												*/
 	/************************************************************************/
 	
+#if 0
 	for (iter = buffer; iter != end; ++iter)
 	{
 		cg_virtual_reg_t * reg = *iter;
@@ -1533,7 +1537,7 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 			deallocate_reg(gen, reg);
 		}
 	}
-	
+#endif	
 	/************************************************************************/
 	/* Allocate registers for all registers in def set						*/
 	/************************************************************************/
@@ -1596,6 +1600,19 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 		physical_reg->dirty = physical_reg->defined = 1;
 	}
 	
+
+	/* BUG BUG: This section is here only since it's broken above */
+	end = cg_inst_use(inst, buffer, buffer + 64);
+
+	for (iter = buffer; iter != end; ++iter)
+	{
+		cg_virtual_reg_t * reg = *iter;
+		
+		if (gen->use_chains[reg->reg_no] == (cg_inst_list_t *) 0)
+		{
+			deallocate_reg(gen, reg);
+		}
+	}
 }
 
 
@@ -2158,3 +2175,7 @@ void cg_codegen_reference(cg_codegen_t * gen, cg_label_t * label,
 }
 									 
 
+cg_segment_t * cg_codegen_segment(cg_codegen_t * gen)
+{
+	return gen->cseg;
+}

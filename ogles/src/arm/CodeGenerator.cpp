@@ -47,6 +47,7 @@
 #include "codegen.h"
 #include "instruction.h"
 #include "emit.h"
+#include "arm-dis.h"
 
 using namespace EGL;
 
@@ -2935,6 +2936,15 @@ void CodeGenerator :: CompileRasterScanLine() {
 
 	Dump("dump4.txt", m_Module);
 
+	cg_runtime_info_t runtime; 
+	memset(&runtime, 0, sizeof runtime);
+
+	cg_codegen_t * codegen = cg_codegen_create(heap, &runtime);
+	cg_codegen_emit_module(codegen, m_Module);
+
+	ARMDis dis;
+	armdis_init(&dis);
+	armdis_dump(&dis, "dump5.s", cg_codegen_segment(codegen));
 
 #ifdef WINCE
 	// flush data cache and clear instruction cache to make new code visible to execution unit
@@ -2942,6 +2952,7 @@ void CodeGenerator :: CompileRasterScanLine() {
 
 #endif
 
+	cg_codegen_destroy(codegen);
 	cg_heap_destroy(module->heap);
 }
 
