@@ -118,7 +118,14 @@ namespace {
 }
 
 
-#define SOLVE_PARAM(dx, dy, p1, p2, p3, scale) \
+#define SOLVE_PARAM_X(dx, dy, p1, p2, p3, scale) \
+	EGL_Fixed dx = EGL_Mul(																\
+			Det2x2(																		\
+				p2 - p1, pos2.m_WindowCoords.y - pos1.m_WindowCoords.y,					\
+				p3 - p1, pos3.m_WindowCoords.y - pos1.m_WindowCoords.y),				\
+			scale);	
+
+#define SOLVE_PARAM_XY(dx, dy, p1, p2, p3, scale) \
 	EGL_Fixed dx = EGL_Mul(																\
 			Det2x2(																		\
 				p2 - p1, pos2.m_WindowCoords.y - pos1.m_WindowCoords.y,					\
@@ -130,8 +137,12 @@ namespace {
 				pos3.m_WindowCoords.x - pos1.m_WindowCoords.x, p3 - p1),				\
 			scale)
 
-#define SOLVE(dx, dy, param, scale) \
-	SOLVE_PARAM(dx, dy, pos1.param, pos2.param, pos3.param, scale)
+
+#define SOLVE_X(dx, dy, param, scale) \
+	SOLVE_PARAM_X(dx, dy, pos1.param, pos2.param, pos3.param, scale)
+
+#define SOLVE_XY(dx, dy, param, scale) \
+	SOLVE_PARAM_XY(dx, dy, pos1.param, pos2.param, pos3.param, scale)
 
 
 // ---------------------------------------------------------------------------
@@ -264,6 +275,81 @@ inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const Ed
 #endif
 
 
+#define SetupEdge(from, fromDepth, to, toDepth, result)													\
+	{																									\
+		EGL_Fixed delta = to.m_WindowCoords.y - from.m_WindowCoords.y;									\
+		EGL_Fixed invDelta;																				\
+																										\
+		if (delta) {																					\
+			invDelta = EGL_Inverse(delta);																\
+			result.m_WindowCoords.x = EGL_Mul(to.m_WindowCoords.x - from.m_WindowCoords.x, invDelta);	\
+			result.m_Color = (to.m_Color - from.m_Color) * invDelta;									\
+			result.m_FogDensity = EGL_Mul(from.m_FogDensity - to.m_FogDensity, invDelta);				\
+			result.m_WindowCoords.depth = EGL_Mul(toDepth - fromDepth, invDelta);						\
+			result.m_WindowCoords.invZ = EGL_Mul(to.m_WindowCoords.invZ - from.m_WindowCoords.invZ, invDelta);	\
+		} else {																						\
+			invDelta = 0;																				\
+			result.m_WindowCoords.x = to.m_WindowCoords.x - from.m_WindowCoords.x;						\
+			result.m_Color = FractionalColor(0, 0, 0, 0);												\
+			result.m_FogDensity = 0;																	\
+			result.m_WindowCoords.depth = 0;															\
+		}																								\
+																										\
+		result.m_TextureCoords.tu =																		\
+			EGL_Mul(EGL_Mul(to.m_TextureCoords.tu, to.m_WindowCoords.invZ) -							\
+					EGL_Mul(from.m_TextureCoords.tu, from.m_WindowCoords.invZ), invDelta);				\
+		result.m_TextureCoords.tv =																		\
+			EGL_Mul(EGL_Mul(to.m_TextureCoords.tv, to.m_WindowCoords.invZ) -							\
+					EGL_Mul(from.m_TextureCoords.tv, from.m_WindowCoords.invZ), invDelta);				\
+	}																				
+
+
+#define TrianglePartScissor(rasterInfo, start, delta, deltaStart, deltaDeltaX, y, yEnd, yScissorStart, yScissorEnd) \
+	{																									\
+		for (; y < yEnd; ++y) {																			\
+			if (y >= yScissorStart && y < yScissorEnd)													\
+				RasterScanLine(rasterInfo, start, delta);												\
+																										\
+			start.m_WindowCoords.x += deltaStart.m_WindowCoords.x;										\
+			start.m_Color += deltaStart.m_Color;														\
+			start.m_WindowCoords.invZ += deltaStart.m_WindowCoords.invZ;								\
+			start.m_TextureCoords.tu += deltaStart.m_TextureCoords.tu;									\
+			start.m_TextureCoords.tv += deltaStart.m_TextureCoords.tv;									\
+			start.m_FogDensity += deltaStart.m_FogDensity;												\
+			start.m_WindowCoords.depth += deltaStart.m_WindowCoords.depth;								\
+																										\
+			delta.m_WindowCoords.x += deltaDeltaX;														\
+																										\
+			rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;											\
+			rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;											\
+			rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;										\
+			rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;											\
+		}																								\
+	}
+
+
+#define TrianglePart(rasterInfo, start, delta, deltaStart, deltaDeltaX, y, yEnd)						\
+	{																									\
+		for (; y < yEnd; ++y) {																			\
+			RasterScanLine(rasterInfo, start, delta);													\
+																										\
+			start.m_WindowCoords.x += deltaStart.m_WindowCoords.x;										\
+			start.m_Color += deltaStart.m_Color;														\
+			start.m_WindowCoords.invZ += deltaStart.m_WindowCoords.invZ;								\
+			start.m_TextureCoords.tu += deltaStart.m_TextureCoords.tu;									\
+			start.m_TextureCoords.tv += deltaStart.m_TextureCoords.tv;									\
+			start.m_FogDensity += deltaStart.m_FogDensity;												\
+			start.m_WindowCoords.depth += deltaStart.m_WindowCoords.depth;								\
+																										\
+			delta.m_WindowCoords.x += deltaDeltaX;														\
+																										\
+			rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;											\
+			rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;											\
+			rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;										\
+			rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;											\
+		}																								\
+	}
+
 // ---------------------------------------------------------------------------
 // Render the triangle specified by the three transformed and lit vertices
 // passed as arguments. Before calling into the actual rasterization, the
@@ -313,15 +399,15 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 	EGL_Fixed invDenominator = EGL_Inverse(denominator);
 
-	SOLVE(dRdX, dRdY, m_Color.r, invDenominator);
-	SOLVE(dGdX, dGdY, m_Color.g, invDenominator);
-	SOLVE(dBdX, dBdY, m_Color.b, invDenominator);
-	SOLVE(dAdX, dAdY, m_Color.a, invDenominator);
+	SOLVE_X(dRdX, dRdY, m_Color.r, invDenominator);
+	SOLVE_X(dGdX, dGdY, m_Color.g, invDenominator);
+	SOLVE_X(dBdX, dBdY, m_Color.b, invDenominator);
+	SOLVE_X(dAdX, dAdY, m_Color.a, invDenominator);
 
-	SOLVE(dFogdX, dFogdY, m_FogDensity, invDenominator);
-	SOLVE(dDepthdX, dDepthdY, m_WindowCoords.depth, invDenominator);
+	SOLVE_X(dFogdX, dFogdY, m_FogDensity, invDenominator);
+	SOLVE_XY(dDepthdX, dDepthdY, m_WindowCoords.depth, invDenominator);
 
-	SOLVE(dInvZdX, dInvZdY, m_WindowCoords.invZ, invDenominator);
+	SOLVE_X(dInvZdX, dInvZdY, m_WindowCoords.invZ, invDenominator);
 
 	EGL_Fixed tuOverZ1 = EGL_Mul(pos1.m_TextureCoords.tu, pos1.m_WindowCoords.invZ);
 	EGL_Fixed tuOverZ2 = EGL_Mul(pos2.m_TextureCoords.tu, pos2.m_WindowCoords.invZ);
@@ -331,8 +417,8 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	EGL_Fixed tvOverZ2 = EGL_Mul(pos2.m_TextureCoords.tv, pos2.m_WindowCoords.invZ);
 	EGL_Fixed tvOverZ3 = EGL_Mul(pos3.m_TextureCoords.tv, pos3.m_WindowCoords.invZ);
 
-	SOLVE_PARAM(dTuOverZdX, dTuOverZdY, tuOverZ1, tuOverZ2, tuOverZ3, invDenominator);
-	SOLVE_PARAM(dTvOverZdX, dTvOverZdY, tvOverZ1, tvOverZ2, tvOverZ3, invDenominator);
+	SOLVE_PARAM_X(dTuOverZdX, dTuOverZdY, tuOverZ1, tuOverZ2, tuOverZ3, invDenominator);
+	SOLVE_PARAM_X(dTvOverZdX, dTvOverZdY, tvOverZ1, tvOverZ2, tvOverZ3, invDenominator);
 
 	// Fill in the gradient in x direction for scanline function
 
@@ -444,156 +530,11 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 	// set up the triangle
 	// init start, end, deltas
-	EGL_Fixed deltaY21 = pos2.m_WindowCoords.y - pos1.m_WindowCoords.y;
+	EdgePos delta2, delta3, delta23;
 
-	EGL_Fixed invDeltaY2;
-
-	EGL_Fixed incX2;
-	EGL_Fixed incR2;
-	EGL_Fixed incG2;
-	EGL_Fixed incB2;
-	EGL_Fixed incA2;
-	EGL_Fixed incFog2;
-	EGL_Fixed incDepth2;
-
-	// perspective interpolation
-	EGL_Fixed incZ2;
-
-	if (deltaY21) {
-		invDeltaY2 = EGL_Inverse(pos2.m_WindowCoords.y - pos1.m_WindowCoords.y);
-
-		incX2 = EGL_Mul(pos2.m_WindowCoords.x - pos1.m_WindowCoords.x, invDeltaY2);
-		incR2 = EGL_Mul(pos2.m_Color.r - pos1.m_Color.r, invDeltaY2);
-		incG2 = EGL_Mul(pos2.m_Color.g - pos1.m_Color.g, invDeltaY2);
-		incB2 = EGL_Mul(pos2.m_Color.b - pos1.m_Color.b, invDeltaY2);
-		incA2 = EGL_Mul(pos2.m_Color.a - pos1.m_Color.a, invDeltaY2);
-		incFog2 = EGL_Mul(pos1.m_FogDensity - pos2.m_FogDensity, invDeltaY2);
-		incDepth2 = EGL_Mul(depth2 - depth1, invDeltaY2);
-
-		// perspective interpolation
-		incZ2 = EGL_Mul(invZ2 - invZ1, invDeltaY2);
-
-	} else {
-		invDeltaY2 = 0;
-
-		incX2 = pos2.m_WindowCoords.x - pos1.m_WindowCoords.x;
-		incR2 = 0;
-		incG2 = 0;
-		incB2 = 0;
-		incA2 = 0;
-		incFog2 = 0;
-		incDepth2 = 0;
-
-		// perspective interpolation
-		incZ2 = 0;
-
-	}
-
-	EGL_Fixed incTu2 = EGL_Mul(EGL_Mul(pos2.m_TextureCoords.tu, invZ2) - 
-							   start.m_TextureCoords.tu, invDeltaY2);
-
-	EGL_Fixed incTv2 = EGL_Mul(EGL_Mul(pos2.m_TextureCoords.tv, invZ2) - 
-							   start.m_TextureCoords.tv, invDeltaY2);
-
-
-	EGL_Fixed deltaY31 = pos3.m_WindowCoords.y - pos1.m_WindowCoords.y;
-
-	EGL_Fixed invDeltaY3;
-
-	EGL_Fixed incX3;
-	EGL_Fixed incR3;
-	EGL_Fixed incG3;
-	EGL_Fixed incB3;
-	EGL_Fixed incA3;
-	EGL_Fixed incFog3;
-	EGL_Fixed incDepth3;
-
-	// perspective interpolation
-	EGL_Fixed incZ3;
-
-	if (deltaY31) {
-		invDeltaY3 = EGL_Inverse(deltaY31);
-
-		incX3 = EGL_Mul(pos3.m_WindowCoords.x - pos1.m_WindowCoords.x, invDeltaY3);
-		incR3 = EGL_Mul(pos3.m_Color.r - pos1.m_Color.r, invDeltaY3);
-		incG3 = EGL_Mul(pos3.m_Color.g - pos1.m_Color.g, invDeltaY3);
-		incB3 = EGL_Mul(pos3.m_Color.b - pos1.m_Color.b, invDeltaY3);
-		incA3 = EGL_Mul(pos3.m_Color.a - pos1.m_Color.a, invDeltaY3);
-		incFog3 = EGL_Mul(pos1.m_FogDensity - pos3.m_FogDensity, invDeltaY3);
-		incDepth3 = EGL_Mul(depth3 - depth1, invDeltaY3);
-
-		// perspective interpolation
-		incZ3 = EGL_Mul(invZ3 - invZ1, invDeltaY3);
-	} else {
-		invDeltaY3 = 0;
-
-		incX3 = pos3.m_WindowCoords.x - pos1.m_WindowCoords.x;
-		incR3 = 0;
-		incG3 = 0;
-		incB3 = 0;
-		incA3 = 0;
-		incFog3 = 0;
-		incDepth3 = 0;
-
-		// perspective interpolation
-		incZ3 = 0;
-	}
-
-	EGL_Fixed incTu3 = EGL_Mul(EGL_Mul(pos3.m_TextureCoords.tu, invZ3) - 
-							   start.m_TextureCoords.tu, invDeltaY3);
-
-	EGL_Fixed incTv3 = EGL_Mul(EGL_Mul(pos3.m_TextureCoords.tv, invZ3) - 
-							   start.m_TextureCoords.tv, invDeltaY3);
-
-	EGL_Fixed deltaY32 = pos3.m_WindowCoords.y - pos2.m_WindowCoords.y;
-	EGL_Fixed invDeltaY23;
-
-	EGL_Fixed incX23;
-	EGL_Fixed incR23;
-	EGL_Fixed incG23;
-	EGL_Fixed incB23;
-	EGL_Fixed incA23;
-	EGL_Fixed incFog23;
-	EGL_Fixed incDepth23;
-
-	// perspective interpolation
-	EGL_Fixed incZ23;
-
-	if (deltaY32) {
-		invDeltaY23 = EGL_Inverse(deltaY32);
-
-		incX23 = EGL_Mul(pos3.m_WindowCoords.x - pos2.m_WindowCoords.x, invDeltaY23);
-		incR23 = EGL_Mul(pos3.m_Color.r - pos2.m_Color.r, invDeltaY23);
-		incG23 = EGL_Mul(pos3.m_Color.g - pos2.m_Color.g, invDeltaY23);
-		incB23 = EGL_Mul(pos3.m_Color.b - pos2.m_Color.b, invDeltaY23);
-		incA23 = EGL_Mul(pos3.m_Color.a - pos2.m_Color.a, invDeltaY23);
-		incFog23 = EGL_Mul(pos2.m_FogDensity - pos3.m_FogDensity, invDeltaY23);
-		incDepth23 = EGL_Mul(depth3 - depth2, invDeltaY23);
-
-		// perspective interpolation
-		incZ23 = EGL_Mul(invZ3 - invZ2, invDeltaY23);
-
-	} else {
-		invDeltaY23 = 0;
-
-		incX23 = pos3.m_WindowCoords.x - pos2.m_WindowCoords.x;
-		incR23 = 0;
-		incG23 = 0;
-		incB23 = 0;
-		incA23 = 0;
-		incFog23 = 0;
-		incDepth23 = 0;
-
-		// perspective interpolation
-		incZ23 = 0;
-
-	}
-
-	EGL_Fixed incTu23 = EGL_Mul(EGL_Mul(pos3.m_TextureCoords.tu, invZ3) - 
-								EGL_Mul(pos2.m_TextureCoords.tu, invZ2), invDeltaY23);
-
-	EGL_Fixed incTv23 = EGL_Mul(EGL_Mul(pos3.m_TextureCoords.tv, invZ3) - 
-								EGL_Mul(pos2.m_TextureCoords.tv, invZ2), invDeltaY23);
+	SetupEdge(pos1, depth1, pos2, depth2, delta2);
+	SetupEdge(pos1, depth1, pos3, depth3, delta3);
+	SetupEdge(pos2, depth2, pos3, depth3, delta23);
 
 	I32 yStart = EGL_Round(pos1.m_WindowCoords.y);
 	I32 yEnd = EGL_Round(pos2.m_WindowCoords.y);
@@ -601,15 +542,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 	y = yStart;
 
-	RasterInfo rasterInfo;
-
-	rasterInfo.SurfaceWidth = m_Surface->GetWidth();
-	rasterInfo.SurfaceHeight = m_Surface->GetHeight();
-	size_t offset = y * m_Surface->GetWidth();
-	rasterInfo.DepthBuffer = m_Surface->GetDepthBuffer() + offset;
-	rasterInfo.ColorBuffer = m_Surface->GetColorBuffer() + offset;
-	rasterInfo.StencilBuffer = m_Surface->GetStencilBuffer() + offset;
-	rasterInfo.AlphaBuffer = m_Surface->GetAlphaBuffer() + offset;
+	RasterInfo rasterInfo(m_Surface, y);
 
 	// texture info
 	Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
@@ -631,35 +564,10 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		I32 yScissorStart = m_State->m_ScissorY;
 		I32 yScissorEnd = yScissorStart + m_State->m_ScissorHeight;
 
-		if (incX2 < incX3) {
+		if (delta2.m_WindowCoords.x < delta3.m_WindowCoords.x) {
 
-			for (; y < yEnd; ++y) {
-
-				if (y >= yScissorStart && y < yScissorEnd) 
-					RasterScanLine(rasterInfo, start, delta);
-
-				// update start
-				start.m_WindowCoords.x += incX2;
-				start.m_Color.r += incR2;
-				start.m_Color.g += incG2;
-				start.m_Color.b += incB2;
-				start.m_Color.a += incA2;
-
-				start.m_WindowCoords.invZ += incZ2;
-				start.m_TextureCoords.tu += incTu2;
-				start.m_TextureCoords.tv += incTv2;
-
-				start.m_FogDensity += incFog2;
-				start.m_WindowCoords.depth += incDepth2;
-
-				// update end
-				delta.m_WindowCoords.x += incX3;
-
-				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
-			}
+			TrianglePartScissor(rasterInfo, start, delta, delta2, delta3.m_WindowCoords.x,
+				y, yEnd, yScissorStart, yScissorEnd);
 
 			yEnd = EGL_Round(pos3.m_WindowCoords.y);
 
@@ -671,123 +579,24 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			start.m_Color = pos2.m_Color;
 			start.m_FogDensity = EGL_ONE - pos2.m_FogDensity;
 
-			for (; y < yEnd; ++y) {
+			TrianglePartScissor(rasterInfo, start, delta, delta23, delta3.m_WindowCoords.x,
+				y, yEnd, yScissorStart, yScissorEnd);
 
-				if (y >= yScissorStart && y < yScissorEnd) 
-					RasterScanLine(rasterInfo, start, delta);
-
-				// update start
-				start.m_WindowCoords.x += incX23;
-				start.m_Color.r += incR23;
-				start.m_Color.g += incG23;
-				start.m_Color.b += incB23;
-				start.m_Color.a += incA23;
-
-				start.m_WindowCoords.invZ += incZ23;
-				start.m_TextureCoords.tu += incTu23;
-				start.m_TextureCoords.tv += incTv23;
-
-				start.m_FogDensity += incFog23;
-				start.m_WindowCoords.depth += incDepth23;
-
-				// update end
-				delta.m_WindowCoords.x += incX3;
-
-				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
-			}
 		} else {
-			for (; y < yEnd; ++y) {
-
-				if (y >= yScissorStart && y < yScissorEnd) 
-					RasterScanLine(rasterInfo, start, delta);
-
-				// update start
-				start.m_WindowCoords.x += incX3;
-				start.m_Color.r += incR3;
-				start.m_Color.g += incG3;
-				start.m_Color.b += incB3;
-				start.m_Color.a += incA3;
-
-				start.m_WindowCoords.invZ += incZ3;
-				start.m_TextureCoords.tu += incTu3;
-				start.m_TextureCoords.tv += incTv3;
-
-				start.m_FogDensity += incFog3;
-				start.m_WindowCoords.depth += incDepth3;
-
-				// update end
-				delta.m_WindowCoords.x += incX2;
-
-				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
-			}
+			TrianglePartScissor(rasterInfo, start, delta, delta3, delta2.m_WindowCoords.x, 
+				y, yEnd, yScissorStart, yScissorEnd);
 
 			yEnd = EGL_Round(pos3.m_WindowCoords.y);
-
 			delta.m_WindowCoords.x = pos2.m_WindowCoords.x + (EGL_ONE/2);
 
-			for (; y < yEnd; ++y) {
+			TrianglePartScissor(rasterInfo, start, delta, delta3, delta23.m_WindowCoords.x, 
+				y, yEnd, yScissorStart, yScissorEnd);
 
-				if (y >= yScissorStart && y < yScissorEnd) 
-					RasterScanLine(rasterInfo, start, delta);
-
-				// update start
-				start.m_WindowCoords.x += incX3;
-				start.m_Color.r += incR3;
-				start.m_Color.g += incG3;
-				start.m_Color.b += incB3;
-				start.m_Color.a += incA3;
-
-				start.m_WindowCoords.invZ += incZ3;
-				start.m_TextureCoords.tu += incTu3;
-				start.m_TextureCoords.tv += incTv3;
-
-				start.m_FogDensity += incFog3;
-				start.m_WindowCoords.depth += incDepth3;
-
-				// update end
-				delta.m_WindowCoords.x += incX23;
-
-				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
-			}
 		}
 	} else {
-		if (incX2 < incX3) {
+		if (delta2.m_WindowCoords.x < delta3.m_WindowCoords.x) {
 
-			for (; y < yEnd; ++y) {
-
-				RasterScanLine(rasterInfo, start, delta);
-
-				// update start
-				start.m_WindowCoords.x += incX2;
-				start.m_Color.r += incR2;
-				start.m_Color.g += incG2;
-				start.m_Color.b += incB2;
-				start.m_Color.a += incA2;
-
-				start.m_WindowCoords.invZ += incZ2;
-				start.m_TextureCoords.tu += incTu2;
-				start.m_TextureCoords.tv += incTv2;
-
-				start.m_FogDensity += incFog2;
-				start.m_WindowCoords.depth += incDepth2;
-
-				// update end
-				delta.m_WindowCoords.x += incX3;
-
-				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
-			}
+			TrianglePart(rasterInfo, start, delta, delta2, delta3.m_WindowCoords.x, y, yEnd);
 
 			yEnd = EGL_Round(pos3.m_WindowCoords.y);
 
@@ -799,89 +608,14 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			start.m_Color = pos2.m_Color;
 			start.m_FogDensity = EGL_ONE - pos2.m_FogDensity;
 
-			for (; y < yEnd; ++y) {
-				
-				RasterScanLine(rasterInfo, start, delta);
-
-				// update start
-				start.m_WindowCoords.x += incX23;
-				start.m_Color.r += incR23;
-				start.m_Color.g += incG23;
-				start.m_Color.b += incB23;
-				start.m_Color.a += incA23;
-
-				start.m_WindowCoords.invZ += incZ23;
-				start.m_TextureCoords.tu += incTu23;
-				start.m_TextureCoords.tv += incTv23;
-
-				start.m_FogDensity += incFog23;
-				start.m_WindowCoords.depth += incDepth23;
-
-				// update end
-				delta.m_WindowCoords.x += incX3;
-
-				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
-			}
+			TrianglePart(rasterInfo, start, delta, delta23, delta3.m_WindowCoords.x, y, yEnd);
 		} else {
-			for (; y < yEnd; ++y) {
-
-				RasterScanLine(rasterInfo, start, delta);
-
-				// update start
-				start.m_WindowCoords.x += incX3;
-				start.m_Color.r += incR3;
-				start.m_Color.g += incG3;
-				start.m_Color.b += incB3;
-				start.m_Color.a += incA3;
-
-				start.m_WindowCoords.invZ += incZ3;
-				start.m_TextureCoords.tu += incTu3;
-				start.m_TextureCoords.tv += incTv3;
-
-				start.m_FogDensity += incFog3;
-				start.m_WindowCoords.depth += incDepth3;
-
-				// update end
-				delta.m_WindowCoords.x += incX2;
-
-				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
-			}
+			TrianglePart(rasterInfo, start, delta, delta3, delta2.m_WindowCoords.x, y, yEnd);
 
 			yEnd = EGL_Round(pos3.m_WindowCoords.y);
-
 			delta.m_WindowCoords.x = pos2.m_WindowCoords.x + (EGL_ONE/2);
 
-			for (; y < yEnd; ++y) {
-				RasterScanLine(rasterInfo, start, delta);
-
-				// update start
-				start.m_WindowCoords.x += incX3;
-				start.m_Color.r += incR3;
-				start.m_Color.g += incG3;
-				start.m_Color.b += incB3;
-				start.m_Color.a += incA3;
-
-				start.m_WindowCoords.invZ += incZ3;
-				start.m_TextureCoords.tu += incTu3;
-				start.m_TextureCoords.tv += incTv3;
-
-				start.m_FogDensity += incFog3;
-				start.m_WindowCoords.depth += incDepth3;
-
-				// update end
-				delta.m_WindowCoords.x += incX23;
-
-				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
-				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
-			}
+			TrianglePart(rasterInfo, start, delta, delta3, delta23.m_WindowCoords.x, y, yEnd);
 		}
 	}
 }

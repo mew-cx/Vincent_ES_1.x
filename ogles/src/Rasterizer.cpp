@@ -123,15 +123,7 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 		}
 	}
 
-	RasterInfo rasterInfo;
-
-	rasterInfo.SurfaceWidth = m_Surface->GetWidth();
-	rasterInfo.SurfaceHeight = m_Surface->GetHeight();
-	size_t offset = y * m_Surface->GetWidth();
-	rasterInfo.DepthBuffer = m_Surface->GetDepthBuffer() + offset;
-	rasterInfo.ColorBuffer = m_Surface->GetColorBuffer() + offset;
-	rasterInfo.StencilBuffer = m_Surface->GetStencilBuffer() + offset;
-	rasterInfo.AlphaBuffer = m_Surface->GetAlphaBuffer() + offset;
+	RasterInfo rasterInfo(m_Surface, y);
 
 	// texture info
 	Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
