@@ -150,14 +150,14 @@ namespace EGL {
 		}
 
 		// -------------------------------------------------------------------------
-		// return the blend of src and dst, where alpha is a value between 0 and 1
+		// return the blend of src and dst, where alpha is a value between 0 and 0x100
 		// -------------------------------------------------------------------------
-		static inline Color Blend(const Color& src, const Color& dst, EGL_Fixed alpha) {
-			EGL_Fixed oneMinusAlpha = EGL_ONE - alpha;
+		static inline Color Blend(const Color& src, const Color& dst, U32 alpha) {
+			U32 oneMinusAlpha = 0x100 - alpha;
 
-			return Color((src.R() * alpha + dst.R() * oneMinusAlpha) >> EGL_PRECISION,
-				(src.G() * alpha + dst.G() * oneMinusAlpha) >> EGL_PRECISION,
-				(src.B() * alpha + dst.B() * oneMinusAlpha) >> EGL_PRECISION,
+			return Color((src.R() * alpha + dst.R() * oneMinusAlpha) >> 8,
+				(src.G() * alpha + dst.G() * oneMinusAlpha) >> 8,
+				(src.B() * alpha + dst.B() * oneMinusAlpha) >> 8,
 				src.A());
 		}
 

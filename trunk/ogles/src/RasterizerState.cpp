@@ -23,6 +23,14 @@ using namespace EGL;
 RasterizerState :: RasterizerState():
 	m_Version(0),
 
+	// fog
+	m_FogEnabled(false),
+	m_FogMode(FogModeExp),
+	m_FogColor(Color(0, 0, 0, 0)),
+	m_FogStart(0),
+	m_FogEnd(EGL_ONE),
+	m_FogDensity(EGL_ONE),
+
 	// initial values for alpha test
 	m_AlphaTestEnabled(false),
 	m_AlphaFunc(CompFuncAlways),
