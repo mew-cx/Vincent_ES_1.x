@@ -63,6 +63,7 @@ Context :: Context(const Config & config)
 	m_CurrentMatrixStack(&m_ModelViewMatrixStack),
 	m_Scissor(0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
 	m_Viewport(0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
+	m_CurrentPaletteMatrix(0),
 
 	// server flags
 	m_ClipPlaneEnabled(0),
@@ -81,6 +82,7 @@ Context :: Context(const Config & config)
 	m_SampleAlphaToOneEnabled(false),
 	m_SampleCoverageEnabled(false),
 	m_ScissorTestEnabled(false),
+	m_MatrixPaletteEnabled(false),
 
 	// point parameters
 	m_PointSize(EGL_ONE),

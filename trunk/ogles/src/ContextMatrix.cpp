@@ -52,14 +52,21 @@ void Context :: MatrixMode(GLenum mode) {
 	switch (mode) {
 	case GL_MODELVIEW:
 		m_CurrentMatrixStack = &m_ModelViewMatrixStack;
+		m_MatrixPaletteEnabled = false;
 		return;
 
 	case GL_PROJECTION:
 		m_CurrentMatrixStack = &m_ProjectionMatrixStack;
+		m_MatrixPaletteEnabled = false;
 		return;
 
 	case GL_TEXTURE:
 		m_CurrentMatrixStack = &m_TextureMatrixStack;
+		m_MatrixPaletteEnabled = false;
+		return;
+
+	case GL_MATRIX_PALETTE_OES:
+		m_MatrixPaletteEnabled = true;
 		return;
 
 	default:
@@ -70,34 +77,61 @@ void Context :: MatrixMode(GLenum mode) {
 
 void Context :: RebuildMatrices(void) {
 	if (m_CurrentMatrixStack == &m_ModelViewMatrixStack) {
-		UpdateInverseModelViewMatrix();
+		m_InverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().InverseUpper3(m_RescaleNormalEnabled);
+		m_FullInverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().Inverse();
 	}
 }
 
 void Context :: UpdateInverseModelViewMatrix(void) {
 	m_InverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().InverseUpper3(m_RescaleNormalEnabled);
-	m_FullInverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().Inverse();
+
+	for (size_t index = 0; index < MATRIX_PALETTE_SIZE; ++index) {
+		m_MatrixPaletteInverse[index] = m_MatrixPalette[index].InverseUpper3(m_RescaleNormalEnabled);
+	}
 }
 
 void Context :: LoadIdentity(void) { 
-	CurrentMatrixStack()->LoadIdentity();
 
-	RebuildMatrices();
+	if (!m_MatrixPaletteEnabled) {
+		CurrentMatrixStack()->LoadIdentity();
+		RebuildMatrices();
+	} else {
+		m_MatrixPalette[m_CurrentPaletteMatrix].MakeIdentity();
+		m_MatrixPaletteInverse[m_CurrentPaletteMatrix].MakeIdentity();
+	}
 }
 
 void Context :: LoadMatrixx(const GLfixed *m) { 
-	CurrentMatrixStack()->LoadMatrix(m);
 
-	RebuildMatrices();
+	if (!m_MatrixPaletteEnabled) {
+		CurrentMatrixStack()->LoadMatrix(m);
+		RebuildMatrices();
+	} else {
+		m_MatrixPalette[m_CurrentPaletteMatrix] = Matrix4x4(m);
+		m_MatrixPaletteInverse[m_CurrentPaletteMatrix] = m_MatrixPalette[m_CurrentPaletteMatrix].InverseUpper3(m_RescaleNormalEnabled);
+	}
+}
+
+void Context :: MultMatrix(const Matrix4x4 & m) {
+	if (!m_MatrixPaletteEnabled) {
+		CurrentMatrixStack()->MultMatrix(m);
+		RebuildMatrices();
+	} else {
+		m_MatrixPalette[m_CurrentPaletteMatrix] = m_MatrixPalette[m_CurrentPaletteMatrix] * Matrix4x4(m);
+		m_MatrixPaletteInverse[m_CurrentPaletteMatrix] = m_MatrixPalette[m_CurrentPaletteMatrix].InverseUpper3(m_RescaleNormalEnabled);
+	}
 }
 
 void Context :: MultMatrixx(const GLfixed *m) { 
-	CurrentMatrixStack()->MultMatrix(m);
-
-	RebuildMatrices();
+	MultMatrix(Matrix4x4(m));
 }
 
 void Context :: PopMatrix(void) { 
+
+	if (m_MatrixPaletteEnabled) {
+		RecordError(GL_INVALID_OPERATION);
+		return;
+	}
 
 	if (CurrentMatrixStack()->PopMatrix()) {
 		RebuildMatrices();
@@ -108,6 +142,11 @@ void Context :: PopMatrix(void) {
 }
 
 void Context :: PushMatrix(void) { 
+	if (m_MatrixPaletteEnabled) {
+		RecordError(GL_INVALID_OPERATION);
+		return;
+	}
+
 	if (CurrentMatrixStack()->PushMatrix()) {
 		RecordError(GL_NO_ERROR);
 	} else {
@@ -120,18 +159,15 @@ void Context :: PushMatrix(void) {
 // --------------------------------------------------------------------------
 
 void Context :: Rotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z) { 
-	CurrentMatrixStack()->MultMatrix(Matrix4x4::CreateRotate(angle, x, y, z));
-	RebuildMatrices();
+	MultMatrix(Matrix4x4::CreateRotate(angle, x, y, z));
 }
 
 void Context :: Scalex(GLfixed x, GLfixed y, GLfixed z) { 
-	CurrentMatrixStack()->MultMatrix(Matrix4x4::CreateScale(x, y, z));
-	RebuildMatrices();
+	MultMatrix(Matrix4x4::CreateScale(x, y, z));
 }
 
 void Context :: Translatex(GLfixed x, GLfixed y, GLfixed z) { 
-	CurrentMatrixStack()->MultMatrix(Matrix4x4::CreateTranslate(x, y, z));
-	RebuildMatrices();
+	MultMatrix(Matrix4x4::CreateTranslate(x, y, z));
 }
 
 void Context :: Frustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar) { 
@@ -141,13 +177,11 @@ void Context :: Frustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed to
 		return;
 	}
 
-	CurrentMatrixStack()->MultMatrix(Matrix4x4::CreateFrustrum(left, right, bottom, top, zNear, zFar));
-	RebuildMatrices();
+	MultMatrix(Matrix4x4::CreateFrustrum(left, right, bottom, top, zNear, zFar));
 }
 
 void Context :: Orthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar) { 
-	CurrentMatrixStack()->MultMatrix(Matrix4x4::CreateOrtho(left, right, bottom, top, zNear, zFar));
-	RebuildMatrices();
+	MultMatrix(Matrix4x4::CreateOrtho(left, right, bottom, top, zNear, zFar));
 }
 
 // --------------------------------------------------------------------------
@@ -156,12 +190,34 @@ void Context :: Orthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top,
 
 GLbitfield Context :: QueryMatrixx(GLfixed mantissa[16], GLint exponent[16]) {
 
-	const Matrix4x4& currentMatrix = CurrentMatrixStack()->CurrentMatrix();
+	const Matrix4x4* currentMatrix;
+	
+	if (!m_MatrixPaletteEnabled) {
+		currentMatrix = &CurrentMatrixStack()->CurrentMatrix();
+	} else {
+		currentMatrix = m_MatrixPalette + m_CurrentPaletteMatrix;
+	}
 
 	for (int index = 0; index < 16; ++index) {
-		mantissa[index] = currentMatrix.Element(index);
+		mantissa[index] = currentMatrix->Element(index);
 		exponent[index] = 0;
 	}
 
 	return 0;
+}
+
+// --------------------------------------------------------------------------
+// Matrix palette extension
+// --------------------------------------------------------------------------
+
+void Context :: CurrentPaletteMatrix(GLint index) {
+	if (index < 0 || index > MATRIX_PALETTE_SIZE) {
+		RecordError(GL_INVALID_VALUE);
+	} else {
+		m_CurrentPaletteMatrix = index;
+	}
+}
+
+void Context :: LoadPaletteFromModelViewMatrix(void) {
+	m_MatrixPalette[m_CurrentPaletteMatrix] = m_ModelViewMatrixStack.CurrentMatrix();
 }

@@ -68,6 +68,7 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		enum {
 			NUM_CLIP_PLANES = 6,
+			MATRIX_PALETTE_SIZE = 9,
 
 			VIEWPORT_X = 0,
 			VIEWPORT_Y = 0,
@@ -251,6 +252,12 @@ namespace EGL {
 		/* OES_point_size_array */
 		void PointSizePointer(GLenum type, GLsizei stride, const GLvoid *pointer);
 
+		/* OES_matrix_palette */
+		void CurrentPaletteMatrix(GLint index);
+		void LoadPaletteFromModelViewMatrix(void);
+		void MatrixIndexPointer(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
+		void WeightPointer(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
+
 		// ----------------------------------------------------------------------
 		// Context Management Functions
 		// ----------------------------------------------------------------------
@@ -303,6 +310,7 @@ namespace EGL {
 
 		void UpdateInverseModelViewMatrix(void);
 		void RebuildMatrices(void);
+		void MultMatrix(const Matrix4x4 & m);
 
 		// SGIS_generate_mipmap extension
 		void UpdateMipmaps(void);
@@ -395,10 +403,15 @@ private:
 		MatrixStack			m_ModelViewMatrixStack;
 		MatrixStack			m_ProjectionMatrixStack;
 		MatrixStack			m_TextureMatrixStack;
+		Matrix4x4			m_MatrixPalette[MATRIX_PALETTE_SIZE];
+		Matrix4x4			m_MatrixPaletteInverse[MATRIX_PALETTE_SIZE];
 
 		MatrixStack *		m_CurrentMatrixStack;
 		Matrix4x4			m_InverseModelViewMatrix;
 		Matrix4x4			m_FullInverseModelViewMatrix;
+		I32					m_CurrentPaletteMatrix;
+		EGL_Fixed			m_CurrentWeights[MATRIX_PALETTE_SIZE];
+		U8					m_PaletteMatrixIndex[MATRIX_PALETTE_SIZE];
 
 		// ----------------------------------------------------------------------
 		// Viewport configuration
@@ -423,13 +436,16 @@ private:
 		bool				m_ColorArrayEnabled;
 		bool				m_TexCoordArrayEnabled;
 		bool				m_PointSizeArrayEnabled;
+		bool				m_WeightArrayEnabled;
+		bool				m_MatrixIndexArrayEnabled;
 
 		VertexArray			m_VertexArray;
 		VertexArray			m_NormalArray;
 		VertexArray			m_ColorArray;
 		VertexArray			m_TexCoordArray;
 		VertexArray			m_PointSizeArray;
-
+		VertexArray			m_WeightArray;
+		VertexArray			m_MatrixIndexArray;
 
 		// ----------------------------------------------------------------------
 		// Default values if arrays are disabled
@@ -489,6 +505,7 @@ private:
 		bool				m_SampleAlphaToOneEnabled;
 		bool				m_SampleCoverageEnabled;
 		bool				m_GenerateMipmaps;
+		bool				m_MatrixPaletteEnabled;
 
 		I32					m_PixelStorePackAlignment;
 		I32					m_PixelStoreUnpackAlignment;

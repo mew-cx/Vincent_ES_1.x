@@ -73,12 +73,36 @@ namespace EGL {
 			} while (--count);
 		}
 
+		void FetchUnsignedByteValues(int row, GLfixed * buffer) {
+			GLsizei rowOffset = row * stride;
+			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+			size_t count = size;
+
+			const GLubyte * byteBase = reinterpret_cast<const GLubyte *>(base);
+
+			do {
+				*buffer++ = EGL_FixedFromInt(*byteBase++);
+			} while (--count);
+		}
+
+		void FetchUnsignedByteValues(int row, GLubyte * buffer) {
+			GLsizei rowOffset = row * stride;
+			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+			size_t count = size;
+
+			const GLubyte * byteBase = reinterpret_cast<const GLubyte *>(base);
+
+			do {
+				*buffer++ = *byteBase++;
+			} while (--count);
+		}
+
 		void FetchByteColorValues(int row, GLfixed * buffer) {
 			GLsizei rowOffset = row * stride;
 			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
 			size_t count = size;
 
-			const GLbyte * byteBase = reinterpret_cast<const GLbyte *>(base);
+			const GLubyte * byteBase = reinterpret_cast<const GLubyte *>(base);
 
 			do {
 				U8 byteValue = *byteBase++;
@@ -125,10 +149,15 @@ namespace EGL {
 		void PrepareFetchValues(bool colorMode) {
 			switch (type) {
 			case GL_BYTE:
+				fetchFunction = FetchByteValues;
+				
+				break;
+
+			case GL_UNSIGNED_BYTE:
 				if (colorMode) {
 					fetchFunction = FetchByteColorValues;
 				} else {
-					fetchFunction = FetchByteValues;
+					fetchFunction = FetchUnsignedByteValues;
 				}
 
 				break;
@@ -155,7 +184,7 @@ namespace EGL {
 			(this->*fetchFunction)(row, buffer);
 		}
 
-		GLint				size;
+		size_t				size;
 		GLenum				type;
 		GLsizei				stride;
 		const GLvoid *		pointer;

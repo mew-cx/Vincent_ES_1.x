@@ -122,13 +122,26 @@ GLAPI EGLBoolean APIENTRY eglSaveSurfaceHM(EGLSurface surface, const TCHAR * fil
 	return surface->Save(filename);
 }
 
+#define FunctionEntry(s) { #s, s }
+
 static const struct {
 	const char * name;
 	void * ptr;
 
 } FunctionTable[] = {
-	{ "glQueryMatrixxOES", glQueryMatrixxOES },
-	{ "eglSaveSurfaceHM", eglSaveSurfaceHM },
+	/* OES_query_matrix */
+	FunctionEntry(glQueryMatrixxOES),
+
+	/* OES_point_size_array */
+	FunctionEntry(glPointSizePointerOES),
+
+	/* OES_matrix_palette */
+	FunctionEntry(glCurrentPaletteMatrixOES),
+	FunctionEntry(glLoadPaletteFromModelViewMatrixOES),
+	FunctionEntry(glMatrixIndexPointerOES),
+	FunctionEntry(glWeightPointerOES),
+
+	FunctionEntry(eglSaveSurfaceHM)
 };
 
 
