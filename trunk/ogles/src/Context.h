@@ -324,15 +324,6 @@ namespace EGL {
 		void CurrentValuesToRasterPos(RasterPos * rasterPos);
 		void InterpolateRasterPos(RasterPos * a, RasterPos * b, GLfixed x, RasterPos * result);
 
-	public:
-		void RenderPoint(RasterPos * pos0);
-
-		void RenderLine(RasterPos * pos0, RasterPos * pos1);
-
-		void PrepareRenderTriangle();
-		void RenderTriangle(RasterPos * pos0, RasterPos * pos1, RasterPos * pos2);
-		void RenderClippedXTriangle(RasterPos * pos0, RasterPos * pos1, RasterPos * pos2);
-
 	private:
 		GLenum				m_LastError;
 
