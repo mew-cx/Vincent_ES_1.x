@@ -109,6 +109,12 @@ void CodeGenerator :: GenerateRasterLine() {
 	cg_block_t * block = cg_block_create(procedure, 1);
 	cg_block_ref_t * blockRefEndProc = cg_block_ref_create(procedure);
 
+	cg_virtual_reg_t * regTexture = LOAD_DATA(block, regInfo, OFFSET_TEXTURES);
+
+	FragmentGenerationInfo info;
+
+	info.regInfo = regInfo;
+	info.regTexture = regTexture;
 
 	// EGL_Fixed deltaX = p_to.m_WindowCoords.x - p_from.m_WindowCoords.x;
 	// EGL_Fixed deltaY = p_to.m_WindowCoords.y - p_from.m_WindowCoords.y;
@@ -116,23 +122,30 @@ void CodeGenerator :: GenerateRasterLine() {
 	DECL_REG	(regDeltaY);
 
 	cg_virtual_reg_t *	regToX		= LOAD_DATA(block, regTo, OFFSET_RASTER_POS_WINDOW_X);
-	cg_virtual_reg_t *	regFromX	= LOAD_DATA(block, regTo, OFFSET_RASTER_POS_WINDOW_X);
+	cg_virtual_reg_t *	regFromX	= LOAD_DATA(block, regFrom, OFFSET_RASTER_POS_WINDOW_X);
 	cg_virtual_reg_t *	regToY		= LOAD_DATA(block, regTo, OFFSET_RASTER_POS_WINDOW_Y);
-	cg_virtual_reg_t *	regFromY	= LOAD_DATA(block, regTo, OFFSET_RASTER_POS_WINDOW_Y);
+	cg_virtual_reg_t *	regFromY	= LOAD_DATA(block, regFrom, OFFSET_RASTER_POS_WINDOW_Y);
 
 	FSUB		(regDeltaX, regToX, regFromX);
 	FSUB		(regDeltaY, regToY, regFromY);
 
+	DECL_REG	(regAbsDeltaX);
+	DECL_REG	(regAbsDeltaY);
+
+	ABS			(regAbsDeltaX, regDeltaX);
+	ABS			(regAbsDeltaY, regDeltaY);
+
 	// if (EGL_Abs(deltaX) > EGL_Abs(deltaY)) {
 
 	DECL_FLAGS	(regCompareXY);
-	FCMP		(regCompareXY, regDeltaY, regDeltaX);
+	FCMP		(regCompareXY, regAbsDeltaY, regAbsDeltaX);
 
 	cg_block_ref_t * blockRefRasterY = cg_block_ref_create(procedure);
 
 	BGT			(regCompareXY, blockRefRasterY);
 
 		// Bresenham along x-axis
+	block = cg_block_create(procedure, 1);
 
 	// 	const RasterPos *start, *end;
 
@@ -141,14 +154,14 @@ void CodeGenerator :: GenerateRasterLine() {
 	// 	EGL_Fixed roundedX;
 
 	// 	if (deltaX < 0) {
-	DECL_REG		(regSignX);
+	DECL_FLAGS		(regSignX);
 	DECL_CONST_REG	(regZero, 0);
 	
 	FCMP		(regSignX, regDeltaX, regZero);
 
 	cg_block_ref_t * blockRefPositiveDeltaX = cg_block_ref_create(procedure);
 
-	BLT			(regSignX, blockRefPositiveDeltaX);
+	BGE			(regSignX, blockRefPositiveDeltaX);
 
 	block = cg_block_create(procedure, 1);
 
@@ -226,8 +239,8 @@ void CodeGenerator :: GenerateRasterLine() {
 	DECL_REG	(regCommonX);
 	DECL_REG	(regCommonEndX);
 
-	PHI			(regCommonDeltaX, cg_create_virtual_reg_list(procedure->module->heap, regX0, regX1, NULL));
-	PHI			(regCommonDeltaY, cg_create_virtual_reg_list(procedure->module->heap, regEndX0, regEndX1, NULL));
+	PHI			(regCommonX, cg_create_virtual_reg_list(procedure->module->heap, regX0, regX1, NULL));
+	PHI			(regCommonEndX, cg_create_virtual_reg_list(procedure->module->heap, regEndX0, regEndX1, NULL));
 
 	// 	const RasterPos& from = *start;
 	// 	const RasterPos& to = *end;
@@ -239,30 +252,29 @@ void CodeGenerator :: GenerateRasterLine() {
 	PHI			(regCommonTo, cg_create_virtual_reg_list(procedure->module->heap, regEnd0, regEnd1, NULL));
 
 	// 	I32 yIncrement = (deltaY > 0) ? 1 : -1;
-	DECL_REG		(regSignY);
-	DECL_CONST_REG	(regZero, 0);
+	DECL_FLAGS		(regSignY);
 	
 	FCMP		(regSignY, regCommonDeltaX, regZero);
 
 	cg_block_ref_t * blockRefPositiveDeltaY = cg_block_ref_create(procedure);
 
-	BLT			(regSignY, blockRefPositiveDeltaY);
+	BGT			(regSignY, blockRefPositiveDeltaY);
 
 	block = cg_block_create(procedure, 1);
 
 	DECL_CONST_REG	(regYIncrementNeg, -1);
 
-	cg_block_ref_t * blockRefPostDeltaX = cg_block_ref_create(procedure);
+	cg_block_ref_t * blockRefCommonDeltaY = cg_block_ref_create(procedure);
 
-	BRA			(blockRefPostDeltaX);
+	BRA			(blockRefCommonDeltaY);
 
 	block = cg_block_create(procedure, 1);
-	blockRefPositiveDeltaX->block = block;
+	blockRefPositiveDeltaY->block = block;
 
 	DECL_CONST_REG	(regYIncrementPos, 1);
 
 	block = cg_block_create(procedure, 1);
-	blockRefPostDeltaY->block = block;
+	blockRefCommonDeltaY->block = block;
 
 	DECL_REG		(regYIncrement);
 	PHI				(regYIncrement, cg_create_virtual_reg_list(procedure->module->heap, regYIncrementPos, regYIncrementNeg, NULL));
@@ -298,10 +310,8 @@ void CodeGenerator :: GenerateRasterLine() {
 	// 	EGL_Fixed OneOverZTo = to.m_WindowCoords.invZ;
 	DECL_REG	(regInvSpan);
 	DECL_REG	(regSlope);
-	DECL_REG	(regAbsDeltaY);
 
 	FINV		(regInvSpan, regCommonDeltaX);
-	ABS			(regAbsDeltaY, regCommonDeltaY);
 	FMUL		(regSlope, regAbsDeltaY, regInvSpan);
 
 	cg_virtual_reg_t * regEndColorR0 = LOAD_DATA(block, regCommonTo, OFFSET_RASTER_POS_COLOR_R);
@@ -354,7 +364,7 @@ void CodeGenerator :: GenerateRasterLine() {
 	FSUB			(regDiffColorG, regEndColorG0, regColorG0);
 	FMUL			(regDeltaColorG, regDiffColorG, regInvSpan);
 	FSUB			(regDiffColorB, regEndColorB0, regColorB0);
-	FMUL			(regDeltaColorG, regDiffColorB, regInvSpan);
+	FMUL			(regDeltaColorB, regDiffColorB, regInvSpan);
 	FSUB			(regDiffColorA, regEndColorA0, regColorA0);
 	FMUL			(regDeltaColorA, regDiffColorA, regInvSpan);
 
@@ -389,28 +399,154 @@ void CodeGenerator :: GenerateRasterLine() {
 	TRUNC			(regY0, regFromY0PlusHalf);
 
 	// 	EGL_Fixed error = 0;
-	LOAD_CONST_REG	(regError0, 0);
+	DECL_CONST_REG	(regError0, 0);
+
+	block = cg_block_create(procedure, 4);
+	cg_block_ref_t * blockRefBeginLoop = cg_block_ref_create(procedure);
+	blockRefBeginLoop->block = block;
 
 	// 	for (; x < endX; ++x) {
 
+	// --- variables for loop entry
+	DECL_REG		(regLoopX);
+	DECL_REG		(regLoopY);
+	DECL_REG		(regLoopError);
+
+	DECL_REG		(regLoopOneOverZ);
+	DECL_REG		(regLoopTuOverZ);
+	DECL_REG		(regLoopTvOverZ);
+
+	DECL_REG		(regLoopColorR);
+	DECL_REG		(regLoopColorG);
+	DECL_REG		(regLoopColorB);
+	DECL_REG		(regLoopColorA);
+
+	DECL_REG		(regLoopDepth);
+	DECL_REG		(regLoopFog);
+
+	// --- variables for loop exit
+	DECL_REG		(regEndLoopX);
+	DECL_REG		(regEndLoopY);
+	DECL_REG		(regEndLoopError);
+
+	DECL_REG		(regEndLoopOneOverZ);
+	DECL_REG		(regEndLoopTuOverZ);
+	DECL_REG		(regEndLoopTvOverZ);
+
+	DECL_REG		(regEndLoopColorR);
+	DECL_REG		(regEndLoopColorG);
+	DECL_REG		(regEndLoopColorB);
+	DECL_REG		(regEndLoopColorA);
+
+	DECL_REG		(regEndLoopDepth);
+	DECL_REG		(regEndLoopFog);
+
+	PHI				(regLoopX, cg_create_virtual_reg_list(procedure->module->heap, regEndLoopX, regCommonX, NULL));
+	PHI				(regLoopY, cg_create_virtual_reg_list(procedure->module->heap, regEndLoopY, regY0, NULL));
+	PHI				(regLoopError, cg_create_virtual_reg_list(procedure->module->heap, regEndLoopError, regError0, NULL));
+
+	PHI				(regLoopOneOverZ, cg_create_virtual_reg_list(procedure->module->heap, regEndLoopOneOverZ, regInvZ0, NULL));
+	PHI				(regLoopTuOverZ, cg_create_virtual_reg_list(procedure->module->heap, regEndLoopTuOverZ, regTuOverZ0, NULL));
+	PHI				(regLoopTvOverZ, cg_create_virtual_reg_list(procedure->module->heap, regEndLoopTvOverZ, regTvOverZ0, NULL));
+
+	PHI				(regLoopColorR, cg_create_virtual_reg_list(procedure->module->heap, regEndLoopColorR, regColorR0, NULL));
+	PHI				(regLoopColorG, cg_create_virtual_reg_list(procedure->module->heap, regEndLoopColorG, regColorG0, NULL));
+	PHI				(regLoopColorB, cg_create_virtual_reg_list(procedure->module->heap, regEndLoopColorB, regColorB0, NULL));
+	PHI				(regLoopColorA, cg_create_virtual_reg_list(procedure->module->heap, regEndLoopColorA, regColorA0, NULL));
+
+	PHI				(regLoopDepth, cg_create_virtual_reg_list(procedure->module->heap, regEndLoopDepth, regDepth0, NULL));
+	PHI				(regLoopFog, cg_create_virtual_reg_list(procedure->module->heap, regEndLoopFog, regFog0, NULL));
+	
 	// 		EGL_Fixed z = EGL_Inverse(OneOverZ);
 	// 		EGL_Fixed tu = EGL_Mul(tuOverZ, z);
 	// 		EGL_Fixed tv = EGL_Mul(tvOverZ, z);
 
-	// 		Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
+	DECL_REG		(regLoopZ);
+	DECL_REG		(regLoopTu);
+	DECL_REG		(regLoopTv);
 
-	// 		error += slope;
-	// 		if (error > EGL_ONE) {
-	// 			y += yIncrement;
-	// 			error -= EGL_ONE;
-	// 		}
+	FINV			(regLoopZ, regLoopOneOverZ);
+	FMUL			(regLoopTu, regLoopTuOverZ, regLoopZ);
+	FMUL			(regLoopTv, regLoopTvOverZ, regLoopZ);
 
-	// 		baseColor += colorIncrement;
-	// 		depth += deltaDepth;
 	// 		OneOverZ += deltaZ;
 	// 		tuOverZ += deltaU;
 	// 		tvOverZ += deltaV;
+	FADD			(regEndLoopOneOverZ, regLoopOneOverZ, regDeltaInvZ);
+	FADD			(regEndLoopTuOverZ, regLoopTuOverZ, regDeltaTuOverZ);
+	FADD			(regEndLoopTvOverZ, regLoopTvOverZ, regDeltaTvOverZ);
+
+	// 		Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
+	info.regX = regLoopX;
+	info.regY = regLoopY;
+
+	info.regU = regLoopTu;
+	info.regV = regLoopTv; 
+	info.regFog = regLoopFog;
+	info.regDepth = regLoopDepth;
+	info.regR = regLoopColorR;
+	info.regG = regLoopColorG;
+	info.regB = regLoopColorB;
+	info.regA = regLoopColorA;
+
+	cg_block_ref_t * postFragment = cg_block_ref_create(procedure);
+
+	GenerateFragment(procedure, block, postFragment, info, 5);
+
+	block = cg_block_create(procedure, 5);
+	postFragment->block = block;
+
+	// 		error += slope;
+
+	DECL_REG		(regIncError);
+	FADD			(regIncError, regLoopError, regSlope);
+#if 0
+	// 		if (error > EGL_ONE) {
+	DECL_CONST_REG	(regLoopOne, EGL_ONE);
+	DECL_FLAGS		(regErrorOverflow);
+	FCMP			(regErrorOverflow, regIncError, regLoopOne);
+	cg_block_ref_t * noOverflow = cg_block_ref_create(procedure);
+
+	BLE				(regErrorOverflow, noOverflow);
+
+	block = cg_block_create(procedure, 5);
+
+	// 			y += yIncrement;
+	// 			error -= EGL_ONE;
+	DECL_REG		(regIncY);
+	DECL_REG		(regCorrectedError);
+
+	FADD			(regIncY, regLoopY, regYIncrement);
+	FSUB			(regCorrectedError, regIncError, regLoopOne);
+	// 		}
+
+	block = cg_block_create(procedure, 5);
+	noOverflow->block = block;
+
+	PHI				(regEndLoopY, cg_create_virtual_reg_list(procedure->module->heap, regLoopY, regIncY, NULL));
+	PHI				(regEndLoopError, cg_create_virtual_reg_list(procedure->module->heap, regIncError, regCorrectedError, NULL));
+#else
+	OR				(regEndLoopY, regLoopY, regLoopY);
+	OR				(regEndLoopError, regIncError, regIncError);
+#endif
+
+	// 		baseColor += colorIncrement;
+	FADD			(regEndLoopColorR,	regLoopColorR, regDeltaColorR);
+	FADD			(regEndLoopColorG,	regLoopColorG, regDeltaColorG);
+	FADD			(regEndLoopColorB,	regLoopColorB, regDeltaColorB);
+	FADD			(regEndLoopColorA,	regLoopColorA, regDeltaColorA);
+
+	// 		depth += deltaDepth;
 	// 		fogDensity += deltaFog;
+	FADD			(regEndLoopDepth,	regLoopDepth, regDeltaDepth);
+	FADD			(regEndLoopFog,		regLoopFog, regDeltaFog);
+
+	DECL_CONST_REG	(regConstInt1, 1);
+	DECL_FLAGS		(regCompareX);
+	FADD			(regEndLoopX, regLoopX, regConstInt1);
+	FCMP			(regCompareX, regEndLoopX, regCommonEndX);
+	BLT				(regCompareX, blockRefBeginLoop);
+
 	// 	}
 
 	BRA		(blockRefEndProc);
