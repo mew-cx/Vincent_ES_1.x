@@ -1001,7 +1001,7 @@ static void proc_inst_def(cg_proc_t * proc)
 	}
 
 	/************************************************************************/
-	/* Add def qand use information for each register						*/
+	/* Add def and use information for each register						*/
 	/************************************************************************/
 
 	for (block = proc->blocks; block; block = block->next)
