@@ -67,6 +67,10 @@ void Context :: BindTexture(GLenum target, GLuint texture) {
 
 			m_Textures.resize(newSize);
 			m_Textures[texture] = new MultiTexture();
+			m_Textures[texture]->SetWrappingModeS(GetRasterizerState()->GetWrappingModeS());
+			m_Textures[texture]->SetWrappingModeT(GetRasterizerState()->GetWrappingModeT());
+			m_Textures[texture]->SetMinFilterMode(GetRasterizerState()->GetMinFilterMode());
+			m_Textures[texture]->SetMagFilterMode(GetRasterizerState()->GetMagFilterMode());
 		}
 	}
 
