@@ -19,13 +19,12 @@
 #undef PixelFormatAlpha			
 #endif
 
+#include "fixed.h"
 
 #include "test.h"
 #include "GLES/egl.h"
 #include "GLES/gl.h"
-#include "fixed.h"
-#include "Context.h"
-#include "Rasterizer.h"
+#include "GLES/glext.h"
 #include "Color.h"
 
 #ifndef _WIN32_WCE
@@ -1393,8 +1392,8 @@ extern "C" void PaintProc(HWND hWnd) {
 	glEnable(GL_CULL_FACE);
 	//glDisable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	//glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	//glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
