@@ -2,7 +2,7 @@ Release Notes
 =============
 
 This document collects changes on a release to release base. For open known issues, please refer to
-the bug database on sourceforge. 
+the bug database on SourceForge. 
 
 
 Version 0.82
@@ -10,8 +10,8 @@ Version 0.82
 
 Version 0.82 is again a significant milestone build for Vincent. It incorporates the following enhancements:
 
-1.) For ARM, all rasterization code is no generated using the JIT, including points and lines
-2.) A first series of performance enhancements have been included
+1.) For ARM, all rasterization code is now generated using the JIT, including points and lines
+2.) A first series of performance enhancements has been included
 3.) In preparation for the OpenGL ES Coding Challenge, a series of new features from the OpenGL ES 1.1 API
     specification have been added:
     
