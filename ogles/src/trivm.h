@@ -524,6 +524,11 @@ namespace triVM {
 			instructions.push_back(inst);
 			return *this;
 		}
+
+		void AttachLabel(Label * label) {
+			labels.push_back(label);
+			label->block.block = this;
+		}
 	};
 
 	struct Procedure {
@@ -542,6 +547,11 @@ namespace triVM {
 			returnValues = retVals;
 		}
 
+		Block * CreateBlock() {
+			Block * result = new Block(this);
+			blocks.push_back(result);
+			return result;
+		}
 	};
 
 	typedef std::vector<Procedure *> ProcedureList;
@@ -567,9 +577,49 @@ namespace triVM {
 
 	typedef std::map<const char *, Label *, StringCompare> IdentifierMap;
 
+
+	// -------------------------------------------------------------------------
+	// Sweep	-	Base class for code sweeps across the intermediate
+	//				language representation
+	// -------------------------------------------------------------------------
+	class Sweep {
+	public:
+		virtual void sweep(triVM::Module * module);
+		virtual void sweep(triVM::Procedure * procedure);
+		virtual void sweep(triVM::Block * block);
+
+	protected:
+		virtual void begin(triVM::Module * module);
+		virtual void begin(triVM::Procedure * procedure);
+		virtual void begin(triVM::Block * block);
+
+		virtual void visit(triVM::Instruction * instruction);
+
+		virtual void end(triVM::Module * module);
+		virtual void end(triVM::Procedure * procedure);
+		virtual void end(triVM::Block * block);
+
+	protected:
+		virtual void visitUnary(triVM::Instruction * instruction);
+		virtual void visitBinary(triVM::Instruction * instruction);
+		virtual void visitCompare(triVM::Instruction * instruction);
+		virtual void visitLoad(triVM::Instruction * instruction);
+		virtual void visitStore(triVM::Instruction * instruction);
+		virtual void visitLoadImmediate(triVM::Instruction * instruction);
+		virtual void visitBranchReg(triVM::Instruction * instruction);
+		virtual void visitBranchLabel(triVM::Instruction * instruction);
+		virtual void visitBranchConditionally(triVM::Instruction * instruction);
+		virtual void visitPhi(triVM::Instruction * instruction);
+		virtual void visitCall(triVM::Instruction * instruction);
+		virtual void visitRet(triVM::Instruction * instruction);
+
+	};
+
 } // namespace triVM
 } // namespace EGL
 
+
+extern std::ostream& operator<<(std::ostream& out, EGL::triVM::Module& module);
 
 #endif //ndef EGL_TRIVM_H
 

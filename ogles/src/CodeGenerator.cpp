@@ -45,6 +45,7 @@
 #include "Texture.h"
 #include "trivm.h"
 
+#include <fstream>
 
 using namespace EGL;
 using namespace triVM;
@@ -96,6 +97,7 @@ namespace {
 
 		return value;
 	}
+
 }
 
 // This method needs access to the following:
@@ -359,22 +361,16 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 					*block +=	IMMEDIATE		(ldi,	regNewU1, Constant::createFloat(1.0f));
 					*block +=	BLABEL			(bra,	label2);
 
-					Block& block1 = *new Block(procedure);
-					procedure->blocks.push_back(&block1);
-					label1->block.block = &block1;
-					block1.labels.push_back(label1);
-					block = &block1;
+					block = procedure->CreateBlock();
+					block->AttachLabel(label1);
 
 					*block +=	IMMEDIATE		(ldi,	regConstantZero, Constant::createFloat(0.0f));
 					*block +=	COMPARE			(fcmp,	regCompareZero, fragmentInfo.regU, regConstantZero);
 					*block +=	BCOND			(bge,	regCompareZero, label2);
 					*block +=	IMMEDIATE		(ldi,	regNewU2, Constant::createFloat(0.0f));
 
-					Block& block2 = *new Block(procedure);
-					procedure->blocks.push_back(&block2);
-					label2->block.block = &block2;
-					block2.labels.push_back(label2);
-					block = &block2;
+					block = procedure->CreateBlock();
+					block->AttachLabel(label2);
 
 					*block +=	PHI				(phi,	regU0, REG_LIST(fragmentInfo.regU, regNewU1, regNewU2));
 				}
@@ -411,22 +407,16 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 					*block +=	IMMEDIATE		(ldi,	regNewV1, Constant::createFloat(1.0f));
 					*block +=	BLABEL			(bra,	label2);
 
-					Block& block1 = *new Block(procedure);
-					procedure->blocks.push_back(&block1);
-					label1->block.block = &block1;
-					block1.labels.push_back(label1);
-					block = &block1;
+					block = procedure->CreateBlock();
+					block->AttachLabel(label1);
 
 					*block +=	IMMEDIATE		(ldi,	regConstantZero, Constant::createFloat(0.0f));
 					*block +=	COMPARE			(fcmp,	regCompareZero, fragmentInfo.regV, regConstantZero);
 					*block +=	BCOND			(bge,	regCompareZero, label2);
 					*block +=	IMMEDIATE		(ldi,	regNewV2, Constant::createFloat(0.0f));
 
-					Block& block2 = *new Block(procedure);
-					procedure->blocks.push_back(&block2);
-					label2->block.block = &block2;
-					block2.labels.push_back(label2);
-					block = &block2;
+					block = procedure->CreateBlock();
+					block->AttachLabel(label2);
 
 					*block +=	PHI				(phi,	regV0, REG_LIST(fragmentInfo.regV, regNewV1, regNewV2));
 				}
@@ -1696,64 +1686,114 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 	if (m_State->m_StencilTestEnabled) {
 
 		//bool stencilTest;
-		U32 stencilRef = m_State->m_StencilReference & m_State->m_StencilMask;
+		//U32 stencilRef = m_State->m_StencilReference & m_State->m_StencilMask;
 		//U32 stencilValue = m_Surface->GetStencilBuffer()[offset];
 		//U32 stencil = stencilValue & m_State->m_StencilMask;
+		I32 regStencilRef = nextRegister++;
+		I32 regStencilMask = nextRegister++;
+		I32 regStencilOffset = nextRegister++;
+		I32 regConstant2 = nextRegister++;
+		I32 regStencilAddr = nextRegister++;
+		I32 regStencilValue = nextRegister++;
+		I32 regStencil = nextRegister++;
+		I32 regStencilTest = nextRegister++;
+
+		*block += IMMEDIATE		(ldi,	regStencilRef, Constant::createInt(m_State->m_StencilReference & m_State->m_StencilMask));
+		*block += IMMEDIATE		(ldi,	regStencilMask, Constant::createInt(m_State->m_StencilMask));
+		*block += IMMEDIATE		(ldi,	regConstant2, Constant::createInt(2));
+
+		*block += BINARY		(lsl,	regStencilOffset, regOffset, regConstant2);
+		*block += BINARY		(add,	regStencilAddr, fragmentInfo.regStencilBuffer, regStencilOffset);
+		*block += LOAD			(ldw,	regStencilValue, regStencilAddr);
+		*block += BINARY		(and,	regStencil, regStencilValue, regStencilMask);
+		*block += COMPARE		(cmp,	regStencilTest, regStencil, regStencilRef);
+
+		Opcode passedTest;
 
 		switch (m_State->m_StencilFunc) {
 			default:
 			case RasterizerState::CompFuncNever:	
 				//stencilTest = false;				
+				passedTest = nop;
 				break;
 
 			case RasterizerState::CompFuncLess:		
 				//stencilTest = stencil < stencilRef;	
+				passedTest = blt;
 				break;
 
 			case RasterizerState::CompFuncEqual:	
 				//stencilTest = stencil == stencilRef;
+				passedTest = beq;
 				break;
 
 			case RasterizerState::CompFuncLEqual:	
 				//stencilTest = stencil <= stencilRef;
+				passedTest = ble;
 				break;
 
 			case RasterizerState::CompFuncGreater:	
 				//stencilTest = stencil > stencilRef;	
+				passedTest = bgt;
 				break;
 
 			case RasterizerState::CompFuncNotEqual:	
 				//stencilTest = stencil != stencilRef;
+				passedTest = bne;
 				break;
 
 			case RasterizerState::CompFuncGEqual:	
 				//stencilTest = stencil >= stencilRef;
+				passedTest = bge;
 				break;
 
 			case RasterizerState::CompFuncAlways:	
 				//stencilTest = true;					
+				passedTest = bra;
 				break;
 		}
 
+		// branch on stencil test
+		Label * labelStencilPassed = Label::create("stencilPassed", LabelBlock);
+		Label * labelStencilBypassed = Label::create("stencilBypassed", LabelBlock);
+
+		*block	 +=		BCOND		(passedTest,	regStencilTest, labelStencilPassed);
+
 		//if (!stencilTest) {
+		{
+			I32 regNewStencilValue;
 
 			switch (m_State->m_StencilFail) {
 				default:
 				case RasterizerState::StencilOpKeep: 
+					regNewStencilValue = regStencilValue;
 					break;
 
 				case RasterizerState::StencilOpZero: 
 					//stencilValue = 0; 
+					regNewStencilValue = nextRegister++;
+
+					*block +=	IMMEDIATE	(ldi, regNewStencilValue, Constant::createInt(0));
 					break;
 
 				case RasterizerState::StencilOpReplace: 
 					//stencilValue = m_State->m_StencilReference; 
+					regNewStencilValue = regStencilRef;
 					break;
 
 				case RasterizerState::StencilOpIncr: 
 					//if (stencilValue != 0xffffffff) {
 					//	stencilValue++; 
 					//}
+					{
+						regNewStencilValue = nextRegister++;
+						I32 regConstant1 = nextRegister++;
+						I32 regFlag = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
+						*block +=	BINARY		(add,	regNewStencilValue, regFlag, regStencilValue, regConstant1);
+						*block +=	BCOND		(beq,	regFlag, continuation);
+					}
 					
 					break;
 
@@ -1761,97 +1801,248 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 					//if (stencilValue != 0) {
 					//	stencilValue--; 
 					//}
+					{
+						regNewStencilValue = nextRegister++;
+						I32 regConstant0 = nextRegister++;
+						I32 regConstant1 = nextRegister++;
+						I32 regFlag = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant0, Constant::createInt(0));
+						*block +=	COMPARE		(cmp,	regFlag, regStencilValue, regConstant0);
+						*block +=	BCOND		(beq,	regFlag, continuation);
+						*block +=	IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
+						*block +=	BINARY		(sub,	regNewStencilValue, regStencilValue, regConstant1);
+					}
 					
 					break;
 
 				case RasterizerState::StencilOpInvert: 
 					//stencilValue = ~stencilValue; 
+					regNewStencilValue = nextRegister++;
+
+					*block +=	UNARY	(not,	regNewStencilValue, regStencilValue);
 					break;
 			}
 
-			//m_Surface->GetStencilBuffer()[offset] = stencilValue;
-			//return;
+			*block +=	STORE		(stw,	regStencilAddr, regNewStencilValue);
+			*block +=	BLABEL		(bra,	continuation);
 		//}
+		}
 
-		//if (depthTest) {
-			switch (m_State->m_StencilZPass) {
-				default:
-				case RasterizerState::StencilOpKeep: 
-					break;
+		Label * labelStencilZTestPassed = Label::create("stencilZTestPassed", LabelBlock);
 
-				case RasterizerState::StencilOpZero: 
-					//stencilValue = 0; 
-					break;
+		// stencil test passed
+		block = procedure->CreateBlock();
+		block->AttachLabel(labelStencilPassed);
 
-				case RasterizerState::StencilOpReplace: 
-					//stencilValue = m_State->m_StencilReference; 
-					break;
-
-				case RasterizerState::StencilOpIncr: 
-					//if (stencilValue != 0xffffffff) {
-					//	stencilValue++; 
-					//}
-					
-					break;
-
-				case RasterizerState::StencilOpDecr: 
-					//if (stencilValue != 0) {
-					//	stencilValue--; 
-					//}
-					
-					break;
-
-				case RasterizerState::StencilOpInvert: 
-					//stencilValue = ~stencilValue; 
-					break;
+		//if (!depthTest) {
+			if (branchOnDepthTestPassed == nop) {
+				// nothing
+			} else if (branchOnDepthTestPassed == bra) {
+				currentBlock +=		BLABEL	(bra,	labelStencilZTestPassed);
+			} else {
+				currentBlock +=		BCOND	(branchOnDepthTestPassed, regDepthTest, labelStencilZTestPassed);
 			}
 
-			//m_Surface->GetStencilBuffer()[offset] = stencilValue;
+			{
+				I32 regNewStencilValue;
+
+				switch (m_State->m_StencilZFail) {
+					default:
+					case RasterizerState::StencilOpKeep: 
+						regNewStencilValue = regStencilValue;
+						break;
+
+					case RasterizerState::StencilOpZero: 
+						//stencilValue = 0; 
+						regNewStencilValue = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi, regNewStencilValue, Constant::createInt(0));
+						break;
+
+					case RasterizerState::StencilOpReplace: 
+						//stencilValue = m_State->m_StencilReference; 
+						regNewStencilValue = regStencilRef;
+						break;
+
+					case RasterizerState::StencilOpIncr: 
+						//if (stencilValue != 0xffffffff) {
+						//	stencilValue++; 
+						//}
+						{
+							regNewStencilValue = nextRegister++;
+							I32 regConstant1 = nextRegister++;
+							I32 regFlag = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
+							*block +=	BINARY		(add,	regNewStencilValue, regFlag, regStencilValue, regConstant1);
+
+							if (m_State->m_DepthTestEnabled) {
+								*block +=	BCOND		(beq,	regFlag, continuation);
+							} else {
+								*block +=	BCOND		(beq,	regFlag, labelStencilBypassed);
+							}
+						}
+						
+						break;
+
+					case RasterizerState::StencilOpDecr: 
+						//if (stencilValue != 0) {
+						//	stencilValue--; 
+						//}
+						{
+							regNewStencilValue = nextRegister++;
+							I32 regConstant0 = nextRegister++;
+							I32 regConstant1 = nextRegister++;
+							I32 regFlag = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant0, Constant::createInt(0));
+							*block +=	COMPARE		(cmp,	regFlag, regStencilValue, regConstant0);
+
+							if (m_State->m_DepthTestEnabled) {
+								*block +=	BCOND		(beq,	regFlag, continuation);
+							} else {
+								*block +=	BCOND		(beq,	regFlag, labelStencilBypassed);
+							}
+
+							*block +=	IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
+							*block +=	BINARY		(sub,	regNewStencilValue, regStencilValue, regConstant1);
+						}
+						
+						break;
+
+					case RasterizerState::StencilOpInvert: 
+						//stencilValue = ~stencilValue; 
+						regNewStencilValue = nextRegister++;
+
+						*block +=	UNARY	(not,	regNewStencilValue, regStencilValue);
+						break;
+				}
+
+				//m_Surface->GetStencilBuffer()[offset] = stencilValue;
+				*block +=	STORE		(stw,	regStencilAddr, regNewStencilValue);
+			//}
+			}
+
+			if (m_State->m_DepthTestEnabled) {
+				// return;
+				*block +=	BLABEL		(bra,	continuation);
+			}
 		//} else {
-			switch (m_State->m_StencilZFail) {
-				default:
-				case RasterizerState::StencilOpKeep: 
-					break;
+		// stencil nad z-test passed
+		block = procedure->CreateBlock();
+		block->AttachLabel(labelStencilZTestPassed);
 
-				case RasterizerState::StencilOpZero: 
-					//stencilValue = 0; 
-					break;
+			{
+				I32 regNewStencilValue;
 
-				case RasterizerState::StencilOpReplace: 
-					//stencilValue = m_State->m_StencilReference; 
-					break;
+				switch (m_State->m_StencilZPass) {
+					default:
+					case RasterizerState::StencilOpKeep: 
+						regNewStencilValue = regStencilValue;
+						break;
 
-				case RasterizerState::StencilOpIncr: 
-					//if (stencilValue != 0xffffffff) {
-					//	stencilValue++; 
-					//}
-					
-					break;
+					case RasterizerState::StencilOpZero: 
+						//stencilValue = 0; 
+						regNewStencilValue = nextRegister++;
 
-				case RasterizerState::StencilOpDecr: 
-					//if (stencilValue != 0) {
-					//	stencilValue--; 
-					//}
-					
-					break;
+						*block +=	IMMEDIATE	(ldi, regNewStencilValue, Constant::createInt(0));
+						break;
 
-				case RasterizerState::StencilOpInvert: 
-					//stencilValue = ~stencilValue; 
-					break;
+					case RasterizerState::StencilOpReplace: 
+						//stencilValue = m_State->m_StencilReference; 
+						regNewStencilValue = regStencilRef;
+						break;
+
+					case RasterizerState::StencilOpIncr: 
+						//if (stencilValue != 0xffffffff) {
+						//	stencilValue++; 
+						//}
+						{
+							regNewStencilValue = nextRegister++;
+							I32 regConstant1 = nextRegister++;
+							I32 regFlag = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
+							*block +=	BINARY		(add,	regNewStencilValue, regFlag, regStencilValue, regConstant1);
+							*block +=	BCOND		(beq,	regFlag, labelStencilBypassed);
+						}
+						
+						break;
+
+					case RasterizerState::StencilOpDecr: 
+						//if (stencilValue != 0) {
+						//	stencilValue--; 
+						//}
+						{
+							regNewStencilValue = nextRegister++;
+							I32 regConstant0 = nextRegister++;
+							I32 regConstant1 = nextRegister++;
+							I32 regFlag = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant0, Constant::createInt(0));
+							*block +=	COMPARE		(cmp,	regFlag, regStencilValue, regConstant0);
+							*block +=	BCOND		(beq,	regFlag, labelStencilBypassed);
+							*block +=	IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
+							*block +=	BINARY		(sub,	regNewStencilValue, regStencilValue, regConstant1);
+						}
+						
+						break;
+
+					case RasterizerState::StencilOpInvert: 
+						//stencilValue = ~stencilValue; 
+						regNewStencilValue = nextRegister++;
+
+						*block +=	UNARY	(not,	regNewStencilValue, regStencilValue);
+						break;
+				}
+
+				//m_Surface->GetStencilBuffer()[offset] = stencilValue;
+				*block +=	STORE		(stw,	regStencilAddr, regNewStencilValue);
+			//}
 			}
 
-			//m_Surface->GetStencilBuffer()[offset] = stencilValue;
-		//}
-	}
-
-	if (m_State->m_StencilTestEnabled && m_State->m_DepthTestEnabled) {
-		// otherwise we returned at the top
-		//if (!depthTest)
-		//	return;
+		// stencil test bypassed
+		block = procedure->CreateBlock();
+		block->AttachLabel(labelStencilBypassed);
 	}
 
 	//U16 dstValue = m_Surface->GetColorBuffer()[offset];
 	//U8 dstAlpha = m_Surface->GetAlphaBuffer()[offset];
+	I32 regDstValue = nextRegister++;
+	I32 regDstAlpha = nextRegister++;
+	I32 regColorAddr = nextRegister++;
+	I32 regAlphaAddr = nextRegister++;
+	I32 regDstR = nextRegister++;
+	I32 regDstG = nextRegister++;
+	I32 regDstB = nextRegister++;
+
+	{
+		I32 regShiftedOffset = nextRegister++;
+		I32 regConstant1 = nextRegister++;
+		I32 regConstant5 = nextRegister++;
+		I32 regConstant11 = nextRegister++;
+		I32 regShifted5 = nextRegister++;
+		I32 regShifted11 = nextRegister++;
+		I32 regMask5 = nextRegister++;
+		I32 regMask6 = nextRegister++;
+
+		*block +=	IMMEDIATE		(ldi,	regConstant1, Constant::createInt(1));
+		*block +=	BINARY			(lsl,	regShiftedOffset, regOffset, regConstant1);
+		*block +=	BINARY			(add,	regColorAddr, fragmentInfo.regColorBuffer, regShiftedOffset);
+		*block +=	BINARY			(add,	regAlphaAddr, fragmentInfo.regAlphaBuffer, regOffset);
+		*block +=	LOAD			(ldh,	regDstValue, regColorAddr);
+		*block +=	LOAD			(ldb,	regDstAlpha, regAlphaAddr);
+		*block +=	IMMEDIATE		(ldi,	regConstant5, Constant::createInt(5));
+		*block +=	IMMEDIATE		(ldi,	regConstant11, Constant::createInt(11));
+		*block +=	BINARY			(lsr,	regShifted5, regDstValue, regConstant5);
+		*block +=	BINARY			(lsr,	regShifted11, regDstValue, regConstant11);
+		*block +=	IMMEDIATE		(ldi,	regMask5, Constant::createInt(0x1f));
+		*block +=	IMMEDIATE		(ldi,	regMask6, Constant::createInt(0x3f));
+		*block +=	BINARY			(and,	regDstR, regDstValue, regMask5);
+		*block +=	BINARY			(and,	regDstG, regShifted5, regMask6);
+		*block +=	BINARY			(and,	regDstB, regShifted11, regMask5);
+	}
 
 	// Blending
 	if (m_State->m_BlendingEnabled) {
@@ -1944,12 +2135,13 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 	// Masking and write to framebuffer
 	if (m_State->m_MaskDepth) {
 		//m_Surface->GetDepthBuffer()[offset] = depth;
+		*block +=	STORE		(stw,	regZBufferAddr, fragmentInfo.regDepth);
 	}
 
-	//Color maskedColor = 
-	//	color.Mask(m_State->m_MaskRed, m_State->m_MaskGreen, m_State->m_MaskBlue, m_State->m_MaskAlpha);
-
 	if (m_State->m_LogicOpEnabled) {
+
+		//Color maskedColor = 
+		//	color.Mask(m_State->m_MaskRed, m_State->m_MaskGreen, m_State->m_MaskBlue, m_State->m_MaskAlpha);
 
 		//U32 newValue = maskedColor.ConvertToRGBA();
 		//U32 oldValue = Color::From565A(dstValue, dstAlpha).ConvertToRGBA();
@@ -2027,10 +2219,41 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 		//m_Surface->GetAlphaBuffer()[offset] = maskedColor.A();
 
 	} else {
-		//m_Surface->GetColorBuffer()[offset] = maskedColor.ConvertTo565();
+		//Color maskedColor = 
+		//	color.Mask(m_State->m_MaskRed, m_State->m_MaskGreen, m_State->m_MaskBlue, m_State->m_MaskAlpha);
+		if (m_State->m_MaskRed & m_State->m_MaskGreen & m_State->m_MaskBlue) {
+			//m_Surface->GetColorBuffer()[offset] = maskedColor.ConvertTo565();
+			*block +=	STORE	(sth, regColorAddr, regColor565);
+		} else {
+			//m_Surface->GetColorBuffer()[offset] = maskedColor.ConvertTo565();
+			I32 regSrcMask = nextRegister++;
+			I32 regDstMask = nextRegister++;
+			I32 regMaskedSrc = nextRegister++;
+			I32 regMaskedDst = nextRegister++;
+			I32 regCombined = nextRegister++;
+
+			I32 mask = (m_State->m_MaskRed ? 0x001f : 0) |
+				(m_State->m_MaskGreen ? 0x07e0 : 0) |
+				(m_State->m_MaskBlue ? 0xF800 : 0);
+			*block +=	IMMEDIATE	(ldi,	regSrcMask, Constant::createInt(mask));
+			*block +=	IMMEDIATE	(ldi,	regDstMask, Constant::createInt(~mask));
+			*block +=	BINARY		(and,	regMaskedSrc, regColor565, regSrcMask);
+			*block +=	BINARY		(and,	regMaskedDst, regDstValue, regDstMask);
+			*block +=	BINARY		(or,	regCombined, regMaskedSrc, regMaskedDst);
+			*block +=	STORE		(sth,	regColorAddr, regCombined);
+		}
+
 
 		if (m_State->m_MaskAlpha) {
 			//m_Surface->GetAlphaBuffer()[offset] = maskedColor.A();
+			I32 regConstant8 = nextRegister++;
+			I32 regShiftedA = nextRegister++;
+			I32 regAdjustedA = nextRegister++;
+
+			*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
+			*block +=	BINARY		(lsr,	regShiftedA, regColorA, regConstant8);
+			*block +=	BINARY		(sub,	regAdjustedA, regColorA, regShiftedA);
+			*block +=	STORE		(stb,	regAlphaAddr, regAdjustedA);
 		}
 	}
 }
@@ -2663,5 +2886,9 @@ void Rasterizer :: GenerateRasterScanLine() {
 	block7.labels.push_back(endLoop2);
 
 	block7 +=		RET			(ret,	new RegisterList());
+
+	std::ofstream out("dump.lst");
+	out << *module;
+	out.close();
 }
 

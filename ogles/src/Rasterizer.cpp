@@ -731,6 +731,7 @@ void Rasterizer :: PrepareLine() {
 
 void Rasterizer :: PrepareTriangle() {
 	if (!m_IsPrepared) {
+		GenerateRasterScanLine();
 	}
 
 	m_MipMapLevel = 0;
