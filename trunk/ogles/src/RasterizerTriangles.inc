@@ -93,7 +93,7 @@
 
 
 namespace {
-	inline void InitScanlineStart(EdgePos & start, const Gradients & grad,
+	inline void InitScanlineStart(const RasterInfo & rasterInfo, EdgePos & start, const Gradients & grad,
 		EGL_Fixed xPreStep, EGL_Fixed yPreStep,
 		const FractionalColor& color, EGL_Fixed fog, EGL_Fixed depth, EGL_Fixed invZ, EGL_Fixed tuOverZ[], EGL_Fixed tvOverZ[]) {
 #if HasDepth
@@ -126,6 +126,9 @@ namespace {
 						+ EGL_Mul(grad.dy.m_WindowCoords.invZ, yPreStep); 
 
 		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
+			if (!rasterInfo.Textures[index])
+				continue;
+
 			start.m_TextureCoords[index].tu = 
 				tuOverZ[index]		
 					+ EGL_Mul(grad.dx.m_TextureCoords[index].tu, xPreStep)		
@@ -135,6 +138,8 @@ namespace {
 				tvOverZ[index]		
 					+ EGL_Mul(grad.dx.m_TextureCoords[index].tv, xPreStep)		
 					+ EGL_Mul(grad.dy.m_TextureCoords[index].tv, yPreStep);
+
+#if EGL_MIPMAP_PER_TEXEL
 
 			// ------------------------------------------------------------------
 			// Determine partial derivatives of texture functions, 
@@ -160,6 +165,7 @@ namespace {
 			start.m_TextureCoords[index].dtvdy = 
 				Det2x2(grad.dy.m_TextureCoords[index].tv, tvOverZ[index], grad.dy.m_WindowCoords.invZ, invZ)
 					+ EGL_Mul(grad.dx.m_TextureCoords[index].dtvdy, xPreStep);
+#endif
 		}
 #endif
 
@@ -171,7 +177,7 @@ namespace {
 	}
 
 
-	inline void InitScanlineDeltas(EdgePos & deltaSmall, EdgePos & deltaBig,
+	inline void InitScanlineDeltas(const RasterInfo & rasterInfo, EdgePos & deltaSmall, EdgePos & deltaBig,
 								   const Gradients & gradients, 
 								   EGL_Fixed dxdy, I32 dXdYStepInt) {
 
@@ -192,20 +198,27 @@ namespace {
 		deltaSmall.m_WindowCoords.invZ	= gradients.dx.m_WindowCoords.invZ * dXdYStepInt	+ gradients.dy.m_WindowCoords.invZ; 
 
 		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
+			if (!rasterInfo.Textures[index])
+				continue;
+
 			deltaSmall.m_TextureCoords[index].tu	= 
 				gradients.dx.m_TextureCoords[index].tu * dXdYStepInt		
 					+ gradients.dy.m_TextureCoords[index].tu;
 			deltaSmall.m_TextureCoords[index].tv	= 
 				gradients.dx.m_TextureCoords[index].tv * dXdYStepInt		
 					+ gradients.dy.m_TextureCoords[index].tv;
+
+#if EGL_MIPMAP_PER_TEXEL
+
 			deltaSmall.m_TextureCoords[index].dtudx =													  
-				gradients.dy.m_TextureCoords[index].dtudx;; 
+				gradients.dy.m_TextureCoords[index].dtudx;
 			deltaSmall.m_TextureCoords[index].dtudy = 
 				gradients.dx.m_TextureCoords[index].dtudy * dXdYStepInt;
 			deltaSmall.m_TextureCoords[index].dtvdx =													  
 				gradients.dy.m_TextureCoords[index].dtvdx;
 			deltaSmall.m_TextureCoords[index].dtvdy = 
 				gradients.dx.m_TextureCoords[index].dtvdy * dXdYStepInt;
+#endif
 		}
 #endif
 
@@ -231,12 +244,18 @@ namespace {
 			deltaBig.m_WindowCoords.invZ	= deltaSmall.m_WindowCoords.invZ	+ gradients.dx.m_WindowCoords.invZ; 
 
 			for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
+				if (!rasterInfo.Textures[index])
+					continue;
+
 				deltaBig.m_TextureCoords[index].tu		= deltaSmall.m_TextureCoords[index].tu		+ gradients.dx.m_TextureCoords[index].tu;
 				deltaBig.m_TextureCoords[index].tv		= deltaSmall.m_TextureCoords[index].tv		+ gradients.dx.m_TextureCoords[index].tv;
+
+#if EGL_MIPMAP_PER_TEXEL
 				deltaBig.m_TextureCoords[index].dtudx	= deltaSmall.m_TextureCoords[index].dtudx;
 				deltaBig.m_TextureCoords[index].dtudy	= deltaSmall.m_TextureCoords[index].dtudy	+ gradients.dx.m_TextureCoords[index].dtudy;
 				deltaBig.m_TextureCoords[index].dtvdx	= deltaSmall.m_TextureCoords[index].dtvdx;
 				deltaBig.m_TextureCoords[index].dtvdy	= deltaSmall.m_TextureCoords[index].dtvdy	+ gradients.dx.m_TextureCoords[index].dtvdy;
+#endif
 			}
 #endif
 
@@ -259,12 +278,18 @@ namespace {
 			deltaBig.m_WindowCoords.invZ	= deltaSmall.m_WindowCoords.invZ	- gradients.dx.m_WindowCoords.invZ; 
 
 			for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
+				if (!rasterInfo.Textures[index])
+					continue;
+
 				deltaBig.m_TextureCoords[index].tu		= deltaSmall.m_TextureCoords[index].tu		- gradients.dx.m_TextureCoords[index].tu;
 				deltaBig.m_TextureCoords[index].tv		= deltaSmall.m_TextureCoords[index].tv		- gradients.dx.m_TextureCoords[index].tv;
+
+#if EGL_MIPMAP_PER_TEXEL
 				deltaBig.m_TextureCoords[index].dtudx	= deltaSmall.m_TextureCoords[index].dtudx;
 				deltaBig.m_TextureCoords[index].dtudy	= deltaSmall.m_TextureCoords[index].dtudy	- gradients.dx.m_TextureCoords[index].dtudy;
 				deltaBig.m_TextureCoords[index].dtvdx	= deltaSmall.m_TextureCoords[index].dtvdx;
 				deltaBig.m_TextureCoords[index].dtvdy	= deltaSmall.m_TextureCoords[index].dtvdy	+ gradients.dx.m_TextureCoords[index].dtvdy;
+#endif
 			}
 #endif
 
@@ -309,9 +334,11 @@ namespace {
 
 
 #if HasTexture
+#if EGL_MIPMAP_PER_TEXEL
 #define ScanlineDeltaTextureBig(rasterInfo, start, delta, deltaSmall, deltaBig, xError, xStepError, dxdy) \
 		start.m_WindowCoords.invZ	+= deltaBig.m_WindowCoords.invZ;			\
 		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {		\
+			if (!m_RasterInfo.Textures[index]) continue;														\
 			start.m_TextureCoords[index].tu	+= deltaBig.m_TextureCoords[index].tu;			\
 			start.m_TextureCoords[index].tv	+= deltaBig.m_TextureCoords[index].tv;			\
 			start.m_TextureCoords[index].dtudx	+= deltaBig.m_TextureCoords[index].dtudx;		\
@@ -323,6 +350,7 @@ namespace {
 #define ScanlineDeltaTextureSmall(rasterInfo, start, delta, deltaSmall, deltaBig, xError, xStepError, dxdy) \
 			start.m_WindowCoords.invZ	+= deltaSmall.m_WindowCoords.invZ;		\
 		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {		\
+			if (!m_RasterInfo.Textures[index]) continue;						\
 			start.m_TextureCoords[index].tu	+= deltaSmall.m_TextureCoords[index].tu;		\
 			start.m_TextureCoords[index].tv	+= deltaSmall.m_TextureCoords[index].tv;		\
 			start.m_TextureCoords[index].dtudx	+= deltaSmall.m_TextureCoords[index].dtudx;	\
@@ -330,6 +358,24 @@ namespace {
 			start.m_TextureCoords[index].dtvdx	+= deltaSmall.m_TextureCoords[index].dtvdx;	\
 			start.m_TextureCoords[index].dtvdy	+= deltaSmall.m_TextureCoords[index].dtvdy;	\
 		}
+#else
+#define ScanlineDeltaTextureBig(rasterInfo, start, delta, deltaSmall, deltaBig, xError, xStepError, dxdy) \
+		start.m_WindowCoords.invZ	+= deltaBig.m_WindowCoords.invZ;			\
+		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {		\
+			if (!m_RasterInfo.Textures[index]) continue;														\
+			start.m_TextureCoords[index].tu	+= deltaBig.m_TextureCoords[index].tu;			\
+			start.m_TextureCoords[index].tv	+= deltaBig.m_TextureCoords[index].tv;			\
+		}
+
+#define ScanlineDeltaTextureSmall(rasterInfo, start, delta, deltaSmall, deltaBig, xError, xStepError, dxdy) \
+			start.m_WindowCoords.invZ	+= deltaSmall.m_WindowCoords.invZ;		\
+		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {		\
+			if (!m_RasterInfo.Textures[index]) continue;						\
+			start.m_TextureCoords[index].tu	+= deltaSmall.m_TextureCoords[index].tu;		\
+			start.m_TextureCoords[index].tv	+= deltaSmall.m_TextureCoords[index].tv;		\
+		}
+
+#endif // EGL_MIPMAP_PER_TEXEL
 
 #else
 #define ScanlineDeltaTextureBig(rasterInfo, start, delta, deltaSmall, deltaBig, xError, xStepError, dxdy)
@@ -447,18 +493,6 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			  tvOverZ2[EGL_NUM_TEXTURE_UNITS], 
 			  tvOverZ3[EGL_NUM_TEXTURE_UNITS];
 
-#if HasTexture
-	for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
-		tuOverZ1[index] = EGL_Mul(pos1.m_TextureCoords[index].tu, pos1.m_WindowCoords.invZ);
-		tuOverZ2[index] = EGL_Mul(pos2.m_TextureCoords[index].tu, pos2.m_WindowCoords.invZ);
-		tuOverZ3[index] = EGL_Mul(pos3.m_TextureCoords[index].tu, pos3.m_WindowCoords.invZ);
-
-		tvOverZ1[index] = EGL_Mul(pos1.m_TextureCoords[index].tv, pos1.m_WindowCoords.invZ);
-		tvOverZ2[index] = EGL_Mul(pos2.m_TextureCoords[index].tv, pos2.m_WindowCoords.invZ);
-		tvOverZ3[index] = EGL_Mul(pos3.m_TextureCoords[index].tv, pos3.m_WindowCoords.invZ);
-	}
-#endif
-
 	if (!denominator) {
 		memset(&grad, 0, sizeof grad);
 	} else {
@@ -479,12 +513,27 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		SOLVE_XY(m_WindowCoords.depth, invDenominator);
 #endif
 
+
 #if HasTexture
 		SOLVE_XY(m_WindowCoords.invZ, invDenominator);
 
 		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
+
+			if (!m_RasterInfo.Textures[index])
+				continue;
+
+			tuOverZ1[index] = EGL_Mul(pos1.m_TextureCoords[index].tu, pos1.m_WindowCoords.invZ);
+			tuOverZ2[index] = EGL_Mul(pos2.m_TextureCoords[index].tu, pos2.m_WindowCoords.invZ);
+			tuOverZ3[index] = EGL_Mul(pos3.m_TextureCoords[index].tu, pos3.m_WindowCoords.invZ);
+
+			tvOverZ1[index] = EGL_Mul(pos1.m_TextureCoords[index].tv, pos1.m_WindowCoords.invZ);
+			tvOverZ2[index] = EGL_Mul(pos2.m_TextureCoords[index].tv, pos2.m_WindowCoords.invZ);
+			tvOverZ3[index] = EGL_Mul(pos3.m_TextureCoords[index].tv, pos3.m_WindowCoords.invZ);
+
 			SOLVE_PARAM_XY(m_TextureCoords[index].tu, tuOverZ1[index], tuOverZ2[index], tuOverZ3[index], invDenominator);
 			SOLVE_PARAM_XY(m_TextureCoords[index].tv, tvOverZ1[index], tvOverZ2[index], tvOverZ3[index], invDenominator);
+
+#if EGL_MIPMAP_PER_TEXEL
 
 			// ------------------------------------------------------------------
 			// Determine partial derivatives of texture functions, 
@@ -515,6 +564,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			grad.dx.m_TextureCoords[index].dtudy = -K1;
 			grad.dx.m_TextureCoords[index].dtvdx = 0;
 			grad.dx.m_TextureCoords[index].dtvdy = -K2;
+#endif
 		}
 #endif
 	}
@@ -577,6 +627,51 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	EGL_Fixed invZ2 = pos2.m_WindowCoords.invZ;
 	EGL_Fixed invZ3 = pos3.m_WindowCoords.invZ;
 //#endif
+
+#if !EGL_MIPMAP_PER_TEXEL && HasTexture
+
+	for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
+
+		if (!m_RasterInfo.Textures[index])
+			continue;
+	
+		if (m_UseMipmap[index]) {
+
+			int logWidth = Log2(m_Texture[index]->GetTexture(0)->GetWidth());
+			int logHeight = Log2(m_Texture[index]->GetTexture(0)->GetHeight());
+			int maxLevel = m_RasterInfo.MaxMipmapLevel[index];
+
+			if (invDenominator) {
+
+				EGL_Fixed textureArea = 
+					Det2x2(
+						(pos2.m_TextureCoords[index].tu - pos1.m_TextureCoords[index].tu) << logWidth, 
+						(pos2.m_TextureCoords[index].tv - pos1.m_TextureCoords[index].tv) << logHeight,
+						(pos3.m_TextureCoords[index].tu - pos1.m_TextureCoords[index].tu) << logWidth,
+						(pos3.m_TextureCoords[index].tv - pos1.m_TextureCoords[index].tv) << logHeight);
+				
+				EGL_Fixed ratio = EGL_Mul(textureArea, invDenominator) >> EGL_PRECISION;
+				
+				int logRatio = Log2(ratio);
+
+				if (logRatio <= 0) {
+					m_RasterInfo.MipmapLevel[index] = 0;
+				} else {
+					m_RasterInfo.MipmapLevel[index] = logRatio / 2;
+
+					if (m_RasterInfo.MipmapLevel[index] > maxLevel) {
+						m_RasterInfo.MipmapLevel[index] = maxLevel;
+					}
+				}
+			} else {
+				m_RasterInfo.MipmapLevel[index] = maxLevel;
+			}
+		} else {
+			m_RasterInfo.MipmapLevel[index] = 0;
+		}
+	}
+
+#endif	
 
 	// ----------------------------------------------------------------------
 	//
@@ -644,7 +739,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			start.m_WindowCoords.x = 
 				xStepped1L + ((EGL_ONE/2) - 1);	// added offset so round down will be round to nearest
 
-			InitScanlineStart(start, grad, xPreStep1, yPreStep1,
+			InitScanlineStart(m_RasterInfo, start, grad, xPreStep1, yPreStep1,
 							  pos1.m_Color, pos1.m_FogDensity, depth1, invZ1, tuOverZ1, tvOverZ1);
 
 			// ------------------------------------------------------------------
@@ -655,7 +750,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			I32 dXdYStep1Int = dXdY3 >= 0 ? EGL_IntFromFixed(dXdY3) : -EGL_IntFromFixed(-dXdY3);
 
 			EdgePos delta3Small, delta3Big;
-			InitScanlineDeltas(delta3Small, delta3Big, grad, dXdY3, dXdYStep1Int);
+			InitScanlineDeltas(m_RasterInfo, delta3Small, delta3Big, grad, dXdY3, dXdYStep1Int);
 
 			// ------------------------------------------------------------------
 			// Stepping for right edge
@@ -716,7 +811,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			start.m_WindowCoords.x = 
 				xStepped2L + ((EGL_ONE/2) - 1);	// added offset so round down will be round to nearest
 
-			InitScanlineStart(start, grad, xPreStep2, yPreStep1,
+			InitScanlineStart(m_RasterInfo, start, grad, xPreStep2, yPreStep1,
 							  pos2.m_Color, pos2.m_FogDensity, depth2, invZ2, tuOverZ2, tvOverZ2);
 
 			// ------------------------------------------------------------------
@@ -727,7 +822,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			I32 dXdYStep2Int = dXdY23 >= 0 ? EGL_IntFromFixed(dXdY23) : -EGL_IntFromFixed(-dXdY23);
 
 			EdgePos delta23Small, delta23Big;
-			InitScanlineDeltas(delta23Small, delta23Big, grad, dXdY23, dXdYStep2Int);
+			InitScanlineDeltas(m_RasterInfo, delta23Small, delta23Big, grad, dXdY23, dXdYStep2Int);
 
 			// ------------------------------------------------------------------
 			// initialize the x coordinate for right edge
@@ -796,7 +891,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		start.m_WindowCoords.x = 
 			xStepped1L + ((EGL_ONE/2) - 1);	// added offset so round down will be round to nearest
 
-		InitScanlineStart(start, grad, xPreStep1, yPreStep1,
+		InitScanlineStart(m_RasterInfo, start, grad, xPreStep1, yPreStep1,
 						  pos1.m_Color, pos1.m_FogDensity, depth1, invZ1, tuOverZ1, tvOverZ1);
 
 		// ------------------------------------------------------------------
@@ -807,7 +902,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		I32 dXdYStep1Int = dXdY2 >= 0 ? EGL_IntFromFixed(dXdY2) : -EGL_IntFromFixed(-dXdY2);
 
 		EdgePos delta2Small, delta2Big;
-		InitScanlineDeltas(delta2Small, delta2Big, grad, dXdY2, dXdYStep1Int);
+		InitScanlineDeltas(m_RasterInfo, delta2Small, delta2Big, grad, dXdY2, dXdYStep1Int);
 
 		// ------------------------------------------------------------------
 		// initialize the x coordinate for right edge
@@ -871,7 +966,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		start.m_WindowCoords.x = 
 			xStepped2L + ((EGL_ONE/2) - 1);	// added offset so round down will be round to nearest
 
-		InitScanlineStart(start, grad, xPreStep2, yPreStep2,
+		InitScanlineStart(m_RasterInfo, start, grad, xPreStep2, yPreStep2,
 						  pos2.m_Color, pos2.m_FogDensity, depth2, invZ2, tuOverZ2, tvOverZ2);
 
 		// ------------------------------------------------------------------
@@ -882,7 +977,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		I32 dXdYStep2Int = dXdY23 >= 0 ? EGL_IntFromFixed(dXdY23) : -EGL_IntFromFixed(-dXdY23);
 
 		EdgePos delta23Small, delta23Big;
-		InitScanlineDeltas(delta23Small, delta23Big, grad, dXdY23, dXdYStep2Int);
+		InitScanlineDeltas(m_RasterInfo, delta23Small, delta23Big, grad, dXdY23, dXdYStep2Int);
 
 		// ------------------------------------------------------------------
 		// initialize the x-step error
@@ -927,7 +1022,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		start.m_WindowCoords.x		= xStepped1L + ((EGL_ONE/2) - 1);	// added offset so round down will be round to nearest
 
-		InitScanlineStart(start, grad, xPreStep1, yPreStep1,
+		InitScanlineStart(m_RasterInfo, start, grad, xPreStep1, yPreStep1,
 						  pos1.m_Color, pos1.m_FogDensity, depth1, invZ1, tuOverZ1, tvOverZ1);
 
 		// ------------------------------------------------------------------
@@ -938,7 +1033,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		I32 dXdYStep1Int = dXdY3 >= 0 ? EGL_IntFromFixed(dXdY3) : -EGL_IntFromFixed(-dXdY3);
 
 		EdgePos delta3Small, delta3Big;
-		InitScanlineDeltas(delta3Small, delta3Big, grad, dXdY3, dXdYStep1Int);
+		InitScanlineDeltas(m_RasterInfo, delta3Small, delta3Big, grad, dXdY3, dXdYStep1Int);
 
 		// ------------------------------------------------------------------
 		// initialize the x coordinate for right edge

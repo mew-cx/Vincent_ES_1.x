@@ -166,17 +166,19 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	// texture coordinates 
 	cg_virtual_reg_t * regAddrStartTextureU[EGL_NUM_TEXTURE_UNITS];
 	cg_virtual_reg_t * regAddrEndTextureU[EGL_NUM_TEXTURE_UNITS];
+	cg_virtual_reg_t * regAddrStartTextureV[EGL_NUM_TEXTURE_UNITS];
+	cg_virtual_reg_t * regAddrEndTextureV[EGL_NUM_TEXTURE_UNITS];
+
+#if EGL_MIPMAP_PER_TEXEL
 	cg_virtual_reg_t * regAddrStartTextureDuDx[EGL_NUM_TEXTURE_UNITS];
 	cg_virtual_reg_t * regAddrEndTextureDuDx[EGL_NUM_TEXTURE_UNITS];
 	cg_virtual_reg_t * regAddrStartTextureDuDy[EGL_NUM_TEXTURE_UNITS];
 	cg_virtual_reg_t * regAddrEndTextureDuDy[EGL_NUM_TEXTURE_UNITS];
-
-	cg_virtual_reg_t * regAddrStartTextureV[EGL_NUM_TEXTURE_UNITS];
-	cg_virtual_reg_t * regAddrEndTextureV[EGL_NUM_TEXTURE_UNITS];
 	cg_virtual_reg_t * regAddrStartTextureDvDx[EGL_NUM_TEXTURE_UNITS];
 	cg_virtual_reg_t * regAddrEndTextureDvDx[EGL_NUM_TEXTURE_UNITS];
 	cg_virtual_reg_t * regAddrStartTextureDvDy[EGL_NUM_TEXTURE_UNITS];
 	cg_virtual_reg_t * regAddrEndTextureDvDy[EGL_NUM_TEXTURE_UNITS];
+#endif
 
 	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		// u texture coordinate
@@ -188,6 +190,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		ADD		(regAddrStartTextureU[unit], regStart, regOffsetTextureU);
 		ADD		(regAddrEndTextureU[unit], regEnd, regOffsetTextureU);
 
+#if EGL_MIPMAP_PER_TEXEL
 		// du/dx texture coordinate
 		DECL_REG	(regOffsetTextureDuDx);
 		ALLOC_REG	(regAddrStartTextureDuDx[unit]);
@@ -205,6 +208,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		LDI		(regOffsetTextureDuDy, OFFSET_EDGE_BUFFER_TEX_DTUDY + unit * sizeof(TexCoord));
 		ADD		(regAddrStartTextureDuDy[unit], regStart, regOffsetTextureDuDy);
 		ADD		(regAddrEndTextureDuDy[unit], regEnd, regOffsetTextureDuDy);
+#endif
 
 		// v texture coordinate
 		DECL_REG	(regOffsetTextureV);
@@ -215,6 +219,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		ADD		(regAddrStartTextureV[unit], regStart, regOffsetTextureV);
 		ADD		(regAddrEndTextureV[unit], regEnd, regOffsetTextureV);
 
+#if EGL_MIPMAP_PER_TEXEL
 		// dv/dx texture coordinate
 		DECL_REG	(regOffsetTextureDvDx);
 		ALLOC_REG	(regAddrStartTextureDvDx[unit]);
@@ -232,6 +237,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		LDI		(regOffsetTextureDvDy, OFFSET_EDGE_BUFFER_TEX_DTVDY + unit * sizeof(TexCoord));
 		ADD		(regAddrStartTextureDvDy[unit], regStart, regOffsetTextureDvDy);
 		ADD		(regAddrEndTextureDvDy[unit], regEnd, regOffsetTextureDvDy);
+#endif
 	}
 
 	// r color component
@@ -283,10 +289,23 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	cg_virtual_reg_t * regAddrTextures[EGL_NUM_TEXTURE_UNITS];
 	cg_virtual_reg_t * regTexture[EGL_NUM_TEXTURE_UNITS];
 
+#if EGL_MIPMAP_PER_TEXEL
 	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		regAddrTextures[unit] = LOAD_DATA(block, regInfo, OFFSET_TEXTURES + unit * sizeof(I32));
 		regTexture[unit] = regAddrTextures[unit];
 	}
+#else
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		cg_virtual_reg_t * mipmapLevel = LOAD_DATA(block, regInfo, OFFSET_MIPMAP_LEVEL + unit * sizeof(I32));
+		regAddrTextures[unit] = LOAD_DATA(block, regInfo, OFFSET_TEXTURES + unit * sizeof(I32));
+
+		DECL_REG		(shiftedLevel);
+		DECL_CONST_REG	(constant2, 2);
+		LSL				(shiftedLevel, mipmapLevel, constant2);
+
+		regTexture[unit] = Add(block, regAddrTextures[unit], shiftedLevel);
+	}
+#endif
 
 	//EGL_Fixed invSpan = EGL_Inverse(end.m_WindowCoords.x - start.m_WindowCoords.x);
 	DECL_REG	(regEndWindowX);
@@ -306,9 +325,12 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regStartDepth);
 
 	DECL_REG_ARRAY	(regStartTextureU, EGL_NUM_TEXTURE_UNITS);
-	DECL_REG_ARRAY	(regStartTextureDuDy, EGL_NUM_TEXTURE_UNITS);
 	DECL_REG_ARRAY	(regStartTextureV, EGL_NUM_TEXTURE_UNITS);
+
+#if EGL_MIPMAP_PER_TEXEL
+	DECL_REG_ARRAY	(regStartTextureDuDy, EGL_NUM_TEXTURE_UNITS);
 	DECL_REG_ARRAY	(regStartTextureDvDy, EGL_NUM_TEXTURE_UNITS);
+#endif
 
 	LDW		(regStartWindowZ, regAddrStartWindowZ);
 
@@ -332,10 +354,13 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	DECL_REG_ARRAY	(regU, EGL_NUM_TEXTURE_UNITS);
 	DECL_REG_ARRAY	(regV, EGL_NUM_TEXTURE_UNITS);
+
+#if EGL_MIPMAP_PER_TEXEL
 	DECL_REG_ARRAY	(regDuDx, EGL_NUM_TEXTURE_UNITS);
 	DECL_REG_ARRAY	(regDvDx, EGL_NUM_TEXTURE_UNITS);
 	DECL_REG_ARRAY	(regAbsDuDx, EGL_NUM_TEXTURE_UNITS);
 	DECL_REG_ARRAY	(regAbsDvDx, EGL_NUM_TEXTURE_UNITS);
+#endif
 
 	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		LDW		(regStartTextureU[unit], regAddrStartTextureU[unit]);
@@ -343,6 +368,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		FMUL	(regU[unit], regStartTextureU[unit], regZ);
 		FMUL	(regV[unit], regStartTextureV[unit], regZ);
 
+#if EGL_MIPMAP_PER_TEXEL
 		// texture gradients for mipmap selection
 
 		LDW		(regDuDx[unit], regAddrStartTextureDuDx[unit]);
@@ -352,6 +378,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 		LDW		(regStartTextureDuDy[unit], regAddrStartTextureDuDy[unit]);
 		LDW		(regStartTextureDvDy[unit], regAddrStartTextureDvDy[unit]);
+#endif
 	}
 
 	LDW		(regStartFog, regAddrStartFog);
@@ -416,18 +443,24 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG_ARRAY	(regLoop0InvU, EGL_NUM_TEXTURE_UNITS);
 	DECL_REG_ARRAY	(regLoop0InvVEntry, EGL_NUM_TEXTURE_UNITS);
 	DECL_REG_ARRAY	(regLoop0InvV, EGL_NUM_TEXTURE_UNITS);
+
+#if EGL_MIPMAP_PER_TEXEL
 	DECL_REG_ARRAY	(regLoop0DuDyEntry, EGL_NUM_TEXTURE_UNITS);
 	DECL_REG_ARRAY	(regLoop0DuDy, EGL_NUM_TEXTURE_UNITS);
 	DECL_REG_ARRAY	(regLoop0DvDyEntry, EGL_NUM_TEXTURE_UNITS);
 	DECL_REG_ARRAY	(regLoop0DvDy, EGL_NUM_TEXTURE_UNITS);
+#endif
 
 	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		PHI		(regLoop0UEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regU[unit], regLoop0U[unit], NULL));
 		PHI		(regLoop0VEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regV[unit], regLoop0V[unit], NULL));
 		PHI		(regLoop0InvUEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regStartTextureU[unit], regLoop0InvU[unit], NULL));
 		PHI		(regLoop0InvVEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regStartTextureV[unit], regLoop0InvV[unit], NULL));
+
+#if EGL_MIPMAP_PER_TEXEL
 		PHI		(regLoop0DuDyEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regStartTextureDuDy[unit], regLoop0DuDy[unit], NULL));
 		PHI		(regLoop0DvDyEntry[unit], cg_create_virtual_reg_list(procedure->module->heap, regStartTextureDvDy[unit], regLoop0DvDy[unit], NULL));
+#endif
 	}
 
 		//invTu += deltaInvU << LOG_LINEAR_SPAN;
@@ -465,6 +498,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	// if multi-texture, determine texture mode (magnification vs. minifacation)
 	// and texture level here
 	// ----------------------------------------------------------------------
+
+#if EGL_MIPMAP_PER_TEXEL
 
 	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		if (m_State->m_Texture[unit].MipmapFilterMode != RasterizerState::FilterModeNone) {
@@ -565,6 +600,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		FADD	(regLoop0DuDy[unit], regLoop0DuDyEntry[unit], regShiftedDuDyDx);
 		FADD	(regLoop0DvDy[unit], regLoop0DvDyEntry[unit], regShiftedDvDyDx);
 	}
+
+#endif
 
 		//EGL_Fixed endZ = EGL_Inverse(invZ);
 		//EGL_Fixed endTu = EGL_Mul(invTu, endZ);
@@ -763,17 +800,22 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG_ARRAY	(regBlock4V, EGL_NUM_TEXTURE_UNITS);
 	DECL_REG_ARRAY	(regBlock4InvU, EGL_NUM_TEXTURE_UNITS);
 	DECL_REG_ARRAY	(regBlock4InvV, EGL_NUM_TEXTURE_UNITS);
+
+#if EGL_MIPMAP_PER_TEXEL
 	DECL_REG_ARRAY	(regLoop4DuDy, EGL_NUM_TEXTURE_UNITS);
 	DECL_REG_ARRAY	(regLoop4DvDy, EGL_NUM_TEXTURE_UNITS);
-		
+#endif
 
 	PHI		(regBlock4InvZ, cg_create_virtual_reg_list(procedure->module->heap, regLoop0InvZ, regStartWindowZ, NULL));
 	PHI		(regBlock4X, cg_create_virtual_reg_list(procedure->module->heap, regX, regLoop1X, NULL));
 	PHI		(regBlock4Z, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Z, regZ, NULL));
 
 	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+#if EGL_MIPMAP_PER_TEXEL
 		PHI		(regLoop4DuDy[unit], cg_create_virtual_reg_list(procedure->module->heap, regStartTextureDuDy[unit], regLoop0DuDy[unit], NULL));
 		PHI		(regLoop4DvDy[unit], cg_create_virtual_reg_list(procedure->module->heap, regStartTextureDvDy[unit], regLoop0DvDy[unit], NULL));
+#endif
+
 		PHI		(regBlock4InvU[unit], cg_create_virtual_reg_list(procedure->module->heap, regLoop0InvU[unit], regStartTextureU[unit], NULL));
 		PHI		(regBlock4InvV[unit], cg_create_virtual_reg_list(procedure->module->heap, regLoop0InvV[unit], regStartTextureV[unit], NULL));
 		PHI		(regBlock4U[unit], cg_create_virtual_reg_list(procedure->module->heap, regLoop0U[unit], regU[unit], NULL));
@@ -788,6 +830,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	// and texture level here
 	// ----------------------------------------------------------------------
 
+#if EGL_MIPMAP_PER_TEXEL
 	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		if (m_State->m_Texture[unit].MipmapFilterMode != RasterizerState::FilterModeNone) {
 
@@ -868,7 +911,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 			}
 		}
 	}
-		
+#endif
+
 	//I32 deltaX = xEnd - x;
 
 	//EGL_Fixed endZ = EGL_Inverse(invZ + deltaX * deltaInvZ);
