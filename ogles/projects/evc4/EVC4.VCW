@@ -30,21 +30,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "colormat"=.\colormat.vcp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name ug
-    End Project Dependency
-}}}
-
-###############################################################################
-
 Project: "conform"=.\conform.vcp - Package Owner=<4>
 
 Package=<5>
@@ -159,21 +144,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "material"=.\material.vcp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name ug
-    End Project Dependency
-}}}
-
-###############################################################################
-
 Project: "platform"=.\platform.vcp - Package Owner=<4>
 
 Package=<5>
@@ -182,21 +152,6 @@ Package=<5>
 
 Package=<4>
 {{{
-}}}
-
-###############################################################################
-
-Project: "polyoff"=.\polyoff.vcp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name ug
-    End Project Dependency
 }}}
 
 ###############################################################################
