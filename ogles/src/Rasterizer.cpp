@@ -146,23 +146,23 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 		EGL_Fixed tv0;
 
 		switch (m_Texture->GetWrappingModeS()) {
-			case MultiTexture::WrappingModeClampToEdge:
+			case RasterizerState::WrappingModeClampToEdge:
 				tu0 = EGL_CLAMP(tu, 0, EGL_ONE);
 				break;
 
 			default:
-			case MultiTexture::WrappingModeRepeat:
+			case RasterizerState::WrappingModeRepeat:
 				tu0 = tu & 0xffff;
 				break;
 		}
 
 		switch (m_Texture->GetWrappingModeT()) {
-			case MultiTexture::WrappingModeClampToEdge:
+			case RasterizerState::WrappingModeClampToEdge:
 				tv0 = EGL_CLAMP(tv, 0, EGL_ONE);
 				break;
 
 			default:
-			case MultiTexture::WrappingModeRepeat:
+			case RasterizerState::WrappingModeRepeat:
 				tv0 = tv & 0xffff;
 				break;
 		}
@@ -217,7 +217,7 @@ inline void Rasterizer :: Fragment(I32 offset, EGL_Fixed depth, I32 texOffset,
 
 		switch (m_Texture->GetInternalFormat()) {
 			default:
-			case Texture::TextureFormatAlpha:
+			case RasterizerState::TextureFormatAlpha:
 				texColor = Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
 
 				switch (m_State->m_TextureMode) {
@@ -233,7 +233,7 @@ inline void Rasterizer :: Fragment(I32 offset, EGL_Fixed depth, I32 texOffset,
 				}
 				break;
 
-			case Texture::TextureFormatLuminance:
+			case RasterizerState::TextureFormatLuminance:
 				{
 				U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset];
 				texColor = Color (luminance, luminance, luminance, 0xff);
@@ -270,7 +270,7 @@ inline void Rasterizer :: Fragment(I32 offset, EGL_Fixed depth, I32 texOffset,
 				}
 				break;
 
-			case Texture::TextureFormatRGB:
+			case RasterizerState::TextureFormatRGB:
 				texColor = Color::From565(reinterpret_cast<const U16 *>(data)[texOffset]);
 
 				switch (m_State->m_TextureMode) {
@@ -304,7 +304,7 @@ inline void Rasterizer :: Fragment(I32 offset, EGL_Fixed depth, I32 texOffset,
 				}
 				break;
 
-			case Texture::TextureFormatLuminanceAlpha:
+			case RasterizerState::TextureFormatLuminanceAlpha:
 				{
 				U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset * 2];
 				U8 alpha = reinterpret_cast<const U8 *>(data)[texOffset * 2 + 1];
@@ -349,7 +349,7 @@ inline void Rasterizer :: Fragment(I32 offset, EGL_Fixed depth, I32 texOffset,
 				}
 				break;
 
-			case Texture::TextureFormatRGBA:
+			case RasterizerState::TextureFormatRGBA:
 				texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
 
 				switch (m_State->m_TextureMode) {

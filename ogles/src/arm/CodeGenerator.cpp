@@ -322,7 +322,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		DECL_REG	(regV0);
 
 		switch (m_Texture->GetWrappingModeS()) {
-			case MultiTexture::WrappingModeClampToEdge:
+			case RasterizerState::WrappingModeClampToEdge:
 				//tu0 = EGL_CLAMP(tu, 0, EGL_ONE);
 				{
 					DECL_REG	(regConstantOne);
@@ -361,7 +361,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				break;
 
 			default:
-			case MultiTexture::WrappingModeRepeat:
+			case RasterizerState::WrappingModeRepeat:
 				//tu0 = tu & 0xffff;
 				{
 					DECL_REG(regMask);
@@ -373,7 +373,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		}
 
 		switch (m_Texture->GetWrappingModeT()) {
-			case MultiTexture::WrappingModeClampToEdge:
+			case RasterizerState::WrappingModeClampToEdge:
 				//tv0 = EGL_CLAMP(tv, 0, EGL_ONE);
 				{
 					DECL_REG	(regConstantOne);
@@ -408,7 +408,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				break;
 
 			default:
-			case MultiTexture::WrappingModeRepeat:
+			case RasterizerState::WrappingModeRepeat:
 				//tv0 = tv & 0xffff;
 				{
 					DECL_REG	(regMask);
@@ -447,7 +447,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		ADD		(regTexOffset, regTexX, regScaledTexY);
 
 		switch (m_Texture->GetInternalFormat()) {
-			case Texture::TextureFormatAlpha:				// 8
+			case RasterizerState::TextureFormatAlpha:				// 8
 				{
 				//texColor = Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
 				regTexColorR = regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
@@ -473,7 +473,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				}
 				break;
 
-			case Texture::TextureFormatLuminance:			// 8
+			case RasterizerState::TextureFormatLuminance:			// 8
 				{
 				//U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset];
 				//texColor = Color (luminance, luminance, luminance, 0xff);
@@ -516,7 +516,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				}
 				break;
 
-			case Texture::TextureFormatLuminanceAlpha:		// 8-8
+			case RasterizerState::TextureFormatLuminanceAlpha:		// 8-8
 				{
 				//U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset * 2];
 				//U8 alpha = reinterpret_cast<const U8 *>(data)[texOffset * 2 + 1];
@@ -577,7 +577,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				}
 				break;
 
-			case Texture::TextureFormatRGB:					// 5-6-5
+			case RasterizerState::TextureFormatRGB:					// 5-6-5
 				//texColor = Color::From565(reinterpret_cast<const U16 *>(data)[texOffset]);
 				{
 				regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
@@ -614,7 +614,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				}
 				break;
 
-			case Texture::TextureFormatRGBA:					// 5-5-5-1
+			case RasterizerState::TextureFormatRGBA:					// 5-5-5-1
 				//texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
 				{
 				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
@@ -693,7 +693,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 		switch (m_Texture->GetInternalFormat()) {
 			default:
-			case Texture::TextureFormatAlpha:
+			case RasterizerState::TextureFormatAlpha:
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeReplace:
 						{
@@ -791,8 +791,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				}
 				break;
 
-			case Texture::TextureFormatLuminance:
-			case Texture::TextureFormatRGB:
+			case RasterizerState::TextureFormatLuminance:
+			case RasterizerState::TextureFormatRGB:
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeDecal:
 					case RasterizerState::TextureModeReplace:
@@ -1095,8 +1095,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				}
 				break;
 
-			case Texture::TextureFormatLuminanceAlpha:
-			case Texture::TextureFormatRGBA:
+			case RasterizerState::TextureFormatLuminanceAlpha:
+			case RasterizerState::TextureFormatRGBA:
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeReplace:
 						{

@@ -113,73 +113,73 @@ void Context :: GenTextures(GLsizei n, GLuint *textures) {
 // --------------------------------------------------------------------------
 
 namespace {
-	Texture::TextureFormat TextureFormatFromEnum(GLenum format) {
+	RasterizerState::TextureFormat TextureFormatFromEnum(GLenum format) {
 		switch (format) {
 			case GL_ALPHA:
-				return Texture::TextureFormatAlpha;
+				return RasterizerState::TextureFormatAlpha;
 
 			case 1:
 			case GL_LUMINANCE:
-				return Texture::TextureFormatLuminance;
+				return RasterizerState::TextureFormatLuminance;
 
 			case 2:
 			case GL_LUMINANCE_ALPHA:
-				return Texture::TextureFormatLuminanceAlpha;
+				return RasterizerState::TextureFormatLuminanceAlpha;
 
 			case 3:
 			case GL_RGB:
-				return Texture::TextureFormatRGB;
+				return RasterizerState::TextureFormatRGB;
 
 			case 4:
 			case GL_RGBA:
-				return Texture::TextureFormatRGBA;
+				return RasterizerState::TextureFormatRGBA;
 
 			default:
-				return Texture::TextureFormatInvalid;
+				return RasterizerState::TextureFormatInvalid;
 		}
 	}
 
-	GLenum InternalTypeForInternalFormat(Texture::TextureFormat format) {
+	GLenum InternalTypeForInternalFormat(RasterizerState::TextureFormat format) {
 		switch (format) {
-			case Texture::TextureFormatAlpha:
-			case Texture::TextureFormatLuminance:
-			case Texture::TextureFormatLuminanceAlpha:
+			case RasterizerState::TextureFormatAlpha:
+			case RasterizerState::TextureFormatLuminance:
+			case RasterizerState::TextureFormatLuminanceAlpha:
 			default:
 				return GL_UNSIGNED_BYTE;
 
-			case Texture::TextureFormatRGB:
+			case RasterizerState::TextureFormatRGB:
 				return GL_UNSIGNED_SHORT_5_6_5;
 
-			case Texture::TextureFormatRGBA:
+			case RasterizerState::TextureFormatRGBA:
 				return GL_UNSIGNED_SHORT_5_5_5_1;
 		}
 	}
 
-	MultiTexture::WrappingMode WrappingModeFromEnum(GLenum mode) {
+	RasterizerState::WrappingMode WrappingModeFromEnum(GLenum mode) {
 		switch (mode) {
-			case GL_CLAMP_TO_EDGE:	return MultiTexture::WrappingModeClampToEdge;
-			case GL_REPEAT:			return MultiTexture::WrappingModeRepeat;
-			default:				return MultiTexture::WrappingModeInvalid;
+			case GL_CLAMP_TO_EDGE:	return RasterizerState::WrappingModeClampToEdge;
+			case GL_REPEAT:			return RasterizerState::WrappingModeRepeat;
+			default:				return RasterizerState::WrappingModeInvalid;
 		}
 	}
 
-	MultiTexture::MinFilterMode MinFilterModeFromEnum(GLenum mode) {
+	RasterizerState::MinFilterMode MinFilterModeFromEnum(GLenum mode) {
 		switch (mode) {
-			case GL_NEAREST:				return MultiTexture::MinFilterModeNearest;
-			case GL_LINEAR:					return MultiTexture::MinFilterModeLinear;
-			case GL_NEAREST_MIPMAP_LINEAR:	return MultiTexture::MinFilterModeNearestMipmapLinear;
-			case GL_NEAREST_MIPMAP_NEAREST:	return MultiTexture::MinFilterModeNearestMipmapNearest;
-			case GL_LINEAR_MIPMAP_LINEAR:	return MultiTexture::MinFilterModeLinearMipmapLinear;
-			case GL_LINEAR_MIPMAP_NEAREST:	return MultiTexture::MinFilterModeLinearMipmapNearest;
-			default:						return MultiTexture::MinFilterModeInvalid;
+			case GL_NEAREST:				return RasterizerState::MinFilterModeNearest;
+			case GL_LINEAR:					return RasterizerState::MinFilterModeLinear;
+			case GL_NEAREST_MIPMAP_LINEAR:	return RasterizerState::MinFilterModeNearestMipmapLinear;
+			case GL_NEAREST_MIPMAP_NEAREST:	return RasterizerState::MinFilterModeNearestMipmapNearest;
+			case GL_LINEAR_MIPMAP_LINEAR:	return RasterizerState::MinFilterModeLinearMipmapLinear;
+			case GL_LINEAR_MIPMAP_NEAREST:	return RasterizerState::MinFilterModeLinearMipmapNearest;
+			default:						return RasterizerState::MinFilterModeInvalid;
 		}
 	}
 
-	MultiTexture::MagFilterMode MagFilterModeFromEnum(GLenum mode) {
+	RasterizerState::MagFilterMode MagFilterModeFromEnum(GLenum mode) {
 		switch (mode) {
-			case GL_NEAREST:		return MultiTexture::MagFilterModeNearest;
-			case GL_LINEAR:			return MultiTexture::MagFilterModeLinear;
-			default:				return MultiTexture::MagFilterModeInvalid;
+			case GL_NEAREST:		return RasterizerState::MagFilterModeNearest;
+			case GL_LINEAR:			return RasterizerState::MagFilterModeLinear;
+			default:				return RasterizerState::MagFilterModeInvalid;
 		}
 	}
 
@@ -397,7 +397,7 @@ namespace {
 	void CopyPixels(const void * src, U32 srcWidth, U32 srcHeight, 
 					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
 					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
-					Texture::TextureFormat format, GLenum srcType, GLenum dstType) {
+					RasterizerState::TextureFormat format, GLenum srcType, GLenum dstType) {
 
 		// ---------------------------------------------------------------------
 		// clip lower left corner
@@ -435,18 +435,18 @@ namespace {
 
 			
 		switch (format) {
-			case Texture::TextureFormatAlpha:
-			case Texture::TextureFormatLuminance:
+			case RasterizerState::TextureFormatAlpha:
+			case RasterizerState::TextureFormatLuminance:
 				CopyPixels<U8>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
 					dst, dstWidth, dstHeight, dstX, dstY);
 				break;
 
-			case Texture::TextureFormatLuminanceAlpha:
+			case RasterizerState::TextureFormatLuminanceAlpha:
 				CopyPixels<U16>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
 					dst, dstWidth, dstHeight, dstX, dstY);
 				break;
 
-			case Texture::TextureFormatRGB:
+			case RasterizerState::TextureFormatRGB:
 				switch (srcType) {
 					case GL_UNSIGNED_BYTE:
 						switch (dstType) {
@@ -479,7 +479,7 @@ namespace {
 
 				break;
 
-			case Texture::TextureFormatRGBA:
+			case RasterizerState::TextureFormatRGBA:
 				switch (srcType) {
 					case GL_UNSIGNED_BYTE:
 						switch (dstType) {
@@ -547,32 +547,32 @@ namespace {
 	//	externalFormat	-	the external bitmap format
 	//	type			-	the external bitmap type
 	// -------------------------------------------------------------------------
-	bool ValidateFormats(Texture::TextureFormat internalFormat,
-		Texture::TextureFormat externalFormat, GLenum type) {
-		if (internalFormat == Texture::TextureFormatInvalid || 
-			externalFormat == Texture::TextureFormatInvalid || 
+	bool ValidateFormats(RasterizerState::TextureFormat internalFormat,
+		RasterizerState::TextureFormat externalFormat, GLenum type) {
+		if (internalFormat == RasterizerState::TextureFormatInvalid || 
+			externalFormat == RasterizerState::TextureFormatInvalid || 
 			internalFormat != externalFormat) {
 			return false;
 		}
 
 		switch (internalFormat) {
-			case Texture::TextureFormatAlpha:
-			case Texture::TextureFormatLuminance:
-			case Texture::TextureFormatLuminanceAlpha:
+			case RasterizerState::TextureFormatAlpha:
+			case RasterizerState::TextureFormatLuminance:
+			case RasterizerState::TextureFormatLuminanceAlpha:
 				if (type != GL_UNSIGNED_BYTE) {
 					return false;
 				}
 
 				break;
 
-			case Texture::TextureFormatRGB:
+			case RasterizerState::TextureFormatRGB:
 				if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT_5_6_5) {
 					return false;
 				}
 
 				break;
 
-			case Texture::TextureFormatRGBA:
+			case RasterizerState::TextureFormatRGBA:
 				if (type != GL_UNSIGNED_BYTE &&
 					type != GL_UNSIGNED_SHORT_4_4_4_4 &&
 					type != GL_UNSIGNED_SHORT_5_5_5_1) {
@@ -586,18 +586,18 @@ namespace {
 		return true;
 	}
 
-	GLenum TypeForInternalFormat(Texture::TextureFormat format) {
+	GLenum TypeForInternalFormat(RasterizerState::TextureFormat format) {
 		switch (format) {
 			default:
-			case Texture::TextureFormatAlpha:
-			case Texture::TextureFormatLuminance:
-			case Texture::TextureFormatLuminanceAlpha:
+			case RasterizerState::TextureFormatAlpha:
+			case RasterizerState::TextureFormatLuminance:
+			case RasterizerState::TextureFormatLuminanceAlpha:
 				return GL_UNSIGNED_BYTE;
 
-			case Texture::TextureFormatRGB:
+			case RasterizerState::TextureFormatRGB:
 				return GL_UNSIGNED_SHORT_5_6_5;
 
-			case Texture::TextureFormatRGBA:
+			case RasterizerState::TextureFormatRGBA:
 				return GL_UNSIGNED_SHORT_5_5_5_1;
 		}
 	}
@@ -605,7 +605,7 @@ namespace {
 
 void Context :: CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data) { 
 
-	Texture::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
+	RasterizerState::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
 	TexImage2D(target, level, internalformat, width, height, border, 
 		internalformat, TypeForInternalFormat(internalFormat), data);
 }
@@ -624,7 +624,7 @@ void Context :: CompressedTexSubImage2D(GLenum target, GLint level, GLint xoffse
 	MultiTexture * multiTexture = GetCurrentTexture();
 	Texture * texture = multiTexture->GetTexture(level);
 
-	Texture::TextureFormat internalFormat = texture->GetInternalFormat();
+	RasterizerState::TextureFormat internalFormat = texture->GetInternalFormat();
 	TexSubImage2D(target, level, xoffset, yoffset, width, height, 
 		internalFormat, TypeForInternalFormat(internalFormat), data);
 }
@@ -643,8 +643,8 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat,
 		return;
 	}
 
-	Texture::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
-	Texture::TextureFormat externalFormat = TextureFormatFromEnum(format);
+	RasterizerState::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
+	RasterizerState::TextureFormat externalFormat = TextureFormatFromEnum(format);
 
 	if (!ValidateFormats(internalFormat, externalFormat, type)) {
 		RecordError(GL_INVALID_VALUE);
@@ -676,8 +676,8 @@ void Context :: TexSubImage2D(GLenum target, GLint level,
 	MultiTexture * multiTexture = GetCurrentTexture();
 	Texture * texture = multiTexture->GetTexture(level);
 
-	Texture::TextureFormat internalFormat = texture->GetInternalFormat();
-	Texture::TextureFormat externalFormat = TextureFormatFromEnum(format);
+	RasterizerState::TextureFormat internalFormat = texture->GetInternalFormat();
+	RasterizerState::TextureFormat externalFormat = TextureFormatFromEnum(format);
 
 	if (!ValidateFormats(internalFormat, externalFormat, type)) {
 		RecordError(GL_INVALID_VALUE);
@@ -702,11 +702,11 @@ void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat
 		return;
 	}
 
-	Texture::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
+	RasterizerState::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
 
 	// These parameters really depend on the actual reading surface, and should
 	// be determined from there
-	Texture::TextureFormat externalFormat = Texture::TextureFormatRGB;
+	RasterizerState::TextureFormat externalFormat = RasterizerState::TextureFormatRGB;
 	GLenum type = GL_UNSIGNED_SHORT_5_6_5;
 
 	if (!ValidateFormats(internalFormat, externalFormat, type)) {
@@ -740,11 +740,11 @@ void Context :: CopyTexSubImage2D(GLenum target, GLint level,
 
 	MultiTexture * multiTexture = GetCurrentTexture();
 	Texture * texture = multiTexture->GetTexture(level);
-	Texture::TextureFormat internalFormat = texture->GetInternalFormat();
+	RasterizerState::TextureFormat internalFormat = texture->GetInternalFormat();
 
 	// These parameters really depend on the actual reading surface, and should
 	// be determined from there
-	Texture::TextureFormat externalFormat = Texture::TextureFormatRGB;
+	RasterizerState::TextureFormat externalFormat = RasterizerState::TextureFormatRGB;
 	GLenum type = GL_UNSIGNED_SHORT_5_6_5;
 
 	if (!ValidateFormats(internalFormat, externalFormat, type)) {
@@ -773,9 +773,9 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 	switch (pname) {
 		case GL_TEXTURE_MIN_FILTER:
 			{
-				MultiTexture::MinFilterMode mode = MinFilterModeFromEnum(intParam);
+				RasterizerState::MinFilterMode mode = MinFilterModeFromEnum(intParam);
 
-				if (mode != MultiTexture::MinFilterModeInvalid) {
+				if (mode != RasterizerState::MinFilterModeInvalid) {
 					multiTexture->SetMinFilterMode(mode);
 				} else {
 					RecordError(GL_INVALID_VALUE);
@@ -785,9 +785,9 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 		case GL_TEXTURE_MAG_FILTER:
 			{
-				MultiTexture::MagFilterMode mode = MagFilterModeFromEnum(intParam);
+				RasterizerState::MagFilterMode mode = MagFilterModeFromEnum(intParam);
 
-				if (mode != MultiTexture::MagFilterModeInvalid) {
+				if (mode != RasterizerState::MagFilterModeInvalid) {
 					multiTexture->SetMagFilterMode(mode);
 				} else {
 					RecordError(GL_INVALID_VALUE);
@@ -797,9 +797,9 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 		case GL_TEXTURE_WRAP_S:
 			{
-				MultiTexture::WrappingMode mode = WrappingModeFromEnum(intParam);
+				RasterizerState::WrappingMode mode = WrappingModeFromEnum(intParam);
 
-				if (mode != MultiTexture::WrappingModeInvalid) {
+				if (mode != RasterizerState::WrappingModeInvalid) {
 					multiTexture->SetWrappingModeS(mode);
 				} else {
 					RecordError(GL_INVALID_VALUE);
@@ -809,9 +809,9 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 		case GL_TEXTURE_WRAP_T:
 			{
-				MultiTexture::WrappingMode mode = WrappingModeFromEnum(intParam);
+				RasterizerState::WrappingMode mode = WrappingModeFromEnum(intParam);
 
-				if (mode != MultiTexture::WrappingModeInvalid) {
+				if (mode != RasterizerState::WrappingModeInvalid) {
 					multiTexture->SetWrappingModeT(mode);
 				} else {
 					RecordError(GL_INVALID_VALUE);
@@ -902,8 +902,8 @@ void Context :: ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 						   GLenum format, GLenum type, GLvoid *pixels) { 
 
    // right now, use a hardcoded image format
-	Texture::TextureFormat internalFormat = Texture::TextureFormatRGB;
-	Texture::TextureFormat externalFormat = TextureFormatFromEnum(format);
+	RasterizerState::TextureFormat internalFormat = RasterizerState::TextureFormatRGB;
+	RasterizerState::TextureFormat externalFormat = TextureFormatFromEnum(format);
 	GLenum internalType = GL_UNSIGNED_SHORT_5_6_5;
 
 	if (!ValidateFormats(internalFormat, externalFormat, type)) {
