@@ -166,7 +166,7 @@ void Rasterizer :: PrepareTriangle() {
 #define LOG_LINEAR_SPAN 3					// logarithm of value base 2
 #define LINEAR_SPAN (1 << LOG_LINEAR_SPAN)	// must be power of 2
 
-#define NO_COMPILE
+//#define NO_COMPILE
 #if !defined(NO_COMPILE) && (defined(ARM) || defined(_ARM_))
 
 inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const EdgePos & start, const EdgePos & end) {

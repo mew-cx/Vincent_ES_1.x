@@ -225,7 +225,7 @@ void Context :: Clear(GLbitfield mask) {
 
 		if (mask & GL_DEPTH_BUFFER_BIT) {
 			// actually need to transform depth to correct value
-			EGL_Fixed clearValue = EGL_Mul(EGL_MAP_0_1(m_DepthClearValue),m_DepthRangeFactor)  + m_DepthRangeBase;
+			EGL_Fixed clearValue = EGL_MAP_0_1(m_DepthClearValue);
 			m_DrawSurface->ClearDepthBuffer(clearValue, m_RasterizerState.GetDepthMask(), m_Scissor);
 		}
 
@@ -240,7 +240,7 @@ void Context :: Clear(GLbitfield mask) {
 
 		if (mask & GL_DEPTH_BUFFER_BIT) {
 			// actually need to transform depth to correct value
-			EGL_Fixed clearValue = EGL_Mul(EGL_MAP_0_1(m_DepthClearValue),m_DepthRangeFactor)  + m_DepthRangeBase;
+			EGL_Fixed clearValue = EGL_MAP_0_1(m_DepthClearValue);
 			m_DrawSurface->ClearDepthBuffer(clearValue, m_RasterizerState.GetDepthMask());
 		}
 
