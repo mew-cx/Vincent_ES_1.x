@@ -19,10 +19,10 @@ Completion:
 Optimization:
 -------------
 
+- Math code for XScale
 - Create configuration header file
 - Make stencil support configuration parameter
 - Create specialized rasterization functions
-- XScale support
 - investigate blitting options
 - JIT and shading language
 
