@@ -2,17 +2,17 @@
 
 REM ==========================================================================
 REM
-REM allzips		Create Distribution package for a specific platform
+REM makecab		Create CAB files
 REM
 REM --------------------------------------------------------------------------
 REM
-REM 12-16-2003		Hans-Martin Will	initial version
+REM 04-09-2004		Hans-Martin Will	initial version
 REM
 REM --------------------------------------------------------------------------
 REM
 REM Usage:
 REM
-REM makezips.cmd	<root folder> <version number>
+REM makecab.cmd		
 REM
 REM
 REM --------------------------------------------------------------------------
@@ -44,9 +44,26 @@ REM
 REM ==========================================================================
 
 
-set ROOT=%1
-set VERSION=%2
+set fileBlkjack="ogl-es.inf"
+set fileCabwiz="c:\program files\windows ce tools\wce420\pocket pc 2003\Tools\cabwiz.exe"
 
-call makezips %ROOT% arm %VERSION%
-REM call makezips %ROOT% emu %VERSION%
-REM call makezips %ROOT% x86 %VERSION%
+if not exist %fileBlkjack% goto Usage
+if not exist %fileCabwiz% goto Usage
+echo "Building" %fileCabwiz% %fileblkjack%
+%fileCabwiz% %fileBlkjack%  /cpu PPC2003_ARM PPC2003_x86
+REM /dest ..\dist /err ..\dist\ogl-es.err
+
+ezsetup.exe -l english -i ogl-es.ini -r ..\readme.txt -e ..\license.txt -o setup.exe
+
+echo "Built"
+goto Exit
+
+:Usage
+@echo ---
+@echo Edit this batch file to point to the correct directories
+@echo    fileBlkjack = %fileBlkjack%
+@echo    fileCabwiz  = %fileCabwiz%
+@echo       (these files are included in the Windows CE SDK)
+@echo ---
+
+:Exit
