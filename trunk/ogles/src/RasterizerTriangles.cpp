@@ -167,16 +167,16 @@ void Rasterizer :: PrepareTriangle() {
 #define LOG_LINEAR_SPAN 3					// logarithm of value base 2
 #define LINEAR_SPAN (1 << LOG_LINEAR_SPAN)	// must be power of 2
 
-//#define NO_COMPILE
+#define NO_COMPILE
 #if !defined(NO_COMPILE) && (defined(ARM) || defined(_ARM_))
 
-inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const EdgePos & start, const EdgePos & end) {
+inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos & start, const EdgePos & end) {
 	m_ScanlineFunction(&rasterInfo, &start, &end);
 }
 
 #else 
 
-inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const EdgePos & start, const EdgePos & delta) {
+inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos & start, const EdgePos & delta) {
 
 	// In the edge buffer, z, tu and tv are actually divided by w
 
@@ -224,17 +224,17 @@ inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const Ed
 
 		if (m_UseMipmap) {
 			EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
-			EGL_Fixed maxDu = EGL_Mul(EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)), m_Texture->GetTexture(0)->GetWidth());
-			EGL_Fixed maxDv = EGL_Mul(EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)), m_Texture->GetTexture(0)->GetHeight());
+			EGL_Fixed maxDu = EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)) >> (16 - m_Texture->GetTexture(0)->GetLogWidth());
+			EGL_Fixed maxDv = EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)) >> (16 - m_Texture->GetTexture(0)->GetLogHeight());
 
 			//EGL_Fixed maxD = EGL_Max(maxDu, maxDv);
 			EGL_Fixed maxD = maxDu + maxDv;
 			//I64 rho64 = ((I64) EGL_Mul(z2, EGL_FixedFromFloat(1/sqrt(2.0f)) + 1)) * ((I64) maxD);
-			I64 rho64 = ((I64) z2) * ((I64) maxD);
+			EGL_Fixed rho = EGL_Mul(z2, maxD);
 
 			// we start with nearest/minification only selection; will add LINEAR later
 
-			rasterInfo.MipmapLevel = EGL_Min(EGL_Max(0, Log2((I32) (rho64 >> 16))), m_MaxMipmapLevel);
+			rasterInfo.MipmapLevel = EGL_Min(Log2(rho), rasterInfo.MaxMipmapLevel);
 
 			dTuDyOverInvZ2 += deltaInvDu << LOG_LINEAR_SPAN;
 			dTvDyOverInvZ2 += deltaInvDv << LOG_LINEAR_SPAN;
@@ -273,17 +273,17 @@ inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const Ed
 
 		if (m_UseMipmap) {
 			EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
-			EGL_Fixed maxDu = EGL_Mul(EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)), m_Texture->GetTexture(0)->GetWidth());
-			EGL_Fixed maxDv = EGL_Mul(EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)), m_Texture->GetTexture(0)->GetHeight());
+			EGL_Fixed maxDu = EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)) >> (16 - m_Texture->GetTexture(0)->GetLogWidth());
+			EGL_Fixed maxDv = EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)) >> (16 - m_Texture->GetTexture(0)->GetLogHeight());
 
 			//EGL_Fixed maxD = EGL_Max(maxDu, maxDv);
 			EGL_Fixed maxD = maxDu + maxDv;
 			//I64 rho64 = ((I64) EGL_Mul(z2, EGL_FixedFromFloat(1/sqrt(2.0f)) + 1)) * ((I64) maxD);
-			I64 rho64 = ((I64) z2) * ((I64) maxD);
+			EGL_Fixed rho = EGL_Mul(z2, maxD);
 
 			// we start with nearest/minification only selection; will add LINEAR later
 
-			rasterInfo.MipmapLevel = EGL_Min(EGL_Max(0, Log2((I32) (rho64 >> 16))), m_MaxMipmapLevel);
+			rasterInfo.MipmapLevel = EGL_Min(Log2(rho), rasterInfo.MaxMipmapLevel);
 		}
 
 		EGL_Fixed endZ = EGL_Inverse(invZ + deltaX * deltaInvZ);

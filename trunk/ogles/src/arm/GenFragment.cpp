@@ -656,7 +656,7 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 	} else {
 		assert(m_State->GetMinFilterMode() == RasterizerState::FilterModeLinear);
 
-		cg_virtual_reg_t * regTextureLogWidth =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_LOG_WIDTH);
+		cg_virtual_reg_t * regTextureLogWidth =		LOAD_DATA(block, fragmentInfo.regTexture, OFFSET_TEXTURE_LOG_WIDTH);
 
 		DECL_REG	(regHalf);
 		DECL_REG	(regHalfU);
@@ -664,7 +664,7 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 
 		LDI			(regHalf, 0x8000);
 
-		cg_virtual_reg_t * regTextureLogHeight =	LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_LOG_HEIGHT);
+		cg_virtual_reg_t * regTextureLogHeight =	LOAD_DATA(block, fragmentInfo.regTexture, OFFSET_TEXTURE_LOG_HEIGHT);
 
 		ASR			(regHalfU, regHalf, regTextureLogWidth);
 		ASR			(regHalfV, regHalf, regTextureLogHeight);
@@ -746,7 +746,7 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 		cg_virtual_reg_t * regColorA00, * regColorA01, *regColorA10, * regColorA11;
 		cg_virtual_reg_t * regColor56500, * regColor56501, *regColor56510, * regColor56511;
 
-		cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_DATA);
+		cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, fragmentInfo.regTexture, OFFSET_TEXTURE_DATA);
 
 		FetchTexColor(procedure, block, regTextureData, regTexOffset00,
 					  regColorR00, regColorG00, regColorB00, regColorA00, regColor56500);

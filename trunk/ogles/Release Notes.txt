@@ -14,6 +14,10 @@ feature complete and can pass the full OpenGL ES conformance test in internal ru
 Second, initial support for Symbian has been added; specifically support for implementations
 of Nokia's Series 60 platform.
 
+This version addresses the following issues:
+
+980877 - Mipmaps Selection test failed.
+
 
 Version 0.79
 ------------
