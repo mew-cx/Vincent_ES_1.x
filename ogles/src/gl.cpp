@@ -367,8 +367,8 @@ GLAPI void APIENTRY glPushMatrix (void) {
 	Context::DefaultContext()->PushMatrix();
 }
 
-GLAPI void APIENTRY glQueryMatrixxOES(GLfixed mantissa[16], GLint exponent[16]) {
-	Context::DefaultContext()->QueryMatrixx(mantissa, exponent);
+GLAPI GLbitfield APIENTRY glQueryMatrixxOES(GLfixed mantissa[16], GLint exponent[16]) {
+	return Context::DefaultContext()->QueryMatrixx(mantissa, exponent);
 }
 
 GLAPI void APIENTRY glReadPixels (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels) { 
