@@ -468,7 +468,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				}
 				break;
 
-			case RasterizerState::TextureFormatRGB:					// 5-6-5
+			case RasterizerState::TextureFormatRGB565:					// 5-6-5
 				//texColor = Color::From565(reinterpret_cast<const U16 *>(data)[texOffset]);
 				{
 				regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
@@ -505,7 +505,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				}
 				break;
 
-			case RasterizerState::TextureFormatRGBA:					// 5-5-5-1
+			case RasterizerState::TextureFormatRGBA5551:					// 5-5-5-1
 				//texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
 				{
 				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
@@ -653,7 +653,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				break;
 
 			case RasterizerState::TextureFormatLuminance:
-			case RasterizerState::TextureFormatRGB:
+			case RasterizerState::TextureFormatRGB565:
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeDecal:
 					case RasterizerState::TextureModeReplace:
@@ -927,7 +927,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				break;
 
 			case RasterizerState::TextureFormatLuminanceAlpha:
-			case RasterizerState::TextureFormatRGBA:
+			case RasterizerState::TextureFormatRGBA5551:
 				switch (m_State->m_TextureMode) {
 					case RasterizerState::TextureModeReplace:
 						{
