@@ -1,0 +1,689 @@
+#ifndef EGL_CONTEXT_H
+#define EGL_CONTEXT_H 1
+
+#pragma once
+
+// ==========================================================================
+//
+// context.h	Rendering Context Class for 3D Rendering Library
+//
+// --------------------------------------------------------------------------
+//
+// 08-07-2003	Hans-Martin Will	initial version
+//
+// --------------------------------------------------------------------------
+//
+// Copyright (c) 2004, Hans-Martin Will. All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without 
+// modification, are permitted provided that the following conditions are 
+// met:
+// 
+//	 *  Redistributions of source code must retain the above copyright
+// 		notice, this list of conditions and the following disclaimer. 
+//   *	Redistributions in binary form must reproduce the above copyright
+// 		notice, this list of conditions and the following disclaimer in the 
+// 		documentation and/or other materials provided with the distribution. 
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+// THE POSSIBILITY OF SUCH DAMAGE.
+//
+// ==========================================================================
+
+
+#include "OGLES.h"
+#include "GLES/gl.h"
+#include "linalg.h"
+#include "FractionalColor.h"
+#include "Config.h"
+#include "Material.h"
+#include "Light.h"
+#include "RasterizerState.h"
+#include "Rasterizer.h"
+#include "MatrixStack.h"
+#include "Texture.h"
+#include <vector>
+
+namespace EGL {
+
+	struct OGLES_API VertexArray {
+		VertexArray() {
+			pointer = 0;
+			stride = 0;
+			size = 4;
+			size = 0;
+		};
+
+		GLfixed GetValue(int row, int column) {
+			GLsizei rowOffset = row * stride;
+			const unsigned char * base = reinterpret_cast<const unsigned char *>(pointer) + rowOffset;
+
+			switch (type) {
+			case GL_BYTE:
+				return EGL_FixedFromInt(*(reinterpret_cast<const char *>(base) + column));
+
+			case GL_SHORT:
+				return EGL_FixedFromInt(*(reinterpret_cast<const short *>(base) + column));
+
+			case GL_FIXED:
+				return *(reinterpret_cast<const I32 *>(base) + column);
+
+			case GL_FLOAT:
+				return EGL_FixedFromFloat(*(reinterpret_cast<const float *>(base) + column));
+
+			default:
+				return 0;
+			}
+		}
+
+		GLint			size;
+		GLenum			type;
+		GLsizei			stride;
+		const GLvoid *	pointer;
+	};
+
+	struct OGLES_API TextureArray {
+
+		struct TextureRecord {
+			U32 value;
+
+			void SetPointer(MultiTexture * texture) {
+				value = reinterpret_cast<U32>(texture);
+			}
+
+			MultiTexture * GetPointer() {
+				assert(IsPointer());
+				return reinterpret_cast<MultiTexture *>(value);
+			}
+
+			bool IsPointer() {
+				return (value & 1) == 0;
+			}
+
+			bool IsNil() {
+				return value == 0xFFFFFFFFu;
+			}
+
+			void SetNil() {
+				value = 0xFFFFFFFFu;
+			}
+
+			void SetIndex(size_t index) {
+				value = (index << 1) | 1;
+			}
+
+			size_t GetIndex() {
+				assert(!IsPointer() && !IsNil());
+				return (value >> 1);
+			}
+
+		};
+
+		enum {
+			INITIAL_SIZE = 64,
+			FACTOR = 2
+		};
+
+		TextureArray() {
+			m_Textures = new TextureRecord[INITIAL_SIZE];
+
+			for (size_t index = 0; index < INITIAL_SIZE; ++index) {
+				m_Textures[index].SetIndex(index + 1);
+			}
+
+			m_Textures[INITIAL_SIZE - 1].SetNil();
+
+			m_FreeTextures = m_AllocatedTextures = INITIAL_SIZE;
+			m_FreeListHead = 0;
+		}
+
+		~TextureArray() {
+
+			if (m_Textures != 0) {
+				for (size_t index = 0; index < m_AllocatedTextures; ++index) {
+					if (m_Textures[index].IsPointer() && m_Textures[index].GetPointer())
+						delete m_Textures[index].GetPointer();
+				}
+
+				delete [] m_Textures;
+			}
+		}
+
+		void Increase() {
+
+			assert(m_FreeListHead == 0xffffffffu);
+
+			size_t newAllocatedTextures = m_AllocatedTextures * FACTOR;
+
+			TextureRecord * newTextures = new TextureRecord[newAllocatedTextures];
+
+			for (size_t index = 0; index < m_AllocatedTextures; ++index) {
+				newTextures[index] = m_Textures[index];
+			}
+
+			for (index = m_AllocatedTextures; index < newAllocatedTextures - 1; ++index) {
+				newTextures[index].SetIndex(index + 1);
+			}
+
+			newTextures[newAllocatedTextures - 1].SetNil();
+
+			delete [] m_Textures;
+			m_Textures = newTextures;
+			m_FreeTextures = newAllocatedTextures - m_AllocatedTextures;
+			m_FreeListHead = m_AllocatedTextures;
+			m_AllocatedTextures = newAllocatedTextures;
+		}
+
+		size_t Allocate() {
+
+			if (m_FreeTextures == 0) {
+				Increase();
+				assert(m_FreeTextures != 0);
+			}
+
+			size_t result = m_FreeListHead;
+			m_FreeListHead = m_Textures[result].IsNil() ? 0xffffffffu : m_Textures[result].GetIndex();
+			m_FreeTextures--;
+			m_Textures[result].SetPointer(0);
+
+			return result;
+		}
+
+		void Deallocate(size_t index) {
+
+			if (m_Textures[index].IsPointer()) {
+				if (m_Textures[index].GetPointer())
+					delete m_Textures[index].GetPointer();
+
+				m_Textures[index].SetIndex(m_FreeListHead);
+				m_FreeListHead = index;
+				m_FreeTextures++;
+			}
+		}
+
+		MultiTexture * GetTexture(size_t index) {
+
+			if (index >= m_AllocatedTextures || !m_Textures[index].IsPointer()) 
+				return 0;
+
+			if (!m_Textures[index].GetPointer()) {
+				m_Textures[index].SetPointer(new MultiTexture());
+			}
+
+			return m_Textures[index].GetPointer();
+		}
+
+		TextureRecord *		m_Textures;
+		size_t				m_FreeTextures;
+		size_t				m_AllocatedTextures;
+		size_t				m_FreeListHead;
+	};
+
+
+	class Surface;
+	class MultiTexture;
+
+	#define EGL_NUMBER_LIGHTS 8
+
+	class Context {
+
+		// ----------------------------------------------------------------------
+		// Default viewport configuration
+		// ----------------------------------------------------------------------
+		enum {
+			VIEWPORT_X = 0,
+			VIEWPORT_Y = 0,
+			VIEWPORT_WIDTH = 240,
+			VIEWPORT_HEIGHT = 320,
+			VIEWPORT_NEAR = 0,
+			VIEWPORT_FAR = EGL_ONE
+		};
+
+		enum CullMode {
+			CullModeBack,
+			CullModeFront,
+			CullModeBackAndFront
+		};
+
+		enum FogMode {
+			FogLinear,
+			FogModeExp,
+			FogModeExp2
+		};
+
+	public:
+		Context(const Config & config);
+
+		~Context();
+
+		// ----------------------------------------------------------------------
+		// Public OpenGL ES entry points
+		// ----------------------------------------------------------------------
+		void ActiveTexture(GLenum texture);
+		void AlphaFuncx(GLenum func, GLclampx ref);
+		void BindTexture(GLenum target, GLuint texture);
+		void BlendFunc(GLenum sfactor, GLenum dfactor);
+		void Clear(GLbitfield mask);
+		void ClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
+		void ClearDepthx(GLclampx depth);
+		void ClearStencil(GLint s);
+		void ClientActiveTexture(GLenum texture);
+		void Color4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
+		void ColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
+		void ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+		void CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
+		void CompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data);
+		void CopyTexImage2D(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
+		void CopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
+		void CullFace(GLenum mode);
+		void DeleteTextures(GLsizei n, const GLuint *textures);
+		void DepthFunc(GLenum func);
+		void DepthMask(GLboolean flag);
+		void DepthRangex(GLclampx zNear, GLclampx zFar);
+		void Disable(GLenum cap);
+		void DisableClientState(GLenum array);
+		void DrawArrays(GLenum mode, GLint first, GLsizei count);
+		void DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
+		void Enable(GLenum cap);
+		void EnableClientState(GLenum array);
+		void Finish(void);
+		void Flush(void);
+		void Fogx(GLenum pname, GLfixed param);
+		void Fogxv(GLenum pname, const GLfixed *params);
+		void FrontFace(GLenum mode);
+		void Frustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
+		void GenTextures(GLsizei n, GLuint *textures);
+		GLenum GetError(void);
+		void GetIntegerv(GLenum pname, GLint *params);
+		const GLubyte * GetString(GLenum name);
+		void Hint(GLenum target, GLenum mode);
+		void LightModelx(GLenum pname, GLfixed param);
+		void LightModelxv(GLenum pname, const GLfixed *params);
+		void Lightx(GLenum light, GLenum pname, GLfixed param);
+		void Lightxv(GLenum light, GLenum pname, const GLfixed *params);
+		void LineWidthx(GLfixed width);
+		void LoadIdentity(void);
+		void LoadMatrixx(const GLfixed *m);
+		void LogicOp(GLenum opcode);
+		void Materialx(GLenum face, GLenum pname, GLfixed param);
+		void Materialxv(GLenum face, GLenum pname, const GLfixed *params);
+		void MatrixMode(GLenum mode);
+		void MultMatrixx(const GLfixed *m);
+		void MultiTexCoord4x(GLenum target, GLfixed s, GLfixed t, GLfixed r, GLfixed q);
+		void Normal3x(GLfixed nx, GLfixed ny, GLfixed nz);
+		void NormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer);
+		void Orthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
+		void PixelStorei(GLenum pname, GLint param);
+		void PointSizex(GLfixed size);
+		void PolygonOffsetx(GLfixed factor, GLfixed units);
+		void PopMatrix(void);
+		void PushMatrix(void);
+		void ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels);
+		void Rotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z);
+		void SampleCoveragex(GLclampx value, GLboolean invert);
+		void Scalex(GLfixed x, GLfixed y, GLfixed z);
+		void Scissor(GLint x, GLint y, GLsizei width, GLsizei height);
+		void ShadeModel(GLenum mode);
+		void StencilFunc(GLenum func, GLint ref, GLuint mask);
+		void StencilMask(GLuint mask);
+		void StencilOp(GLenum fail, GLenum zfail, GLenum zpass);
+		void TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+		void TexEnvx(GLenum target, GLenum pname, GLfixed param);
+		void TexEnvxv(GLenum target, GLenum pname, const GLfixed *params);
+		void TexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+		void TexParameterf(GLenum target, GLenum pname, GLfloat param);
+		void TexParameterx(GLenum target, GLenum pname, GLfixed param);
+		void TexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
+		void Translatex(GLfixed x, GLfixed y, GLfixed z);
+		void VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+		void Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
+
+		// ----------------------------------------------------------------------
+		// Floating Point API
+		// ----------------------------------------------------------------------
+
+		void AlphaFunc(GLenum func, GLclampf ref);
+		void ClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
+		void ClearDepthf(GLclampf depth);
+		void Color4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+		void DepthRangef(GLclampf zNear, GLclampf zFar);
+		void Fogf(GLenum pname, GLfloat param);
+		void Fogfv(GLenum pname, const GLfloat *params);
+		void Frustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
+		void LightModelf(GLenum pname, GLfloat param);
+		void LightModelfv(GLenum pname, const GLfloat *params);
+		void Lightf(GLenum light, GLenum pname, GLfloat param);
+		void Lightfv(GLenum light, GLenum pname, const GLfloat *params);
+		void LineWidth(GLfloat width);
+		void LoadMatrixf(const GLfloat *m);
+		void Materialf(GLenum face, GLenum pname, GLfloat param);
+		void Materialfv(GLenum face, GLenum pname, const GLfloat *params);
+		void MultMatrixf(const GLfloat *m);
+		void MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
+		void Normal3f(GLfloat nx, GLfloat ny, GLfloat nz);
+		void Orthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
+		void PointSize(GLfloat size);
+		void PolygonOffset(GLfloat factor, GLfloat units);
+		void Rotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
+		void SampleCoverage(GLclampf value, GLboolean invert);
+		void Scalef(GLfloat x, GLfloat y, GLfloat z);
+		void TexEnvf(GLenum target, GLenum pname, GLfloat param);
+		void TexEnvfv(GLenum target, GLenum pname, const GLfloat *params);
+		void Translatef(GLfloat x, GLfloat y, GLfloat z);
+
+		void DrawMesh(GLsizei count, GLenum type, GLsizei stride,
+					  GLsizei offsetVertex, GLsizei strideVertex,
+					  GLsizei offsetNormal, GLsizei strideNormal,
+					  GLsizei offsetTexture, GLsizei strideTexture,
+					  GLsizei offsetColor, GLsizei strideColor, 
+					  const GLvoid *pointer);
+
+		// ----------------------------------------------------------------------
+		// Context Management Functions
+		// ----------------------------------------------------------------------
+
+		void Dispose();
+		void SetCurrent(bool current);
+		Config * GetConfig();
+
+		RasterizerState * GetRasterizerState() {
+			return &m_RasterizerState;
+		}
+
+		const RasterizerState * GetRasterizerState() const {
+			return &m_RasterizerState;
+		}
+
+		Rasterizer * GetRasterizer() {
+			return m_Rasterizer;
+		}
+
+		MultiTexture * GetCurrentTexture() {
+			return m_Rasterizer->GetTexture();
+		}
+
+		const MultiTexture * GetCurrentTexture() const {
+			return m_Rasterizer->GetTexture();
+		}
+
+		static void SetCurrentContext(Context * context);
+		static Context * GetCurrentContext();
+		static Context * DefaultContext();
+
+		void SetReadSurface(Surface * surface);
+		void SetDrawSurface(Surface * surface);
+		Surface * GetReadSurface() const;
+		Surface * GetDrawSurface() const;
+
+	private:
+		// ----------------------------------------------------------------------
+		// Private Functions
+		// ----------------------------------------------------------------------
+
+		inline MatrixStack * CurrentMatrixStack() {
+			return m_CurrentMatrixStack;
+		}
+
+		inline const Matrix4x4& CurrentMatrix() {
+			return CurrentMatrixStack()->CurrentMatrix();
+		}
+
+		void UpdateInverseModelViewMatrix(void);
+		void UpdateVertexTransformation(void);
+		void RebuildMatrices(void);
+
+		// SGIS_generate_mipmap extension
+		void UpdateMipmaps(void);
+
+		void RecordError(GLenum error);
+		void Toggle(GLenum cap, bool value);
+		void ToggleClientState(GLenum array, bool value);
+
+		// ----------------------------------------------------------------------
+		// Private Functions - Rendering of collections
+		// ----------------------------------------------------------------------
+
+		void RenderPoints(GLint first, GLsizei count);
+		void RenderPoints(GLsizei count, const GLubyte * indices);
+		void RenderPoints(GLsizei count, const GLushort * indices);
+
+		void RenderLines(GLint first, GLsizei count);
+		void RenderLines(GLsizei count, const GLubyte * indices);
+		void RenderLines(GLsizei count, const GLushort * indices);
+
+		void RenderLineStrip(GLint first, GLsizei count);
+		void RenderLineStrip(GLsizei count, const GLubyte * indices);
+		void RenderLineStrip(GLsizei count, const GLushort * indices);
+
+		void RenderLineLoop(GLint first, GLsizei count);
+		void RenderLineLoop(GLsizei count, const GLubyte * indices);
+		void RenderLineLoop(GLsizei count, const GLushort * indices);
+
+		void RenderTriangles(GLint first, GLsizei count);
+		void RenderTriangles(GLsizei count, const GLubyte * indices);
+		void RenderTriangles(GLsizei count, const GLushort * indices);
+
+		void RenderTriangleStrip(GLint first, GLsizei count);
+		void RenderTriangleStrip(GLsizei count, const GLubyte * indices);
+		void RenderTriangleStrip(GLsizei count, const GLushort * indices);
+
+		void RenderTriangleFan(GLint first, GLsizei count);
+		void RenderTriangleFan(GLsizei count, const GLubyte * indices);
+		void RenderTriangleFan(GLsizei count, const GLushort * indices);
+
+		// ----------------------------------------------------------------------
+		// Private Functions - Rendering of individual elements
+		// ----------------------------------------------------------------------
+
+private:
+		void SelectArrayElement(int vertexIndex, int normalIndex, int textureIndex, int colorIndex);
+
+		void SelectArrayElement(int index) {
+			SelectArrayElement(index, index, index, index);
+		}
+
+		void CurrentValuesToRasterPos(RasterPos * rasterPos);
+		void InterpolateRasterPos(RasterPos * a, RasterPos * b, GLfixed x, RasterPos * result);
+
+private:
+		// ----------------------------------------------------------------------
+		// Perform clipping, depth division & actual call into rasterizer
+		// ----------------------------------------------------------------------
+		void RenderPoint(RasterPos& point);
+		void RenderLine(RasterPos& from, RasterPos& to);
+		void RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c);
+		bool IsCulled(RasterPos& a, RasterPos& b, RasterPos& c);
+
+		void ClipCoordsToWindowCoords(RasterPos & pos);
+		EGL_Fixed FogDensity(EGL_Fixed eyeDistance) const;
+
+		void InitFogTable();
+
+	private:
+		GLenum				m_LastError;
+
+		// ----------------------------------------------------------------------
+		// Matrix stacks
+		// ----------------------------------------------------------------------
+		MatrixStack			m_ModelViewMatrixStack;
+		MatrixStack			m_ProjectionMatrixStack;
+		MatrixStack			m_TextureMatrixStack;
+
+		MatrixStack *		m_CurrentMatrixStack;
+		Matrix4x4			m_InverseModelViewMatrix;
+		Matrix4x4			m_VertexTransformation;
+
+		// ----------------------------------------------------------------------
+		// Viewport configuration
+		// ----------------------------------------------------------------------
+		GLint				m_ViewportX;
+		GLint				m_ViewportY;
+		GLsizei				m_ViewportWidth;
+		GLsizei				m_ViewportHeight;
+		GLclampx			m_ViewportNear;
+		GLclampx			m_ViewportFar;
+
+		// origin and scale for actual transformation
+		Vec3D				m_ViewportOrigin;
+		Vec3D				m_ViewportScale;
+
+		// ----------------------------------------------------------------------
+		// Client state variables
+		// ----------------------------------------------------------------------
+		bool				m_VertexArrayEnabled;
+		bool				m_NormalArrayEnabled;
+		bool				m_ColorArrayEnabled;
+		bool				m_TexCoordArrayEnabled;
+
+		VertexArray			m_VertexArray;
+		VertexArray			m_NormalArray;
+		VertexArray			m_ColorArray;
+		VertexArray			m_TexCoordArray;
+
+
+		// ----------------------------------------------------------------------
+		// Default values if arrays are disabled
+		// ----------------------------------------------------------------------
+		Vec3D				m_DefaultNormal;
+		FractionalColor		m_DefaultRGBA;
+		TexCoord			m_DefaultTextureCoords;
+
+		// ----------------------------------------------------------------------
+		// Current values for setup
+		// ----------------------------------------------------------------------
+		Vec3D				m_CurrentVertex;	// don't support vertex at inf
+		Vec3D				m_CurrentNormal;
+		FractionalColor		m_CurrentRGBA;
+		TexCoord			m_CurrentTextureCoords;
+
+		// ----------------------------------------------------------------------
+		// Rendering State
+		// ----------------------------------------------------------------------
+		Light				m_Lights[EGL_NUMBER_LIGHTS];
+		Material			m_FrontMaterial;
+		FractionalColor		m_LightModelAmbient;
+		GLint				m_LightEnabled;
+
+		EGL_Fixed			m_DepthClearValue;
+		FractionalColor		m_ColorClearValue;
+		U32					m_StencilClearValue;
+
+		FogMode				m_FogMode;			// the fog color is still in the
+		EGL_Fixed			m_FogStart, m_FogDensity, m_FogEnd;	// rasterizer state
+
+		EGL_Fixed			m_DepthRangeBase, m_DepthRangeFactor;
+
+		bool				m_LightingEnabled;		// is lightning enabled?
+		bool				m_TwoSidedLightning;	// do we have two-sided lightning
+		bool				m_CullFaceEnabled;
+		bool				m_ReverseFaceOrientation;
+		bool				m_ColorMaterialEnabled;
+		bool				m_NormalizeEnabled;
+		bool				m_RescaleNormalEnabled;
+		bool				m_PolygonOffsetFillEnabled;
+		bool				m_MultiSampleEnabled;
+		bool				m_SampleAlphaToCoverageEnabled;
+		bool				m_SampleAlphaToOneEnabled;
+		bool				m_SampleCoverageEnabled;
+		bool				m_GenerateMipmaps;
+
+		I32					m_PixelStorePackAlignment;
+		I32					m_PixelStoreUnpackAlignment;
+
+		CullMode			m_CullMode;
+
+		RasterizerState		m_RasterizerState;
+		Rasterizer *		m_Rasterizer;
+
+		// ----------------------------------------------------------------------
+		// texturing related state
+		// ----------------------------------------------------------------------
+
+		TextureArray		m_Textures;
+
+		// ----------------------------------------------------------------------
+		// Object-Life Cycle State
+		// ----------------------------------------------------------------------
+
+		Surface *			m_DrawSurface;		// current surface for drawing
+		Surface *			m_ReadSurface;		// current surface for reading
+
+		Config				m_Config;			// copy of configuration args
+		bool				m_Current;			// this context has been selected
+												// as a current context
+		bool				m_Disposed;			// this context has been deleted,
+												// but is stil selected into a 
+												// thread
+		bool				m_ViewportInitialized;	// if true, the viewport has been
+													// initialized
+
+		RasterPos			m_Temporary[16];	// temporary coordinates
+	};
+
+
+	inline Config * Context :: GetConfig() {
+		return &m_Config;
+	}
+
+
+	inline Context * Context :: DefaultContext() {
+		return Context::GetCurrentContext();
+	}
+
+
+	inline Surface * Context :: GetDrawSurface() const {
+		return m_DrawSurface;
+	}
+
+
+	inline Surface * Context :: GetReadSurface() const {
+		return m_ReadSurface;
+	}
+
+	inline void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
+
+		// perform depth division
+		EGL_Fixed x = pos.m_ClipCoords.x();
+		EGL_Fixed y = pos.m_ClipCoords.y();
+		EGL_Fixed z = pos.m_ClipCoords.z();
+		EGL_Fixed w = pos.m_ClipCoords.w();
+
+		// fix possible rounding problems
+		if (x < -w)	x = -w;
+		if (x >= w)	x = w - 1;
+		if (y < -w)	y = -w;
+		if (y >= w)	y = w - 1;
+		if (z < -w)	z = -w;
+		if (z >= w)	z = w - 1;
+
+		// keep this value around for perspective-correct texturing
+		EGL_Fixed invDenominator = EGL_Inverse(w);
+
+		// Scale 1/Z by 2^10 to avoid rounding problems during prespective correct
+		// interpolation
+		// So book by LaMothe for more detailed discussion on this
+		pos.m_WindowCoords.invZ = invDenominator << 10;
+
+		pos.m_WindowCoords.x = 
+			EGL_Mul(x, EGL_Mul(m_ViewportScale.x(), invDenominator)) + m_ViewportOrigin.x();
+
+		pos.m_WindowCoords.y = 
+			EGL_Mul(y, EGL_Mul(m_ViewportScale.y(), invDenominator)) + m_ViewportOrigin.y();
+
+		pos.m_WindowCoords.depth = 
+			EGL_Mul(z, EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase;
+
+	}
+
+}
+
+#endif //ndef EGL_CONTEXT_H
