@@ -239,7 +239,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	LSL		(regOffset4, regOffset, regConstant2);
 	ADD		(regZBufferAddr, fragmentInfo.regDepthBuffer, regOffset4);
 	LDW		(regZBufferValue, regZBufferAddr);
-	FCMP	(regDepthTest, regZBufferValue, fragmentInfo.regDepth);
+	FCMP	(regDepthTest, fragmentInfo.regDepth, regZBufferValue);
 
 	cg_opcode_t branchOnDepthTestPassed, branchOnDepthTestFailed;
 
@@ -1578,7 +1578,6 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			DECL_REG	(regRG);
 
 			LDI		(regConstant5, 5);
-			LDI		(regConstant11, 11);
 			LSL		(regShiftedB, regColorB, regConstant11);
 			LSL		(regShiftedG, regColorG, regConstant5);
 			OR		(regRG, regColorR, regShiftedG);
@@ -2294,7 +2293,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 }
 
 
-#define LOG_LINEAR_SPAN 3					// logarithm of value base 2
+#define LOG_LINEAR_SPAN 0 /* 3 */					// logarithm of value base 2
 #define LINEAR_SPAN (1 << LOG_LINEAR_SPAN)	// must be power of 2
 
 
@@ -2420,10 +2419,14 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regStartWindowX);
 	DECL_REG	(regDiffX);
 	DECL_REG	(regInvSpan);
+	DECL_FLAGS	(flagXCompare);
+
+	cg_block_ref_t * endProc = cg_block_ref_create(procedure);
 
 	LDW		(regEndWindowX, regAddrEndWindowX);
 	LDW		(regStartWindowX, regAddrStartWindowX);
-	SUB		(regDiffX, regEndWindowX, regStartWindowX);
+	SUB_S	(regDiffX, flagXCompare, regEndWindowX, regStartWindowX);
+	BLE		(flagXCompare, endProc);
 	FINV	(regInvSpan, regDiffX);
 
 	//FractionalColor baseColor = start.m_Color;
@@ -2610,6 +2613,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		//invTu += deltaInvU << LOG_LINEAR_SPAN;
 		//invTv += deltaInvV << LOG_LINEAR_SPAN;
 	DECL_REG	(regLinearSpan);
+	DECL_REG	(regLogLinearSpan);
 	DECL_REG	(regConstant1);
 	DECL_REG	(regDeltaInvZTimesLinearSpan);
 	DECL_REG	(regDeltaInvUTimesLinearSpan);
@@ -2617,11 +2621,12 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	LDI		(regConstant1, 1);
 	LDI		(regLinearSpan, LINEAR_SPAN);
-	FMUL	(regDeltaInvZTimesLinearSpan, regDeltaInvZ, regLinearSpan);	
+	LDI		(regLogLinearSpan, LOG_LINEAR_SPAN);
+	LSL		(regDeltaInvZTimesLinearSpan, regDeltaInvZ, regLogLinearSpan);	
 	FADD	(regLoop0InvZ, regLoop0InvZEntry, regDeltaInvZTimesLinearSpan);
-	FMUL	(regDeltaInvUTimesLinearSpan, regDeltaInvU, regLinearSpan);	
+	LSL		(regDeltaInvUTimesLinearSpan, regDeltaInvU, regLogLinearSpan);	
 	FADD	(regLoop0InvU, regLoop0InvUEntry, regDeltaInvUTimesLinearSpan);
-	FMUL	(regDeltaInvVTimesLinearSpan, regDeltaInvV, regLinearSpan);	
+	LSL		(regDeltaInvVTimesLinearSpan, regDeltaInvV, regLogLinearSpan);	
 	FADD	(regLoop0InvV, regLoop0InvVEntry, regDeltaInvVTimesLinearSpan);
 
 		//EGL_Fixed endZ = EGL_Inverse(invZ);
@@ -2647,12 +2652,12 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regLoop0DiffV);
 	DECL_REG	(regLoop0ScaledDiffV);
 
-	FSUB	(regLoop0DiffZ, regLoop0EndZ, regLoop0Z); // Entry?
-	FDIV	(regLoop0ScaledDiffZ, regLoop0DiffZ, regLinearSpan);
-	FSUB	(regLoop0DiffU, regLoop0EndU, regLoop0U); // Entry?
-	FDIV	(regLoop0ScaledDiffU, regLoop0DiffU, regLinearSpan);
-	FSUB	(regLoop0DiffV, regLoop0EndV, regLoop0V); // Entry?
-	FDIV	(regLoop0ScaledDiffV, regLoop0DiffV, regLinearSpan);
+	FSUB	(regLoop0DiffZ, regLoop0EndZ, regLoop0ZEntry); // Entry?
+	ASR		(regLoop0ScaledDiffZ, regLoop0DiffZ, regLogLinearSpan);
+	FSUB	(regLoop0DiffU, regLoop0EndU, regLoop0UEntry); // Entry?
+	ASR		(regLoop0ScaledDiffU, regLoop0DiffU, regLogLinearSpan);
+	FSUB	(regLoop0DiffV, regLoop0EndV, regLoop0VEntry); // Entry?
+	ASR		(regLoop0ScaledDiffV, regLoop0DiffV, regLogLinearSpan);
 
 	// also not to include phi projection for z coming from inner loop
 
@@ -2901,10 +2906,10 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	BLT		(regCondLoopEnd, beginLoop2);
 
 		//}
-
 	//}
 	block = cg_block_create(procedure, 1);
 	endLoop2->block = block;
+	endProc->block = block;
 
 	RET();
 
