@@ -44,6 +44,7 @@
 #include "Surface.h"
 #include "Texture.h"
 
+#include "arm/CodeGenerator.h"
 
 using namespace EGL;
 
@@ -810,7 +811,11 @@ void Rasterizer :: PrepareLine() {
 
 void Rasterizer :: PrepareTriangle() {
 	if (!m_IsPrepared) {
-		//GenerateRasterScanLine();
+		CodeGenerator generator;
+		generator.SetState(m_State);
+		generator.SetTexture(m_Texture);
+
+		generator.CompileRasterScanLine();
 	}
 
 	m_MipMapLevel = 0;

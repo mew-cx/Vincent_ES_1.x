@@ -2884,7 +2884,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 			//++x;
 	ADD		(regLoop2X, regLoop2XEntry, regConstant1);
 
-	DECL_REG	(regCondLoopEnd);
+	DECL_FLAGS	(regCondLoopEnd);
 
 	CMP		(regCondLoopEnd, regLoop2X, regXEnd);
 	BLT		(regCondLoopEnd, beginLoop2);
@@ -2899,6 +2899,15 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 }
 
+namespace {
+	void Dump(const char * filename, cg_module_t * module)
+	{
+		FILE * fp = fopen(filename, "w");
+		cg_module_dump(module, fp);
+		fclose(fp);
+	}
+}
+
 void CodeGenerator :: CompileRasterScanLine() {
 
 	cg_heap_t * heap = cg_heap_create(4096);
@@ -2908,13 +2917,23 @@ void CodeGenerator :: CompileRasterScanLine() {
 
 	GenerateRasterScanLine();
 
+	Dump("dump1.txt", m_Module);
+
 	cg_module_inst_def(m_Module);
 	cg_module_amode(m_Module);
+
+	Dump("dump2.txt", m_Module);
+
 	cg_module_eliminate_dead_code(m_Module);
+
+	Dump("dump3.txt", m_Module);
+
 	cg_module_unify_registers(m_Module);
 	cg_module_allocate_variables(m_Module);
 	cg_module_inst_use_chains(m_Module);
 	cg_module_dataflow(m_Module);
+
+	Dump("dump4.txt", m_Module);
 
 
 #ifdef WINCE
