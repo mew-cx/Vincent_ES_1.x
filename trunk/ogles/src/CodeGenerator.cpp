@@ -86,14 +86,14 @@ namespace {
 		return result;
 	}
 
-	I32 LOAD_DATA(Block & block, I32& nextRegister, I32 base, I32 constant) {
+	I32 LOAD_DATA(Block & block, I32& nextRegister, I32 base, I32 constant, const char * comment = "") {
 		I32 offset = nextRegister++;
 		I32 addr = nextRegister++;
 		I32 value = nextRegister++;
 
 		block +=	IMMEDIATE	(ldi,	offset, Constant::createInt(constant));
 		block +=	BINARY		(add,	addr, base, offset);
-		block +=	LOAD		(ldw,	value, addr);
+		block +=	LOAD		(ldw,	value, addr, comment);
 
 		return value;
 	}
@@ -195,7 +195,6 @@ namespace {
 namespace EGL {
 	struct FragmentGenerationInfo {
 		I32 regX;
-		I32 regY; 
 		I32 regDepth;
 		I32 regU;
 		I32 regV; 
@@ -239,9 +238,9 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 	//bool depthTest;
 	//U32 offset = x + y * m_Surface->GetWidth();
 	//I32 zBufferValue = m_Surface->GetDepthBuffer()[offset];
+	I32 regOffset = fragmentInfo.regX;
 	I32 regDepthTest = nextRegister++;
 	I32 regScaledY = nextRegister++;
-	I32 regOffset = nextRegister++;
 	I32 regConstant1 = nextRegister++;
 	I32 regConstant2 = nextRegister++;
 	I32 regOffset4 = nextRegister++;
@@ -249,15 +248,13 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 	I32 regZBufferAddr = nextRegister++;
 	I32 regZBufferValue = nextRegister++;
 
-	currentBlock +=		BINARY		(mul,	regScaledY, fragmentInfo.regY, fragmentInfo.regSurfaceWidth);
-	currentBlock +=		BINARY		(add,	regOffset, regScaledY, fragmentInfo.regX);
 	currentBlock +=		IMMEDIATE	(ldi,	regConstant1, Constant::createInt(1));
 	currentBlock +=		IMMEDIATE	(ldi,	regConstant2, Constant::createInt(2));
 	currentBlock +=		BINARY		(lsl,	regOffset2, regOffset, regConstant1); 
 	currentBlock +=		BINARY		(lsl,	regOffset4, regOffset, regConstant2);
 	currentBlock +=		BINARY		(add,	regZBufferAddr, fragmentInfo.regDepthBuffer, regOffset4);
 	currentBlock +=		LOAD		(ldw,	regZBufferValue, regZBufferAddr);
-	currentBlock +=		COMPARE		(fcmp,	regDepthTest, regZBufferValue, fragmentInfo.regDepth);
+	currentBlock +=		COMPARE		(fcmp,	regDepthTest, regZBufferValue, fragmentInfo.regDepth, "depth test");
 
 	Opcode branchOnDepthTestPassed, branchOnDepthTestFailed;
 
@@ -355,19 +352,19 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 					Label * label1 = Label::create("wrapU1", LabelBlock);
 					Label * label2 = Label::create("wrapU2", LabelBlock);
 
-					*block +=	IMMEDIATE		(ldi,	regConstantOne, Constant::createFloat(1.0f));
+					*block +=	IMMEDIATE		(ldi,	regConstantOne, Constant::createFixed(EGL_FixedFromInt(1)));
 					*block +=	COMPARE			(fcmp,	regCompareOne, fragmentInfo.regU, regConstantOne);
 					*block +=	BCOND			(ble,	regCompareOne, label1);
-					*block +=	IMMEDIATE		(ldi,	regNewU1, Constant::createFloat(1.0f));
+					*block +=	IMMEDIATE		(ldi,	regNewU1, Constant::createFixed(EGL_FixedFromInt(1)));
 					*block +=	BLABEL			(bra,	label2);
 
 					block = procedure->CreateBlock();
 					block->AttachLabel(label1);
 
-					*block +=	IMMEDIATE		(ldi,	regConstantZero, Constant::createFloat(0.0f));
+					*block +=	IMMEDIATE		(ldi,	regConstantZero, Constant::createFixed(EGL_FixedFromInt(0)));
 					*block +=	COMPARE			(fcmp,	regCompareZero, fragmentInfo.regU, regConstantZero);
 					*block +=	BCOND			(bge,	regCompareZero, label2);
-					*block +=	IMMEDIATE		(ldi,	regNewU2, Constant::createFloat(0.0f));
+					*block +=	IMMEDIATE		(ldi,	regNewU2, Constant::createFixed(EGL_FixedFromInt(0)));
 
 					block = procedure->CreateBlock();
 					block->AttachLabel(label2);
@@ -401,19 +398,19 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 					Label * label1 = Label::create("wrapV1", LabelBlock);
 					Label * label2 = Label::create("wrapV2", LabelBlock);
 
-					*block +=	IMMEDIATE		(ldi,	regConstantOne, Constant::createFloat(1.0f));
+					*block +=	IMMEDIATE		(ldi,	regConstantOne, Constant::createFixed(EGL_FixedFromInt(1)));
 					*block +=	COMPARE			(fcmp,	regCompareOne, fragmentInfo.regV, regConstantOne);
 					*block +=	BCOND			(ble,	regCompareOne, label1);
-					*block +=	IMMEDIATE		(ldi,	regNewV1, Constant::createFloat(1.0f));
+					*block +=	IMMEDIATE		(ldi,	regNewV1, Constant::createFixed(EGL_FixedFromInt(1)));
 					*block +=	BLABEL			(bra,	label2);
 
 					block = procedure->CreateBlock();
 					block->AttachLabel(label1);
 
-					*block +=	IMMEDIATE		(ldi,	regConstantZero, Constant::createFloat(0.0f));
+					*block +=	IMMEDIATE		(ldi,	regConstantZero, Constant::createFixed(EGL_FixedFromInt(0)));
 					*block +=	COMPARE			(fcmp,	regCompareZero, fragmentInfo.regV, regConstantZero);
 					*block +=	BCOND			(bge,	regCompareZero, label2);
-					*block +=	IMMEDIATE		(ldi,	regNewV2, Constant::createFloat(0.0f));
+					*block +=	IMMEDIATE		(ldi,	regNewV2, Constant::createFixed(EGL_FixedFromInt(0)));
 
 					block = procedure->CreateBlock();
 					block->AttachLabel(label2);
@@ -475,7 +472,7 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 				
 
 				*block +=	BINARY		(add,	regTexAddr, regTexOffset, fragmentInfo.regTextureData);
-				*block +=	LOAD		(ldb,	regTexData, regTexAddr);
+				*block +=	LOAD		(ldb,	regTexData, regTexAddr, "fetch texture data");
 				*block +=	IMMEDIATE	(ldi,	regConstant7, Constant::createInt(7));
 				*block +=	BINARY		(lsr,	regShifted7, regTexData, regConstant7);
 				*block +=	BINARY		(add,	regTexColorA, regTexData, regShifted7);
@@ -509,7 +506,7 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 				I32 regRG = nextRegister++;
 
 				*block +=	BINARY		(add,	regTexAddr, regTexOffset, fragmentInfo.regTextureData);
-				*block +=	LOAD		(ldb,	regTexData, regTexAddr);
+				*block +=	LOAD		(ldb,	regTexData, regTexAddr, "fetch texture data");
 				*block +=	IMMEDIATE	(ldi,	regTexColorA, Constant::createInt(0x100));
 				*block +=	IMMEDIATE	(ldi,	regMask5, Constant::createInt(0x1f));
 				*block +=	IMMEDIATE	(ldi,	regMask6, Constant::createInt(0x3f));
@@ -562,7 +559,7 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 				*block +=	IMMEDIATE	(ldi,	regConstantOne, Constant::createInt(1));
 				*block +=	BINARY		(lsl,	regScaledOffset, regTexOffset, regConstantOne);
 				*block +=	BINARY		(add,	regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
-				*block +=	LOAD		(ldh,	regTexData, regTexAddr);
+				*block +=	LOAD		(ldh,	regTexData, regTexAddr, "fetch texture data");
 				*block +=	IMMEDIATE	(ldi,	regMask, Constant::createInt(0xff));
 				*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
 				*block +=	BINARY		(lsr,	regAlpha, regTexData, regConstant8);
@@ -609,7 +606,7 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 				*block +=	IMMEDIATE	(ldi,	regConstantOne, Constant::createInt(1));
 				*block +=	BINARY		(lsl,	regScaledOffset, regTexOffset, regConstantOne);
 				*block +=	BINARY		(add,	regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
-				*block +=	LOAD		(ldh,	regTexColor565, regTexAddr);
+				*block +=	LOAD		(ldh,	regTexColor565, regTexAddr, "fetch texture data");
 				*block +=	IMMEDIATE	(ldi,	regTexColorA, Constant::createInt(0x100));
 				*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
 				*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
@@ -635,7 +632,7 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 				*block +=	IMMEDIATE	(ldi,	regConstantOne, Constant::createInt(1));
 				*block +=	BINARY		(lsl,	regScaledOffset, regTexOffset, regConstantOne);
 				*block +=	BINARY		(add,	regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
-				*block +=	LOAD		(ldh,	regTexData, regTexAddr);
+				*block +=	LOAD		(ldh,	regTexData, regTexAddr, "fetch texture data");
 
 				regTexColorA = nextRegister++;
 				I32 regConstant7 = nextRegister++;
@@ -709,6 +706,7 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 						regColorR = nextRegister++;
 						regColorG = nextRegister++;
 						regColorB = nextRegister++;
+						regColor565 = nextRegister++;
 						I32 regConstant31 = nextRegister++;
 						I32 regConstant63 = nextRegister++;
 						I32 regConstant16 = nextRegister++;
@@ -776,6 +774,7 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 						I32 regShiftedB = nextRegister++;
 						I32 regShiftedG = nextRegister++;
 						I32 regRG = nextRegister++;
+						regColor565 = nextRegister++;
 
 						*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
 						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
@@ -1188,6 +1187,7 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 							I32 regProduct = nextRegister++;
 							I32 regColorShift = nextRegister++;
 							I32 regDelta = nextRegister++;
+							regColorR = nextRegister++;
 
 							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regR, regConstant15);
 							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regR, regShifted);
@@ -1208,6 +1208,7 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 							I32 regProduct = nextRegister++;
 							I32 regColorShift = nextRegister++;
 							I32 regDelta = nextRegister++;
+							regColorG = nextRegister++;
 
 							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regG, regConstant15);
 							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regG, regShifted);
@@ -1228,6 +1229,7 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 							I32 regProduct = nextRegister++;
 							I32 regColorShift = nextRegister++;
 							I32 regDelta = nextRegister++;
+							regColorB = nextRegister++;
 
 							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regB, regConstant15);
 							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regB, regShifted);
@@ -1573,7 +1575,7 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 		I32 regFogColorG = nextRegister++;
 		I32 regFogColorB = nextRegister++;
 
-		*block +=	IMMEDIATE	(ldi,	regFogColorR, Constant::createInt(m_State->m_FogColor.r >> 3));
+		*block +=	IMMEDIATE	(ldi,	regFogColorR, Constant::createInt(m_State->m_FogColor.r >> 3), "fog calculation...");
 		*block +=	IMMEDIATE	(ldi,	regFogColorG, Constant::createInt(m_State->m_FogColor.g >> 2));
 		*block +=	IMMEDIATE	(ldi,	regFogColorB, Constant::createInt(m_State->m_FogColor.b >> 3));
 
@@ -1609,11 +1611,28 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 
 		*block +=	BINARY		(add,	regNewColorR, regShiftedProductR, regFogColorR);
 		*block +=	BINARY		(add,	regNewColorG, regShiftedProductG, regFogColorG);
-		*block +=	BINARY		(add,	regNewColorB, regShiftedProductB, regFogColorB);
+		*block +=	BINARY		(add,	regNewColorB, regShiftedProductB, regFogColorB, "...end of fog calculation");
 
 		regColorR = regNewColorR;
 		regColorG = regNewColorG;
 		regColorB = regNewColorB;
+
+		// create RGB 565 representation
+		I32 regConstant5 = nextRegister++;
+		I32 regConstant11 = nextRegister++;
+		I32 regShiftedB = nextRegister++;
+		I32 regShiftedG = nextRegister++;
+		I32 regRG = nextRegister++;
+		I32 regNewColor565 = nextRegister++;
+
+		*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+		*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+		*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
+		*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
+		*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
+		*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+
+		regColor565 = regNewColor565;
 	}
 
 	if (m_State->m_AlphaTestEnabled) {
@@ -1691,8 +1710,6 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 		//U32 stencil = stencilValue & m_State->m_StencilMask;
 		I32 regStencilRef = nextRegister++;
 		I32 regStencilMask = nextRegister++;
-		I32 regStencilOffset = nextRegister++;
-		I32 regConstant2 = nextRegister++;
 		I32 regStencilAddr = nextRegister++;
 		I32 regStencilValue = nextRegister++;
 		I32 regStencil = nextRegister++;
@@ -1700,10 +1717,7 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 
 		*block += IMMEDIATE		(ldi,	regStencilRef, Constant::createInt(m_State->m_StencilReference & m_State->m_StencilMask));
 		*block += IMMEDIATE		(ldi,	regStencilMask, Constant::createInt(m_State->m_StencilMask));
-		*block += IMMEDIATE		(ldi,	regConstant2, Constant::createInt(2));
-
-		*block += BINARY		(lsl,	regStencilOffset, regOffset, regConstant2);
-		*block += BINARY		(add,	regStencilAddr, fragmentInfo.regStencilBuffer, regStencilOffset);
+		*block += BINARY		(add,	regStencilAddr, fragmentInfo.regStencilBuffer, regOffset4);
 		*block += LOAD			(ldw,	regStencilValue, regStencilAddr);
 		*block += BINARY		(and,	regStencil, regStencilValue, regStencilMask);
 		*block += COMPARE		(cmp,	regStencilTest, regStencil, regStencilRef);
@@ -2018,8 +2032,6 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 	I32 regDstB = nextRegister++;
 
 	{
-		I32 regShiftedOffset = nextRegister++;
-		I32 regConstant1 = nextRegister++;
 		I32 regConstant5 = nextRegister++;
 		I32 regConstant11 = nextRegister++;
 		I32 regShifted5 = nextRegister++;
@@ -2027,9 +2039,7 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 		I32 regMask5 = nextRegister++;
 		I32 regMask6 = nextRegister++;
 
-		*block +=	IMMEDIATE		(ldi,	regConstant1, Constant::createInt(1));
-		*block +=	BINARY			(lsl,	regShiftedOffset, regOffset, regConstant1);
-		*block +=	BINARY			(add,	regColorAddr, fragmentInfo.regColorBuffer, regShiftedOffset);
+		*block +=	BINARY			(add,	regColorAddr, fragmentInfo.regColorBuffer, regOffset2);
 		*block +=	BINARY			(add,	regAlphaAddr, fragmentInfo.regAlphaBuffer, regOffset);
 		*block +=	LOAD			(ldh,	regDstValue, regColorAddr);
 		*block +=	LOAD			(ldb,	regDstAlpha, regAlphaAddr);
@@ -2284,13 +2294,14 @@ void Rasterizer :: GenerateRasterScanLine() {
 	I32 nextRegister = 0;
 
 	// The signature of the generated function is:
-	//	(const RasterInfo * info, const EdgePos& start, const EdgePos& end, U32 y);
+	//	(const RasterInfo * info, const EdgePos& start, const EdgePos& end);
+	// Do not pass in y coordinate but rather assume that raster info pointers have been
+	// adjusted to point to current scanline in memory
 	// In the edge buffers, z, tu and tv are actually divided by w
 
 	I32 regInfo = nextRegister++;		// virtual register containing info structure pointer
 	I32 regStart = nextRegister++;		// virtual register containing start edge buffer pointer
 	I32 regEnd = nextRegister++;		// virtual register containing end edge buffer pointer
-	I32 regY = nextRegister++;			// virtual register containing y coordinate
 
 	Label * label0 = Label::create("RasterScanline", LabelProcedure);
 	Procedure * procedure = new Procedure(label0, module, nextRegister, 0);
@@ -2304,18 +2315,18 @@ void Rasterizer :: GenerateRasterScanLine() {
 	// edge buffer input arguments
 
 	// texture data, width, height, exponent
-	I32 regTextureData =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_TEXTURE_DATA);
-	I32 regTextureWidth =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_TEXTURE_WIDTH);
-	I32 regTextureHeight =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_TEXTURE_HEIGHT);
-	I32 regTextureExponent =	LOAD_DATA(block0, nextRegister, regInfo, OFFSET_TEXTURE_EXPONENT);
+	I32 regTextureData =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_TEXTURE_DATA, "load texture data addr.");
+	I32 regTextureWidth =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_TEXTURE_WIDTH, "load texture width");
+	I32 regTextureHeight =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_TEXTURE_HEIGHT, "load texture height");
+	I32 regTextureExponent =	LOAD_DATA(block0, nextRegister, regInfo, OFFSET_TEXTURE_EXPONENT, "load texture exponent");
 
 
 	// surface color buffer, depth buffer, alpha buffer, stencil buffer
-	I32 regColorBuffer =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_COLOR_BUFFER);
-	I32 regDepthBuffer =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_DEPTH_BUFFER);
-	I32 regAlphaBuffer =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_ALPHA_BUFFER);
-	I32 regStencilBuffer =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_STENCIL_BUFFER);
-	I32 regSurfaceWidth =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_WIDTH);
+	I32 regColorBuffer =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_COLOR_BUFFER, "load color buffer addr.");
+	I32 regDepthBuffer =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_DEPTH_BUFFER, "load depth buffer addr.");
+	I32 regAlphaBuffer =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_ALPHA_BUFFER, "load alpha buffer addr.");
+	I32 regStencilBuffer =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_STENCIL_BUFFER, "load stencil buffer addr.");
+	I32 regSurfaceWidth =		LOAD_DATA(block0, nextRegister, regInfo, OFFSET_SURFACE_WIDTH, "load surface width");
 
 	// x coordinate
 	I32 regOffsetWindowX = nextRegister++;
@@ -2404,8 +2415,8 @@ void Rasterizer :: GenerateRasterScanLine() {
 	I32 regDiffX = nextRegister++;
 	I32 regInvSpan = nextRegister++;
 
-	block0 +=	LOAD			(ldw,	regEndWindowX, regAddrEndWindowX);
-	block0 +=	LOAD			(ldw,	regStartWindowX, regAddrStartWindowX);
+	block0 +=	LOAD			(ldw,	regEndWindowX, regAddrEndWindowX, "load x end");
+	block0 +=	LOAD			(ldw,	regStartWindowX, regAddrStartWindowX, "load x start");
 	block0 +=	BINARY			(sub,	regDiffX, regEndWindowX, regStartWindowX);
 	block0 +=	UNARY			(finv,	regInvSpan, regDiffX);
 
@@ -2415,10 +2426,10 @@ void Rasterizer :: GenerateRasterScanLine() {
 	I32 regStartColorB = nextRegister++;
 	I32 regStartColorA = nextRegister++;
 
-	block0 +=	LOAD			(ldw,	regStartColorR, regAddrStartColorR);
-	block0 +=	LOAD			(ldw,	regStartColorG, regAddrStartColorG);
-	block0 +=	LOAD			(ldw,	regStartColorB, regAddrStartColorB);
-	block0 +=	LOAD			(ldw,	regStartColorA, regAddrStartColorA);
+	block0 +=	LOAD			(ldw,	regStartColorR, regAddrStartColorR, "load r start");
+	block0 +=	LOAD			(ldw,	regStartColorG, regAddrStartColorG, "load g start");
+	block0 +=	LOAD			(ldw,	regStartColorB, regAddrStartColorB, "load b start");
+	block0 +=	LOAD			(ldw,	regStartColorA, regAddrStartColorA, "load a start");
 
 	//FractionalColor colorIncrement = (end.m_Color - start.m_Color) * invSpan;
 	I32 regEndColorR = nextRegister++;
@@ -2426,10 +2437,10 @@ void Rasterizer :: GenerateRasterScanLine() {
 	I32 regEndColorB = nextRegister++;
 	I32 regEndColorA = nextRegister++;
 
-	block0 +=	LOAD			(ldw,	regEndColorR, regAddrEndColorR);
-	block0 +=	LOAD			(ldw,	regEndColorG, regAddrEndColorG);
-	block0 +=	LOAD			(ldw,	regEndColorB, regAddrEndColorB);
-	block0 +=	LOAD			(ldw,	regEndColorA, regAddrEndColorA);
+	block0 +=	LOAD			(ldw,	regEndColorR, regAddrEndColorR, "load r end");
+	block0 +=	LOAD			(ldw,	regEndColorG, regAddrEndColorG, "load g end");
+	block0 +=	LOAD			(ldw,	regEndColorB, regAddrEndColorB, "load b end");
+	block0 +=	LOAD			(ldw,	regEndColorA, regAddrEndColorA, "load a end");
 
 	I32 regDiffColorR = nextRegister++;
 	I32 regDiffColorG = nextRegister++;
@@ -2446,10 +2457,10 @@ void Rasterizer :: GenerateRasterScanLine() {
 	I32 regColorIncrementB = nextRegister++;
 	I32 regColorIncrementA = nextRegister++;
 
-	block0 +=	BINARY			(fmul,	regColorIncrementR, regDiffColorR, regInvSpan);
-	block0 +=	BINARY			(fmul,	regColorIncrementG, regDiffColorG, regInvSpan);
-	block0 +=	BINARY			(fmul,	regColorIncrementB, regDiffColorB, regInvSpan);
-	block0 +=	BINARY			(fmul,	regColorIncrementA, regDiffColorA, regInvSpan);
+	block0 +=	BINARY			(fmul,	regColorIncrementR, regDiffColorR, regInvSpan, "delta R");
+	block0 +=	BINARY			(fmul,	regColorIncrementG, regDiffColorG, regInvSpan, "delta G");
+	block0 +=	BINARY			(fmul,	regColorIncrementB, regDiffColorB, regInvSpan, "delta B");
+	block0 +=	BINARY			(fmul,	regColorIncrementA, regDiffColorA, regInvSpan, "delta A");
 
 	//EGL_Fixed deltaInvZ = EGL_Mul(end.m_WindowCoords.z - start.m_WindowCoords.z, invSpan);
 	I32 regEndWindowZ = nextRegister++;
@@ -2457,8 +2468,8 @@ void Rasterizer :: GenerateRasterScanLine() {
 	I32 regDiffInvZ = nextRegister++;
 	I32 regDeltaInvZ = nextRegister++;
 
-	block0 +=	LOAD			(ldw,	regEndWindowZ, regAddrEndWindowZ);
-	block0 +=	LOAD			(ldw,	regStartWindowZ, regAddrStartWindowZ);
+	block0 +=	LOAD			(ldw,	regEndWindowZ, regAddrEndWindowZ, "load inv. z end");
+	block0 +=	LOAD			(ldw,	regStartWindowZ, regAddrStartWindowZ, "load inv. z start");
 	block0 +=	BINARY			(sub,	regDiffInvZ, regEndWindowZ, regStartWindowZ);
 	block0 +=	BINARY			(fmul,	regDeltaInvZ, regDiffInvZ, regInvSpan);
 
@@ -2468,10 +2479,10 @@ void Rasterizer :: GenerateRasterScanLine() {
 	I32 regDiffInvU = nextRegister++;
 	I32 regDeltaInvU = nextRegister++;
 
-	block0 +=	LOAD			(ldw,	regEndTextureU, regAddrEndTextureU);
-	block0 +=	LOAD			(ldw,	regStartTextureU, regAddrStartTextureU);
+	block0 +=	LOAD			(ldw,	regEndTextureU, regAddrEndTextureU, "load u/z end");
+	block0 +=	LOAD			(ldw,	regStartTextureU, regAddrStartTextureU, "load u/z start");
 	block0 +=	BINARY			(sub,	regDiffInvU, regEndTextureU, regStartTextureU);
-	block0 +=	BINARY			(fmul,	regDeltaInvU, regDiffInvU, regInvSpan);
+	block0 +=	BINARY			(fmul,	regDeltaInvU, regDiffInvU, regInvSpan, "delta u/z");
 
 	//EGL_Fixed deltaInvV = EGL_Mul(end.m_TextureCoords.tv - start.m_TextureCoords.tv, invSpan);
 	I32 regEndTextureV = nextRegister++;
@@ -2479,10 +2490,10 @@ void Rasterizer :: GenerateRasterScanLine() {
 	I32 regDiffInvV = nextRegister++;
 	I32 regDeltaInvV = nextRegister++;
 
-	block0 +=	LOAD			(ldw,	regEndTextureV, regAddrEndTextureV);
-	block0 +=	LOAD			(ldw,	regStartTextureV, regAddrStartTextureV);
+	block0 +=	LOAD			(ldw,	regEndTextureV, regAddrEndTextureV, "load v/z end");
+	block0 +=	LOAD			(ldw,	regStartTextureV, regAddrStartTextureV, "load v/z start");
 	block0 +=	BINARY			(sub,	regDiffInvV, regEndTextureV, regStartTextureV);
-	block0 +=	BINARY			(fmul,	regDeltaInvV, regDiffInvV, regInvSpan);
+	block0 +=	BINARY			(fmul,	regDeltaInvV, regDiffInvV, regInvSpan, "delta v/z");
 
 	//EGL_Fixed deltaFog = EGL_Mul(end.m_FogDensity - start.m_FogDensity, invSpan);
 	I32 regEndFog = nextRegister++;
@@ -2490,10 +2501,10 @@ void Rasterizer :: GenerateRasterScanLine() {
 	I32 regDiffFog = nextRegister++;
 	I32 regDeltaFog = nextRegister++;
 
-	block0 +=	LOAD			(ldw,	regEndFog, regAddrEndFog);
-	block0 +=	LOAD			(ldw,	regStartFog, regAddrStartFog);
+	block0 +=	LOAD			(ldw,	regEndFog, regAddrEndFog, "load end fog");
+	block0 +=	LOAD			(ldw,	regStartFog, regAddrStartFog, "load start fog");
 	block0 +=	BINARY			(sub,	regDiffFog, regEndFog, regStartFog);
-	block0 +=	BINARY			(fmul,	regDeltaFog, regDiffFog, regInvSpan);
+	block0 +=	BINARY			(fmul,	regDeltaFog, regDiffFog, regInvSpan, "delta fog");
 
 	//EGL_Fixed invTu = start.m_TextureCoords.tu;
 	//EGL_Fixed invTv = start.m_TextureCoords.tv;
@@ -2673,7 +2684,6 @@ void Rasterizer :: GenerateRasterScanLine() {
 		
 	FragmentGenerationInfo info;
 	info.regX = regLoop1XEntry;
-	info.regY = regY; 
 	info.regDepth = regLoop1ZEntry;
 	info.regU = regLoop1UEntry;
 	info.regV = regLoop1VEntry; 
@@ -2752,7 +2762,7 @@ void Rasterizer :: GenerateRasterScanLine() {
 	block4 +=		PHI			(phi,	regBlock4Z, REG_LIST(regLoop1Z, regZ));
 	block4 +=		PHI			(phi,	regBlock4U, REG_LIST(regLoop1U, regU));
 	block4 +=		PHI			(phi,	regBlock4V, REG_LIST(regLoop1V, regV));
-	block4 +=		BINARY		(cmp,	regBlock4DiffX, regBlock4Condition, regXEnd, regBlock4X);
+	block4 +=		BINARY		(sub,	regBlock4DiffX, regBlock4Condition, regXEnd, regBlock4X);
 	block4 +=		BCOND		(beq,	regBlock4Condition, endLoop2);
 
 		//EGL_Fixed endZ = EGL_Inverse(end.m_WindowCoords.z);
@@ -2830,7 +2840,6 @@ void Rasterizer :: GenerateRasterScanLine() {
 
 	FragmentGenerationInfo info2;
 	info2.regX = regLoop2XEntry;
-	info2.regY = regY; 
 	info2.regDepth = regLoop2ZEntry;
 	info2.regU = regLoop2UEntry;
 	info2.regV = regLoop2VEntry; 
@@ -2877,6 +2886,10 @@ void Rasterizer :: GenerateRasterScanLine() {
 			//++x;
 	block6 +=		BINARY		(add,	regLoop2X, regLoop2XEntry, regConstant1);
 
+	I32 regCondLoopEnd = nextRegister++;
+	block6 +=		BINARY		(cmp,	regCondLoopEnd, regLoop2X, regXEnd);
+	block6 +=		BCOND		(blt,	regCondLoopEnd, beginLoop2);
+
 		//}
 
 	//}
@@ -2887,8 +2900,16 @@ void Rasterizer :: GenerateRasterScanLine() {
 
 	block7 +=		RET			(ret,	new RegisterList());
 
-	std::ofstream out("dump.lst");
-	out << *module;
-	out.close();
+	std::ofstream out0("dump0.lst");
+	out0 << *module;
+	out0.close();
+
+	RemoveUnusedCode(module);
+
+	std::ofstream out1("dump1.lst");
+	out1 << *module;
+	out1.close();
+
+
 }
 

@@ -40,6 +40,7 @@
 
 
 #include "stdafx.h"
+#include "fixed.h"
 #include "trivm.h"
 
 
@@ -79,6 +80,44 @@ void Sweep :: sweep(triVM::Block * block){
 
 	for (InstructionList::iterator iter = block->instructions.begin();
 		iter != block->instructions.end(); ++iter) {
+		visit(*iter);
+	}
+
+	end(block);
+}
+
+void Sweep :: reverseSweep(triVM::Module * module){ 
+
+	begin(module);
+
+	for (ProcedureList::iterator iter = module->procedures.begin();
+		iter != module->procedures.end(); ++iter) {
+		reverseSweep(*iter);
+	}
+
+	end(module);
+}
+
+void Sweep :: reverseSweep(triVM::Procedure * procedure){ 
+
+	begin(procedure);
+
+	for (BlockList::iterator iter = procedure->blocks.begin();
+		iter != procedure->blocks.end(); ++iter) {
+
+		Block * block = *iter;
+		reverseSweep(block);
+	}
+
+	end(procedure);
+}
+
+void Sweep :: reverseSweep(triVM::Block * block){ 
+
+	begin(block);
+
+	for (InstructionList::reverse_iterator iter = block->instructions.rbegin();
+		iter != block->instructions.rend(); ++iter) {
 		visit(*iter);
 	}
 
@@ -251,8 +290,8 @@ namespace {
 			out << constant->intConstant.value;
 			break;
 
-		case ConstantFloat:
-			out << constant->floatConstant.value;
+		case ConstantFixed:
+			out << (float) EGL_FloatFromFixed(constant->fixedConstant.value);
 			break;
 
 		case ConstantString:
@@ -294,6 +333,13 @@ protected:
 	virtual void visit(triVM::Instruction * instruction) {
 		out << "\t";
 		Sweep::visit(instruction);
+
+#ifndef NDEBUG
+		if (instruction->base.comment != 0 && *instruction->base.comment != '\0') {
+			out << "\t\t\t\t; " << instruction->base.comment;
+		}
+#endif
+
 		out << std::endl;
 	}
 
@@ -391,4 +437,209 @@ std::ostream& operator<<(std::ostream& out, EGL::triVM::Module& module) {
 	Dump dump(out);
 	dump.sweep(&module);
 	return out;
+}
+
+
+namespace {
+	class MarkUsed: public Sweep {
+	public:
+		MarkUsed(): changed(false) {
+		}
+
+		void resetChanged() {
+			changed = false;
+		}
+
+		bool hasChanged() {
+			return changed;
+		}
+
+		void markAllUsedInstructions(Module * module) {
+			do {
+				resetChanged();
+				reverseSweep(module);
+			} while (hasChanged());
+		}
+
+	protected:
+		virtual void  visitUnary(triVM::Instruction * instruction){ 
+			if (instruction->unary.rC >= 0) {
+				if (isUsed(instruction->unary.rD) || isUsed(instruction->unary.rC)) {
+					instruction->base.used = true;
+					addRegister(instruction->unary.rS);
+				} else {
+					instruction->base.used = false;
+				}
+			} else {
+				if (isUsed(instruction->unary.rD)) {
+					instruction->base.used = true;
+					addRegister(instruction->unary.rS);
+				} else {
+					instruction->base.used = false;
+				}
+			}
+		}
+
+		virtual void  visitBinary(triVM::Instruction * instruction){ 
+			if (instruction->binary.rC >= 0) {
+				if (isUsed(instruction->binary.rD) || isUsed(instruction->binary.rC)) {
+					instruction->base.used = true;
+					addRegister(instruction->binary.rS);
+					addRegister(instruction->binary.rM);
+				} else {
+					instruction->base.used = false;
+				}
+			} else {
+				if (isUsed(instruction->binary.rD)) {
+					instruction->base.used = true;
+					addRegister(instruction->binary.rS);
+					addRegister(instruction->binary.rM);
+				} else {
+					instruction->base.used = false;
+				}
+			}
+		}
+		
+		virtual void  visitCompare(triVM::Instruction * instruction){ 
+
+			if (isUsed(instruction->compare.rD)) {
+				instruction->base.used = true;
+				addRegister(instruction->compare.rS);
+				addRegister(instruction->compare.rC);
+			} else {
+				instruction->base.used = false;
+			}
+		}
+
+		virtual void  visitLoad(triVM::Instruction * instruction){ 
+
+			if (isUsed(instruction->load.rD)) {
+				instruction->base.used = true;
+				addRegister(instruction->load.rS);
+			} else {
+				instruction->base.used = false;
+			}
+		}
+
+		virtual void  visitStore(triVM::Instruction * instruction){ 
+			// always executed
+
+			instruction->base.used = true;
+			addRegister(instruction->store.rS);
+			addRegister(instruction->store.rD);
+		}
+
+		virtual void  visitLoadImmediate(triVM::Instruction * instruction){ 
+			if (isUsed(instruction->loadImmediate.rD)) {
+				instruction->base.used = true;
+			}
+		}
+
+		virtual void  visitBranchReg(triVM::Instruction * instruction){ 
+			// always executed
+
+			instruction->base.used = true;
+			addRegister(instruction->branchReg.rS);
+		}
+
+		virtual void  visitBranchLabel(triVM::Instruction * instruction){ 
+			// always executed
+			instruction->base.used = true;
+		}
+
+		virtual void  visitBranchConditionally(triVM::Instruction * instruction){ 
+			// always executed
+
+			instruction->base.used = true;
+			addRegister(instruction->branchConditionally.rS);
+		}
+
+		virtual void  visitPhi(triVM::Instruction * instruction) { 
+
+			if (isUsed(instruction->phi.rD)) {
+				instruction->base.used = true;
+				RegisterList * registers = instruction->phi.registers;
+
+				for (RegisterList::iterator iter = registers->begin(); iter != registers->end(); ++iter) {
+					addRegister(*iter);
+				}
+			} else {
+				instruction->base.used = false;
+			}
+		}
+
+		virtual void  visitCall(triVM::Instruction * instruction) { 
+			// always executed
+
+			instruction->base.used = true;
+			RegisterList * registers = instruction->call.args;
+
+			for (RegisterList::iterator iter = registers->begin(); iter != registers->end(); ++iter) {
+				addRegister(*iter);
+			}
+		}
+
+		virtual void  visitRet(triVM::Instruction * instruction) { 
+			// always executed
+
+			instruction->base.used = true;
+			RegisterList * registers = instruction->ret.registers;
+
+			for (RegisterList::iterator iter = registers->begin(); iter != registers->end(); ++iter) {
+				addRegister(*iter);
+			}
+		}
+
+	private:
+		typedef std::set<int> RegisterSet;
+
+		RegisterSet usedRegisters;
+		bool changed;
+
+	private:
+		bool isUsed(int reg) {
+			return usedRegisters.find(reg) != usedRegisters.end();
+		}
+
+		void addRegister(int reg) {
+			if (usedRegisters.find(reg) == usedRegisters.end()) {
+				usedRegisters.insert(reg);
+				changed = true;
+			}
+		}
+	};
+
+}
+
+
+// --------------------------------------------------------------------------
+// Remove any unused instructions from the tree
+// --------------------------------------------------------------------------
+void EGL::triVM::RemoveUnusedCode(Module * module) {
+	MarkUsed used;
+	used.markAllUsedInstructions(module);
+
+	for (ProcedureList::iterator iter = module->procedures.begin();
+		iter != module->procedures.end(); ++iter) {
+
+		Procedure * procedure = *iter;
+
+		for (BlockList::iterator blockIter = procedure->blocks.begin();
+			blockIter != procedure->blocks.end(); ++blockIter) {
+
+			Block * block = *blockIter;
+			InstructionList & instructions = block->instructions;
+
+			for (InstructionList::iterator instIter = instructions.begin();
+				instIter != instructions.end(); ) {
+				Instruction * instruction = *instIter;
+
+				if (instruction->base.used) {
+					++instIter;
+				} else {
+					instructions.erase(instIter);
+				}
+			}
+		}
+	}
 }

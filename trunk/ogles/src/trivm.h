@@ -187,7 +187,7 @@ namespace triVM {
 
 	enum ConstantKind {
 		ConstantInt,
-		ConstantFloat,
+		ConstantFixed,
 		ConstantString,
 		ConstantLabel
 	};
@@ -201,9 +201,9 @@ namespace triVM {
 		int				 value;
 	};
 
-	struct ConstantFloatType {
+	struct ConstantFixedType {
 		ConstantBaseType base;
-		float			 value;
+		int				 value;
 	};
 
 	struct ConstantStringType {
@@ -219,7 +219,7 @@ namespace triVM {
 	union Constant {
 		ConstantBaseType	base;
 		ConstantIntType		intConstant;
-		ConstantFloatType	floatConstant;
+		ConstantFixedType	fixedConstant;
 		ConstantStringType	stringConstant;
 		ConstantLabelType	labelConstant;
 
@@ -230,10 +230,10 @@ namespace triVM {
 			return result;
 		}
 
-		static Constant * createFloat(float value) {
+		static Constant * createFixed(int value) {
 			Constant * result = new Constant;
-			result->base.kind = ConstantFloat;
-			result->floatConstant.value = value;
+			result->base.kind = ConstantFixed;
+			result->fixedConstant.value = value;
 			return result;
 		}
 
@@ -256,6 +256,7 @@ namespace triVM {
 	typedef std::vector<int> RegisterList;
 
 	enum InstructionKind {
+		InstructionNone,
 		InstructionUnary,
 		InstructionBinary,
 		InstructionCompare,
@@ -274,6 +275,11 @@ namespace triVM {
 		InstructionKind	kind;
 		Opcode opcode;
 		Block * block;
+		unsigned used: 1;
+
+#ifndef NDEBUG
+		const char * comment;
+#endif
 	};
 
 	struct InstructionUnaryType {
@@ -368,30 +374,45 @@ namespace triVM {
 			InstructionRetType					ret;
 		};
 
-		static Instruction * createUnary(Opcode anOpcode, int rD, int rS) {
+		static Instruction * createUnary(Opcode anOpcode, int rD, int rS, const char * comment = "") {
 			Instruction * result = new Instruction();
 			result->base.kind = InstructionUnary;
 			result->base.opcode = anOpcode;
+
+#ifndef NDEBUG
+			result->base.comment = comment;
+#endif
+
 			result->unary.rD = rD;
 			result->unary.rS = rS;
 			result->unary.rC = -1;
 			return result;
 		}
 
-		static Instruction * createUnary(Opcode anOpcode, int rD, int rC, int rS) {
+		static Instruction * createUnary(Opcode anOpcode, int rD, int rC, int rS, const char * comment = "") {
 			Instruction * result = new Instruction();
 			result->base.kind = InstructionUnary;
 			result->base.opcode = anOpcode;
+
+#ifndef NDEBUG
+			result->base.comment = comment;
+#endif
+
 			result->unary.rD = rD;
 			result->unary.rS = rS;
 			result->unary.rC = rC;
 			return result;
 		}
 
-		static Instruction * createBinary(Opcode anOpcode, int rD, int rS, int rM) {
+		static Instruction * createBinary(Opcode anOpcode, int rD, int rS, int rM, const char * comment = "") {
 			Instruction * result = new Instruction();
 			result->base.kind = InstructionBinary;
 			result->base.opcode = anOpcode;
+
+#ifndef NDEBUG
+			result->base.comment = comment;
+#endif
+
 			result->binary.rD = rD;
 			result->binary.rS = rS;
 			result->binary.rC = -1;
@@ -399,10 +420,15 @@ namespace triVM {
 			return result;
 		}
 
-		static Instruction * createBinary(Opcode anOpcode, int rD, int rC, int rS, int rM) {
+		static Instruction * createBinary(Opcode anOpcode, int rD, int rC, int rS, int rM, const char * comment = "") {
 			Instruction * result = new Instruction();
 			result->base.kind = InstructionBinary;
 			result->base.opcode = anOpcode;
+
+#ifndef NDEBUG
+			result->base.comment = comment;
+#endif
+
 			result->binary.rD = rD;
 			result->binary.rS = rS;
 			result->binary.rC = rC;
@@ -410,92 +436,142 @@ namespace triVM {
 			return result;
 		}
 
-		static Instruction * createCompare(Opcode anOpcode, int rD, int rS, int rC) {
+		static Instruction * createCompare(Opcode anOpcode, int rD, int rS, int rC, const char * comment = "") {
 			Instruction * result = new Instruction();
 			result->base.kind = InstructionCompare;
 			result->base.opcode = anOpcode;
+
+#ifndef NDEBUG
+			result->base.comment = comment;
+#endif
+
 			result->compare.rD = rD;
 			result->compare.rC = rC;
 			result->compare.rS = rS;
 			return result;
 		}
 
-		static Instruction * createLoad(Opcode anOpcode, int rD, int rS) {
+		static Instruction * createLoad(Opcode anOpcode, int rD, int rS, const char * comment = "") {
 			Instruction * result = new Instruction();
 			result->base.kind = InstructionLoad;
 			result->base.opcode = anOpcode;
+
+#ifndef NDEBUG
+			result->base.comment = comment;
+#endif
+
 			result->load.rD = rD;
 			result->load.rS = rS;
 			return result;
 		}
 
-		static Instruction * createStore(Opcode anOpcode, int rD, int rS) {
+		static Instruction * createStore(Opcode anOpcode, int rD, int rS, const char * comment = "") {
 			Instruction * result = new Instruction();
 			result->base.kind = InstructionStore;
 			result->base.opcode = anOpcode;
+
+#ifndef NDEBUG
+			result->base.comment = comment;
+#endif
+
 			result->store.rD = rD;
 			result->store.rS = rS;
 			return result;
 		}
 
-		static Instruction * createLoadImmediate(Opcode anOpcode, int rD, Constant * value) {
+		static Instruction * createLoadImmediate(Opcode anOpcode, int rD, Constant * value, const char * comment = "") {
 			Instruction * result = new Instruction();
 			result->base.kind = InstructionLoadImmediate;
 			result->base.opcode = anOpcode;
+
+#ifndef NDEBUG
+			result->base.comment = comment;
+#endif
+
 			result->loadImmediate.rD = rD;
 			result->loadImmediate.constant = value;
 			return result;
 		}
 
-		static Instruction * createBranchReg(Opcode anOpcode, int rS) {
+		static Instruction * createBranchReg(Opcode anOpcode, int rS, const char * comment = "") {
 			Instruction * result = new Instruction();
 			result->base.kind = InstructionBranchReg;
 			result->base.opcode = anOpcode;
+
+#ifndef NDEBUG
+			result->base.comment = comment;
+#endif
+
 			result->branchReg.rS = rS;
 			return result;
 		}
 
-		static Instruction * createBranchLabel(Opcode anOpcode, Label * label) {
+		static Instruction * createBranchLabel(Opcode anOpcode, Label * label, const char * comment = "") {
 			Instruction * result = new Instruction();
 			result->base.kind = InstructionBranchLabel;
 			result->base.opcode = anOpcode;
+
+#ifndef NDEBUG
+			result->base.comment = comment;
+#endif
+
 			result->branchLabel.label = label;
 			return result;
 		}
 
-		static Instruction * createBranchConditionally(Opcode anOpcode, int rS, Label * label) {
+		static Instruction * createBranchConditionally(Opcode anOpcode, int rS, Label * label, const char * comment = "") {
 			Instruction * result = new Instruction();
 			result->base.kind = InstructionBranchConditionally;
 			result->base.opcode = anOpcode;
+
+#ifndef NDEBUG
+			result->base.comment = comment;
+#endif
+
 			result->branchConditionally.rS = rS;
 			result->branchConditionally.label = label;
 			return result;
 		}
 
-		static Instruction * createPhi(Opcode anOpcode, int rD, RegisterList * registers) {
+		static Instruction * createPhi(Opcode anOpcode, int rD, RegisterList * registers, const char * comment = "") {
 			Instruction * result = new Instruction();
 			result->base.kind = InstructionPhi;
 			result->base.opcode = anOpcode;
+
+#ifndef NDEBUG
+			result->base.comment = comment;
+#endif
+
 			result->phi.rD = rD;
 			result->phi.registers = registers;
 			return result;
 		}
 
 		static Instruction * createCall(Opcode anOpcode, int rS, RegisterList * args,
-			RegisterList * results) {
+			RegisterList * results, const char * comment = "") {
 			Instruction * result = new Instruction();
 			result->base.kind = InstructionCall;
 			result->base.opcode = anOpcode;
+
+#ifndef NDEBUG
+			result->base.comment = comment;
+#endif
+
 			result->call.rS = rS;
 			result->call.args = args;
 			result->call.results = results;
 			return result;
 		}
 
-		static Instruction * createRet(Opcode anOpcode, RegisterList * registers) {
+		static Instruction * createRet(Opcode anOpcode, RegisterList * registers, const char * comment = "") {
 			Instruction * result = new Instruction();
 			result->base.kind = InstructionRet;
 			result->base.opcode = anOpcode;
+
+#ifndef NDEBUG
+			result->base.comment = comment;
+#endif
+
 			result->ret.registers = registers;
 			return result;
 		}
@@ -588,6 +664,10 @@ namespace triVM {
 		virtual void sweep(triVM::Procedure * procedure);
 		virtual void sweep(triVM::Block * block);
 
+		virtual void reverseSweep(triVM::Module * module);
+		virtual void reverseSweep(triVM::Procedure * procedure);
+		virtual void reverseSweep(triVM::Block * block);
+
 	protected:
 		virtual void begin(triVM::Module * module);
 		virtual void begin(triVM::Procedure * procedure);
@@ -614,6 +694,9 @@ namespace triVM {
 		virtual void visitRet(triVM::Instruction * instruction);
 
 	};
+
+
+	extern void RemoveUnusedCode(Module * module);
 
 } // namespace triVM
 } // namespace EGL
