@@ -10,6 +10,9 @@ Version 0.75
 
 This version addresses the following issues:
 
+946772 - mustpass conformance test fails
+952667 - Polygon fill conventions need to be revised
+954677 - polycull test fails
 951117 - glTexParameterf causes an error 
 863629 - Lightning model is incomplete 
 949647 - SpecularColor test fails 

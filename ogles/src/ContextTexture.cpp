@@ -69,7 +69,13 @@ void Context :: DeleteTextures(GLsizei n, const GLuint *textures) {
 		U32 texture = *textures++;
 
 		if (texture != 0) {
-			m_Textures.Deallocate(texture);
+			if (m_Textures.GetTexture(texture) == GetRasterizer()->GetTexture()) {
+				GetRasterizer()->SetTexture(m_Textures.GetTexture(0));
+			}
+
+			if (texture != 0) {
+				m_Textures.Deallocate(texture);
+			}
 		}
 	}
 }

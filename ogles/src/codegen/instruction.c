@@ -1774,7 +1774,7 @@ static void inst_dump(cg_inst_t * inst, FILE * out)
 	case cg_inst_arm_store_reg_offset:	
 		fprintf(out, "\t%s\tr%d, (r%d, r%d)\n", opcodes[inst->base.opcode],
 			inst->store.source->reg_no, inst->store.mem.reg_offset.base->reg_no,
-			inst->store.mem.reg_offset.offset);
+			inst->store.mem.reg_offset.offset->reg_no);
 		break;
 
 	case cg_inst_none:
