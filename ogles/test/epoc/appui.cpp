@@ -4,6 +4,7 @@
 //
 // ------------------------------------------------------------------------------------
 //
+// 12-18-2004   Iwan Junianto       support both s60 and uiq
 // 11-05-2004   Iwan Junianto       initial version
 // ====================================================================================
 
@@ -40,6 +41,9 @@ void CAppUi::HandleCommandL(TInt aCmd)
         case 201: // ogles test
             iAppView->ShowTest();
             break;
+#ifdef TARGET_S60
+        case EAknSoftkeyExit:
+#endif
 		case EEikCmdExit:
             iAppView->Exit();
 			Exit();
@@ -47,7 +51,7 @@ void CAppUi::HandleCommandL(TInt aCmd)
 	}
 }
 
-
+#ifndef TARGET_S60
 void CAppUi::DynInitMenuPaneL(TInt aMenuId, CEikMenuPane* aMenuPane)
 {
 	if (aMenuId==R_MENUPANE) {
@@ -63,3 +67,4 @@ void CAppUi::DynInitMenuPaneL(TInt aMenuId, CEikMenuPane* aMenuPane)
 //#endif
 	}
 }
+#endif
