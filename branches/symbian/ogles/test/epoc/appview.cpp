@@ -4,11 +4,11 @@
 //
 // ------------------------------------------------------------------------------------
 //
+// 12-18-2004   Iwan Junianto       support both s60 and uiq
 // 11-05-2004   Iwan Junianto       initial version
 // ====================================================================================
 
 #include <w32std.h>
-#include <quartzkeys.h>
 #include "appview.h"
 
 extern int InitOpenGL(CWindowGc* gc, RWindow* win, TAppGlobal* data);
@@ -108,40 +108,7 @@ TCoeInputCapabilities CAppView::InputCapabilities() const
 
 TKeyResponse CAppView::OfferKeyEventL(const TKeyEvent& aKeyEvent,TEventCode aType)
 {
-	if (aType!=EEventKey)
-		return EKeyWasNotConsumed;
-		
-	switch (aKeyEvent.iCode) {
-	case EQuartzKeyFourWayLeft:
-		break;
-		
-	case EQuartzKeyFourWayRight:
-        break;
-
-	case EQuartzKeyFourWayUp:
-		break;
-		
-	case EQuartzKeyFourWayDown:
-		break;
-		
-	case EKeyYes:
-		break;
-		
-	case EKeyNo:
-		break;
-	
-	default:
-		return EKeyWasNotConsumed;
-	}
-	
-	return EKeyWasConsumed;
-}
-
-void CAppView::HandlePointerEventL(const TPointerEvent& aPointerEvent)
-{
-	if (aPointerEvent.iType==TPointerEvent::EButton1Down) 
-	{
-	}
+	return EKeyWasNotConsumed;
 }
 
 int CAppView::OnTimer(void* aArg)

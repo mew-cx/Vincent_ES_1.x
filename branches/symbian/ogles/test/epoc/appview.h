@@ -4,6 +4,7 @@
 //
 // ------------------------------------------------------------------------------------
 //
+// 12-18-2004   Iwan Junianto       support both s60 and uiq
 // 11-05-2004   Iwan Junianto       initial version
 // ====================================================================================
 
@@ -20,7 +21,6 @@ public:
 	static CAppView* NewL(const TRect& aRect);
 	
 	virtual TKeyResponse OfferKeyEventL(const TKeyEvent& aKeyEvent,TEventCode aType);	
-	virtual void HandlePointerEventL(const TPointerEvent& aPointerEvent);
 	virtual TCoeInputCapabilities InputCapabilities() const;
     
     CWindowGc* Gc() const;
