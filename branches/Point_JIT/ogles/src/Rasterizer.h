@@ -151,6 +151,7 @@ namespace EGL {
 
 	// signature for generated scanline functions
 	typedef void (ScanlineFunction)(const RasterInfo * info, const EdgePos * start, const EdgePos * end);
+	typedef void (LineFunction)(const RasterInfo * info, const RasterPos * from, const RasterPos * to);
 	typedef void (PointFunction)(const RasterInfo * info, const RasterPos * pos);
 
 	class Rasterizer {
@@ -201,7 +202,6 @@ namespace EGL {
 		// stencil test.
 		// ----------------------------------------------------------------------
 
-		typedef void (Rasterizer::*RasterLineFunction)(const RasterPos& from, const RasterPos& to);
 		typedef void (Rasterizer::*RasterTriangleFunction)(const RasterPos& a, const RasterPos& b,
 			const RasterPos& c);
 
@@ -308,9 +308,9 @@ namespace EGL {
 		FunctionCache *			m_FunctionCache;
 
 		ScanlineFunction *		m_ScanlineFunction;
+		LineFunction *			m_LineFunction;		// raster lines function
 		PointFunction *			m_PointFunction;
 
-		RasterLineFunction		m_RasterLineFunction;
 		RasterTriangleFunction	m_RasterTriangleFunction;
 
 		RasterTriangleFunction	m_RasterTriangleFunctions[1 << RasterTriangleCount];
