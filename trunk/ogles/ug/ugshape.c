@@ -95,25 +95,25 @@ void PlotSpherePoints(GLfloat radius, GLint stacks, GLint slices, GLfloat* v, GL
     int i, j; 
 	GLfloat slicestep, stackstep;
 
-	stackstep = (PI_ / stacks);
-	slicestep = (2.0 * PI_ / slices);
+	stackstep = (((float)PI_) / stacks);
+	slicestep = (2.0f * ((float)PI_) / slices);
 
 	for (i = 0; i < stacks; ++i)		
 	{
 		GLfloat a = i * stackstep;
 		GLfloat b = a + stackstep;
 
-		GLfloat s0 =  sin(a);
-		GLfloat s1 =  sin(b);
+		GLfloat s0 =  (float)sin(a);
+		GLfloat s1 =  (float)sin(b);
 
-		GLfloat c0 =  cos(a);
-		GLfloat c1 =  cos(b);
+		GLfloat c0 =  (float)cos(a);
+		GLfloat c1 =  (float)cos(b);
 
 		for (j = 0; j <= slices; ++j)		
 		{
 			GLfloat c = j * slicestep;
-			GLfloat x = cos(c);
-			GLfloat y = sin(c);
+			GLfloat x = (float)cos(c);
+			GLfloat y = (float)sin(c);
 
 			*n = x * s0;
 			*v = *n * radius;
@@ -163,8 +163,6 @@ ugSolidSpheref(GLfloat radius, GLint slices, GLint stacks)
     static GLfloat* v, *n;
     static GLfloat parms[3];
 
-
-
     if (v) 
 	{
 		if (parms[0] != radius || parms[1] != slices || parms[2] != stacks) 
@@ -182,8 +180,8 @@ ugSolidSpheref(GLfloat radius, GLint slices, GLint stacks)
     if (!v) 
 	{
 		parms[0] = radius; 
-		parms[1] = slices; 
-		parms[2] = stacks;
+		parms[1] = (float)slices; 
+		parms[2] = (float)stacks;
 
 		v = malloc(stacks*(slices+1)*2*3*sizeof *v);
 		n = malloc(stacks*(slices+1)*2*3*sizeof *n);
@@ -214,8 +212,6 @@ ugWireSpheref(GLfloat radius, GLint slices, GLint stacks)
     static GLfloat* v, *n;
     static GLfloat parms[3];
 
-	GLfloat slicestep, stackstep;
-
     if (v) 
 	{
 		if (parms[0] != radius || parms[1] != slices || parms[2] != stacks) 
@@ -233,8 +229,8 @@ ugWireSpheref(GLfloat radius, GLint slices, GLint stacks)
     if (!v) 
 	{
 		parms[0] = radius; 
-		parms[1] = slices; 
-		parms[2] = stacks;
+		parms[1] = (float)slices; 
+		parms[2] = (float)stacks;
 
 		v = malloc(stacks*(slices+1)*2*3*sizeof *v);
 		n = malloc(stacks*(slices+1)*2*3*sizeof *n);
@@ -328,121 +324,125 @@ ugSolidConef(GLfloat base, GLfloat height, GLint slices, GLint stacks) {
 }
 
 void APIENTRY
-ugSolidCubef(GLfloat size) {
-    static GLfloat* v, *n;
-    static const GLfloat cubev[3*12*3] = {
-	-1., -1., 1.,	/* front */
-	 1., -1., 1.,
-	-1.,  1., 1.,
+ugSolidCubef(GLfloat size) 
+{
+    static GLfloat v[108];	   // 108 =  3*12*3
 
-	 1., -1., 1.,
-	 1.,  1., 1.,
-	-1.,  1., 1.,
+    static const GLfloat cubev[108] = 
+	{
+		-1., -1., 1.,	/* front */
+		 1., -1., 1.,
+		-1.,  1., 1.,
 
-	-1.,  1., -1.,	/* back */
-	 1., -1., -1.,
-	-1., -1., -1.,
+		 1., -1., 1.,
+		 1.,  1., 1.,
+		-1.,  1., 1.,
 
-	-1.,  1., -1.,
-	 1.,  1., -1.,
-	 1., -1., -1.,
+		-1.,  1., -1.,	/* back */
+		 1., -1., -1.,
+		-1., -1., -1.,
 
-	-1., -1., -1.,	/* left */
-	-1., -1.,  1.,
-	-1.,  1., -1.,
+		-1.,  1., -1.,
+		 1.,  1., -1.,
+		 1., -1., -1.,
 
-	-1., -1.,  1.,
-	-1.,  1.,  1.,
-	-1.,  1., -1.,
+		-1., -1., -1.,	/* left */
+		-1., -1.,  1.,
+		-1.,  1., -1.,
 
-	 1., -1.,  1.,	/* right */
-	 1., -1., -1.,
-	 1.,  1.,  1.,
+		-1., -1.,  1.,
+		-1.,  1.,  1.,
+		-1.,  1., -1.,
 
-	 1., -1., -1.,
-	 1.,  1., -1.,
-	 1.,  1.,  1.,
+		 1., -1.,  1.,	/* right */
+		 1., -1., -1.,
+		 1.,  1.,  1.,
 
-	-1.,  1.,  1.,	/* top */
-	 1.,  1.,  1.,
-	-1.,  1., -1.,
+		 1., -1., -1.,
+		 1.,  1., -1.,
+		 1.,  1.,  1.,
 
-	 1.,  1.,  1.,
-	 1.,  1., -1.,
-	-1.,  1., -1.,
+		-1.,  1.,  1.,	/* top */
+		 1.,  1.,  1.,
+		-1.,  1., -1.,
 
-	-1., -1., -1.,	/* bottom */
-	 1., -1., -1.,
-	-1., -1.,  1.,
+		 1.,  1.,  1.,
+		 1.,  1., -1.,
+		-1.,  1., -1.,
 
-	 1., -1., -1.,
-	 1., -1.,  1.,
-	-1., -1.,  1.,
+		-1., -1., -1.,	/* bottom */
+		 1., -1., -1.,
+		-1., -1.,  1.,
+
+		 1., -1., -1.,
+		 1., -1.,  1.,
+		-1., -1.,  1.,
     };
 
-    static const GLfloat cuben[3*12*3] = {
-	0., 0., 1.,	/* front */
-	0., 0., 1.,
-	0., 0., 1.,
+    static const GLfloat cuben[108] = 
+	{
+		0., 0., 1.,	/* front */
+		0., 0., 1.,
+		0., 0., 1.,
 
-	0., 0., 1.,
-	0., 0., 1.,
-	0., 0., 1.,
+		0., 0., 1.,
+		0., 0., 1.,
+		0., 0., 1.,
 
-	0., 0., -1.,	/* back */
-	0., 0., -1.,
-	0., 0., -1.,
+		0., 0., -1.,	/* back */
+		0., 0., -1.,
+		0., 0., -1.,
 
-	0., 0., -1.,
-	0., 0., -1.,
-	0., 0., -1.,
+		0., 0., -1.,
+		0., 0., -1.,
+		0., 0., -1.,
 
-	-1., 0., 0.,	/* left */
-	-1., 0., 0.,
-	-1., 0., 0.,
+		-1., 0., 0.,	/* left */
+		-1., 0., 0.,
+		-1., 0., 0.,
 
-	-1., 0., 0.,
-	-1., 0., 0.,
-	-1., 0., 0.,
+		-1., 0., 0.,
+		-1., 0., 0.,
+		-1., 0., 0.,
 
-	1., 0., 0.,	/* right */
-	1., 0., 0.,
-	1., 0., 0.,
+		1., 0., 0.,	/* right */
+		1., 0., 0.,
+		1., 0., 0.,
 
-	1., 0., 0.,
-	1., 0., 0.,
-	1., 0., 0.,
+		1., 0., 0.,
+		1., 0., 0.,
+		1., 0., 0.,
 
-	0., 1., 0.,	/* top */
-	0., 1., 0.,
-	0., 1., 0.,
+		0., 1., 0.,	/* top */
+		0., 1., 0.,
+		0., 1., 0.,
 
-	0., 1., 0.,
-	0., 1., 0.,
-	0., 1., 0.,
+		0., 1., 0.,
+		0., 1., 0.,
+		0., 1., 0.,
 
-	0., -1., 0.,	/* bottom */
-	0., -1., 0.,
-	0., -1., 0.,
+		0., -1., 0.,	/* bottom */
+		0., -1., 0.,
+		0., -1., 0.,
 
-	0., -1., 0.,
-	0., -1., 0.,
-	0., -1., 0.,
+		0., -1., 0.,
+		0., -1., 0.,
+		0., -1., 0.,
     };
+
     int i;
 	size /= 2;
-    v = malloc(sizeof cubev); memcpy(v, cubev, sizeof cubev);
-    n = malloc(sizeof cuben); memcpy(n, cuben, sizeof cuben);
-    for(i = 0; i < sizeof cubev/sizeof cubev[0]; i++) {
-	v[i] *= size;
-    }
+
+    for(i = 0; i < 108; i++) 
+		v[i] = cubev[i] * size;
+
     glVertexPointer(3, GL_FLOAT, 0, v);
-    glNormalPointer(GL_FLOAT, 0, n);
+    glNormalPointer(GL_FLOAT, 0, cuben);
 
     glEnableClientState (GL_VERTEX_ARRAY);
     glEnableClientState (GL_NORMAL_ARRAY);
 
-    glDrawArrays(GL_TRIANGLES, 0, 12*3);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
@@ -450,80 +450,84 @@ ugSolidCubef(GLfloat size) {
 }
 
 void APIENTRY
-ugWireCubef(GLfloat size) {
-    static GLfloat* v, *n;
-    static const GLfloat cubev[3*6*4] = {
-	-1., -1., 1.,	/* front */
-	 1., -1., 1.,
-	 1.,  1., 1.,
-	-1.,  1., 1.,
+ugWireCubef(GLfloat size) 
+{
+    static GLfloat v[72];
 
-	-1.,  1., -1.,	/* back */
-	 1.,  1., -1.,
-	 1., -1., -1.,
-	-1., -1., -1.,
+    static const GLfloat cubev[72] = 	  // 72 = 3*6*4
+	{
+		-1., -1., 1.,	/* front */
+		 1., -1., 1.,
+		 1.,  1., 1.,
+		-1.,  1., 1.,
 
-	-1., -1., -1.,	/* left */
-	-1., -1.,  1.,
-	-1.,  1.,  1.,
-	-1.,  1., -1.,
+		-1.,  1., -1.,	/* back */
+		 1.,  1., -1.,
+		 1., -1., -1.,
+		-1., -1., -1.,
 
-	 1., -1.,  1.,	/* right */
-	 1., -1., -1.,
-	 1.,  1., -1.,
-	 1.,  1.,  1.,
+		-1., -1., -1.,	/* left */
+		-1., -1.,  1.,
+		-1.,  1.,  1.,
+		-1.,  1., -1.,
 
-	-1.,  1.,  1.,	/* top */
-	 1.,  1.,  1.,
-	 1.,  1., -1.,
-	-1.,  1., -1.,
+		 1., -1.,  1.,	/* right */
+		 1., -1., -1.,
+		 1.,  1., -1.,
+		 1.,  1.,  1.,
 
-	-1., -1., -1.,	/* bottom */
-	 1., -1., -1.,
-	 1., -1.,  1.,
-	-1., -1.,  1.,
+		-1.,  1.,  1.,	/* top */
+		 1.,  1.,  1.,
+		 1.,  1., -1.,
+		-1.,  1., -1.,
+
+		-1., -1., -1.,	/* bottom */
+		 1., -1., -1.,
+		 1., -1.,  1.,
+		-1., -1.,  1.,
     };
 
-    static const GLfloat cuben[3*6*4] = {
-	0., 0., 1.,	/* front */
-	0., 0., 1.,
-	0., 0., 1.,
-	0., 0., 1.,
+    static const GLfloat cuben[72] = 
+	{
+		0., 0., 1.,	/* front */
+		0., 0., 1.,
+		0., 0., 1.,
+		0., 0., 1.,
 
-	0., 0., -1.,	/* back */
-	0., 0., -1.,
-	0., 0., -1.,
-	0., 0., -1.,
+		0., 0., -1.,	/* back */
+		0., 0., -1.,
+		0., 0., -1.,
+		0., 0., -1.,
 
-	-1., 0., 0.,	/* left */
-	-1., 0., 0.,
-	-1., 0., 0.,
-	-1., 0., 0.,
+		-1., 0., 0.,	/* left */
+		-1., 0., 0.,
+		-1., 0., 0.,
+		-1., 0., 0.,
 
-	1., 0., 0.,	/* right */
-	1., 0., 0.,
-	1., 0., 0.,
-	1., 0., 0.,
+		1., 0., 0.,	/* right */
+		1., 0., 0.,
+		1., 0., 0.,
+		1., 0., 0.,
 
-	0., 1., 0.,	/* top */
-	0., 1., 0.,
-	0., 1., 0.,
-	0., 1., 0.,
+		0., 1., 0.,	/* top */
+		0., 1., 0.,
+		0., 1., 0.,
+		0., 1., 0.,
 
-	0., -1., 0.,	/* bottom */
-	0., -1., 0.,
-	0., -1., 0.,
-	0., -1., 0.,
+		0., -1., 0.,	/* bottom */
+		0., -1., 0.,
+		0., -1., 0.,
+		0., -1., 0.,
     };
+
     int i;
 	size /= 2;
-    v = malloc(sizeof cubev); memcpy(v, cubev, sizeof cubev);
-    n = malloc(sizeof cuben); memcpy(n, cuben, sizeof cuben);
-    for(i = 0; i < sizeof cubev/sizeof cubev[0]; i++) {
-	v[i] *= size;
-    }
+
+    for(i = 0; i < 72; i++) 
+		v[i] = cubev[i] * size;
+
     glVertexPointer(3, GL_FLOAT, 0, v);
-    glNormalPointer(GL_FLOAT, 0, n);
+    glNormalPointer(GL_FLOAT, 0, cuben);
 
     glEnableClientState (GL_VERTEX_ARRAY);
     glEnableClientState (GL_NORMAL_ARRAY);
