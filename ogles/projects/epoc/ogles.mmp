@@ -48,6 +48,6 @@ USERINCLUDE ..\..\src
 SYSTEMINCLUDE ..\..\include
 SYSTEMINCLUDE \epoc32\include\libc
 SYSTEMINCLUDE \epoc32\include
-LIBRARY codegen.lib ws32.lib fbscli.lib 
+LIBRARY 	ws32.lib fbscli.lib 
 LIBRARY		estlib.lib euser.lib
-LIBRARY	int64x.lib
+STATICLIBRARY	int64x.lib codegen.lib

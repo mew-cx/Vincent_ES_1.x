@@ -98,16 +98,16 @@ void * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & s
 
 	switch (type) {
 	case FunctionTypePoint:
-		comparison = RasterizerState::ComparePoint;
+		comparison = &RasterizerState::ComparePoint;
 		break;
 
 	case FunctionTypeLine:
-		comparison = RasterizerState::CompareLine;
+		comparison = &RasterizerState::CompareLine;
 		break;
 
 	case FunctionTypeScanline:
 	case FunctionTypeTriangle:
-		comparison = RasterizerState::ComparePolygon;
+		comparison = &RasterizerState::ComparePolygon;
 		break;
 
 	}

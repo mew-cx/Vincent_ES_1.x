@@ -46,9 +46,13 @@ extern "C" {
 /* Symbolic labels															*/
 /****************************************************************************/
 
+#if defined(__GCC32__) && defined(__cplusplus)
+struct cg_label_t;
+struct cg_codegen_t;
+#else
 typedef struct cg_label_t cg_label_t;
 typedef struct cg_codegen_t cg_codegen_t;
-
+#endif
 
 typedef enum 
 {

@@ -42,6 +42,47 @@
 
 using namespace EGL;
 
+// --------------------------------------------------------------------------
+// Table of Supported Configurations
+// --------------------------------------------------------------------------
+namespace {
+    const EGL::Config s_AllConfigurations[] = {
+   	    // ----------------------------------------------------------------------
+	    // Initial default configuration 
+	    // RGB 565, as PBuffer or Windows surface
+	    // ----------------------------------------------------------------------
+	    Config(
+		    32,				//	EGLint	bufferSize,
+		    5,				//	EGLint	redSize,
+		    6,				//	EGLint	greenSize,
+		    5,				//	EGLint	blueSize,
+		    8,				//	EGLint	alphaSize,
+		    EGL_SLOW_CONFIG,//	EGLint	configCaveat,
+		    1,				//	EGLint	configID,
+		    16,				//	EGLint	depthSize,
+		    0,				//	EGLint	level,
+		    1024,			//	EGLint	maxPBufferWidth,
+		    1024,			//	EGLint	maxPBufferHeight,
+		    1024 * 1024,	//	EGLint	mxPBufferPixels,
+		    EGL_FALSE,		//	EGLint	nativeRenderable,
+		    0,				//	EGLint	nativeVisualID,
+		    EGL_NONE,		//	EGLint	nativeVisualType,
+		    0,				//	EGLint	sampleBuffers,
+		    0,				//	EGLint	samples,
+		    32,				//	EGLint	stencilSize,
+		    EGL_PBUFFER_BIT | EGL_WINDOW_BIT,//	EGLint	surfaceType,
+		    EGL_NONE,		//	EGLint	transparentType,
+		    0,				//	EGLint	transparentRedValue,
+		    0,				//	EGLint	transparentGreenValue,
+		    0,				//	EGLint	transparentBlueValue,
+		    240,			//  EGLint	width,
+		    320				//  EGLint	height
+	    )
+    };
+
+    // total number of supported configurations
+    const int s_NumConfigurations = 1;
+};
 
 Config :: Config(
 	EGLint	bufferSize,
@@ -403,44 +444,3 @@ EGLBoolean Config :: ChooseConfig(const EGLint * attribList, EGLConfig * result,
 }
 
 
-// --------------------------------------------------------------------------
-// Table of Supported Configurations
-// --------------------------------------------------------------------------
-
-
-const Config Config :: s_AllConfigurations[1] = {
-	// ----------------------------------------------------------------------
-	// Initial default configuration 
-	// RGB 565, as PBuffer or Windows surface
-	// ----------------------------------------------------------------------
-	Config(
-		32,				//	EGLint	bufferSize,
-		5,				//	EGLint	redSize,
-		6,				//	EGLint	greenSize,
-		5,				//	EGLint	blueSize,
-		8,				//	EGLint	alphaSize,
-		EGL_SLOW_CONFIG,//	EGLint	configCaveat,
-		1,				//	EGLint	configID,
-		16,				//	EGLint	depthSize,
-		0,				//	EGLint	level,
-		1024,			//	EGLint	maxPBufferWidth,
-		1024,			//	EGLint	maxPBufferHeight,
-		1024 * 1024,	//	EGLint	mxPBufferPixels,
-		EGL_FALSE,		//	EGLint	nativeRenderable,
-		0,				//	EGLint	nativeVisualID,
-		EGL_NONE,		//	EGLint	nativeVisualType,
-		0,				//	EGLint	sampleBuffers,
-		0,				//	EGLint	samples,
-		32,				//	EGLint	stencilSize,
-		EGL_PBUFFER_BIT | EGL_WINDOW_BIT,//	EGLint	surfaceType,
-		EGL_NONE,		//	EGLint	transparentType,
-		0,				//	EGLint	transparentRedValue,
-		0,				//	EGLint	transparentGreenValue,
-		0,				//	EGLint	transparentBlueValue,
-		240,			//  EGLint	width,
-		320				//  EGLint	height
-	)
-};
-
-// total number of supported configurations
-const int Config :: s_NumConfigurations = 1;

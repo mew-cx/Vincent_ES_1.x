@@ -42,9 +42,11 @@ extern "C" {
 /****************************************************************************/
 /* Heap data type															*/
 /****************************************************************************/
-
+#if defined(__GCC32__) && defined(__cplusplus)
+struct cg_heap_t;
+#else
 typedef struct cg_heap_t cg_heap_t;
-
+#endif
 
 cg_heap_t * cg_heap_create(size_t default_block_size);
 	/************************************************************************/

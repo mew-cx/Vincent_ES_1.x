@@ -191,4 +191,4 @@ EXPORTS
 	glWeightPointerOES @ 190 NONAME
 	??0TInt64X@@QAE@ABVTInt64@@@Z @ 191 NONAME ; public: __thiscall TInt64X::TInt64X(class TInt64 const &)
 	??0TInt64X@@QAE@XZ @ 192 NONAME ; public: __thiscall TInt64X::TInt64X(void)
-
+	??0Config@EGL@@QAE@XZ @ 193 NONAME ; public: __thiscall EGL::Config::Config(void)
