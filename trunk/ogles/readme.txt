@@ -9,7 +9,7 @@ http://sourceforge.net/projects/ogl-es/
 Overview
 --------
 
-Vincent develops a compliant implementation of the OpenGL (R) ES 1.0 API specification for 
+Vincent develops a compliant implementation of the OpenGL (R) ES 1.1 API specification for 
 Pocket PCs and Smartphones. The current target platforms are Windows Mobile and Symbian devices 
 using TI OMAP, Intel (R) StrongARM and XScale PA2xx processors.
 
@@ -20,6 +20,9 @@ conformance test for the Common Light profile, i.e. the fixed point API defined 
 Further builds of the project will focus on addressing performance issues present in the
 current build, as well as adressing issues as reported by users that are not covered by
 the tests we have run so far.
+
+In addition, we have started to incorporate a large part of the additions that were introduced
+with the OpenGL ES 1.1 API specification.
 
 
 
@@ -38,19 +41,20 @@ The project tree as checked into sourceforge provides everything you need to bui
 folder structure is as follows:
 
 /src				- Source files
+	/ARM			- Code generation for ARM
+	/codegen		- A compiler backend library
+	/epoc			- Symbian platform files (not really maintained at this point)
+	/WinCE			- Windows Mobile platform files
 
 /projects			- Visual Studio project files
 	/evc4			- for embedded Visual C++ 4.0
-	/vcnet			- for Visual Studio .NET 2003
+	/epoc			- for Symbian development 
 
 /obj				- Intermediate build files
 	/arm			- for ARM
 		/Debug
 		/Release
 	/emu			- for PocketPC emulator
-		/Debug
-		/Release
-	/x86			- for Windows
 		/Debug
 		/Release
 	/xscale			- for Intel XScale
@@ -64,29 +68,31 @@ folder structure is as follows:
 	/emu
 		/Debug
 		/Release
-	/x86
-		/Debug
-		/Release
 	/xscale
 		/Debug
 		/Release
 
-/dist				- Distribution folders
-	/arm
-		/Debug
-		/Release
-	/emu
-		/Debug
-		/Release
-	/x86
-		/Debug
-		/Release
-	/xscale
-		/Debug
-		/Release
+/include
+	/GLES			- The OpenGL ES library header files
+	
+/redbook			- Conversion of the redbook examples
+	/evc4			- A project workspace for embedded Visual C++ 4.0
+	
+/ug
+				- A helper library that provides a subset of GLUT for Pocket PCs
+	
+
+/doc				- Various documents that are helpful for this project
 
 /tools				- Build scripts and helper tools
 
+
+How do I get started?
+---------------------
+
+Check out the "Getting Started" page on SourceForge: http://ogl-es.sourceforge.net/getting_started.htm
+To start programming with OpenGL ES the redbook examples that are provided with this project
+make a good starting point.
 
 
 How do I build this project from the source?
@@ -100,7 +106,8 @@ any further adjustment.
 How do I get support?
 ---------------------
 
-Please refer to the SourceForge project homepage on how to obtain support.
+Please refer to the SourceForge project homepage on how to obtain support. Preferably, please enter a
+support request through the SourceForge project page. 
 
 
 How can I contribute?
