@@ -217,22 +217,19 @@ cg_virtual_reg_t * CodeGenerator :: ClampTo255(cg_block_t * block, cg_virtual_re
 	cg_proc_t * procedure = block->proc;
 
 	DECL_CONST_REG	(constant0, 0);
-	DECL_CONST_REG	(constant8, 8);
-	DECL_CONST_REG	(constant16, 16);
+	DECL_CONST_REG	(constant17, 17);
 	DECL_CONST_REG	(constant1, 0x10000);
+	DECL_CONST_REG	(constantFactor, 0x1ff);
 
 	DECL_REG	(regClamped0);
 	DECL_REG	(regClamped1);
-	DECL_REG	(regShifted);
 	DECL_REG	(regAdjusted);
 	DECL_REG	(regResult);
 
 	MAX		(regClamped0, value, constant0);
 	MIN		(regClamped1, regClamped0, constant1);
-
-	LSR		(regShifted, regClamped1, constant16);
-	SUB		(regAdjusted, regClamped1, regShifted);
-	LSR		(regResult, regAdjusted, constant8);
+	MUL		(regAdjusted, regClamped1, constantFactor);
+	LSR		(regResult, regAdjusted, constant17);
 
 	return regResult;
 }

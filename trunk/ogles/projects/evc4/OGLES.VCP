@@ -332,10 +332,12 @@ DEP_CPP_CONFI=\
 	"..\..\include\GLES\gl.h"\
 	"..\..\src\Config.h"\
 	"..\..\src\OGLES.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	
 NODEP_CPP_CONFI=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -509,11 +511,14 @@ DEP_CPP_CONTE=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\Utils.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CONTE=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -688,11 +693,13 @@ DEP_CPP_CONTEX=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CONTEX=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -864,11 +871,13 @@ DEP_CPP_CONTEXT=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CONTEXT=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -1041,11 +1050,14 @@ DEP_CPP_CONTEXTL=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\Utils.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CONTEXTL=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -1226,11 +1238,13 @@ DEP_CPP_CONTEXTLI=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CONTEXTLI=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -1403,11 +1417,14 @@ DEP_CPP_CONTEXTM=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\Utils.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CONTEXTM=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -1579,11 +1596,13 @@ DEP_CPP_CONTEXTMA=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CONTEXTMA=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -1755,11 +1774,13 @@ DEP_CPP_CONTEXTP=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CONTEXTP=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -1934,11 +1955,13 @@ DEP_CPP_CONTEXTR=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CONTEXTR=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -2111,11 +2134,13 @@ DEP_CPP_CONTEXTRE=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CONTEXTRE=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 # ADD CPP /FAs
 
@@ -2290,11 +2315,14 @@ DEP_CPP_CONTEXTT=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\Utils.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CONTEXTT=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -2476,11 +2504,13 @@ DEP_CPP_CONTEXTTR=\
 	"..\..\src\Texture.h"\
 	"..\..\src\TriangleClipperHigh.inc"\
 	"..\..\src\TriangleClipperLow.inc"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CONTEXTTR=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -2652,11 +2682,13 @@ DEP_CPP_CONTEXTV=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CONTEXTV=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -2748,10 +2780,12 @@ DEP_CPP_DISPL=\
 	"..\..\include\GLES\gl.h"\
 	"..\..\src\Display.h"\
 	"..\..\src\OGLES.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	
 NODEP_CPP_DISPL=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -2832,6 +2866,7 @@ DEP_CPP_FIXED=\
 	
 NODEP_CPP_FIXED=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 # ADD CPP /FAs
 
@@ -3004,11 +3039,13 @@ DEP_CPP_GL_CP=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_GL_CP=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -3114,6 +3151,7 @@ DEP_CPP_LIGHT=\
 	
 NODEP_CPP_LIGHT=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -3195,6 +3233,7 @@ DEP_CPP_LINAL=\
 	
 NODEP_CPP_LINAL=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -3292,6 +3331,7 @@ DEP_CPP_MATER=\
 	
 NODEP_CPP_MATER=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -3379,6 +3419,7 @@ DEP_CPP_MATRI=\
 	
 NODEP_CPP_MATRI=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -3525,11 +3566,13 @@ DEP_CPP_RASTE=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_RASTE=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 # ADD BASE CPP /Oxt /Ob2 /FAs
 # ADD CPP /Oxt /Ob2 /FAs
@@ -3625,6 +3668,7 @@ DEP_CPP_RASTER=\
 	
 NODEP_CPP_RASTER=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -3773,11 +3817,13 @@ DEP_CPP_RASTERI=\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\RasterizerTriangles.inc"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_RASTERI=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 # ADD CPP /FAs
 
@@ -3905,10 +3951,12 @@ DEP_CPP_TEXTU=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	
 NODEP_CPP_TEXTU=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -4307,11 +4355,13 @@ DEP_CPP_CODEG=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CODEG=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -4456,11 +4506,13 @@ DEP_CPP_FUNCT=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_FUNCT=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -4653,11 +4705,13 @@ DEP_CPP_GENFR=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_GENFR=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 # ADD CPP /FAs
 
@@ -4845,11 +4899,13 @@ DEP_CPP_GENLL=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_GENLL=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -5036,11 +5092,13 @@ DEP_CPP_GENPO=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_GENPO=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -5229,11 +5287,13 @@ DEP_CPP_GENSC=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_GENSC=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -5420,11 +5480,13 @@ DEP_CPP_GENTR=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_GENTR=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -5603,11 +5665,13 @@ DEP_CPP_CONTEXTW=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_CONTEXTW=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -5782,11 +5846,13 @@ DEP_CPP_EGL_C=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_EGL_C=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -5855,6 +5921,7 @@ DEP_CPP_OGLES=\
 	
 NODEP_CPP_OGLES=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
@@ -5922,6 +5989,7 @@ DEP_CPP_STDAF=\
 	
 NODEP_CPP_STDAF=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 # ADD CPP /Yc"stdafx.h"
 
@@ -6035,11 +6103,13 @@ DEP_CPP_SURFA=\
 	"..\..\src\Config.h"\
 	"..\..\src\fixed.h"\
 	"..\..\src\OGLES.h"\
+	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
 	
 NODEP_CPP_SURFA=\
 	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ENDIF 
