@@ -62,6 +62,29 @@ namespace EGL {
 
 	class OGLES_API MultiTexture {
 	public:
+		enum WrappingMode {
+			WrappingModeInvalid = -1,
+			WrappingModeClampToEdge,
+			WrappingModeRepeat
+		};
+
+		enum MinFilterMode {
+			MinFilterModeInvalid = -1,
+			MinFilterModeNearest,
+			MinFilterModeLinear,
+			MinFilterModeNearestMipmapNearest,
+			MinFilterModeNearestMipmapLinear,
+			MinFilterModeLinearMipmapNearest,
+			MinFilterModeLinearMipmapLinear,
+		};
+
+		enum MagFilterMode {
+			MagFilterModeInvalid = -1,
+			MagFilterModeNearest,
+			MagFilterModeLinear
+		};
+
+	public:
 		enum {
 			MAX_LEVELS = 20
 		};
@@ -72,9 +95,22 @@ namespace EGL {
 		Texture * GetTexture(int level)				{ return m_TextureLevels[level]; }
 		const Texture * GetTexture(int level) const	{ return m_TextureLevels[level]; }
 
+		void SetMinFilterMode(MinFilterMode mode)	{ m_MinFilterMode = mode; }
+		void SetMagFilterMode(MagFilterMode mode)	{ m_MagFilterMode = mode; }
+		void SetWrappingModeS(WrappingMode mode)	{ m_WrappingModeS = mode; }
+		void SetWrappingModeT(WrappingMode mode)	{ m_WrappingModeT = mode; }
+
+		MinFilterMode GetMinFilterMode() const		{ return m_MinFilterMode; }
+		MagFilterMode GetMagFilterMode() const		{ return m_MagFilterMode; }
+		WrappingMode GetWrappingModeS() const		{ return m_WrappingModeS; }
+		WrappingMode GetWrappingModeT() const		{ return m_WrappingModeT; }
+
 	private:
 		Texture	*		m_TextureLevels[MAX_LEVELS];
-		U32				m_BaseLevel;
+		MinFilterMode	m_MinFilterMode;
+		MagFilterMode	m_MagFilterMode;
+		WrappingMode	m_WrappingModeS;
+		WrappingMode	m_WrappingModeT;
 		U32				m_Levels;
 	};
 
