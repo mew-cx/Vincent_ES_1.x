@@ -397,6 +397,22 @@ void Context :: Hint(GLenum target, GLenum mode) {
 	// that is not defined
 }
 
+namespace {
+    static const GLenum formats[] = {
+		GL_PALETTE4_RGB8_OES,
+		GL_PALETTE4_RGBA8_OES,
+		GL_PALETTE4_R5_G6_B5_OES,
+		GL_PALETTE4_RGBA4_OES,
+		GL_PALETTE4_RGB5_A1_OES,
+		GL_PALETTE8_RGB8_OES,
+		GL_PALETTE8_RGBA8_OES,
+		GL_PALETTE8_R5_G6_B5_OES,
+		GL_PALETTE8_RGBA4_OES,
+		GL_PALETTE8_RGB5_A1_OES
+    };
+}
+
+
 void Context :: GetIntegerv(GLenum pname, GLint *params) { 
 	switch (pname) {
 	case GL_ALPHA_BITS:
@@ -434,12 +450,18 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		params[0] = 1;
 		break;
 
-
 	case GL_COMPRESSED_TEXTURE_FORMATS:
+		{
+			size_t numFormats = sizeof(formats) / sizeof(formats[0]);
+
+			for (size_t index = 0; index < numFormats; ++index) 
+				params[index] = formats[index];
+		}
+
 		break;
 
 	case GL_NUM_COMPRESSED_TEXTURE_FORMATS:
-		params[0] = 0;
+		params[0] = sizeof(formats) / sizeof(formats[0]);
 		break;
 
 	case GL_MAX_ELEMENTS_INDICES:
