@@ -2088,7 +2088,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				}
 				break;
 
-			case RasterizerState::BlendFuncSrcSrcColor:
+			case RasterizerState::BlendFuncSrcDstColor:
 				{
 					//srcCoeff = color;	// adjust scaling of R, G, B
 					DECL_REG(regShiftedR);
@@ -2100,9 +2100,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					DECL_REG(regConstant2);
 					LDI		(regConstant2, 2);
 
-					LSL		(regShiftedR, regColorR, regConstant3);
-					LSL		(regShiftedG, regColorG, regConstant2);
-					LSL		(regShiftedB, regColorB, regConstant3);
+					LSL		(regShiftedR, regDstR, regConstant3);
+					LSL		(regShiftedG, regDstG, regConstant2);
+					LSL		(regShiftedB, regDstB, regConstant3);
 
 					//srcCoeff * color
 
@@ -2113,7 +2113,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				}
 				break;
 
-			case RasterizerState::BlendFuncSrcOneMinusSrcColor:
+			case RasterizerState::BlendFuncSrcOneMinusDstColor:
 				{
 					//srcCoeff = Color(Color::MAX - color.R(), Color::MAX - color.G(), Color::MAX - color.B(), Color::MAX - color.A());
 
@@ -2132,9 +2132,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					LDI		(regConstant2, 2);
 					LDI		(regConstant256, 256);
 
-					LSL		(regShiftedR, regColorR, regConstant3);
-					LSL		(regShiftedG, regColorG, regConstant2);
-					LSL		(regShiftedB, regColorB, regConstant3);
+					LSL		(regShiftedR, regDstR, regConstant3);
+					LSL		(regShiftedG, regDstG, regConstant2);
+					LSL		(regShiftedB, regDstB, regConstant3);
 
 					SUB		(regCoeffR, regConstant256, regShiftedR);
 					SUB		(regCoeffG, regConstant256, regShiftedG);
@@ -2201,6 +2201,28 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							&regSrcBlendR, &regSrcBlendG, &regSrcBlendB, &regSrcBlendA, 
 							regDiffA, regDiffA, regDiffA, regDiffA,
 							regColorR, regColorG, regColorB, regColorA);
+				}
+				break;
+
+			case RasterizerState::BlendFuncSrcSrcAlphaSaturate:
+				{
+					//	U8 rev = Color::MAX - dstAlpha;
+					DECL_REG(regConstant256);
+					DECL_REG(regRev);
+
+					LDI		(regConstant256, 256);
+					SUB		(regRev, regConstant256, regDstAlpha);
+
+					//	U8 f = (rev < color.A() ? rev : color.A());
+					DECL_REG(regF);
+					MIN		(regF, regRev, regColorA);
+
+					//	dstCoeff = Color(f, f, f, Color::MAX);
+					//dstCoeff * dstColor
+					BlendColor(block,
+						&regDstBlendR, &regDstBlendG, &regDstBlendB, &regDstBlendA, 
+						regF, regF, regF, regConstant256,
+						regDstR, regDstG, regDstB, regDstAlpha);
 				}
 				break;
 		}
@@ -2304,7 +2326,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						regDstR, regDstG, regDstB, regDstAlpha);
 				break;
 
-			case RasterizerState::BlendFuncDstSrcOneMinusSrcAlpha:
+			case RasterizerState::BlendFuncDstOneMinusSrcAlpha:
 				{
 					//dstCoeff = Color(Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A());
 					DECL_REG(regConstant256);
@@ -2345,28 +2367,6 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					BlendColor(block,
 						&regDstBlendR, &regDstBlendG, &regDstBlendB, &regDstBlendA, 
 						regDiffA, regDiffA, regDiffA, regDiffA,
-						regDstR, regDstG, regDstB, regDstAlpha);
-				}
-				break;
-
-			case RasterizerState::BlendFuncDstSrcAlphaSaturate:
-				{
-					//	U8 rev = Color::MAX - dstAlpha;
-					DECL_REG(regConstant256);
-					DECL_REG(regRev);
-
-					LDI		(regConstant256, 256);
-					SUB		(regRev, regConstant256, regColorA);
-
-					//	U8 f = (rev < color.A() ? rev : color.A());
-					DECL_REG(regF);
-					MIN		(regF, regRev, regColorA);
-
-					//	dstCoeff = Color(f, f, f, Color::MAX);
-					//dstCoeff * dstColor
-					BlendColor(block,
-						&regDstBlendR, &regDstBlendG, &regDstBlendB, &regDstBlendA, 
-						regF, regF, regF, regConstant256,
 						regDstR, regDstG, regDstB, regDstAlpha);
 				}
 				break;

@@ -240,16 +240,14 @@ namespace EGL {
 		}
 
 	private:
-		static U8 clamp(U16 value) {
+		static inline U8 clamp(U16 value) {
 			return (value > MAX) ? (U8) MAX : (U8) value;
 		}
 
-		static U8 mul(U8 color, U8 factor) {
-			if (factor & 0x80) {
-				return (color * (factor + 1)) >> 8;
-			} else {
-				return (color * factor) >> 8;
-			}
+		static inline U8 mul(U8 color, U8 factor) {
+			U16 prod = color * factor;
+
+			return (prod + (prod >> 8)) >> 8;
 		}
 
 		static EGL_Fixed s_alphaFactor[256];		// lookup table to convert 0..255 into 0 .. 1.0

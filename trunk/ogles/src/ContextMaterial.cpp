@@ -64,37 +64,6 @@ namespace {
 		}
 	}
 
-	RasterizerState::BlendFuncSrc BlendFuncSrcFromEnum(GLenum func) {
-		switch (func) {
-			case GL_ONE:					return RasterizerState::BlendFuncSrcOne;
-			case GL_DST_COLOR:				return RasterizerState::BlendFuncSrcSrcColor;
-			case GL_ONE_MINUS_DST_COLOR:	return RasterizerState::BlendFuncSrcOneMinusSrcColor;
-			case GL_SRC_ALPHA:				return RasterizerState::BlendFuncSrcSrcAlpha;
-			case GL_ONE_MINUS_SRC_ALPHA:	return RasterizerState::BlendFuncSrcOneMinusSrcAlpha;
-			case GL_DST_ALPHA:				return RasterizerState::BlendFuncSrcDstAlpha;
-			case GL_ONE_MINUS_DST_ALPHA:	return RasterizerState::BlendFuncSrcOneMinusDstAlpha;
-
-			default:						// TODO RecordError(GL_INVALID_ENUM);
-			case GL_ZERO:					return RasterizerState::BlendFuncSrcZero;
-		}
-	}
-
-	RasterizerState::BlendFuncDst BlendFuncDstFromEnum(GLenum func) {
-		switch (func) {
-			case GL_ZERO:					return RasterizerState::BlendFuncDstZero;
-			case GL_SRC_COLOR:				return RasterizerState::BlendFuncDstSrcColor;
-			case GL_ONE_MINUS_SRC_COLOR:	return RasterizerState::BlendFuncDstOneMinusSrcColor;
-			case GL_SRC_ALPHA:				return RasterizerState::BlendFuncDstSrcAlpha;
-			case GL_ONE_MINUS_SRC_ALPHA:	return RasterizerState::BlendFuncDstSrcOneMinusSrcAlpha;
-			case GL_DST_ALPHA:				return RasterizerState::BlendFuncDstDstAlpha;
-			case GL_ONE_MINUS_DST_ALPHA:	return RasterizerState::BlendFuncDstOneMinusDstAlpha;
-			case GL_SRC_ALPHA_SATURATE:		return RasterizerState::BlendFuncDstSrcAlphaSaturate;
-
-			default:						// TODO RecordError(GL_INVALID_ENUM);
-			case GL_ONE:					return RasterizerState::BlendFuncDstOne;
-		}
-	}
-
 	RasterizerState::StencilOp StencilOpFromEnum(GLenum op) {
 		switch (op) {
 			default:
@@ -162,7 +131,42 @@ void Context :: DepthMask(GLboolean flag) {
 
 
 void Context :: BlendFunc(GLenum sfactor, GLenum dfactor) { 
-	GetRasterizerState()->SetBlendFunc(BlendFuncSrcFromEnum(sfactor), BlendFuncDstFromEnum(dfactor));
+
+	RasterizerState::BlendFuncSrc source;
+	RasterizerState::BlendFuncDst dest;
+
+	switch (sfactor) {
+		case GL_ZERO:					source = RasterizerState::BlendFuncSrcZero; break;
+		case GL_ONE:					source = RasterizerState::BlendFuncSrcOne; break;
+		case GL_DST_COLOR:				source = RasterizerState::BlendFuncSrcDstColor; break;
+		case GL_ONE_MINUS_DST_COLOR:	source = RasterizerState::BlendFuncSrcOneMinusDstColor; break;
+		case GL_SRC_ALPHA:				source = RasterizerState::BlendFuncSrcSrcAlpha; break;
+		case GL_ONE_MINUS_SRC_ALPHA:	source = RasterizerState::BlendFuncSrcOneMinusSrcAlpha; break;
+		case GL_DST_ALPHA:				source = RasterizerState::BlendFuncSrcDstAlpha; break;
+		case GL_ONE_MINUS_DST_ALPHA:	source = RasterizerState::BlendFuncSrcOneMinusDstAlpha; break;
+		case GL_SRC_ALPHA_SATURATE:		source = RasterizerState::BlendFuncSrcSrcAlphaSaturate; break;
+
+		default:						
+			RecordError(GL_INVALID_ENUM);
+			return;
+	}
+
+	switch (dfactor) {
+		case GL_ZERO:					dest = RasterizerState::BlendFuncDstZero; break;
+		case GL_SRC_COLOR:				dest = RasterizerState::BlendFuncDstSrcColor; break;
+		case GL_ONE_MINUS_SRC_COLOR:	dest = RasterizerState::BlendFuncDstOneMinusSrcColor; break;
+		case GL_SRC_ALPHA:				dest = RasterizerState::BlendFuncDstSrcAlpha; break;
+		case GL_ONE_MINUS_SRC_ALPHA:	dest = RasterizerState::BlendFuncDstOneMinusSrcAlpha; break;
+		case GL_DST_ALPHA:				dest = RasterizerState::BlendFuncDstDstAlpha; break;
+		case GL_ONE_MINUS_DST_ALPHA:	dest = RasterizerState::BlendFuncDstOneMinusDstAlpha; break;
+		case GL_ONE:					dest = RasterizerState::BlendFuncDstOne; break;
+
+		default:						
+			RecordError(GL_INVALID_ENUM);
+			return;
+	}
+
+	GetRasterizerState()->SetBlendFunc(source, dest);
 }
 
 

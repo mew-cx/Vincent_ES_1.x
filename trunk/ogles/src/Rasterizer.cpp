@@ -641,12 +641,12 @@ inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
 				srcCoeff = Color(Color::MAX, Color::MAX, Color::MAX, Color::MAX);
 				break;
 
-			case RasterizerState::BlendFuncSrcSrcColor:
-				srcCoeff = color;
+			case RasterizerState::BlendFuncSrcDstColor:
+				srcCoeff = dstColor;
 				break;
 
-			case RasterizerState::BlendFuncSrcOneMinusSrcColor:
-				srcCoeff = Color(Color::MAX - color.R(), Color::MAX - color.G(), Color::MAX - color.B(), Color::MAX - color.A());
+			case RasterizerState::BlendFuncSrcOneMinusDstColor:
+				srcCoeff = Color(Color::MAX - dstColor.R(), Color::MAX - dstColor.G(), Color::MAX - dstColor.B(), Color::MAX - dstColor.A());
 				break;
 
 			case RasterizerState::BlendFuncSrcSrcAlpha:
@@ -663,6 +663,14 @@ inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
 
 			case RasterizerState::BlendFuncSrcOneMinusDstAlpha:
 				srcCoeff = Color(Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha);
+				break;
+
+			case RasterizerState::BlendFuncSrcSrcAlphaSaturate:
+				{
+					U8 rev = Color::MAX - dstAlpha;
+					U8 f = (rev < color.A() ? rev : color.A());
+					srcCoeff = Color(f, f, f, Color::MAX);
+				}
 				break;
 		}
 
@@ -688,7 +696,7 @@ inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
 				dstCoeff = Color(color.A(), color.A(), color.A(), color.A());
 				break;
 
-			case RasterizerState::BlendFuncDstSrcOneMinusSrcAlpha:
+			case RasterizerState::BlendFuncDstOneMinusSrcAlpha:
 				dstCoeff = Color(Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A());
 				break;
 
@@ -700,13 +708,6 @@ inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
 				dstCoeff = Color(Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha);
 				break;
 
-			case RasterizerState::BlendFuncDstSrcAlphaSaturate:
-				{
-					U8 rev = Color::MAX - dstAlpha;
-					U8 f = (rev < color.A() ? rev : color.A());
-					dstCoeff = Color(f, f, f, Color::MAX);
-				}
-				break;
 		}
 
 		color = srcCoeff * color + dstCoeff * dstColor;
