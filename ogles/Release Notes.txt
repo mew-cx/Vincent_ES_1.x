@@ -17,10 +17,12 @@ This version addresses the following issues:
 1010510 - specular color incorrect
 1010824 - Provide utility function to save screenshots
 1011519 - Improve rasterizer state comparisons
+1001369 - Convert point rasterization to JIT
 1014020 - Fog Linear test failed.
 1014019 - Blend test failed.
 1014018 - LogicOp Function test failed.
 1014016 - Stencil Plane Operation test failed.
+1014017 - Stencil Plane Function test failed.
 
 
 Version 0.81
