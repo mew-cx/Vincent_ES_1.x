@@ -137,20 +137,20 @@ void CodeGenerator :: Compile(FunctionCache * target, FunctionCache::FunctionTyp
 
 	(this->*function)();
 
-#ifndef NDEBEUG
+#ifndef NDEBUG
 	Dump("dump1.txt", m_Module);
 #endif
 
 	cg_module_inst_def(m_Module);
 	cg_module_amode(m_Module);
 
-#ifndef NDEBEUG
+#ifndef NDEBUG
 	Dump("dump2.txt", m_Module);
 #endif
 
 	cg_module_eliminate_dead_code(m_Module);
 
-#ifndef NDEBEUG
+#ifndef NDEBUG
 	Dump("dump3.txt", m_Module);
 #endif
 
@@ -159,12 +159,14 @@ void CodeGenerator :: Compile(FunctionCache * target, FunctionCache::FunctionTyp
 	cg_module_inst_use_chains(m_Module);
 	//cg_module_reorder_instructions(m_Module);
 
+#ifndef NDEBUG
 	Dump("dump35.txt", m_Module);
+#endif
 
 	cg_module_dataflow(m_Module);
 	cg_module_interferences(m_Module);
 
-#ifndef NDEBEUG
+#ifndef NDEBUG
 	Dump("dump4.txt", m_Module);
 #endif
 
@@ -188,7 +190,7 @@ void CodeGenerator :: Compile(FunctionCache * target, FunctionCache::FunctionTyp
 
 	cg_segment_t * cseg = cg_codegen_segment(codegen);
 
-#ifndef NDEBEUG
+#ifndef NDEBUG
 	ARMDis dis;
 	armdis_init(&dis);
 	armdis_dump(&dis, "dump5.txt", cseg);
