@@ -225,6 +225,28 @@ void Context :: Lightxv(GLenum light, GLenum pname, const GLfixed *params) {
 }
 
 void Context :: GetLightxv(GLenum light, GLenum pname, GLfixed *params) {
-	assert(0);
+	if (light < GL_LIGHT0 || light > GL_LIGHT7) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	Light * pLight = m_Lights + (light - GL_LIGHT0);
+
+	switch (pname) {
+	case GL_AMBIENT:
+	case GL_DIFFUSE:
+	case GL_SPECULAR:
+	case GL_POSITION:
+	case GL_SPOT_DIRECTION:
+	case GL_SPOT_EXPONENT:
+	case GL_SPOT_CUTOFF:
+	case GL_CONSTANT_ATTENUATION:
+	case GL_LINEAR_ATTENUATION:
+	case GL_QUADRATIC_ATTENUATION:
+
+	default:
+		Lightx(light, pname, *params);
+		return;
+	}
 }
 

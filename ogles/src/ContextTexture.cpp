@@ -2079,18 +2079,85 @@ void Context :: UpdateMipmaps(void) {
 
 
 void Context :: GetTexEnviv(GLenum env, GLenum pname, GLint *params) {
-	assert(0);	
+
+	if (env != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	switch (pname) {
+	case GL_TEXTURE_ENV_MODE:
+	case GL_COMBINE_RGB:
+	case GL_COMBINE_ALPHA:
+	case GL_SRC0_RGB:
+	case GL_SRC1_RGB:
+	case GL_SRC2_RGB:
+	case GL_SRC0_ALPHA:
+	case GL_SRC1_ALPHA:
+	case GL_SRC2_ALPHA:
+	case GL_OPERAND0_RGB:
+	case GL_OPERAND1_RGB:
+	case GL_OPERAND2_RGB:
+	case GL_OPERAND0_ALPHA:
+	case GL_OPERAND1_ALPHA:
+	case GL_OPERAND2_ALPHA:
+	case GL_RGB_SCALE:
+	case GL_ALPHA_SCALE:
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		break;
+	}
 }
 
 void Context :: GetTexEnvxv(GLenum env, GLenum pname, GLfixed *params) {
-	assert(0);
+
+	if (env != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	switch (pname) {
+	case GL_TEXTURE_ENV_COLOR:
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		break;
+	}
 }
 
 void Context :: GetTexParameteriv(GLenum target, GLenum pname, GLint *params) {
-	assert(0);
+
+	if (target != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	switch (pname) {
+	case GL_TEXTURE_MIN_FILTER:
+	case GL_TEXTURE_MAG_FILTER:
+	case GL_TEXTURE_WRAP_S:
+	case GL_TEXTURE_WRAP_T:
+	case GL_GENERATE_MIPMAP:
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		break;
+	}
 }
 
 void Context :: GetTexParameterxv(GLenum target, GLenum pname, GLfixed *params) {
-	assert(0);
+
+	if (target != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	switch (pname) {
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		break;
+	}
 }
 

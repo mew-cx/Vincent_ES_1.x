@@ -521,14 +521,6 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		params[0] = m_Config.GetConfigAttrib(EGL_SAMPLES);
 		break;
 
-	case GL_ALIASED_LINE_WIDTH_RANGE:
-	case GL_ALIASED_POINT_SIZE_RANGE:
-	case GL_SMOOTH_LINE_WIDTH_RANGE:
-	case GL_SMOOTH_POINT_SIZE_RANGE:
-		params[0] = 1;
-		params[1] = 1;
-		break;
-
 	case GL_COMPRESSED_TEXTURE_FORMATS:
 		{
 			size_t numFormats = sizeof(formats) / sizeof(formats[0]);
@@ -550,6 +542,10 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 
 	case GL_MAX_LIGHTS:
 		params[0] = EGL_NUMBER_LIGHTS;
+		break;
+
+	case GL_MAX_CLIP_PLANES:
+		params[0] = NUM_CLIP_PLANES;
 		break;
 
 	case GL_MAX_MODELVIEW_STACK_DEPTH:
@@ -585,6 +581,147 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		params[1] = m_Config.m_Height;
 		break;
 
+	case GL_MAX_PALETTE_MATRICES_OES:
+		params[0] = MATRIX_PALETTE_SIZE;
+		break;
+
+	case GL_VERTEX_ARRAY_SIZE:
+		params[0] = m_VertexArray.size;
+		break;
+
+	case GL_VERTEX_ARRAY_STRIDE:
+		params[0] = m_VertexArray.stride;
+		break;
+
+	case GL_VERTEX_ARRAY_TYPE:
+		params[0] = m_VertexArray.type;
+		break;
+
+	case GL_NORMAL_ARRAY_STRIDE:
+		params[0] = m_NormalArray.stride;
+		break;
+
+	case GL_NORMAL_ARRAY_TYPE:
+		params[0] = m_NormalArray.type;
+		break;
+
+	case GL_COLOR_ARRAY_SIZE:
+		params[0] = m_ColorArray.size;
+		break;
+
+	case GL_COLOR_ARRAY_STRIDE:
+		params[0] = m_ColorArray.stride;
+		break;
+
+	case GL_COLOR_ARRAY_TYPE:
+		params[0] = m_ColorArray.type;
+		break;
+
+	case GL_TEXTURE_COORD_ARRAY_SIZE:
+		params[0] = m_TexCoordArray.size;
+		break;
+
+	case GL_TEXTURE_COORD_ARRAY_STRIDE:
+		params[0] = m_TexCoordArray.stride;
+		break;
+
+	case GL_TEXTURE_COORD_ARRAY_TYPE:
+		params[0] = m_TexCoordArray.type;
+		break;
+
+	case GL_MATRIX_INDEX_ARRAY_SIZE_OES:
+		params[0] = m_MatrixIndexArray.size;
+		break;
+
+	case GL_MATRIX_INDEX_ARRAY_TYPE_OES:
+		params[0] = m_MatrixIndexArray.type;
+		break;
+
+	case GL_MATRIX_INDEX_ARRAY_STRIDE_OES:
+		params[0] = m_MatrixIndexArray.stride;
+		break;
+
+	case GL_WEIGHT_ARRAY_SIZE_OES:
+		params[0] = m_WeightArray.size;
+		break;
+
+	case GL_WEIGHT_ARRAY_TYPE_OES:
+		params[0] = m_WeightArray.type;
+		break;
+
+	case GL_WEIGHT_ARRAY_STRIDE_OES:
+		params[0] = m_WeightArray.stride;
+		break;
+
+	case GL_POINT_SIZE_ARRAY_TYPE_OES:
+		params[0] = m_PointSizeArray.type;
+		break;
+
+	case GL_POINT_SIZE_ARRAY_STRIDE_OES:
+		params[0] = m_PointSizeArray.stride;
+		break;
+
+		/* TO DO */
+	case GL_SAMPLE_BUFFERS:
+	case GL_SAMPLES:
+
+	case GL_CURRENT_COLOR:
+	case GL_CLIENT_ACTIVE_TEXTURE:
+
+
+	case GL_VERTEX_ARRAY_BUFFER_BINDING:
+	case GL_NORMAL_ARRAY_BUFFER_BINDING:
+	case GL_COLOR_ARRAY_BUFFER_BINDING:
+	case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING:
+	case GL_ELEMENT_ARRAY_BUFFER_BINDING:
+	case GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES:
+	case GL_MATRIX_INDEX_ARRAY_BUFFER_BINDING_OES:
+	case GL_WEIGHT_ARRAY_BUFFER_BINDING_OES:
+
+	case GL_VIEWPORT:
+	case GL_MATRIX_MODE:
+	case GL_FOG_MODE:
+	case GL_SHADE_MODEL:
+
+	case GL_CULL_FACE_MODE:
+	case GL_FRONT_FACE:
+
+	case GL_TEXTURE_BINDING_2D:
+
+	case GL_ACTIVE_TEXTURE:
+
+	case GL_STENCIL_WRITEMASK:
+	case GL_DEPTH_CLEAR_VALUE:
+	case GL_STENCIL_CLEAR_VALUE:
+
+	case GL_SCISSOR_BOX:
+	case GL_ALPHA_TEST_FUNC:
+	case GL_ALPHA_TEST_REF:
+	case GL_STENCIL_FUNC:
+	case GL_STENCIL_VALUE_MASK:
+	case GL_STENCIL_REF:
+	case GL_STENCIL_FAIL:
+	case GL_STENCIL_PASS_DEPTH_FAIL:
+	case GL_STENCIL_PASS_DEPTH_PASS:
+	case GL_DEPTH_FUNC:
+	case GL_BLEND_SRC:
+	case GL_BLEND_DST:
+	case GL_LOGIC_OP_MODE:
+
+	case GL_UNPACK_ALIGNMENT:
+	case GL_PACK_ALIGNMENT:
+
+	case GL_PERSPECTIVE_CORRECTION_HINT:
+	case GL_POINT_SMOOTH_HINT:
+	case GL_LINE_SMOOTH_HINT:
+	case GL_FOG_HINT:
+	case GL_GENERATE_MIPMAP_HINT:
+
+	/* extensions */
+	case GL_MAX_VERTEX_UNITS_OES:
+
+	case GL_COORD_REPLACE_OES:
+
 	default:
 		RecordError(GL_INVALID_ENUM);
 	}
@@ -617,18 +754,166 @@ void Context :: Flush(void) { }
 
 
 void Context :: GetBooleanv(GLenum pname, GLboolean *params) {
-	assert(0);
+	switch (pname) {
+	case GL_LIGHT_MODEL_TWO_SIDE:
+		params[0] = m_TwoSidedLightning;
+		break;
+
+	case GL_COLOR_WRITEMASK:
+	case GL_DEPTH_WRITEMASK:
+
+	case GL_SAMPLE_COVERAGE_INVERT:
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
 }
 
 void Context :: GetFixedv(GLenum pname, GLfixed *params) {
-	assert(0);
+	switch (pname) {
+	case GL_CURRENT_COLOR:
+	case GL_CURRENT_TEXTURE_COORDS:
+	case GL_CURRENT_NORMAL:
+
+	case GL_MODELVIEW_MATRIX:
+	case GL_PROJECTION_MATRIX:
+	case GL_TEXTURE_MATRIX:
+	case GL_DEPTH_RANGE:
+
+	case GL_FOG_COLOR:
+	case GL_FOG_DENSITY:
+	case GL_FOG_START:
+	case GL_FOG_END:
+
+	case GL_LIGHT_MODEL_AMBIENT:
+
+	/*case GL_POINT_SIZE:*/
+	case GL_POINT_SIZE_MIN:
+	case GL_POINT_SIZE_MAX:
+	case GL_POINT_FADE_THRESHOLD_SIZE:
+	case GL_POINT_DISTANCE_ATTENUATION:
+
+	/*case GL_LINE_WIDTH:*/
+
+	case GL_POLYGON_OFFSET_UNITS:
+	case GL_POLYGON_OFFSET_FACTOR:
+
+	case GL_SAMPLE_COVERAGE_VALUE:
+
+	case GL_COLOR_CLEAR_VALUE:
+
+
+	case GL_ALIASED_LINE_WIDTH_RANGE:
+	case GL_ALIASED_POINT_SIZE_RANGE:
+	case GL_SMOOTH_LINE_WIDTH_RANGE:
+	case GL_SMOOTH_POINT_SIZE_RANGE:
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		break;
+	}
+
 }
 
 void Context :: GetPointerv(GLenum pname, void **params) {
-	assert(0);
+	switch (pname) {
+	case GL_VERTEX_ARRAY_POINTER:
+		params[0] = const_cast<void *>(m_VertexArray.pointer);
+		break;
+
+	case GL_NORMAL_ARRAY_POINTER:
+		params[0] = const_cast<void *>(m_NormalArray.pointer);
+		break;
+
+	case GL_COLOR_ARRAY_POINTER:
+		params[0] = const_cast<void *>(m_ColorArray.pointer);
+		break;
+
+	case GL_TEXTURE_COORD_ARRAY_POINTER:
+		params[0] = const_cast<void *>(m_TexCoordArray.pointer);
+		break;
+
+	case GL_MATRIX_INDEX_ARRAY_POINTER_OES:
+		params[0] = const_cast<void *>(m_MatrixIndexArray.pointer);
+		break;
+
+	case GL_WEIGHT_ARRAY_OES:
+		params[0] = const_cast<void *>(m_WeightArray.pointer);
+		break;
+
+	case GL_POINT_SIZE_ARRAY_OES:
+		params[0] = const_cast<void *>(m_PointSizeArray.pointer);
+		break;
+
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		break;
+	}
 }
 
 GLboolean Context :: IsEnabled(GLenum cap) {
-	assert(0);
-	return false;
+	switch (cap) {
+	case GL_VERTEX_ARRAY:
+	case GL_NORMAL_ARRAY:
+	case GL_COLOR_ARRAY:
+	case GL_TEXTURE_COORD_ARRAY:
+
+	case GL_ARRAY_BUFFER_BINDING:
+
+	case GL_NORMALIZE:
+	case GL_RESCALE_NORMAL:
+
+	case GL_CLIP_PLANE0:
+	case GL_CLIP_PLANE1:
+	case GL_CLIP_PLANE2:
+	case GL_CLIP_PLANE3:
+	case GL_CLIP_PLANE4:
+	case GL_CLIP_PLANE5:
+
+	case GL_FOG:
+	case GL_LIGHTING:
+	case GL_COLOR_MATERIAL:
+
+	case GL_LIGHT0:
+	case GL_LIGHT1:
+	case GL_LIGHT2:
+	case GL_LIGHT3:
+	case GL_LIGHT4:
+	case GL_LIGHT5:
+	case GL_LIGHT6:
+	case GL_LIGHT7:
+
+	case GL_POINT_SMOOTH:
+	case GL_LINE_SMOOTH:
+
+	case GL_CULL_FACE:
+	case GL_POLYGON_OFFSET_FILL:
+
+	case GL_MULTISAMPLE:
+	case GL_SAMPLE_ALPHA_TO_COVERAGE:
+	case GL_SAMPLE_ALPHA_TO_ONE:
+	case GL_SAMPLE_COVERAGE:
+
+	case GL_TEXTURE_2D:
+
+	case GL_SCISSOR_TEST:
+	case GL_ALPHA_TEST:
+	case GL_STENCIL_TEST:
+	case GL_DEPTH_TEST:
+	case GL_BLEND:
+	case GL_DITHER:
+	case GL_COLOR_LOGIC_OP:
+
+	/* extensions */
+	case GL_MATRIX_PALETTE_OES:
+	case GL_MATRIX_INDEX_ARRAY_OES:
+	case GL_WEIGHT_ARRAY_OES:
+	case GL_POINT_SPRITE_OES:
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		return false;
+	}
 }
