@@ -163,6 +163,10 @@ namespace {
 		}
 	}
 
+	inline U32 Align(U32 offset, size_t alignment) {
+		return (offset + alignment - 1) & ~(alignment - 1);
+	}
+
 	// -------------------------------------------------------------------------
 	// Given two bitmaps src and dst, where src has dimensions 
 	// (srcWidth * srcHeight) and dst has dimensions (dstWidth * dstHeight),
@@ -175,19 +179,27 @@ namespace {
 	template<class PixelType> 
 	void CopyPixels(const PixelType * src, U32 srcWidth, U32 srcHeight, 
 					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
-					PixelType * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY) {
+					PixelType * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
+					size_t srcAlignment, size_t dstAlignment) {
 
-		U32 srcGap = srcWidth - copyWidth;	// how many pixels to skip for next line
-		U32 dstGap = dstWidth - copyWidth;	// how many pixels to skip for next line
+		size_t pixelSize = sizeof(PixelType);
 
-		const PixelType * srcPtr = reinterpret_cast<const PixelType *>(src) + srcX + srcY * srcWidth;
-		PixelType * dstPtr = reinterpret_cast<PixelType *>(dst) + dstX + dstY * dstWidth;
+		U32 srcBytesWidth = Align(srcWidth * pixelSize, srcAlignment);
+		U32 dstBytesWidth = Align(dstWidth * pixelSize, dstAlignment);
+
+		U32 srcGap = srcBytesWidth - copyWidth * pixelSize;	// how many bytes to skip for next line
+		U32 dstGap = dstBytesWidth - copyWidth * pixelSize;	// how many bytes to skip for next line
+
+		const U8 * srcPtr = reinterpret_cast<const U8 *>(src) + srcX * pixelSize + srcY * srcBytesWidth;
+		U8 * dstPtr = reinterpret_cast<U8 *>(dst) + dstX * pixelSize + dstY * dstBytesWidth;
 
 		do {
 			U32 span = copyWidth;
 
 			do {
-				*dstPtr++ = *srcPtr++;
+				*reinterpret_cast<PixelType *>(dstPtr) = *reinterpret_cast<const PixelType *>(srcPtr);
+				dstPtr += pixelSize;
+				srcPtr += pixelSize;
 			} while (--span);
 
 			srcPtr += srcGap;
@@ -200,9 +212,7 @@ namespace {
 			baseIncr = 3
 		};
 
-		typedef U8 BaseType;
-
-		Color operator()(const BaseType * &ptr) {
+		Color operator()(const U8 * &ptr) {
 			U8 r = *ptr++;
 			U8 g = *ptr++;
 			U8 b = *ptr++;
@@ -215,9 +225,7 @@ namespace {
 			baseIncr = 3
 		};
 
-		typedef U8 BaseType;
-
-		void operator()(BaseType * &ptr, const Color& value) {
+		void operator()(U8 * &ptr, const Color& value) {
 			*ptr++ = value.R();
 			*ptr++ = value.G();
 			*ptr++ = value.B();
@@ -229,9 +237,7 @@ namespace {
 			baseIncr = 4
 		};
 
-		typedef U8 BaseType;
-
-		Color operator()(const BaseType * &ptr) {
+		Color operator()(const U8 * &ptr) {
 			U8 r = *ptr++;
 			U8 g = *ptr++;
 			U8 b = *ptr++;
@@ -245,9 +251,7 @@ namespace {
 			baseIncr = 4
 		};
 
-		typedef U8 BaseType;
-
-		void operator()(BaseType * &ptr, const Color& value) {
+		void operator()(U8 * &ptr, const Color& value) {
 			*ptr++ = value.R();
 			*ptr++ = value.G();
 			*ptr++ = value.B();
@@ -257,73 +261,74 @@ namespace {
 
 	struct RGBA44442Color {
 		enum {
-			baseIncr = 1
+			baseIncr = 2
 		};
 
-		typedef U16 BaseType;
+		Color operator()(const U8 * &ptr) {
+			const U16 * u16Ptr = reinterpret_cast<const U16 *>(ptr);
+			ptr += baseIncr;
+			return Color::From4444(*u16Ptr);
 
-		Color operator()(const BaseType * &ptr) {
-			return Color::From4444(*ptr++);
 		}
 	};
 
 	struct Color2RGBA4444 {
 		enum {
-			baseIncr = 1
+			baseIncr = 2
 		};
 
-		typedef U16 BaseType;
-
-		void operator()(BaseType * &ptr, const Color& value) {
-			*ptr++ = value.ConvertTo4444();
+		void operator()(U8 * &ptr, const Color& value) {
+			U16 * u16Ptr = reinterpret_cast<U16 *>(ptr);
+			ptr += baseIncr;
+			*u16Ptr = value.ConvertTo4444();
 		}
 	};
 
 	struct Color2RGB565 {
 		enum {
-			baseIncr = 1
+			baseIncr = 2
 		};
 
-		typedef U16 BaseType;
-
-		void operator()(BaseType * &ptr, const Color& value) {
-			*ptr++ = value.ConvertTo565();
+		void operator()(U8 * &ptr, const Color& value) {
+			U16 * u16Ptr = reinterpret_cast<U16 *>(ptr);
+			ptr += baseIncr;
+			*u16Ptr = value.ConvertTo565();
 		}
 	};
 
 	struct RGB5652Color {
 		enum {
-			baseIncr = 1
+			baseIncr = 2
 		};
 
-		typedef U16 BaseType;
-
-		Color operator()(const BaseType * &ptr) {
-			return Color::From565(*ptr++);
+		Color operator()(const U8 * &ptr) {
+			const U16 * u16Ptr = reinterpret_cast<const U16 *>(ptr);
+			ptr += baseIncr;
+			return Color::From565(*u16Ptr);
 		}
 	};
 
 	struct RGBA55512Color {
 		enum {
-			baseIncr = 1
+			baseIncr = 2
 		};
 
-		typedef U16 BaseType;
-
-		Color operator()(const BaseType * &ptr) {
-			return Color::From5551(*ptr++);
+		Color operator()(const U8 * &ptr) {
+			const U16 * u16Ptr = reinterpret_cast<const U16 *>(ptr);
+			ptr += baseIncr;
+			return Color::From5551(*u16Ptr);
 		}
 	};
 
 	struct Color2RGBA5551 {
 		enum {
-			baseIncr = 1
+			baseIncr = 2
 		};
 
-		typedef U16 BaseType;
-
-		void operator()(BaseType * &ptr, const Color& value) {
-			*ptr++ = value.ConvertTo5551();
+		void operator()(U8 * &ptr, const Color& value) {
+			U16 * u16Ptr = reinterpret_cast<U16 *>(ptr);
+			ptr += baseIncr;
+			*u16Ptr = value.ConvertTo5551();
 		}
 	};
 
@@ -340,19 +345,23 @@ namespace {
 	void CopyPixelsA(const void * src, U32 srcWidth, U32 srcHeight, 
 					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
 					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
-					const SrcAccessor&, const DstAccessor&) {
-
-		typedef typename SrcAccessor::BaseType SrcBaseType;
-		typedef typename DstAccessor::BaseType DstBaseType;
+					const SrcAccessor&, const DstAccessor&,
+					size_t srcAlignment, size_t dstAlignment) {
 
 		SrcAccessor srcAccessor;
 		DstAccessor dstAccessor;
 
-		U32 srcGap = srcWidth - copyWidth;	// how many pixels to skip for next line
-		U32 dstGap = dstWidth - copyWidth;	// how many pixels to skip for next line
+		size_t srcPixelSize = SrcAccessor::baseIncr;
+		size_t dstPixelSize = DstAccessor::baseIncr;
 
-		const SrcBaseType * srcPtr = reinterpret_cast<const SrcBaseType *>(src) + srcX + srcY * srcWidth;
-		DstBaseType * dstPtr = reinterpret_cast<DstBaseType *>(dst) + dstX + dstY * dstWidth;
+		U32 srcBytesWidth = Align(srcWidth * srcPixelSize, srcAlignment);
+		U32 dstBytesWidth = Align(dstWidth * dstPixelSize, dstAlignment);
+
+		U32 srcGap = srcBytesWidth - copyWidth * srcPixelSize;	// how many bytes to skip for next line
+		U32 dstGap = dstBytesWidth - copyWidth * dstPixelSize;	// how many bytes to skip for next line
+
+		const U8 * srcPtr = reinterpret_cast<const U8 *>(src) + srcX * srcPixelSize + srcY * srcBytesWidth;
+		U8 * dstPtr = reinterpret_cast<U8 *>(dst) + dstX * dstPixelSize + dstY * dstBytesWidth;
 
 		do {
 			U32 span = copyWidth;
@@ -361,8 +370,8 @@ namespace {
 				dstAccessor(dstPtr, srcAccessor(srcPtr));
 			} while (--span);
 
-			srcPtr += srcGap * SrcAccessor::baseIncr;
-			dstPtr += dstGap * DstAccessor::baseIncr;
+			srcPtr += srcGap;
+			dstPtr += dstGap;
 		} while (--copyHeight);
 	}
 
@@ -370,21 +379,20 @@ namespace {
 	void CopySurfacePixels(Surface * src, 
 						   U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
 					       void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
-					       const DstAccessor&) {
-
-		typedef typename DstAccessor::BaseType DstBaseType;
+					       const DstAccessor&, size_t dstAlignment) {
 
 		DstAccessor dstAccessor;
+		size_t dstPixelSize = DstAccessor::baseIncr;
+		U32 dstBytesWidth = Align(dstWidth * dstPixelSize, dstAlignment);
+		U32 dstGap = dstBytesWidth - copyWidth * dstPixelSize;	// how many bytes to skip for next line
 
 		U32 srcWidth = src->GetWidth();
 		U32 srcHeight = src->GetHeight();
-
-		U32 srcGap = srcWidth - copyWidth;	// how many pixels to skip for next line
-		U32 dstGap = dstWidth - copyWidth;	// how many pixels to skip for next line
+		U32 srcGap = srcWidth - copyWidth;
 
 		const U16 * srcPtr = src->GetColorBuffer() + srcX + srcY * srcWidth;
 		const U8 * alphaPtr = src->GetAlphaBuffer() + srcX + srcY * srcWidth;
-		DstBaseType * dstPtr = reinterpret_cast<DstBaseType *>(dst) + dstX + dstY * dstWidth;
+		U8 * dstPtr = reinterpret_cast<U8 *>(dst) + dstX * dstPixelSize + dstY * dstBytesWidth;
 
 		do {
 			U32 span = copyWidth;
@@ -396,7 +404,7 @@ namespace {
 
 			srcPtr += srcGap;
 			alphaPtr += srcGap;
-			dstPtr += dstGap * DstAccessor::baseIncr;
+			dstPtr += dstGap;
 		} while (--copyHeight);
 	}
 
@@ -412,7 +420,8 @@ namespace {
 	void CopyPixels(const void * src, U32 srcWidth, U32 srcHeight, 
 					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
 					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
-					RasterizerState::TextureFormat format, GLenum srcType, GLenum dstType) {
+					RasterizerState::TextureFormat format, GLenum srcType, GLenum dstType,
+					size_t srcAlignment, size_t dstAlignment) {
 
 		// ---------------------------------------------------------------------
 		// clip lower left corner
@@ -453,12 +462,12 @@ namespace {
 			case RasterizerState::TextureFormatAlpha:
 			case RasterizerState::TextureFormatLuminance:
 				CopyPixels(reinterpret_cast<const U8 *>(src), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-					reinterpret_cast<U8 *>(dst), dstWidth, dstHeight, dstX, dstY);
+					reinterpret_cast<U8 *>(dst), dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
 				break;
 
 			case RasterizerState::TextureFormatLuminanceAlpha:
 				CopyPixels(reinterpret_cast<const U16 *>(src), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-					reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY);
+					reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
 				break;
 
 			case RasterizerState::TextureFormatRGB:
@@ -468,13 +477,13 @@ namespace {
 							case GL_UNSIGNED_BYTE:
 								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
 									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
-									RGB2Color(), Color2RGB());
+									RGB2Color(), Color2RGB(), srcAlignment, dstAlignment);
 								break;
 
 							case GL_UNSIGNED_SHORT_5_6_5:
 								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
 									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
-									RGB2Color(), Color2RGB565());
+									RGB2Color(), Color2RGB565(), srcAlignment, dstAlignment);
 								break;
 						}
 						break;
@@ -484,12 +493,12 @@ namespace {
 							case GL_UNSIGNED_BYTE:
 								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
 									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
-									RGB5652Color(), Color2RGB());
+									RGB5652Color(), Color2RGB(), srcAlignment, dstAlignment);
 								break;
 
 							case GL_UNSIGNED_SHORT_5_6_5:
 								CopyPixels(reinterpret_cast<const U16 *>(src), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-									reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY);
+									reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
 								break;
 						}
 						break;
@@ -504,17 +513,17 @@ namespace {
 							case GL_UNSIGNED_BYTE:
 								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
 									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
-									RGBA2Color(), Color2RGBA());
+									RGBA2Color(), Color2RGBA(), srcAlignment, dstAlignment);
 								break;
 							case GL_UNSIGNED_SHORT_5_5_5_1:
 								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
 									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
-									RGBA2Color(), Color2RGBA5551());
+									RGBA2Color(), Color2RGBA5551(), srcAlignment, dstAlignment);
 								break;
 							case GL_UNSIGNED_SHORT_4_4_4_4:
 								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
 									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
-									RGBA2Color(), Color2RGBA4444());
+									RGBA2Color(), Color2RGBA4444(), srcAlignment, dstAlignment);
 								break;
 						}
 						break;
@@ -524,16 +533,16 @@ namespace {
 							case GL_UNSIGNED_BYTE:
 								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
 									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
-									RGBA55512Color(), Color2RGBA());
+									RGBA55512Color(), Color2RGBA(), srcAlignment, dstAlignment);
 								break;
 							case GL_UNSIGNED_SHORT_5_5_5_1:
 								CopyPixels(reinterpret_cast<const U16 *>(src), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-									reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY);
+									reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
 								break;
 							case GL_UNSIGNED_SHORT_4_4_4_4:
 								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
 									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
-									RGBA55512Color(), Color2RGBA4444());
+									RGBA55512Color(), Color2RGBA4444(), srcAlignment, dstAlignment);
 								break;
 						}
 						break;
@@ -543,16 +552,16 @@ namespace {
 							case GL_UNSIGNED_BYTE:
 								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
 									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
-									RGBA44442Color(), Color2RGBA());
+									RGBA44442Color(), Color2RGBA(), srcAlignment, dstAlignment);
 								break;
 							case GL_UNSIGNED_SHORT_5_5_5_1:
 								CopyPixelsA(src, srcWidth, srcHeight, srcX, srcY, 
 									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
-									RGBA44442Color(), Color2RGBA5551());
+									RGBA44442Color(), Color2RGBA5551(), srcAlignment, dstAlignment);
 								break;
 							case GL_UNSIGNED_SHORT_4_4_4_4:
 								CopyPixels(reinterpret_cast<const U16 *>(src), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-									reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY);
+									reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
 								break;
 						}
 						break;
@@ -575,7 +584,8 @@ namespace {
 	bool CopySurfacePixels(Surface * src, 
 					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
 					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
-					RasterizerState::TextureFormat format, GLenum dstType) {
+					RasterizerState::TextureFormat format, GLenum dstType,
+					size_t dstAlignment) {
 
 		U32 srcWidth = src->GetWidth();
 		U32 srcHeight = src->GetHeight();
@@ -621,21 +631,21 @@ namespace {
 					CopySurfacePixels(src, srcX, srcY,
 						copyWidth, copyHeight,
 						dst, dstWidth, dstHeight, dstX, dstY,
-						Color2RGBA());
+						Color2RGBA(), dstAlignment);
 					return true;
 
 				case GL_UNSIGNED_SHORT_5_5_5_1:
 					CopySurfacePixels(src, srcX, srcY,
 						copyWidth, copyHeight,
 						dst, dstWidth, dstHeight, dstX, dstY,
-						Color2RGBA5551());
+						Color2RGBA5551(), dstAlignment);
 					return true;
 
 				case GL_UNSIGNED_SHORT_4_4_4_4:
 					CopySurfacePixels(src, srcX, srcY,
 						copyWidth, copyHeight,
 						dst, dstWidth, dstHeight, dstX, dstY,
-						Color2RGBA4444());
+						Color2RGBA4444(), dstAlignment);
 					return true;
 
 				}
@@ -647,13 +657,13 @@ namespace {
 				case GL_UNSIGNED_BYTE:
 					CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
 						copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
-						RGB5652Color(), Color2RGB());
+						RGB5652Color(), Color2RGB(), 1, dstAlignment);
 
 					return true;
 
 				case GL_UNSIGNED_SHORT_5_6_5:
 					CopyPixels(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-						reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY);
+						reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY, 1, dstAlignment);
 
 					return true;
 				}
@@ -812,7 +822,7 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat,
 	if (pixels != 0) {
 		CopyPixels(const_cast<const void *>(pixels), width, height, 0, 0, width, height,
 			texture->GetData(), width, height, 0, 0, internalFormat, type,
-			InternalTypeForInternalFormat(internalFormat));
+			InternalTypeForInternalFormat(internalFormat), m_PixelStoreUnpackAlignment, 1);
 	}
 
 	if (level == 0 && m_GenerateMipmaps) {
@@ -847,7 +857,8 @@ void Context :: TexSubImage2D(GLenum target, GLint level,
 	if (pixels != 0) {
 		CopyPixels(const_cast<const void *>(pixels), width, height, 0, 0, width, height,
 			texture->GetData(), texture->GetWidth(), texture->GetHeight(),
-			xoffset, yoffset, internalFormat, type, InternalTypeForInternalFormat(internalFormat));
+			xoffset, yoffset, internalFormat, type, InternalTypeForInternalFormat(internalFormat),
+			m_PixelStoreUnpackAlignment, 1);
 	}
 
 	if (level == 0 && m_GenerateMipmaps) {
@@ -876,7 +887,7 @@ void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat
 
 	bool result = CopySurfacePixels(readSurface, x, y, width, height,
 				texture->GetData(), width, height, 0, 0, internalFormat, 
-				InternalTypeForInternalFormat(internalFormat));
+				InternalTypeForInternalFormat(internalFormat), 1);
 
 	if (!result) {
 		RecordError(GL_INVALID_VALUE);
@@ -908,7 +919,7 @@ void Context :: CopyTexSubImage2D(GLenum target, GLint level,
 
 	bool result = CopySurfacePixels(readSurface, x, y, width, height,
 				texture->GetData(), texture->GetWidth(), texture->GetHeight(), xoffset, yoffset, 
-				internalFormat, InternalTypeForInternalFormat(internalFormat));
+				internalFormat, InternalTypeForInternalFormat(internalFormat), 1);
 
 	if (!result) {
 		RecordError(GL_INVALID_VALUE);
@@ -1079,7 +1090,7 @@ void Context :: ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 	bool result = CopySurfacePixels(readSurface, 
 				x, y, width, height,
 				pixels, width, height, 0, 0, 
-				externalFormat, type);
+				externalFormat, type, m_PixelStorePackAlignment);
 	
 	if (!result) {
 		RecordError(GL_INVALID_VALUE);
@@ -1091,11 +1102,35 @@ void Context :: ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 void Context :: PixelStorei(GLenum pname, GLint param) { 
 	switch (pname) {
 		case GL_UNPACK_ALIGNMENT:
-			m_PixelStoreUnpackAlignment = param;
+			switch (param) {
+			case 1:
+			case 2:
+			case 4:
+			case 8:
+				m_PixelStoreUnpackAlignment = param;
+				break;
+
+			default:
+				RecordError(GL_INVALID_VALUE);
+				break;
+			}
+
 			break;
 
 		case GL_PACK_ALIGNMENT:
-			m_PixelStorePackAlignment = param;
+			switch (param) {
+			case 1:
+			case 2:
+			case 4:
+			case 8:
+				m_PixelStorePackAlignment = param;
+				break;
+
+			default:
+				RecordError(GL_INVALID_VALUE);
+				break;
+			}
+
 			break;
 
 		default:

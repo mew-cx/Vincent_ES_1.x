@@ -583,34 +583,6 @@ GLAPI void APIENTRY glVertexPointer (GLint size, GLenum type, GLsizei stride, co
 GLAPI void APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height);
 
 
-/****************************************************************************/
-/* Extension: GL_OES_query_matrix											*/
-/****************************************************************************/
-
-
-GLAPI GLbitfield APIENTRY glQueryMatrixxOES(GLfixed mantissa[16], GLint exponent[16]);
-
-
-/****************************************************************************/
-/* Extension: SGIS_generate_mipmap											*/
-/****************************************************************************/
-
-
-#define GL_GENERATE_MIPMAP_SGIS			0x8191
-#define GL_GENERATE_MIPMAP_HINT_SGIS	0x8192
-
-
-/****************************************************************************/
-/* Extension: HM_render_mesh												*/
-/****************************************************************************/
-
-GLAPI void APIENTRY glDrawMeshHM(GLsizei count, GLenum type, GLsizei stride,
-								 GLsizei offsetVertex, GLsizei strideVertex,
-								 GLsizei offsetNormal, GLsizei strideNormal,
-								 GLsizei offsetTexture, GLsizei strideTexture,
-								 GLsizei offsetColor, GLsizei strideColor, 
-								 const GLvoid *pointer);
-
 #ifdef __cplusplus
 }
 #endif
