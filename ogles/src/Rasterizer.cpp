@@ -149,12 +149,18 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 		EGL_Fixed tv0;
 
 		// for nearest texel
-		tu += ((EGL_ONE/2) >> rasterInfo.TextureLogWidth) - 1;
-		tv += ((EGL_ONE/2) >> rasterInfo.TextureLogHeight) - 1; 
+//		tu += ((EGL_ONE/2) >> rasterInfo->TextureLogWidth) - 1;
+//		tv += ((EGL_ONE/2) >> rasterInfo->TextureLogHeight) - 1;
 
 		switch (m_Texture->GetWrappingModeS()) {
 			case RasterizerState::WrappingModeClampToEdge:
-				tu0 = EGL_CLAMP(tu, 0, EGL_ONE);
+				if (tu < 0)
+					tu0 = 0;
+				else if (tu >= EGL_ONE)
+					tu0 = EGL_ONE - 1;
+				else 
+					tu0 = tu;
+
 				break;
 
 			default:
@@ -165,7 +171,13 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 
 		switch (m_Texture->GetWrappingModeT()) {
 			case RasterizerState::WrappingModeClampToEdge:
-				tv0 = EGL_CLAMP(tv, 0, EGL_ONE);
+				if (tv < 0)
+					tv0 = 0;
+				else if (tv >= EGL_ONE)
+					tv0 = EGL_ONE - 1;
+				else
+					tv0 = tv;
+
 				break;
 
 			default:
@@ -173,7 +185,6 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 				tv0 = tv & 0xffff;
 				break;
 		}
-
 
 		// get the pixel color
 		Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
@@ -220,6 +231,8 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					tu0 = 0;
 				else if (tu >= EGL_ONE)
 					tu0 = EGL_ONE - 1;
+				else 
+					tu0 = tu;
 
 				break;
 
@@ -235,6 +248,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					tv0 = 0;
 				else if (tv >= EGL_ONE)
 					tv0 = EGL_ONE - 1;
+				else tv0 = tv;
 
 				break;
 
