@@ -686,20 +686,20 @@ inline void Rasterizer :: Fragment(I32 offset, EGL_Fixed depth, I32 texOffset,
 		switch (m_State->m_LogicOpcode) {
 			default:
 			case RasterizerState:: LogicOpClear:		value = 0;						break;
-			case RasterizerState:: LogicOpAnd:			value = newValue & dstValue;	break;
-			case RasterizerState:: LogicOpAndReverse:	value = newValue & ~dstValue;	break;
+			case RasterizerState:: LogicOpAnd:			value = newValue & oldValue;	break;
+			case RasterizerState:: LogicOpAndReverse:	value = newValue & ~oldValue;	break;
 			case RasterizerState:: LogicOpCopy:			value = newValue;				break;
-			case RasterizerState:: LogicOpAndInverted:	value = ~newValue & dstValue;	break;
-			case RasterizerState:: LogicOpNoop:			value = dstValue;				break;
-			case RasterizerState:: LogicOpXor:			value = newValue ^ dstValue;	break;
-			case RasterizerState:: LogicOpOr:			value = newValue | dstValue;	break;
-			case RasterizerState:: LogicOpNor:			value = ~(newValue | dstValue); break;
-			case RasterizerState:: LogicOpEquiv:		value = ~(newValue ^ dstValue); break;
-			case RasterizerState:: LogicOpInvert:		value = ~dstValue;				break;
-			case RasterizerState:: LogicOpOrReverse:	value = newValue | ~dstValue;	break;
+			case RasterizerState:: LogicOpAndInverted:	value = ~newValue & oldValue;	break;
+			case RasterizerState:: LogicOpNoop:			value = oldValue;				break;
+			case RasterizerState:: LogicOpXor:			value = newValue ^ oldValue;	break;
+			case RasterizerState:: LogicOpOr:			value = newValue | oldValue;	break;
+			case RasterizerState:: LogicOpNor:			value = ~(newValue | oldValue); break;
+			case RasterizerState:: LogicOpEquiv:		value = ~(newValue ^ oldValue); break;
+			case RasterizerState:: LogicOpInvert:		value = ~oldValue;				break;
+			case RasterizerState:: LogicOpOrReverse:	value = newValue | ~oldValue;	break;
 			case RasterizerState:: LogicOpCopyInverted:	value = ~newValue;				break;
-			case RasterizerState:: LogicOpOrInverted:	value = ~newValue | dstValue;	break;
-			case RasterizerState:: LogicOpNand:			value = ~(newValue & dstValue); break;
+			case RasterizerState:: LogicOpOrInverted:	value = ~newValue | oldValue;	break;
+			case RasterizerState:: LogicOpNand:			value = ~(newValue & oldValue); break;
 			case RasterizerState:: LogicOpSet:			value = 0xFFFF;					break;
 		}
 
