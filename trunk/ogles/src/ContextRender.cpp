@@ -494,28 +494,32 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 		int mask = 1;
 
 		if (m_ColorMaterialEnabled) {
-			rasterPos->m_Color = m_CurrentRGBA * m_LightModelAmbient;
-			rasterPos->m_Color += m_FrontMaterial.GetEmisiveColor();
+			FractionalColor color = m_CurrentRGBA * m_LightModelAmbient;
+			color += m_FrontMaterial.GetEmisiveColor();
 
 			for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 				if (m_LightEnabled & mask) {
 					m_Lights[index].AccumulateLight(eyeCoords, eyeNormal,
-						m_CurrentRGBA, rasterPos->m_Color);
+						m_CurrentRGBA, color);
 				}
 			}
+
+			color.Clamp();
+			rasterPos->m_Color = color;
 		} else {
-			rasterPos->m_Color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
-			rasterPos->m_Color += m_FrontMaterial.GetEmisiveColor();
+			FractionalColor color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
+			color += m_FrontMaterial.GetEmisiveColor();
 
 			for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 				if (m_LightEnabled & mask) {
 					m_Lights[index].AccumulateLight(eyeCoords, eyeNormal,
-						rasterPos->m_Color);
+						color);
 				}
 			}
-		}
 
-		rasterPos->m_Color.Clamp();
+			color.Clamp();
+			rasterPos->m_Color = color;
+		}
 	} else {
 		//	copy current colors to raster pos
 		rasterPos->m_Color = m_CurrentRGBA;

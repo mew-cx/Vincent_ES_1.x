@@ -113,6 +113,22 @@ namespace {
 		}
 	}
 
+	GLenum InternalTypeForInternalFormat(Texture::TextureFormat format) {
+		switch (format) {
+			case Texture::TextureFormatAlpha:
+			case Texture::TextureFormatLuminance:
+			case Texture::TextureFormatLuminanceAlpha:
+			default:
+				return GL_UNSIGNED_BYTE;
+
+			case Texture::TextureFormatRGB:
+				return GL_UNSIGNED_SHORT_5_6_5;
+
+			case Texture::TextureFormatRGBA:
+				return GL_UNSIGNED_SHORT_5_5_5_1;
+		}
+	}
+
 	MultiTexture::WrappingMode WrappingModeFromEnum(GLenum mode) {
 		switch (mode) {
 			case GL_CLAMP_TO_EDGE:	return MultiTexture::WrappingModeClampToEdge;
@@ -185,6 +201,20 @@ namespace {
 		}
 	};
 
+	struct Color2RGB {
+		enum {
+			baseIncr = 3
+		};
+
+		typedef U8 BaseType;
+
+		void operator()(BaseType * &ptr, const Color& value) {
+			*ptr++ = value.R();
+			*ptr++ = value.G();
+			*ptr++ = value.B();
+		}
+	};
+
 	struct RGBA2Color {
 		enum {
 			baseIncr = 4
@@ -197,19 +227,42 @@ namespace {
 		}
 	};
 
-	struct RGBA44442Color {
+	struct Color2RGBA {
 		enum {
-			baseIncr = 2
+			baseIncr = 4
 		};
 
 		typedef U8 BaseType;
 
+		void operator()(BaseType * &ptr, const Color& value) {
+			*ptr++ = value.R();
+			*ptr++ = value.G();
+			*ptr++ = value.B();
+			*ptr++ = value.A();
+		}
+	};
+
+	struct RGBA44442Color {
+		enum {
+			baseIncr = 1
+		};
+
+		typedef U16 BaseType;
+
 		Color operator()(const BaseType * &ptr) {
-			U8 r = *ptr & 0xF0;
-			U8 g = (*ptr++ & 0xF) << 4;
-			U8 b = *ptr & 0xF0;
-			U8 a = (*ptr++ & 0xF) << 4;
-			return Color(r, g, b, a);
+			return Color::From4444(*ptr++);
+		}
+	};
+
+	struct Color2RGBA4444 {
+		enum {
+			baseIncr = 1
+		};
+
+		typedef U16 BaseType;
+
+		void operator()(BaseType * &ptr, const Color& value) {
+			*ptr++ = value.ConvertTo4444();
 		}
 	};
 
@@ -220,8 +273,32 @@ namespace {
 
 		typedef U16 BaseType;
 
-		void operator()(BaseType * &ptr, const Color value) {
+		void operator()(BaseType * &ptr, const Color& value) {
 			*ptr++ = value.ConvertTo565();
+		}
+	};
+
+	struct RGB5652Color {
+		enum {
+			baseIncr = 1
+		};
+
+		typedef U16 BaseType;
+
+		Color operator()(const BaseType * &ptr) {
+			return Color::From565(*ptr++);
+		}
+	};
+
+	struct RGBA55512Color {
+		enum {
+			baseIncr = 1
+		};
+
+		typedef U16 BaseType;
+
+		Color operator()(const BaseType * &ptr) {
+			return Color::From5551(*ptr++);
 		}
 	};
 
@@ -232,7 +309,7 @@ namespace {
 
 		typedef U16 BaseType;
 
-		void operator()(BaseType * &ptr, const Color value) {
+		void operator()(BaseType * &ptr, const Color& value) {
 			*ptr++ = value.ConvertTo5551();
 		}
 	};
@@ -287,7 +364,7 @@ namespace {
 	void CopyPixels(const void * src, U32 srcWidth, U32 srcHeight, 
 					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
 					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
-					Texture::TextureFormat format, GLenum type) {
+					Texture::TextureFormat format, GLenum srcType, GLenum dstType) {
 
 		// ---------------------------------------------------------------------
 		// clip lower left corner
@@ -337,35 +414,89 @@ namespace {
 				break;
 
 			case Texture::TextureFormatRGB:
-				switch (type) {
+				switch (srcType) {
 					case GL_UNSIGNED_BYTE:
-						CopyPixelsA<RGB2Color, Color2RGB565>(src, srcWidth, srcHeight, srcX, srcY, 
-							copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+						switch (dstType) {
+							case GL_UNSIGNED_BYTE:
+								CopyPixelsA<RGB2Color, Color2RGB>(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								break;
+
+							case GL_UNSIGNED_SHORT_5_6_5:
+								CopyPixelsA<RGB2Color, Color2RGB565>(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								break;
+						}
 						break;
 
 					case GL_UNSIGNED_SHORT_5_6_5:
-						CopyPixels<U16>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-							dst, dstWidth, dstHeight, dstX, dstY);
+						switch (dstType) {
+							case GL_UNSIGNED_BYTE:
+								CopyPixelsA<RGB5652Color, Color2RGB>(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								break;
+
+							case GL_UNSIGNED_SHORT_5_6_5:
+								CopyPixels<U16>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+									dst, dstWidth, dstHeight, dstX, dstY);
+								break;
+						}
 						break;
 				}
 
 				break;
 
 			case Texture::TextureFormatRGBA:
-				switch (type) {
+				switch (srcType) {
 					case GL_UNSIGNED_BYTE:
-						CopyPixelsA<RGBA2Color, Color2RGBA5551>(src, srcWidth, srcHeight, srcX, srcY, 
-							copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+						switch (dstType) {
+							case GL_UNSIGNED_BYTE:
+								CopyPixelsA<RGBA2Color, Color2RGBA>(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								break;
+							case GL_UNSIGNED_SHORT_5_5_5_1:
+								CopyPixelsA<RGBA2Color, Color2RGBA5551>(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								break;
+							case GL_UNSIGNED_SHORT_4_4_4_4:
+								CopyPixelsA<RGBA2Color, Color2RGBA4444>(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								break;
+						}
 						break;
 
 					case GL_UNSIGNED_SHORT_5_5_5_1:
-						CopyPixels<U16>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-							dst, dstWidth, dstHeight, dstX, dstY);
+						switch (dstType) {
+							case GL_UNSIGNED_BYTE:
+								CopyPixelsA<RGBA55512Color, Color2RGBA>(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								break;
+							case GL_UNSIGNED_SHORT_5_5_5_1:
+								CopyPixels<U16>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+									dst, dstWidth, dstHeight, dstX, dstY);
+								break;
+							case GL_UNSIGNED_SHORT_4_4_4_4:
+								CopyPixelsA<RGBA55512Color, Color2RGBA4444>(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								break;
+						}
 						break;
 
 					case GL_UNSIGNED_SHORT_4_4_4_4:
-						CopyPixelsA<RGBA44442Color, Color2RGBA5551>(src, srcWidth, srcHeight, srcX, srcY, 
-							copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+						switch (dstType) {
+							case GL_UNSIGNED_BYTE:
+								CopyPixelsA<RGBA44442Color, Color2RGBA>(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								break;
+							case GL_UNSIGNED_SHORT_5_5_5_1:
+								CopyPixelsA<RGBA44442Color, Color2RGBA5551>(src, srcWidth, srcHeight, srcX, srcY, 
+									copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+								break;
+							case GL_UNSIGNED_SHORT_4_4_4_4:
+								CopyPixels<U16>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+									dst, dstWidth, dstHeight, dstX, dstY);
+								break;
+						}
 						break;
 				}
 
@@ -492,7 +623,8 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat,
 	texture->Initialize(width, height, internalFormat);
 
 	CopyPixels(const_cast<const void *>(pixels), width, height, 0, 0, width, height,
-		texture->GetData(), width, height, 0, 0, internalFormat, type);
+		texture->GetData(), width, height, 0, 0, internalFormat, type,
+		InternalTypeForInternalFormat(internalFormat));
 }
 
 void Context :: TexSubImage2D(GLenum target, GLint level, 
@@ -521,7 +653,7 @@ void Context :: TexSubImage2D(GLenum target, GLint level,
 
 	CopyPixels(const_cast<const void *>(pixels), width, height, 0, 0, width, height,
 		texture->GetData(), texture->GetWidth(), texture->GetHeight(),
-		xoffset, yoffset, internalFormat, type);
+		xoffset, yoffset, internalFormat, type, InternalTypeForInternalFormat(internalFormat));
 }
 
 void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat, 
@@ -530,7 +662,7 @@ void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat
 		return;
 	}
 
-	Surface * drawSurface = GetDrawSurface();
+	Surface * readSurface = GetReadSurface();
 
 	if (level < 0 || level >= MultiTexture::MAX_LEVELS) {
 		RecordError(GL_INVALID_VALUE);
@@ -539,7 +671,7 @@ void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat
 
 	Texture::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
 
-	// These parameters really depend on the actual drawing surface, and should
+	// These parameters really depend on the actual reading surface, and should
 	// be determined from there
 	Texture::TextureFormat externalFormat = Texture::TextureFormatRGB;
 	GLenum type = GL_UNSIGNED_SHORT_5_6_5;
@@ -553,9 +685,10 @@ void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat
 	Texture * texture = multiTexture->GetTexture(level);
 	texture->Initialize(width, height, internalFormat);
 
-	CopyPixels(drawSurface->GetColorBuffer(), drawSurface->GetWidth(), drawSurface->GetHeight(), 
+	CopyPixels(readSurface->GetColorBuffer(), readSurface->GetWidth(), readSurface->GetHeight(), 
 				0, 0, width, height,
-				texture->GetData(), width, height, 0, 0, internalFormat, type);
+				texture->GetData(), width, height, 0, 0, internalFormat, type,
+				InternalTypeForInternalFormat(internalFormat));
 }
 
 void Context :: CopyTexSubImage2D(GLenum target, GLint level, 
@@ -565,7 +698,7 @@ void Context :: CopyTexSubImage2D(GLenum target, GLint level,
 		return;
 	}
 
-	Surface * drawSurface = GetDrawSurface();
+	Surface * readSurface = GetReadSurface();
 
 	if (level < 0 || level >= MultiTexture::MAX_LEVELS) {
 		RecordError(GL_INVALID_VALUE);
@@ -576,7 +709,7 @@ void Context :: CopyTexSubImage2D(GLenum target, GLint level,
 	Texture * texture = multiTexture->GetTexture(level);
 	Texture::TextureFormat internalFormat = texture->GetInternalFormat();
 
-	// These parameters really depend on the actual drawing surface, and should
+	// These parameters really depend on the actual reading surface, and should
 	// be determined from there
 	Texture::TextureFormat externalFormat = Texture::TextureFormatRGB;
 	GLenum type = GL_UNSIGNED_SHORT_5_6_5;
@@ -586,10 +719,10 @@ void Context :: CopyTexSubImage2D(GLenum target, GLint level,
 		return;
 	}
 
-	CopyPixels(drawSurface->GetColorBuffer(), drawSurface->GetWidth(), drawSurface->GetHeight(), 
+	CopyPixels(readSurface->GetColorBuffer(), readSurface->GetWidth(), readSurface->GetHeight(), 
 				0, 0, width, height,
 				texture->GetData(), texture->GetWidth(), texture->GetHeight(), 0, 0, 
-				internalFormat, type);
+				internalFormat, type, InternalTypeForInternalFormat(internalFormat));
 }
 
 // --------------------------------------------------------------------------
@@ -723,6 +856,51 @@ void Context :: TexEnvxv(GLenum target, GLenum pname, const GLfixed *params) {
 void Context :: ActiveTexture(GLenum texture) { 
 }
 
+
 void Context :: ClientActiveTexture(GLenum texture) { 
 }
+
+// --------------------------------------------------------------------------
+// Pixel transfer to bitmap - basically the inverse of the texture copy
+// functions
+// --------------------------------------------------------------------------
+
+void Context :: ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, 
+						   GLenum format, GLenum type, GLvoid *pixels) { 
+
+   // right now, use a hardcoded image format
+	Texture::TextureFormat internalFormat = Texture::TextureFormatRGB;
+	Texture::TextureFormat externalFormat = TextureFormatFromEnum(format);
+	GLenum internalType = GL_UNSIGNED_SHORT_5_6_5;
+
+	if (!ValidateFormats(internalFormat, externalFormat, type)) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	Surface * readSurface = GetReadSurface();
+
+	CopyPixels(readSurface->GetColorBuffer(), readSurface->GetWidth(), readSurface->GetHeight(), 
+				x, y, width, height,
+				pixels, width, height, 0, 0, 
+				internalFormat, internalType, type);
+}
+
+
+void Context :: PixelStorei(GLenum pname, GLint param) { 
+	switch (pname) {
+		case GL_UNPACK_ALIGNMENT:
+			m_PixelStoreUnpackAlignment = param;
+			break;
+
+		case GL_PACK_ALIGNMENT:
+			m_PixelStorePackAlignment = param;
+			break;
+
+		default:
+			RecordError(GL_INVALID_ENUM);
+			break;
+	}
+}
+
 

@@ -118,7 +118,7 @@ I32 Surface :: DepthBitsFromDepth(GLclampx depth) {
 }
 */
 
-void Surface :: ClearColorBuffer(const FractionalColor & rgba) {
+void Surface :: ClearColorBuffer(const Color & rgba) {
 	U16 color = rgba.ConvertTo565();
 
 	int count = GetPixels();

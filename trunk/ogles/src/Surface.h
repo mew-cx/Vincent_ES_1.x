@@ -20,7 +20,7 @@
 #include "Config.h"
 #include "fixed.h"
 #include "Color.h"
-#include "FractionalColor.h"
+#include "Color.h"
 
 
 namespace EGL {
@@ -36,7 +36,7 @@ namespace EGL {
 
 		// Is the depth value re-scaled based on near/far settings?.
 		void ClearDepthBuffer(GLclampx depth);
-		void ClearColorBuffer(const FractionalColor & rgba);
+		void ClearColorBuffer(const Color & rgba);
 		void ClearStencilBuffer(U32 value);
 
 		U16 GetWidth();

@@ -48,7 +48,7 @@ namespace EGL {
 		Vec4D				m_WindowsCoords;	// x, y window coords
 												// z
 												// w
-		FractionalColor		m_Color;			// color in range 0..255
+		Color				m_Color;			// color in range 0..255
 		TexCoord			m_TextureCoords;	// texture coords 0..1
 
 	};
@@ -85,12 +85,6 @@ namespace EGL {
 		RasterizerState * GetState() const;
 
 		// ----------------------------------------------------------------------
-		// Whole framebuffer operations
-		// ----------------------------------------------------------------------
-		void ReadPixels(I32 x, I32 y, U32 width, U32 height,
-			PixelFormat format, PixelType type, void *pixels);
-
-		// ----------------------------------------------------------------------
 		// Actual rasterization of primitives
 		// These functions take care of anything downstream of the
 		// scissor test, scan conversion, texturing, compositing, depth &
@@ -111,7 +105,7 @@ namespace EGL {
 		// Rasterization of fragment
 		// ----------------------------------------------------------------------
 
-		void Fragment(const Vec3D & coords, const FractionalColor & color);
+		void Fragment(const Vec3D & coords, const Color & color);
 			// will have special cases based on settings
 
 		// ----------------------------------------------------------------------

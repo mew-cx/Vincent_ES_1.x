@@ -77,6 +77,22 @@ namespace EGL {
 			return b >> 3 | (g & 0xF8) << 2 | (b & 0xF8) << 7 | (a & 0x80) << 8;
 		}
 
+		inline U16 ConvertTo4444() const {
+			return (r & 0xf0) << 8 |
+				(g & 0xf0) << 4 |
+				(b & 0xf0) |
+				a >> 4;
+		}
+
+		static inline Color From4444(U16 u4444) {
+			U8 r = (u4444 & 0xF000u) << 8;
+			U8 g = (u4444 & 0x0F00u) >> 4;
+			U8 b = (u4444 & 0x00F0u);
+			U8 a = (u4444 & 0x000Fu) << 4;
+
+			return Color(r, g, b, a);
+		}
+
 		static inline Color From565(U16 u565) {
 			U8 r = (u565 & 0x001Fu) << 3;
 			U8 g = (u565 & 0x07E0u) >> 3;

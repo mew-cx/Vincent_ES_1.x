@@ -23,7 +23,7 @@
 #include "OGLES.h"
 #include "fixed.h"
 #include "linalg.h"
-#include "FractionalColor.h"
+#include "Color.h"
 
 
 namespace EGL {
@@ -132,7 +132,7 @@ namespace EGL {
 		MultiTexture * GetTexture()					{ VersionChanged(); return m_Texture; }
 		const MultiTexture * GetTexture() const		{ return m_Texture; }
 
-		void SetTexEnvColor(const FractionalColor& color);
+		void SetTexEnvColor(const Color& color);
 		void SetTextureMode(TextureMode mode);
 
 		void SetDepthRange(EGL_Fixed zNear, EGL_Fixed zFar);
@@ -141,7 +141,7 @@ namespace EGL {
 		void SetFogEnd(EGL_Fixed end);
 		void SetFogDensity(EGL_Fixed density);
 
-		void SetFogColor(const FractionalColor& color);
+		void SetFogColor(const Color& color);
 		void EnableFog(bool enabled);
 
 		void SetLineWidth(EGL_Fixed width);
@@ -194,7 +194,7 @@ namespace EGL {
 
 		FogMode					m_FogMode;
 		EGL_Fixed				m_FogStart, m_FogDensity, m_FogEnd;
-		FractionalColor			m_FogColor;
+		Color			m_FogColor;
 
 		bool					m_FogEnabled;
 
@@ -209,7 +209,7 @@ namespace EGL {
 		// Texture environment rendering state
 		// ----------------------------------------------------------------------
 
-		FractionalColor			m_TexEnvColor;
+		Color			m_TexEnvColor;
 		bool					m_TextureEnabled;
 		TextureMode				m_TextureMode;
 
@@ -281,7 +281,7 @@ namespace EGL {
 		VersionChanged();
 	}
 
-	inline void RasterizerState :: SetTexEnvColor(const FractionalColor& color) {
+	inline void RasterizerState :: SetTexEnvColor(const Color& color) {
 		m_TexEnvColor = color;
 		VersionChanged();
 	}
@@ -313,7 +313,7 @@ namespace EGL {
 	}
 
 
-	inline void RasterizerState :: SetFogColor(const FractionalColor& color) {
+	inline void RasterizerState :: SetFogColor(const Color& color) {
 		m_FogColor = color;
 		VersionChanged();
 	}
