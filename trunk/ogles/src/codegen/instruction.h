@@ -575,6 +575,8 @@ void cg_module_allocate_variables(cg_module_t * module);
 void cg_module_inst_use_chains(cg_module_t * module);
 void cg_module_dataflow(cg_module_t * module);
 
+void cg_module_dump(cg_module_t * module, FILE * out);
+
 #ifdef __cplusplus
 }
 #endif
