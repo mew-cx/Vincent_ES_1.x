@@ -58,7 +58,13 @@ namespace EGL {
 		friend class CodeGenerator;
 
 	public:
+		enum Limits {
+			LogMaxTextureSize = 12,
+			MaxTextureSize = 1 << LogMaxTextureSize
+		};
+
 		enum LogicOp {
+			LogicOpInvalid = -1,
 			LogicOpClear,
 			LogicOpAnd,
 			LogicOpAndReverse,
@@ -78,6 +84,7 @@ namespace EGL {
 		};
 
 		enum ComparisonFunc {
+			CompFuncInvalid = -1,
 			CompFuncNever,
 			CompFuncLess,
 			CompFuncEqual,
@@ -89,6 +96,7 @@ namespace EGL {
 		};
 
 		enum BlendFuncDst {
+			BlendFuncDstInvalid = -1,
 			BlendFuncDstZero,
 			BlendFuncDstOne,
 			BlendFuncDstSrcColor,
@@ -100,6 +108,7 @@ namespace EGL {
 		};
 
 		enum BlendFuncSrc {
+			BlendFuncSrcInvalid = -1,
 			BlendFuncSrcZero,
 			BlendFuncSrcOne,
 			BlendFuncSrcDstColor,
@@ -112,6 +121,7 @@ namespace EGL {
 		};
 
 		enum StencilOp {
+			StencilOpInvalid = -1,
 			StencilOpZero,
 			StencilOpKeep,
 			StencilOpReplace,
@@ -121,11 +131,13 @@ namespace EGL {
 		};
 
 		enum ShadingModel {
+			ShadeModelInvalid = -1,
 			ShadeModelFlat,
 			ShadeModelSmooth
 		};
 
 		enum TextureMode {
+			TextureModeInvalid = -1,
 			TextureModeDecal,
 			TextureModeReplace,
 			TextureModeBlend,

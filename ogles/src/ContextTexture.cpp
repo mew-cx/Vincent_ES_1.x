@@ -66,6 +66,11 @@ void Context :: BindTexture(GLenum target, GLuint texture) {
 
 void Context :: DeleteTextures(GLsizei n, const GLuint *textures) { 
 
+	if (n < 0) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
 	while (n-- != 0) {
 		U32 texture = *textures++;
 
@@ -82,6 +87,11 @@ void Context :: DeleteTextures(GLsizei n, const GLuint *textures) {
 }
 
 void Context :: GenTextures(GLsizei n, GLuint *textures) { 
+
+	if (n < 0) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
 
 	while (n != 0) {
 		*textures++ = m_Textures.Allocate();
@@ -943,80 +953,122 @@ namespace {
 }
 
 
+namespace {
+	bool IsPowerOf2(GLsizei value) {
+		if (!value)
+			return true;
+
+		while (!(value & 1))
+			value >>= 1;
+
+		value >>= 1;
+
+		return value == 0;
+	}
+}
+
+
 void Context :: CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, 
 									 GLint border, GLsizei imageSize, const GLvoid *data) { 
 
 	if (target != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	if (level > 0 || -level > RasterizerState::LogMaxTextureSize) {
 		RecordError(GL_INVALID_VALUE);
 		return;
 	}
 
-	size_t paletteSize;
+	if (border != 0 || width < 0 || height < 0 || !IsPowerOf2(width) || !IsPowerOf2(height)) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	I32 paletteBits, colorSize;
 	PaletteFormat paletteFormat;
 	bool hasAlpha;
 
 	switch (internalformat) {
 	case GL_PALETTE4_RGB8_OES:
-		paletteSize = 16;
+		paletteBits = 4;
+		colorSize = 3;
 		paletteFormat = PaletteRGB8;
 		hasAlpha = false;
 		break;
 
 	case GL_PALETTE4_RGBA8_OES:
-		paletteSize = 16;
+		paletteBits = 4;
+		colorSize = 4;
 		paletteFormat = PaletteRGBA8;
 		hasAlpha = true;
 		break;
 
 	case GL_PALETTE4_R5_G6_B5_OES:
-		paletteSize = 16;
+		paletteBits = 4;
+		colorSize = 2;
 		paletteFormat = PaletteRGB565;
 		hasAlpha = false;
 		break;
 
 	case GL_PALETTE4_RGBA4_OES:
-		paletteSize = 16;
+		paletteBits = 4;
+		colorSize = 2;
 		paletteFormat = PaletteRGBA4444;
 		hasAlpha = true;
 		break;
 
 	case GL_PALETTE4_RGB5_A1_OES:
-		paletteSize = 16;
+		paletteBits = 4;
+		colorSize = 2;
 		paletteFormat = PaletteRGBA5551;
 		hasAlpha = true;
 		break;
 
 	case GL_PALETTE8_RGB8_OES:
-		paletteSize = 256;
+		paletteBits = 8;
+		colorSize = 3;
 		paletteFormat = PaletteRGB8;
 		hasAlpha = false;
 		break;
 
 	case GL_PALETTE8_RGBA8_OES:
-		paletteSize = 256;
+		paletteBits = 8;
+		colorSize = 4;
 		paletteFormat = PaletteRGBA8;
 		hasAlpha = true;
 		break;
 
 	case GL_PALETTE8_R5_G6_B5_OES:
-		paletteSize = 256;
+		paletteBits = 8;
+		colorSize = 2;
 		paletteFormat = PaletteRGB565;
 		hasAlpha = false;
 		break;
 
 	case GL_PALETTE8_RGBA4_OES:
-		paletteSize = 256;
+		paletteBits = 8;
+		colorSize = 2;
 		paletteFormat = PaletteRGBA4444;
 		hasAlpha = true;
 		break;
 
 	case GL_PALETTE8_RGB5_A1_OES:
-		paletteSize = 256;
+		paletteBits = 8;
+		colorSize = 2;
 		paletteFormat = PaletteRGBA5551;
 		hasAlpha = true;
 		break;
 
 	default:
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	I32 paletteSize = 1 << paletteBits;
+
+    if (((width * paletteBits) + 7) / 8 * height + paletteSize * colorSize != imageSize) {
 		RecordError(GL_INVALID_VALUE);
 		return;
 	}
@@ -1131,6 +1183,7 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat,
 						   GLenum format, GLenum type, const GLvoid *pixels) { 
 
 	if (target != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
 		return;
 	}
 
@@ -1142,14 +1195,29 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat,
 	RasterizerState::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
 	RasterizerState::TextureFormat externalFormat = TextureFormatFromEnum(format);
 
-	if (!ValidateFormats(internalFormat, externalFormat, type)) {
+	if (internalFormat == RasterizerState::TextureFormatInvalid ||
+		externalFormat == RasterizerState::TextureFormatInvalid) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	if (border != 0 || width < 0 || height < 0 || !IsPowerOf2(width) || !IsPowerOf2(height)) {
 		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	if (!ValidateFormats(internalFormat, externalFormat, type)) {
+		RecordError(GL_INVALID_OPERATION);
 		return;
 	}
 
 	MultiTexture * multiTexture = GetCurrentTexture();
 	Texture * texture = multiTexture->GetTexture(level);
-	texture->Initialize(width, height, internalFormat);
+	
+	if (!texture->Initialize(width, height, internalFormat)) {
+		RecordError(GL_OUT_OF_MEMORY);
+		return;
+	}
 
 	if (!level) {
 		GetRasterizerState()->SetInternalFormat(internalFormat);
@@ -1171,6 +1239,7 @@ void Context :: TexSubImage2D(GLenum target, GLint level,
 							  GLenum format, GLenum type, const GLvoid *pixels) { 
 
 	if (target != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
 		return;
 	}
 
@@ -1179,14 +1248,32 @@ void Context :: TexSubImage2D(GLenum target, GLint level,
 		return;
 	}
 
+	RasterizerState::TextureFormat externalFormat = TextureFormatFromEnum(format);
+
+	if (externalFormat == RasterizerState::TextureFormatInvalid) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
 	MultiTexture * multiTexture = GetCurrentTexture();
 	Texture * texture = multiTexture->GetTexture(level);
 
+	if (!texture) {
+		RecordError(GL_INVALID_OPERATION);
+		return;
+	}
+
+	if (xoffset < 0 || yoffset < 0 || width < 0 || height < 0 ||
+		static_cast<U32>(xoffset + width) > texture->GetWidth() || 
+		static_cast<U32>(yoffset + height) > texture->GetHeight()) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
 	RasterizerState::TextureFormat internalFormat = texture->GetInternalFormat();
-	RasterizerState::TextureFormat externalFormat = TextureFormatFromEnum(format);
 
 	if (!ValidateFormats(internalFormat, externalFormat, type)) {
-		RecordError(GL_INVALID_VALUE);
+		RecordError(GL_INVALID_OPERATION);
 		return;
 	}
 
@@ -1218,9 +1305,29 @@ void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat
 
 	RasterizerState::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
 
+	if (internalFormat == RasterizerState::TextureFormatInvalid) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	if (border != 0 || width < 0 || height < 0 || !IsPowerOf2(width) || !IsPowerOf2(height)) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	if (!ValidateFormats(internalFormat, RasterizerState::TextureFormatRGB565, GL_UNSIGNED_SHORT_5_6_5) &&
+		!ValidateFormats(internalFormat, RasterizerState::TextureFormatRGBA8, GL_UNSIGNED_BYTE)) {
+		RecordError(GL_INVALID_OPERATION);
+		return;
+	}
+
 	MultiTexture * multiTexture = GetCurrentTexture();
 	Texture * texture = multiTexture->GetTexture(level);
-	texture->Initialize(width, height, internalFormat);
+
+	if (!texture->Initialize(width, height, internalFormat)) {
+		RecordError(GL_OUT_OF_MEMORY);
+		return;
+	}
 
 	bool result = CopySurfacePixels(readSurface, x, y, width, height,
 				texture->GetData(), width, height, 0, 0, internalFormat, 
@@ -1253,7 +1360,26 @@ void Context :: CopyTexSubImage2D(GLenum target, GLint level,
 
 	MultiTexture * multiTexture = GetCurrentTexture();
 	Texture * texture = multiTexture->GetTexture(level);
+
+	if (!texture) {
+		RecordError(GL_INVALID_OPERATION);
+		return;
+	}
+
+	if (xoffset < 0 || yoffset < 0 || width < 0 || height < 0 ||
+		static_cast<U32>(xoffset + width) > texture->GetWidth() || 
+		static_cast<U32>(yoffset + height) > texture->GetHeight()) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
 	RasterizerState::TextureFormat internalFormat = texture->GetInternalFormat();
+
+	if (!ValidateFormats(internalFormat, RasterizerState::TextureFormatRGB565, GL_UNSIGNED_SHORT_5_6_5) &&
+		!ValidateFormats(internalFormat, RasterizerState::TextureFormatRGBA8, GL_UNSIGNED_BYTE)) {
+		RecordError(GL_INVALID_OPERATION);
+		return;
+	}
 
 	bool result = CopySurfacePixels(readSurface, x, y, width, height,
 				texture->GetData(), texture->GetWidth(), texture->GetHeight(), xoffset, yoffset, 
@@ -1295,7 +1421,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 					multiTexture->SetMipmapFilterMode(mipmapMode);
 					GetRasterizerState()->SetMipmapFilterMode(mipmapMode);
 				} else {
-					RecordError(GL_INVALID_VALUE);
+					RecordError(GL_INVALID_ENUM);
 				}
 			}
 			break;
@@ -1308,7 +1434,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 					multiTexture->SetMagFilterMode(mode);
 					GetRasterizerState()->SetMagFilterMode(mode);
 				} else {
-					RecordError(GL_INVALID_VALUE);
+					RecordError(GL_INVALID_ENUM);
 				}
 			}
 			break;
@@ -1321,7 +1447,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 					multiTexture->SetWrappingModeS(mode);
 					GetRasterizerState()->SetWrappingModeS(mode);
 				} else {
-					RecordError(GL_INVALID_VALUE);
+					RecordError(GL_INVALID_ENUM);
 				}
 			}
 			break;
@@ -1334,7 +1460,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 					multiTexture->SetWrappingModeT(mode);
 					GetRasterizerState()->SetWrappingModeT(mode);
 				} else {
-					RecordError(GL_INVALID_VALUE);
+					RecordError(GL_INVALID_ENUM);
 				}
 			}
 			break;
@@ -1438,6 +1564,27 @@ void Context :: ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 						   GLenum format, GLenum type, GLvoid *pixels) { 
 
    // right now, use a hardcoded image format
+	if (format != GL_RGBA && format != GL_RGB) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT_5_6_5) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	if (width < 0 || height < 0) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	if (format == GL_RGBA && type != GL_UNSIGNED_BYTE ||
+		format == GL_RGB && type != GL_UNSIGNED_SHORT_5_6_5) {
+		RecordError(GL_INVALID_OPERATION);
+		return;
+	}
+
 	RasterizerState::TextureFormat externalFormat = TextureFormatFromEnum(format);
 
 	Surface * readSurface = GetReadSurface();

@@ -46,7 +46,12 @@ using namespace EGL;
 
 
 void Context :: PointSizex(GLfixed size) { 
-	GetRasterizerState()->SetPointSize(size);
+
+	if (size <= 0) {
+		RecordError(GL_INVALID_VALUE);
+	} else {
+		GetRasterizerState()->SetPointSize(size);
+	}
 }
 
 

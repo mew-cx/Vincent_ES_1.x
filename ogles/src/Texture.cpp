@@ -89,7 +89,7 @@ namespace {
 }
 
 
-void Texture :: Initialize(U32 width, U32 height, RasterizerState::TextureFormat format) {
+bool Texture :: Initialize(U32 width, U32 height, RasterizerState::TextureFormat format) {
 
 	if (m_Data != 0) {
 		free(m_Data);
@@ -102,6 +102,8 @@ void Texture :: Initialize(U32 width, U32 height, RasterizerState::TextureFormat
 	m_InternalFormat = format;
 	size_t bytes = pixels * GetBytesPerPixel();
 	m_Data = malloc(bytes);
+
+	return m_Data != 0;
 }
 
 
@@ -123,14 +125,14 @@ MultiTexture :: MultiTexture():
 	m_WrappingModeS(RasterizerState::WrappingModeRepeat),
 	m_WrappingModeT(RasterizerState::WrappingModeRepeat)
 {
-	for (size_t index = 0; index < MAX_LEVELS; ++index) {
+	for (size_t index = 0; index <= MAX_LEVELS; ++index) {
 		m_TextureLevels[index].Init();
 	}
 }
 
 
 MultiTexture :: ~MultiTexture() {
-	for (size_t index = 0; index < MAX_LEVELS; ++index) {
+	for (size_t index = 0; index <= MAX_LEVELS; ++index) {
 		m_TextureLevels[index].Dispose();
 	}
 }

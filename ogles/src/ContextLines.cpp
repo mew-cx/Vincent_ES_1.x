@@ -46,7 +46,12 @@ using namespace EGL;
 
 
 void Context :: LineWidthx(GLfixed width) { 
-	GetRasterizerState()->SetLineWidth(width);
+
+	if (width <= 0) {
+		RecordError(GL_INVALID_VALUE);
+	} else {
+		GetRasterizerState()->SetLineWidth(width);
+	}
 }
 
 

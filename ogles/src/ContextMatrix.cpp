@@ -141,6 +141,12 @@ void Context :: Translatex(GLfixed x, GLfixed y, GLfixed z) {
 }
 
 void Context :: Frustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar) { 
+
+	if (left == right || top == bottom || zNear <= 0 || zFar <= 0) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
 	CurrentMatrixStack()->MultMatrix(Matrix4x4::CreateFrustrum(left, right, bottom, top, zNear, zFar));
 	RebuildMatrices();
 }

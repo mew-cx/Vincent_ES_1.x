@@ -59,7 +59,12 @@ void Context :: Materialx(GLenum face, GLenum pname, GLfixed param) {
 
 	switch (pname) {
 	case GL_SHININESS:
-		material->SetSpecularExponent(param);
+		if (param < 0 || param > EGL_FixedFromInt(128)) {
+			RecordError(GL_INVALID_VALUE);
+		} else {
+			material->SetSpecularExponent(param);
+		}
+
 		break;
 
 	default:
