@@ -67,17 +67,36 @@ void Context :: DepthRangef (GLclampf zNear, GLclampf zFar) {
 }
 
 void Context :: Fogf (GLenum pname, GLfloat param) {
-	Fogx(pname, EGL_FixedFromFloat(param));
+	switch (pname) {
+		case GL_FOG_MODE:
+			Fogx(pname, param);
+			break;
+
+		case GL_FOG_START:
+		case GL_FOG_END:
+		case GL_FOG_DENSITY:
+			Fogx(pname, EGL_FixedFromFloat(param));
+			break;
+
+		default:
+			RecordError(GL_INVALID_ENUM);
+	}
 }
 
 void Context :: Fogfv (GLenum pname, const GLfloat *params) {
+
+	GLfixed param;
+
 	switch (pname) {
 	case GL_FOG_MODE:
+		param = *params;
+		Fogxv(pname, &param);
+		break;
+
 	case GL_FOG_DENSITY:
 	case GL_FOG_START:
 	case GL_FOG_END:
 	//case GL_FOG_INDEX:
-		GLfixed param;
 		param = EGL_FixedFromFloat(*params);
 		Fogxv(pname, &param);
 		break;
@@ -267,15 +286,50 @@ void Context :: Scalef (GLfloat x, GLfloat y, GLfloat z) {
 }
 
 void Context :: TexEnvf (GLenum target, GLenum pname, GLfloat param) {
-	TexEnvx(target, pname, EGL_FixedFromFloat(param));
+	switch (pname) {
+		case GL_TEXTURE_ENV_MODE:
+			TexEnvx(target, pname, (GLfixed) param);
+			break;
+
+		default:
+			RecordError(GL_INVALID_ENUM);
+			break;
+	}
 }
 
 void Context :: TexEnvfv (GLenum target, GLenum pname, const GLfloat *params) {
-	//void Context :: TexEnvxv (GLenum target, GLenum pname, const GLfixed *params);
+	GLfixed fixed_params[4];
+	int index;
+
+	switch (pname) {
+		case GL_TEXTURE_ENV_COLOR:
+			for (index = 0; index < 4; ++index) {
+				fixed_params[index] = EGL_FixedFromFloat(params[index]);
+			}
+
+			TexEnvxv(target, pname, fixed_params);
+			break;
+
+		default:
+			TexEnvf(target, pname, *params);
+			break;
+	}
 }
 
 
 void Context :: TexParameterf (GLenum target, GLenum pname, GLfloat param) {
+	switch (pname) {
+		case GL_TEXTURE_MIN_FILTER:
+		case GL_TEXTURE_MAG_FILTER:
+		case GL_TEXTURE_WRAP_S:
+		case GL_TEXTURE_WRAP_T:
+		case GL_GENERATE_MIPMAP_SGIS:
+			TexParameterx(target, pname, (GLfixed) param);
+			break;
+
+		default:
+			RecordError(GL_INVALID_ENUM);
+	}
 	TexParameterx(target, pname, EGL_FixedFromFloat(param));
 }
 
