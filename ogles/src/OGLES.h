@@ -95,8 +95,21 @@ typedef __int64				I64;
 #endif
 
 #ifdef EGL_ON_SYMBIAN
+
 typedef unsigned long long	U64;
 typedef long long			I64;
+
+
+namespace EGL {
+	class Context;
+
+	struct TlsInfo {
+		Context * m_Context;
+		I32 m_LastError;
+	};
+}
+
+
 #endif
 
 // --------------------------------------------------------------------------

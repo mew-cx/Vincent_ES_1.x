@@ -51,16 +51,16 @@ using namespace EGL;
 
 void Context :: SetCurrentContext(Context * context) {
 
-	//extern DWORD s_TlsIndexContext;
+	TlsInfo * info = reinterpret_cast<TlsInfo *>(Dll::Tls());
 
-	Context * oldContext = GetCurrentContext();
+	Context * oldContext = info->m_Context;
 
 	if (oldContext != context) {
 
 		if (oldContext != 0)
 			oldContext->SetCurrent(false);
 
-		//TlsSetValue(s_TlsIndexContext, reinterpret_cast<void *>(context));
+		info->m_Context = context;
 
 		if (context != 0)
 			context->SetCurrent(true);
@@ -70,8 +70,12 @@ void Context :: SetCurrentContext(Context * context) {
 
 Context * Context :: GetCurrentContext() {
 
-	//extern DWORD s_TlsIndexContext;
+	TlsInfo * info = reinterpret_cast<TlsInfo *>(Dll::Tls());
 
-	return reinterpret_cast<EGLContext> (0/*TlsGetValue(s_TlsIndexContext)*/);
+	if (info) {
+		return info->m_Context;
+	} else {
+		return 0;
+	}
 }
 

@@ -59,7 +59,9 @@ namespace EGL {
 	// u and v coordinates for texture mapping
 	// ----------------------------------------------------------------------
 	struct TexCoord {
-		EGL_Fixed		tu, tv;		// texture coordinates between 0 and 1
+		EGL_Fixed		tu, tv;			// texture coordinates between 0 and 1
+		EGL_Fixed		dtudx, dtvdx;	// partial derivatives
+		EGL_Fixed		dtudy, dtvdy;	// partial derivatives
 	};
 
 	struct ScreenCoord {
@@ -122,6 +124,9 @@ namespace EGL {
 		U32 *	StencilBuffer;
 		U8 *	AlphaBuffer;
 		I32 *	InversionTablePtr;
+
+		// TODO: will need to add a minimum texture level here
+		// TODO: 
 
 		// texture info
 		I32		TextureLogWidth;

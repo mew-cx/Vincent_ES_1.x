@@ -468,6 +468,40 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		SOLVE_PARAM_XY(m_TextureCoords.tv, tvOverZ1, tvOverZ2, tvOverZ3, invDenominator);
 	}
 
+	// ----------------------------------------------------------------------
+	// Constants to determine partial derivatives, see eq. (2) and (3) in
+	// J. P. Ewins et al (1998), "MIP-Map Level Selection for Texture Mapping",
+	// IEEE Transactions on Visualization and Computer Graphics, Vol 4, No. 4
+	// ----------------------------------------------------------------------
+
+	EGL_Fixed A = grad.dx.m_TextureCoords.tu;
+	EGL_Fixed B = grad.dy.m_TextureCoords.tu;
+	EGL_Fixed C = tuOverZ1;
+	EGL_Fixed D = grad.dx.m_WindowCoords.invZ;
+	EGL_Fixed E = grad.dy.m_WindowCoords.invZ;
+	EGL_Fixed F = pos1.m_WindowCoords.invZ;
+	EGL_Fixed G = grad.dx.m_TextureCoords.tv;
+	EGL_Fixed H = grad.dy.m_TextureCoords.tv;
+	EGL_Fixed I = tvOverZ1;
+
+	EGL_Fixed K1 = Det2x2NoShift(A, B, D, E);
+	EGL_Fixed K2 = Det2x2NoShift(G, H, D, E);
+	EGL_Fixed K3 = Det2x2NoShift(A, C, D, F);
+	EGL_Fixed K4 = Det2x2NoShift(G, I, D, F);
+	EGL_Fixed K5 = Det2x2NoShift(B, C, E, F);
+	EGL_Fixed K6 = Det2x2NoShift(I, I, E, F);
+
+	// We fill out the full matrix just to keep the data structure clean
+	grad.dx.m_TextureCoords.dtudx = 0;
+	grad.dx.m_TextureCoords.dtvdx = 0;
+	grad.dx.m_TextureCoords.dtudy = -K1;
+	grad.dx.m_TextureCoords.dtvdy = -K2;
+
+	grad.dy.m_TextureCoords.dtudx = K1;
+	grad.dy.m_TextureCoords.dtvdx = K2;
+	grad.dy.m_TextureCoords.dtudy = 0;
+	grad.dy.m_TextureCoords.dtvdy = 0;
+
 	// Share the gradient in x direction for scanline function
 
 	EdgePos& delta = grad.dx;

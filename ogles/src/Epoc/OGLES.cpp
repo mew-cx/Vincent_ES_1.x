@@ -39,40 +39,6 @@
 #include "OGLES.h"
 
 
-#if 0
-DWORD s_TlsIndexContext;	// thread local storage slot for current context
-DWORD s_TlsIndexError;		// thread local storage slot for EGL error
-
-
-BOOL APIENTRY DllMain( HANDLE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-					 )
-{
-	switch (ul_reason_for_call)
-	{
-	case DLL_PROCESS_ATTACH:
-		s_TlsIndexContext = TlsAlloc();
-		s_TlsIndexError = TlsAlloc();
-
-		if (s_TlsIndexContext == 0xffffffff ||
-			s_TlsIndexError == 0xffffffff) {
-			return false;
-		}
-
-		break;
-
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-		break;
-
-	case DLL_PROCESS_DETACH:
-		TlsFree(s_TlsIndexContext);
-		TlsFree(s_TlsIndexError);
-		break;
-	}
-
-    return TRUE;
+GLDEF_C TInt E32Dll(TDllReason) {
+	return KErrNone;
 }
-
-#endif
