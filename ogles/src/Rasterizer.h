@@ -27,7 +27,6 @@
 #include "FractionalColor.h"
 
 
-
 namespace EGL {
 
 	class Surface;
@@ -111,6 +110,10 @@ namespace EGL {
 		void SetSurface(Surface * surface);
 		Surface * GetSurface() const;
 
+		void SetTexture(MultiTexture * texture)		{ m_Texture = texture; }
+		MultiTexture * GetTexture()					{ return m_Texture; }
+		const MultiTexture * GetTexture() const		{ return m_Texture; }
+
 		// ----------------------------------------------------------------------
 		// Actual rasterization of primitives
 		// These functions take care of anything downstream of the
@@ -158,6 +161,7 @@ namespace EGL {
 		//#include "generated_rasterization_function_declarations.h"
 
 	private:
+		Color TexturedColor(const Color& baseColor, EGL_Fixed tu, EGL_Fixed tv);
 		void RasterClippedXTriangle(RasterPos * pos1, RasterPos * pos2, RasterPos * pos3);
 		void InitFogTable();
 
@@ -167,6 +171,7 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 
 		Surface *				m_Surface;			// rendering surface
+		MultiTexture *			m_Texture;			// current texture 
 		RasterizerState *		m_State;			// current rasterization settings
 
 		RasterPointFunction		m_RasterPointFunction;

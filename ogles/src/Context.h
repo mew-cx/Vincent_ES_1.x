@@ -223,11 +223,11 @@ namespace EGL {
 		}
 
 		MultiTexture * GetCurrentTexture() {
-			return GetRasterizerState()->GetTexture();
+			return m_Rasterizer->GetTexture();
 		}
 
 		const MultiTexture * GetCurrentTexture() const {
-			return GetRasterizerState()->GetTexture();
+			return m_Rasterizer->GetTexture();
 		}
 
 		static void SetCurrentContext(Context * context);
@@ -430,6 +430,7 @@ namespace EGL {
 	inline Surface * Context :: GetDrawSurface() const {
 		return m_DrawSurface;
 	}
+
 
 	inline Surface * Context :: GetReadSurface() const {
 		return m_ReadSurface;

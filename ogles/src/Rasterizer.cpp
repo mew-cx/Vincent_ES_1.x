@@ -484,6 +484,112 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, Color color) {
 }
 
 
+inline Color Rasterizer :: TexturedColor(const Color& baseColor, EGL_Fixed tu, EGL_Fixed tv) {
+
+	Color color = baseColor;
+
+	if (m_State->m_TextureEnabled) {
+
+		EGL_Fixed tu0 = m_Texture->GetWrappedS(tu);
+		EGL_Fixed tv0 = m_Texture->GetWrappedT(tv);
+
+		Color texColor = 
+			m_Texture->GetTexture(0)->GetPixel(tu0, tv0);
+
+		switch (m_Texture->GetTexture(0)->GetInternalFormat()) {
+			default:
+			case Texture::TextureFormatAlpha:
+				switch (m_State->m_TextureMode) {
+					case RasterizerState::TextureModeReplace:
+						color = Color(color.r, color.g, color.b, texColor.a);
+						break;
+
+					case RasterizerState::TextureModeModulate:
+					case RasterizerState::TextureModeBlend:
+					case RasterizerState::TextureModeAdd:
+						color = Color(color.r, color.g, color.b, MulU8(color.a, texColor.a));
+						break;
+				}
+				break;
+
+			case Texture::TextureFormatLuminance:
+			case Texture::TextureFormatRGB:
+				switch (m_State->m_TextureMode) {
+					case RasterizerState::TextureModeDecal:
+					case RasterizerState::TextureModeReplace:
+						color = Color(texColor.r, texColor.g, texColor.b, color.a);
+						break;
+
+					case RasterizerState::TextureModeModulate:
+						color = Color(MulU8(color.r, texColor.r), 
+							MulU8(color.g, texColor.g), MulU8(color.b, texColor.b), color.a);
+						break;
+
+					case RasterizerState::TextureModeBlend:
+						color = 
+							Color(
+								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
+								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
+								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
+								color.a);
+						break;
+
+					case RasterizerState::TextureModeAdd:
+						color =
+							Color(
+								ClampU8(color.r + texColor.r),
+								ClampU8(color.g + texColor.g),
+								ClampU8(color.b + texColor.b),
+								color.a);
+						break;
+				}
+				break;
+
+			case Texture::TextureFormatLuminanceAlpha:
+			case Texture::TextureFormatRGBA:
+				switch (m_State->m_TextureMode) {
+					case RasterizerState::TextureModeReplace:
+						color = texColor;
+						break;
+
+					case RasterizerState::TextureModeModulate:
+						color = color * texColor;
+						break;
+
+					case RasterizerState::TextureModeDecal:
+						color = 
+							Color(
+								MulU8(color.r, 0xff - texColor.a) + MulU8(texColor.r, texColor.a),
+								MulU8(color.g, 0xff - texColor.a) + MulU8(texColor.g, texColor.a),
+								MulU8(color.b, 0xff - texColor.a) + MulU8(texColor.b, texColor.a),
+								color.a);
+						break;
+
+					case RasterizerState::TextureModeBlend:
+						color = 
+							Color(
+								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
+								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
+								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
+								MulU8(color.a, texColor.a));
+						break;
+
+					case RasterizerState::TextureModeAdd:
+						color =
+							Color(
+								ClampU8(color.r + texColor.r),
+								ClampU8(color.g + texColor.g),
+								ClampU8(color.b + texColor.b),
+								MulU8(color.a, texColor.a));
+						break;
+				}
+				break;
+		}
+	}
+
+	return color;
+}
+
 inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& end, U32 y) {
 
 	// TODO: The depth coordinate should really be interpolated perspectively
@@ -503,108 +609,7 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 
 	for (; x < xEnd; ++x) {
 
-		Color color = baseColor;
-
-		if (m_State->m_TextureEnabled) {
-
-			EGL_Fixed tu0 = m_State->m_Texture->GetWrappedS(tu);
-			EGL_Fixed tv0 = m_State->m_Texture->GetWrappedS(tv);
-
-			Color texColor = 
-				m_State->m_Texture->GetTexture(0)->GetPixel(tu0, tv0);
-
-			switch (m_State->m_Texture->GetTexture(0)->GetInternalFormat()) {
-				default:
-				case Texture::TextureFormatAlpha:
-					switch (m_State->m_TextureMode) {
-						case RasterizerState::TextureModeReplace:
-							color = Color(color.r, color.g, color.b, texColor.a);
-							break;
-
-						case RasterizerState::TextureModeModulate:
-						case RasterizerState::TextureModeBlend:
-						case RasterizerState::TextureModeAdd:
-							color = Color(color.r, color.g, color.b, MulU8(color.a, texColor.a));
-							break;
-					}
-					break;
-
-				case Texture::TextureFormatLuminance:
-				case Texture::TextureFormatRGB:
-					switch (m_State->m_TextureMode) {
-						case RasterizerState::TextureModeDecal:
-						case RasterizerState::TextureModeReplace:
-							color = Color(texColor.r, texColor.g, texColor.b, color.a);
-							break;
-
-						case RasterizerState::TextureModeModulate:
-							color = Color(MulU8(color.r, texColor.r), 
-								MulU8(color.g, texColor.g), MulU8(color.b, texColor.b), color.a);
-							break;
-
-						case RasterizerState::TextureModeBlend:
-							color = 
-								Color(
-									MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
-									MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
-									MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
-									color.a);
-							break;
-
-						case RasterizerState::TextureModeAdd:
-							color =
-								Color(
-									ClampU8(color.r + texColor.r),
-									ClampU8(color.g + texColor.g),
-									ClampU8(color.b + texColor.b),
-									color.a);
-							break;
-					}
-					break;
-
-				case Texture::TextureFormatLuminanceAlpha:
-				case Texture::TextureFormatRGBA:
-					switch (m_State->m_TextureMode) {
-						case RasterizerState::TextureModeReplace:
-							color = texColor;
-							break;
-
-						case RasterizerState::TextureModeModulate:
-							color = color * texColor;
-							break;
-
-						case RasterizerState::TextureModeDecal:
-							color = 
-								Color(
-									MulU8(color.r, 0xff - texColor.a) + MulU8(texColor.r, texColor.a),
-									MulU8(color.g, 0xff - texColor.a) + MulU8(texColor.g, texColor.a),
-									MulU8(color.b, 0xff - texColor.a) + MulU8(texColor.b, texColor.a),
-									color.a);
-							break;
-
-						case RasterizerState::TextureModeBlend:
-							color = 
-								Color(
-									MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
-									MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
-									MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
-									MulU8(color.a, texColor.a));
-							break;
-
-						case RasterizerState::TextureModeAdd:
-							color =
-								Color(
-									ClampU8(color.r + texColor.r),
-									ClampU8(color.g + texColor.g),
-									ClampU8(color.b + texColor.b),
-									MulU8(color.a, texColor.a));
-							break;
-					}
-					break;
-			}
-		}
-
-		Fragment(x, y, w, color);
+		Fragment(x, y, w, TexturedColor(baseColor, tu, tv));
 		baseColor += colorIncrement;
 		w += deltaW;
 		tu += deltaU;
@@ -648,10 +653,100 @@ void Rasterizer :: Finish() {
 
 
 void Rasterizer :: RasterPoint(const RasterPos& point) {
+
+	I32 x = EGL_IntFromFixed(point.m_WindowCoords.x);
+	I32 y = EGL_IntFromFixed(point.m_WindowCoords.y);
+	EGL_Fixed w = point.m_WindowCoords.w;
+	EGL_Fixed tu = point.m_TextureCoords.tu;
+	EGL_Fixed tv = point.m_TextureCoords.tv;
+	FractionalColor baseColor = point.m_Color;
+
+	Fragment(x, y, w, TexturedColor(baseColor, tu, tv));
 }
 
 
 void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
+
+	if (from.m_WindowCoords.x == to.m_WindowCoords.x &&
+		from.m_WindowCoords.y == to.m_WindowCoords.y) {
+		RasterPoint(from);
+		return;
+	}
+
+	EGL_Fixed deltaX = to.m_WindowCoords.x - from.m_WindowCoords.x;
+	EGL_Fixed deltaY = to.m_WindowCoords.y - from.m_WindowCoords.y;
+
+	FractionalColor baseColor = from.m_Color;
+	EGL_Fixed tu = from.m_TextureCoords.tu;
+	EGL_Fixed tv = from.m_TextureCoords.tv;
+	EGL_Fixed w = from.m_WindowCoords.w;
+
+	if (EGL_Abs(deltaX) > EGL_Abs(deltaY)) {
+		// Bresenheim along x-axis
+
+		EGL_Fixed invSpan = EGL_Inverse(deltaX);
+
+		EGL_Fixed slope = EGL_Abs(EGL_Mul(deltaY, invSpan));
+		FractionalColor colorIncrement = (to.m_Color - from.m_Color) * invSpan;
+		EGL_Fixed deltaW = EGL_Mul(to.m_WindowCoords.w - from.m_WindowCoords.w, invSpan);
+		EGL_Fixed deltaU = EGL_Mul(to.m_TextureCoords.tu - from.m_TextureCoords.tu, invSpan);
+		EGL_Fixed deltaV = EGL_Mul(to.m_TextureCoords.tv - from.m_TextureCoords.tv, invSpan);
+
+		I32 x = EGL_IntFromFixed(from.m_WindowCoords.x);
+		I32 y = EGL_IntFromFixed(from.m_WindowCoords.y);
+		I32 endX = EGL_IntFromFixed(to.m_WindowCoords.x);
+		I32 yIncrement = (deltaY > 0) ? 1 : -1;
+		EGL_Fixed error = 0;
+
+		for (; x < endX; ++x) {
+
+			Fragment(x, y, w, TexturedColor(baseColor, tu, tv));
+
+			error += slope;
+			if (error > EGL_FixedFromFloat(0.5f)) {
+				y += yIncrement;
+				error -= EGL_ONE;
+			}
+
+			baseColor += colorIncrement;
+			w += deltaW;
+			tu += deltaU;
+			tv += deltaV;
+		}
+
+	} else {
+		// Bresenheim along y-axis
+
+		EGL_Fixed invSpan = EGL_Inverse(deltaY);
+
+		EGL_Fixed slope = EGL_Abs(EGL_Mul(deltaX, invSpan));
+		FractionalColor colorIncrement = (to.m_Color - from.m_Color) * invSpan;
+		EGL_Fixed deltaW = EGL_Mul(to.m_WindowCoords.w - from.m_WindowCoords.w, invSpan);
+		EGL_Fixed deltaU = EGL_Mul(to.m_TextureCoords.tu - from.m_TextureCoords.tu, invSpan);
+		EGL_Fixed deltaV = EGL_Mul(to.m_TextureCoords.tv - from.m_TextureCoords.tv, invSpan);
+
+		I32 x = EGL_IntFromFixed(from.m_WindowCoords.x);
+		I32 y = EGL_IntFromFixed(from.m_WindowCoords.y);
+		I32 endY = EGL_IntFromFixed(to.m_WindowCoords.y);
+		I32 xIncrement = (deltaX > 0) ? 1 : -1;
+		EGL_Fixed error = 0;
+
+		for (; y < endY; ++y) {
+
+			Fragment(x, y, w, TexturedColor(baseColor, tu, tv));
+
+			error += slope;
+			if (error > EGL_FixedFromFloat(0.5f)) {
+				x += xIncrement;
+				error -= EGL_ONE;
+			}
+
+			baseColor += colorIncrement;
+			w += deltaW;
+			tu += deltaU;
+			tv += deltaV;
+		}
+	}
 }
 
 

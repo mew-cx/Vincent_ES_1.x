@@ -22,10 +22,10 @@ Surface :: Surface(const Config & config, HDC hdc)
 :	m_Config(config),
 	m_Width (config.GetConfigAttrib(EGL_WIDTH)), 
 	m_Height (config.GetConfigAttrib(EGL_HEIGHT)),
-//	m_Bitmap(reinterpret_cast<HBITMAP>(INVALID_HANDLE_VALUE)),
+	m_Bitmap(reinterpret_cast<HBITMAP>(INVALID_HANDLE_VALUE)),
 	m_HDC(reinterpret_cast<HDC>(INVALID_HANDLE_VALUE))
 {
-	m_ColorBuffer = new U16[m_Width * m_Height];
+	//m_ColorBuffer = new U16[m_Width * m_Height];
 	m_AlphaBuffer = new U8[m_Width * m_Height];
 	m_DepthBuffer = new I32[m_Width * m_Height];
 	m_StencilBuffer = new U32[m_Width * m_Height];
@@ -33,26 +33,50 @@ Surface :: Surface(const Config & config, HDC hdc)
 	if (hdc != INVALID_HANDLE_VALUE) {
 		m_HDC = CreateCompatibleDC(hdc);
 	}
+
+	struct {
+		BITMAPINFOHEADER bmiHeader;
+		DWORD            bmiColors[3];
+	} info;
+
+	info.bmiHeader.biSize = sizeof(info.bmiHeader); 
+	info.bmiHeader.biWidth = m_Width; 
+	info.bmiHeader.biHeight = m_Height; 
+	info.bmiHeader.biPlanes = 1; 
+	info.bmiHeader.biBitCount = 16; 
+	info.bmiHeader.biCompression = BI_BITFIELDS; 
+	info.bmiHeader.biSizeImage = m_Width * m_Height * sizeof(U16); 
+	info.bmiHeader.biXPelsPerMeter = 72 * 25; 
+	info.bmiHeader.biYPelsPerMeter = 72 * 25; 
+	info.bmiHeader.biClrUsed = 0; 
+	info.bmiHeader.biClrImportant = 0; 
+
+	info.bmiColors[0] = 0xF800;
+	info.bmiColors[1] = 0x07E0;
+	info.bmiColors[2] = 0x001F;
+
+	m_Bitmap = CreateDIBSection(m_HDC, reinterpret_cast<BITMAPINFO *>(&info), DIB_RGB_COLORS, 
+		reinterpret_cast<void **>(&m_ColorBuffer), NULL, 0);
 }
 
 
 Surface :: ~Surface() {
 
-	/*
+	
 	if (m_Bitmap != INVALID_HANDLE_VALUE) {
 		DeleteObject(m_Bitmap);
 		m_Bitmap = reinterpret_cast<HBITMAP>(INVALID_HANDLE_VALUE);
-	}*/
+	}
 
 	if (m_HDC != INVALID_HANDLE_VALUE) {
 		DeleteDC(m_HDC);
 		m_HDC = reinterpret_cast<HDC>(INVALID_HANDLE_VALUE);
 	}
 
-	if (m_ColorBuffer != 0) {
+	/*if (m_ColorBuffer != 0) {
 		delete [] m_ColorBuffer;
 		m_ColorBuffer = 0;
-	}
+	}*/
 
 	if (m_AlphaBuffer != 0) {
 		delete [] m_AlphaBuffer;

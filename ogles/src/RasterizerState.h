@@ -119,7 +119,14 @@ namespace EGL {
 
 	public:
 		RasterizerState();
+		RasterizerState(const RasterizerState& other);
 		~RasterizerState();
+
+		RasterizerState& operator=(const RasterizerState& other);
+
+		// -1 if less, 0 if equal, 1 if greater
+		int Compare(const RasterizerState& other) const;
+		size_t HashCode() const;
 
 		U32 GetVersion() const;
 		void VersionChanged();
@@ -127,10 +134,6 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		// Primitive rendering state
 		// ----------------------------------------------------------------------
-
-		void SetTexture(MultiTexture * texture);
-		MultiTexture * GetTexture()					{ VersionChanged(); return m_Texture; }
-		const MultiTexture * GetTexture() const		{ return m_Texture; }
 
 		void SetTexEnvColor(const Color& color);
 		void SetTextureMode(TextureMode mode);
@@ -254,8 +257,6 @@ namespace EGL {
 
 		StencilOp				m_StencilFail, m_StencilZFail, m_StencilZPass;
 
-		MultiTexture *			m_Texture;			// current texture 
-
 		U32						m_Version;			// version numbers gets
 													// incremented with each 
 													// state change
@@ -275,11 +276,6 @@ namespace EGL {
 		++m_Version; 
 	};
 
-
-	inline void RasterizerState :: SetTexture(MultiTexture * texture) {
-		m_Texture = texture;
-		VersionChanged();
-	}
 
 	inline void RasterizerState :: SetTexEnvColor(const Color& color) {
 		m_TexEnvColor = color;
@@ -465,6 +461,22 @@ namespace EGL {
 		m_PointSmoothEnabled = enabled;
 		VersionChanged();
 	}
+
+	class RasterizerStateCompare {
+	public:
+		enum {
+			bucket_size = 10,
+			min_buckets = 4
+		};
+
+		size_t operator()(const RasterizerState& key) const {
+			return key.HashCode();
+		}
+
+		bool operator()(const RasterizerState& key1, const RasterizerState& key2) const {
+			return key1.Compare(key2) < 0;
+		}
+	};
 
 }
 

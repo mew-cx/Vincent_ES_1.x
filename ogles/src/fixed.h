@@ -63,6 +63,15 @@ inline static U32 EGL_CLAMP(U32 value, U32 min, U32 max) {
 }
 
 
+static inline I32 EGL_Abs(I32 value) {
+	if (value < 0) {
+		return -value;
+	} else {
+		return value;
+	}
+}
+
+
 // --------------------------------------------------------------------------
 // Convert integer value to fixed point number
 //

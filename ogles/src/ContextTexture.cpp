@@ -44,7 +44,7 @@ void Context :: BindTexture(GLenum target, GLuint texture) {
 		}
 	}
 
-	GetRasterizerState()->SetTexture(m_Textures[texture]);
+	GetRasterizer()->SetTexture(m_Textures[texture]);
 }
 
 void Context :: DeleteTextures(GLsizei n, const GLuint *textures) { 
@@ -54,8 +54,8 @@ void Context :: DeleteTextures(GLsizei n, const GLuint *textures) {
 
 		if (texture != 0) {
 			if (texture < m_Textures.size() && m_Textures[texture] != 0) {
-				if (m_Textures[texture] == GetRasterizerState()->GetTexture()) {
-					GetRasterizerState()->SetTexture(m_Textures[0]);
+				if (m_Textures[texture] == GetRasterizer()->GetTexture()) {
+					GetRasterizer()->SetTexture(m_Textures[0]);
 				}
 
 				delete m_Textures[texture];

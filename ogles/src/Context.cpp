@@ -64,8 +64,8 @@ Context :: Context(const Config & config)
 {
 	DepthRangex(VIEWPORT_NEAR, VIEWPORT_FAR);
 	m_Textures.push_back(new MultiTexture());
-	GetRasterizerState()->SetTexture(m_Textures[0]);
 	m_Rasterizer = new Rasterizer(GetRasterizerState());
+	m_Rasterizer->SetTexture(m_Textures[0]);
 
 	m_LightModelAmbient.r = m_LightModelAmbient.g = m_LightModelAmbient.b = F(0.2f);
 	m_LightModelAmbient.a = F(1.0);
@@ -88,6 +88,7 @@ Context :: ~Context() {
 	m_ReadSurface = m_DrawSurface = 0;
 
 	if (m_Rasterizer != 0) {
+
 		delete m_Rasterizer;
 		m_Rasterizer = 0;
 	}
