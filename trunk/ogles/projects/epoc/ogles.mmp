@@ -3,12 +3,12 @@ TARGETTYPE dll
 SOURCEPATH ..\..\src
 SOURCE Config.cpp
 SOURCE Context.cpp
+SOURCE ContextBuffer.cpp
 SOURCE ContextFloat.cpp
 SOURCE ContextLight.cpp
 SOURCE ContextLines.cpp
 SOURCE ContextMaterial.cpp
 SOURCE ContextMatrix.cpp
-SOURCE ContextMesh.cpp
 SOURCE ContextPoints.cpp
 SOURCE ContextRender.cpp
 SOURCE ContextRaster.cpp
@@ -26,6 +26,7 @@ SOURCE Rasterizer.cpp
 SOURCE RasterizerState.cpp
 SOURCE RasterizerTriangles.cpp
 SOURCE Texture.cpp
+SOURCE Utils.cpp
 SOURCEPATH ..\..\src\ARM
 SOURCE FunctionCache.cpp
 SOURCE CodeGenerator.cpp
@@ -39,14 +40,14 @@ SOURCE ContextEpoc.cpp
 SOURCE egl.cpp
 SOURCE OGLES.cpp
 SOURCE Surface.cpp
+SOURCE stdafx.cpp
 USERINCLUDE ..\..\src\codegen
 USERINCLUDE ..\..\src\ARM
 USERINCLUDE ..\..\src\Epoc
 USERINCLUDE ..\..\src
-USERINCLUDE ..\..\include
-SYSTEMINCLUDE ..\..\src
+SYSTEMINCLUDE ..\..\include
 SYSTEMINCLUDE \epoc32\include\libc
 SYSTEMINCLUDE \epoc32\include
 LIBRARY codegen.lib ws32.lib fbscli.lib 
 LIBRARY		estlib.lib euser.lib
-STATICLIBRARY	ecrt0.lib
+LIBRARY	int64x.lib
