@@ -382,14 +382,89 @@ cg_proc_t * cg_proc_create(cg_module_t * module);
 
 cg_block_t * cg_block_create(cg_proc_t * proc);
 
-cg_virtual_reg_t * cg_virtual_reg_create(cg_proc_t * proc);
+cg_virtual_reg_t * cg_virtual_reg_create(cg_proc_t * proc, cg_reg_type_t type);
 
 // create a register list
 cg_virtual_reg_list_t * cg_create_virtual_reg_list(cg_heap_t * heap, ...);
 
 // add an instruction to a block
-void cg_block_add(cg_block_t * block, cg_inst_t * inst);
 
+cg_inst_t * cg_create_inst_unary(cg_block_t * block, 
+								 cg_opcode_t op, 
+								 cg_virtual_reg_t * dest, 
+								 cg_virtual_reg_t * source);
+
+cg_inst_t * cg_create_inst_unary_s(cg_block_t * block, 
+								   cg_opcode_t op, 
+								   cg_virtual_reg_t * dest, 
+								   cg_virtual_reg_t * flags, 
+								   cg_virtual_reg_t * source);
+
+cg_inst_t * cg_create_inst_binary(cg_block_t * block, 
+								  cg_opcode_t op, 
+								  cg_virtual_reg_t * dest, 
+								  cg_virtual_reg_t * source, 
+								  cg_virtual_reg_t * operand);
+
+cg_inst_t * cg_create_inst_binary_s(cg_block_t * block, 
+									cg_opcode_t op, 
+									cg_virtual_reg_t * dest, 
+									cg_virtual_reg_t * flags, 
+									cg_virtual_reg_t * source, 
+									cg_virtual_reg_t * operand);
+
+cg_inst_t * cg_create_inst_compare(cg_block_t * block, 
+								   cg_opcode_t op, 
+								   cg_virtual_reg_t * dest, 
+								   cg_virtual_reg_t * source, 
+								   cg_virtual_reg_t * operand);
+
+cg_inst_t * cg_create_inst_load(cg_block_t * block, 
+								cg_opcode_t op, 
+								cg_virtual_reg_t * dest, 
+								cg_virtual_reg_t * mem);
+
+cg_inst_t * cg_create_inst_store(cg_block_t * block, 
+								 cg_opcode_t op, 
+								 cg_virtual_reg_t * source, 
+								 cg_virtual_reg_t * mem);
+
+cg_inst_t * cg_create_inst_load_immed(cg_block_t * block, 
+									  cg_opcode_t op, 
+									  cg_virtual_reg_t * dest, 
+									  U32 value);
+
+cg_inst_t * cg_create_inst_branch_label(cg_block_t * block, 
+										cg_opcode_t op, 
+										cg_block_t * target);
+
+cg_inst_t * cg_create_inst_branch_cond(cg_block_t * block, 
+									   cg_opcode_t op, 
+									   cg_virtual_reg_t * flags, 
+									   cg_block_t * target);
+
+cg_inst_t * cg_create_inst_phi(cg_block_t * block, 
+							   cg_opcode_t op, 
+							   cg_virtual_reg_t * dest, 
+							   cg_virtual_reg_list_t * regs);
+
+cg_inst_t * cg_create_inst_call_proc(cg_block_t * block, 
+									 cg_opcode_t op, 
+									 cg_proc_t * proc, 
+									 cg_virtual_reg_list_t * args);
+
+cg_inst_t * cg_create_inst_call_func(cg_block_t * block, 
+									 cg_opcode_t op, 
+									 cg_virtual_reg_t * dest, 
+									 cg_proc_t * proc, 
+									 cg_virtual_reg_list_t * args);
+
+cg_inst_t * cg_create_inst_ret(cg_block_t * block, 
+							   cg_opcode_t op);
+
+cg_inst_t * cg_create_inst_ret_value(cg_block_t * block, 
+									 cg_opcode_t op, 
+									 cg_virtual_reg_t * value);
 
 // constructor functions for basic instruction formats:
 /*	cg_inst_unary,		

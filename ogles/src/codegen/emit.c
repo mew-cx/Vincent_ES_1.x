@@ -403,7 +403,8 @@ static void call(cg_codegen_t * gen, cg_label_t * target,
 }
 
 
-static void emit_unary_negate(cg_codegen_t * gen, cg_inst_unary_t * inst)
+static void emit_unary_negate(cg_codegen_t * gen, cg_inst_unary_t * inst,
+							  int update_flags)
 {
 	switch (inst->base.kind)
 	{
@@ -442,9 +443,10 @@ static void emit_unary_negate(cg_codegen_t * gen, cg_inst_unary_t * inst)
 }
 
 
-static void emit_unary_complement(cg_codegen_t * gen, cg_inst_unary_t * inst)
+static void emit_unary_complement(cg_codegen_t * gen, cg_inst_unary_t * inst,
+								  int update_flags)
 {
-	emit_unary_negate(gen, inst);
+	emit_unary_negate(gen, inst, 0);
 	ARM_SUB_REG_IMM(gen->cseg,
 					inst->dest_value->physical_reg->regno,
 					inst->dest_value->physical_reg->regno,
@@ -452,7 +454,8 @@ static void emit_unary_complement(cg_codegen_t * gen, cg_inst_unary_t * inst)
 }
 
 
-static void emit_unary_trunc(cg_codegen_t * gen, cg_inst_unary_t * inst)
+static void emit_unary_trunc(cg_codegen_t * gen, cg_inst_unary_t * inst,
+							 int update_flags)
 {
 	assert(inst->base.kind == cg_inst_unary);
 	
@@ -463,7 +466,8 @@ static void emit_unary_trunc(cg_codegen_t * gen, cg_inst_unary_t * inst)
 }
 
 
-static void emit_unary_round(cg_codegen_t * gen, cg_inst_unary_t * inst)
+static void emit_unary_round(cg_codegen_t * gen, cg_inst_unary_t * inst,
+							 int update_flags)
 {
 	assert(inst->base.kind == cg_inst_unary);
 	
@@ -479,7 +483,8 @@ static void emit_unary_round(cg_codegen_t * gen, cg_inst_unary_t * inst)
 }
 
 
-static void emit_unary_fcnv(cg_codegen_t * gen, cg_inst_unary_t * inst)
+static void emit_unary_fcnv(cg_codegen_t * gen, cg_inst_unary_t * inst,
+							int update_flags)
 {
 	assert(inst->base.kind == cg_inst_unary);
 	
@@ -490,7 +495,8 @@ static void emit_unary_fcnv(cg_codegen_t * gen, cg_inst_unary_t * inst)
 }
 
 
-static void emit_unary(cg_codegen_t * gen, cg_inst_unary_t * inst)
+static void emit_unary(cg_codegen_t * gen, cg_inst_unary_t * inst,
+					   int update_flags)
 {
 	// distinguish operations that map directly to ARM instructions
 	// operations that require sequence of instructions
@@ -501,24 +507,24 @@ static void emit_unary(cg_codegen_t * gen, cg_inst_unary_t * inst)
 		/* regular unary operation */
 		case cg_op_neg:
 		case cg_op_fneg:
-			emit_unary_negate(gen, inst);
+			emit_unary_negate(gen, inst, update_flags);
 			break;
 			
 		case cg_op_not:		
-			emit_unary_complement(gen, inst);
+			emit_unary_complement(gen, inst, update_flags);
 			break;
 			
 		/* sequences */
 		case cg_op_trunc:	
-			emit_unary_trunc(gen, inst);
+			emit_unary_trunc(gen, inst, update_flags);
 			break;
 			
 		case cg_op_round:	
-			emit_unary_round(gen, inst);
+			emit_unary_round(gen, inst, update_flags);
 			break;
 			
 		case cg_op_fcnv:															
-			emit_unary_fcnv(gen, inst);
+			emit_unary_fcnv(gen, inst, update_flags);
 			break;
 
 		default:
@@ -527,7 +533,8 @@ static void emit_unary(cg_codegen_t * gen, cg_inst_unary_t * inst)
 }
 
 
-static void emit_binary_shifter(cg_codegen_t * gen, cg_inst_binary_t * inst)
+static void emit_binary_shifter(cg_codegen_t * gen, cg_inst_binary_t * inst,
+								int update_flags)
 {
 	ARMShiftType shift_type;
 	
@@ -571,7 +578,7 @@ static void emit_binary_shifter(cg_codegen_t * gen, cg_inst_binary_t * inst)
 
 
 static void emit_binary_regular(cg_codegen_t * gen, cg_inst_binary_t * inst,
-								ARMOpcode opcode)
+								ARMOpcode opcode, int update_flags)
 {
 	switch (inst->base.kind)
 	{
@@ -622,7 +629,8 @@ static void emit_binary_regular(cg_codegen_t * gen, cg_inst_binary_t * inst,
 }
 
 
-static void emit_binary_multiply_int(cg_codegen_t * gen, cg_inst_binary_t * inst)
+static void emit_binary_multiply_int(cg_codegen_t * gen, cg_inst_binary_t * inst,
+									 int update_flags)
 {
 	assert(inst->base.kind == cg_inst_binary);
 	
@@ -633,7 +641,8 @@ static void emit_binary_multiply_int(cg_codegen_t * gen, cg_inst_binary_t * inst
 }
 
 
-static void emit_binary_multiply_fixed(cg_codegen_t * gen, cg_inst_binary_t * inst)
+static void emit_binary_multiply_fixed(cg_codegen_t * gen, cg_inst_binary_t * inst,
+									   int update_flags)
 {
 	// alloacte a temporary register
 	cg_virtual_reg_t temp_reg;
@@ -677,7 +686,7 @@ static void emit_binary_multiply_fixed(cg_codegen_t * gen, cg_inst_binary_t * in
 }
 
 
-static void emit_binary(cg_codegen_t * gen, cg_inst_binary_t * inst)
+static void emit_binary(cg_codegen_t * gen, cg_inst_binary_t * inst, int update_flags)
 {
 	// distinguish operations that map directly to ARM instructions
 	// shifter-type instructions (MOV plus shifter operand)
@@ -690,39 +699,39 @@ static void emit_binary(cg_codegen_t * gen, cg_inst_binary_t * inst)
 		case cg_op_asr:
 		case cg_op_lsl:
 		case cg_op_lsr:
-			emit_binary_shifter(gen, inst);
+			emit_binary_shifter(gen, inst, update_flags);
 			break;
 	
 		/* regular binary operation */
 		case cg_op_add:
 		case cg_op_fadd:
-			emit_binary_regular(gen, inst, ARMOP_ADD);
+			emit_binary_regular(gen, inst, ARMOP_ADD, update_flags);
 			break;
 			
 		case cg_op_sub:
 		case cg_op_fsub:
-			emit_binary_regular(gen, inst, ARMOP_SUB);
+			emit_binary_regular(gen, inst, ARMOP_SUB, update_flags);
 			break;
 			
 		case cg_op_and:
-			emit_binary_regular(gen, inst, ARMOP_AND);
+			emit_binary_regular(gen, inst, ARMOP_AND, update_flags);
 			break;
 			
 		case cg_op_or:
-			emit_binary_regular(gen, inst, ARMOP_ORR);
+			emit_binary_regular(gen, inst, ARMOP_ORR, update_flags);
 			break;
 			
 		case cg_op_xor:
-			emit_binary_regular(gen, inst, ARMOP_EOR);
+			emit_binary_regular(gen, inst, ARMOP_EOR, update_flags);
 			break;
 	
 		/* multiplication */
 		case cg_op_mul:
-			emit_binary_multiply_int(gen, inst);
+			emit_binary_multiply_int(gen, inst, update_flags);
 			break;
 			
 		case cg_op_fmul:
-			emit_binary_multiply_fixed(gen, inst);
+			emit_binary_multiply_fixed(gen, inst, update_flags);
 			break;
 			
 		default:
@@ -1039,7 +1048,7 @@ static void emit_ret(cg_codegen_t * gen, cg_inst_ret_t * inst)
 }
 
 
-static void dispatch_inst(cg_codegen_t * gen, cg_inst_t * inst)
+static void dispatch_inst(cg_codegen_t * gen, cg_inst_t * inst, int update_flags)
 {
 	switch (inst->base.kind) 
 	{		
@@ -1047,14 +1056,14 @@ static void dispatch_inst(cg_codegen_t * gen, cg_inst_t * inst)
 		case cg_inst_arm_unary_immed:	
 		case cg_inst_arm_unary_shift_reg:	
 		case cg_inst_arm_unary_shift_immed:	
-			emit_unary(gen, &inst->unary);
+			emit_unary(gen, &inst->unary, update_flags);
 			break;
 			
 		case cg_inst_binary:		
 		case cg_inst_arm_binary_immed:	
 		case cg_inst_arm_binary_shift_reg:	
 		case cg_inst_arm_binary_shift_immed:	
-			emit_binary(gen, &inst->binary);
+			emit_binary(gen, &inst->binary, update_flags);
 			break;
 			
 		case cg_inst_compare:	
@@ -1296,6 +1305,7 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 
 	cg_virtual_reg_t * buffer[64];
 	cg_virtual_reg_t **iter, ** end = cg_inst_use(inst, buffer, buffer + 64);
+	int update_flags = 0;
 
 	for (iter = buffer; iter != end; ++iter)
 	{
@@ -1314,6 +1324,16 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 			*plist = (*plist)->next;
 		}
 		
+		if (reg->type == cg_reg_type_flags)
+		{
+			/****************************************************************/
+			/* do not allocate a register for flags, however we will have	*/
+			/* to add spill code later										*/
+			/****************************************************************/
+
+			continue;
+		}
+
 		physical_reg = load_reg(gen, reg, 0);
 	}
 	
@@ -1343,12 +1363,23 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 		//  for each def:
 		//		allocate a new register
 		cg_virtual_reg_t * reg = *iter;
+		cg_physical_reg_t * physical_reg;
 		
-		cg_physical_reg_t * physical_reg = allocate_reg(gen, reg, 0);
+		if (reg->type == cg_reg_type_flags)
+		{
+			/****************************************************************/
+			/* do not allocate a register for flags, however we will have	*/
+			/* to add spill code later										*/
+			/****************************************************************/
+			update_flags = 1;
+			continue;
+		}
+
+		physical_reg = allocate_reg(gen, reg, 0);
 		assign_reg(gen, physical_reg, reg);
 	}
 
-	dispatch_inst(gen, inst);
+	dispatch_inst(gen, inst, update_flags);
 
 	/************************************************************************/
 	/* Mark all registers from the def set as dirty and defined				*/
@@ -1357,8 +1388,14 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 	for (iter = buffer; iter != end; ++iter)
 	{
 		cg_virtual_reg_t * reg = *iter;
+		cg_physical_reg_t * physical_reg;
 		
-		cg_physical_reg_t * physical_reg = reg->physical_reg;
+		if (reg->type == cg_reg_type_flags)
+		{
+			continue;
+		}
+
+		physical_reg = reg->physical_reg;
 		physical_reg->dirty = physical_reg->defined = 1;
 	}
 	
