@@ -549,22 +549,13 @@ namespace {
 	inline EGL_Fixed Det3x3(EGL_Fixed x0, EGL_Fixed x1, EGL_Fixed x2,
 							EGL_Fixed y0, EGL_Fixed y1, EGL_Fixed y2,
 							EGL_Fixed z0, EGL_Fixed z1, EGL_Fixed z2) {
-
-		// TODO: Need to replace those float calculations by pseudo-floats (i.e. not fully normalized)
-		float result = 
-			+EGL_FloatFromFixed(x0) * EGL_FloatFromFixed(y1) * EGL_FloatFromFixed(z2)
-			+EGL_FloatFromFixed(x1) * EGL_FloatFromFixed(y2) * EGL_FloatFromFixed(z0)
-			+EGL_FloatFromFixed(x2) * EGL_FloatFromFixed(y0) * EGL_FloatFromFixed(z1)
-			-EGL_FloatFromFixed(x0) * EGL_FloatFromFixed(y2) * EGL_FloatFromFixed(z1)
-			-EGL_FloatFromFixed(x1) * EGL_FloatFromFixed(y0) * EGL_FloatFromFixed(z2)
-			-EGL_FloatFromFixed(x2) * EGL_FloatFromFixed(y1) * EGL_FloatFromFixed(z0);
-
-		if (result > 0) 
-			return 1;
-		else if (result < 0)
-			return -1;
-		else 
-			return 0;
+		return (I32) ((
+			+I64(x0) * I64(y1) * I64(z2)
+			+I64(x1) * I64(y2) * I64(z0)
+			+I64(x2) * I64(y0) * I64(z1)
+			-I64(x0) * I64(y2) * I64(z1)
+			-I64(x1) * I64(y0) * I64(z2)
+			-I64(x2) * I64(y1) * I64(z0)) >> 32);
 	}
 }
 
