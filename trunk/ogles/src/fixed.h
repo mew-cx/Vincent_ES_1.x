@@ -209,7 +209,12 @@ OGLES_API EGL_Fixed EGL_Inverse(EGL_Fixed value);
 //	b			-	divisor
 // --------------------------------------------------------------------------
 inline OGLES_API EGL_Fixed EGL_Div(EGL_Fixed a, EGL_Fixed b) {
-	return EGL_Mul(a, EGL_Inverse(b));
+
+	if ((b >> 24) && (b >> 24) + 1) {
+		return EGL_Mul(a >> 8, EGL_Inverse(b >> 8));
+	} else {
+		return EGL_Mul(a, EGL_Inverse(b));
+	}
 }
 
 

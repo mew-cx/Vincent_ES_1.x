@@ -148,7 +148,7 @@ namespace EGL {
 
 		inline FractionalColor operator*(EGL_Fixed scale) const {
 			return FractionalColor(EGL_Mul(r, scale),
-				EGL_Mul(g, scale), EGL_Mul(b, scale), a);
+				EGL_Mul(g, scale), EGL_Mul(b, scale), EGL_Mul(a, scale));
 		}
 
 
@@ -156,6 +156,7 @@ namespace EGL {
 			r = EGL_Mul(r, scale);
 			g = EGL_Mul(g, scale);
 			b = EGL_Mul(b, scale);
+			a = EGL_Mul(a, scale);
 			return *this;
 		}
 
