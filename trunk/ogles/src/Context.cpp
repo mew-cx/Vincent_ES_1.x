@@ -351,6 +351,7 @@ void Context :: Toggle(GLenum cap, bool value) {
 
 	case GL_RESCALE_NORMAL:
 		m_RescaleNormalEnabled = value;
+		UpdateInverseModelViewMatrix();
 		break;
 
 	case GL_POLYGON_OFFSET_FILL:
