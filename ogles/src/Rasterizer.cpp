@@ -184,9 +184,108 @@ void Rasterizer :: InitFogTable() {
 }
 
 
-inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, Color color) {
-	// will have special cases based on settings
-	// for now, no special support for blending etc.
+inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv, const Color& baseColor) {
+
+	Color color = baseColor;
+
+	if (m_State->m_TextureEnabled) {
+
+		EGL_Fixed tu0 = m_Texture->GetWrappedS(tu);
+		EGL_Fixed tv0 = m_Texture->GetWrappedT(tv);
+
+		Color texColor = 
+			m_Texture->GetTexture(0)->GetPixel(tu0, tv0);
+
+		switch (m_Texture->GetTexture(0)->GetInternalFormat()) {
+			default:
+			case Texture::TextureFormatAlpha:
+				switch (m_State->m_TextureMode) {
+					case RasterizerState::TextureModeReplace:
+						color = Color(color.r, color.g, color.b, texColor.a);
+						break;
+
+					case RasterizerState::TextureModeModulate:
+					case RasterizerState::TextureModeBlend:
+					case RasterizerState::TextureModeAdd:
+						color = Color(color.r, color.g, color.b, MulU8(color.a, texColor.a));
+						break;
+				}
+				break;
+
+			case Texture::TextureFormatLuminance:
+			case Texture::TextureFormatRGB:
+				switch (m_State->m_TextureMode) {
+					case RasterizerState::TextureModeDecal:
+					case RasterizerState::TextureModeReplace:
+						color = Color(texColor.r, texColor.g, texColor.b, color.a);
+						break;
+
+					case RasterizerState::TextureModeModulate:
+						color = Color(MulU8(color.r, texColor.r), 
+							MulU8(color.g, texColor.g), MulU8(color.b, texColor.b), color.a);
+						break;
+
+					case RasterizerState::TextureModeBlend:
+						color = 
+							Color(
+								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
+								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
+								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
+								color.a);
+						break;
+
+					case RasterizerState::TextureModeAdd:
+						color =
+							Color(
+								ClampU8(color.r + texColor.r),
+								ClampU8(color.g + texColor.g),
+								ClampU8(color.b + texColor.b),
+								color.a);
+						break;
+				}
+				break;
+
+			case Texture::TextureFormatLuminanceAlpha:
+			case Texture::TextureFormatRGBA:
+				switch (m_State->m_TextureMode) {
+					case RasterizerState::TextureModeReplace:
+						color = texColor;
+						break;
+
+					case RasterizerState::TextureModeModulate:
+						color = color * texColor;
+						break;
+
+					case RasterizerState::TextureModeDecal:
+						color = 
+							Color(
+								MulU8(color.r, 0xff - texColor.a) + MulU8(texColor.r, texColor.a),
+								MulU8(color.g, 0xff - texColor.a) + MulU8(texColor.g, texColor.a),
+								MulU8(color.b, 0xff - texColor.a) + MulU8(texColor.b, texColor.a),
+								color.a);
+						break;
+
+					case RasterizerState::TextureModeBlend:
+						color = 
+							Color(
+								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
+								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
+								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
+								MulU8(color.a, texColor.a));
+						break;
+
+					case RasterizerState::TextureModeAdd:
+						color =
+							Color(
+								ClampU8(color.r + texColor.r),
+								ClampU8(color.g + texColor.g),
+								ClampU8(color.b + texColor.b),
+								MulU8(color.a, texColor.a));
+						break;
+				}
+				break;
+		}
+	}
 
 	bool depthTest;
 	
@@ -510,112 +609,6 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, Color color) {
 }
 
 
-inline Color Rasterizer :: TexturedColor(const Color& baseColor, EGL_Fixed tu, EGL_Fixed tv) {
-
-	Color color = baseColor;
-
-	if (m_State->m_TextureEnabled) {
-
-		EGL_Fixed tu0 = m_Texture->GetWrappedS(tu);
-		EGL_Fixed tv0 = m_Texture->GetWrappedT(tv);
-
-		Color texColor = 
-			m_Texture->GetTexture(0)->GetPixel(tu0, tv0);
-
-		switch (m_Texture->GetTexture(0)->GetInternalFormat()) {
-			default:
-			case Texture::TextureFormatAlpha:
-				switch (m_State->m_TextureMode) {
-					case RasterizerState::TextureModeReplace:
-						color = Color(color.r, color.g, color.b, texColor.a);
-						break;
-
-					case RasterizerState::TextureModeModulate:
-					case RasterizerState::TextureModeBlend:
-					case RasterizerState::TextureModeAdd:
-						color = Color(color.r, color.g, color.b, MulU8(color.a, texColor.a));
-						break;
-				}
-				break;
-
-			case Texture::TextureFormatLuminance:
-			case Texture::TextureFormatRGB:
-				switch (m_State->m_TextureMode) {
-					case RasterizerState::TextureModeDecal:
-					case RasterizerState::TextureModeReplace:
-						color = Color(texColor.r, texColor.g, texColor.b, color.a);
-						break;
-
-					case RasterizerState::TextureModeModulate:
-						color = Color(MulU8(color.r, texColor.r), 
-							MulU8(color.g, texColor.g), MulU8(color.b, texColor.b), color.a);
-						break;
-
-					case RasterizerState::TextureModeBlend:
-						color = 
-							Color(
-								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
-								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
-								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
-								color.a);
-						break;
-
-					case RasterizerState::TextureModeAdd:
-						color =
-							Color(
-								ClampU8(color.r + texColor.r),
-								ClampU8(color.g + texColor.g),
-								ClampU8(color.b + texColor.b),
-								color.a);
-						break;
-				}
-				break;
-
-			case Texture::TextureFormatLuminanceAlpha:
-			case Texture::TextureFormatRGBA:
-				switch (m_State->m_TextureMode) {
-					case RasterizerState::TextureModeReplace:
-						color = texColor;
-						break;
-
-					case RasterizerState::TextureModeModulate:
-						color = color * texColor;
-						break;
-
-					case RasterizerState::TextureModeDecal:
-						color = 
-							Color(
-								MulU8(color.r, 0xff - texColor.a) + MulU8(texColor.r, texColor.a),
-								MulU8(color.g, 0xff - texColor.a) + MulU8(texColor.g, texColor.a),
-								MulU8(color.b, 0xff - texColor.a) + MulU8(texColor.b, texColor.a),
-								color.a);
-						break;
-
-					case RasterizerState::TextureModeBlend:
-						color = 
-							Color(
-								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
-								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
-								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
-								MulU8(color.a, texColor.a));
-						break;
-
-					case RasterizerState::TextureModeAdd:
-						color =
-							Color(
-								ClampU8(color.r + texColor.r),
-								ClampU8(color.g + texColor.g),
-								ClampU8(color.b + texColor.b),
-								MulU8(color.a, texColor.a));
-						break;
-				}
-				break;
-		}
-	}
-
-	return color;
-}
-
 inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& end, U32 y) {
 
 	// TODO: The depth coordinate should really be interpolated perspectively
@@ -635,7 +628,7 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 
 	for (; x < xEnd; ++x) {
 
-		Fragment(x, y, w, TexturedColor(baseColor, tu, tv));
+		Fragment(x, y, w, tu, tv, baseColor);
 		baseColor += colorIncrement;
 		w += deltaW;
 		tu += deltaU;
@@ -647,6 +640,7 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 // --------------------------------------------------------------------------
 // Prepare rasterizer with according to current state settings
 // --------------------------------------------------------------------------
+
 void Rasterizer :: PreparePoint() {
 	if (!m_IsPrepared) {
 		InitFogTable();
@@ -655,6 +649,7 @@ void Rasterizer :: PreparePoint() {
 	m_IsPrepared = true;
 }
 
+
 void Rasterizer :: PrepareLine() {
 	if (!m_IsPrepared) {
 		InitFogTable();
@@ -662,6 +657,7 @@ void Rasterizer :: PrepareLine() {
 
 	m_IsPrepared = true;
 }
+
 
 void Rasterizer :: PrepareTriangle() {
 	if (!m_IsPrepared) {
@@ -687,7 +683,7 @@ void Rasterizer :: RasterPoint(const RasterPos& point) {
 	EGL_Fixed tv = point.m_TextureCoords.tv;
 	FractionalColor baseColor = point.m_Color;
 
-	Fragment(x, y, w, TexturedColor(baseColor, tu, tv));
+	Fragment(x, y, w, tu, tv, baseColor);
 }
 
 
@@ -726,7 +722,7 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 
 		for (; x < endX; ++x) {
 
-			Fragment(x, y, w, TexturedColor(baseColor, tu, tv));
+			Fragment(x, y, w, tu, tv, baseColor);
 
 			error += slope;
 			if (error > EGL_FixedFromFloat(0.5f)) {
@@ -759,7 +755,7 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 
 		for (; y < endY; ++y) {
 
-			Fragment(x, y, w, TexturedColor(baseColor, tu, tv));
+			Fragment(x, y, w, tu, tv, baseColor);
 
 			error += slope;
 			if (error > EGL_FixedFromFloat(0.5f)) {

@@ -183,12 +183,10 @@ namespace EGL {
 		// Rasterization of fragment
 		// ----------------------------------------------------------------------
 
-		void Fragment(I32 x, I32 y, EGL_Fixed depth, Color color);
+		void Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv, const Color& baseColor);
 			// will have special cases based on settings
 			// the coordinates are integer coordinates
 
-		Color TexturedColor(const Color& baseColor, EGL_Fixed tu, EGL_Fixed tv);
-		//void RasterClippedXTriangle(RasterPos * pos1, RasterPos * pos2, RasterPos * pos3);
 		void InitFogTable();
 
 	private:

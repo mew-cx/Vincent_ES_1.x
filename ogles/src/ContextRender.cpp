@@ -235,9 +235,11 @@ void Context :: TexCoordPointer(GLint size, GLenum type, GLsizei stride, const G
 	m_TexCoordArray.size = size;
 }
 
+
 // --------------------------------------------------------------------------
 // Default values of array is disabled
 // --------------------------------------------------------------------------
+
 
 void Context :: Color4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha) { 
 	m_DefaultRGBA.r = red;
@@ -245,6 +247,7 @@ void Context :: Color4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
 	m_DefaultRGBA.b = blue;
 	m_DefaultRGBA.a = alpha;
 }
+
 
 void Context :: MultiTexCoord4x(GLenum target, GLfixed s, GLfixed t, GLfixed r, GLfixed q) { 
 	
@@ -259,14 +262,16 @@ void Context :: MultiTexCoord4x(GLenum target, GLfixed s, GLfixed t, GLfixed r, 
 	m_DefaultTextureCoords.tv = EGL_Mul(t, inverse);
 }
 
+
 void Context :: Normal3x(GLfixed nx, GLfixed ny, GLfixed nz) { 
 	m_DefaultNormal = Vec3D(nx, ny, nz);
 }
 
 
 // --------------------------------------------------------------------------
-// Actual mesh rendering
+// Actual array rendering
 // --------------------------------------------------------------------------
+
 
 void Context :: DrawArrays(GLenum mode, GLint first, GLsizei count) { 
 
@@ -304,6 +309,7 @@ void Context :: DrawArrays(GLenum mode, GLint first, GLsizei count) {
 		return;
 	}
 }
+
 
 void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices) { 
 	
@@ -392,34 +398,15 @@ void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
 	}
 }
 
-/*
 
-General rendering sequence:
-
-  If no vertices given, we are done.
-
-  Transform vertices into world coordinates.
-  Transform into screen coordinates.
-
-  Transform normals if normals provided and lights enabled. If no normals are given, use the
-  current default normal
-
-  Transform texture coordinates if texture coordinates are given. If no texture coordinates are given,
-  use the current default texture coordinate set
-
-  Calculate vertex colors from arrays. If no individual colors are given, use the default color specified.
-  Modulate vertex colors with lights and fog if necessary.
-
-  Set up primitives:
-	Apply culling & clipping to primitive
-	for non-clipped primitive:
-		perform depth division
-		raster primitive
-
-
-
- */
-
+// --------------------------------------------------------------------------
+// Load all the current coordinates from either a specific array or from
+// the common settings.
+//
+// Parameters:
+//	index		-	The array index from which any array coordinates should
+//					be retrieved.
+// --------------------------------------------------------------------------
 void Context :: SelectArrayElement(int index) {
 
 	// TO DO: this whole method should be redesigned for efficient pipelining
@@ -480,6 +467,15 @@ void Context :: SelectArrayElement(int index) {
 }
 
 
+// --------------------------------------------------------------------------
+// Perform lightning and geometry transformation on the current vertex
+// and store the results in buffer for the rasterization stage of the
+// pipeline.
+//
+// Parameters:
+//	rasterPos	-	A pointer to a vertex parameter buffer for the
+//					rasterization stage
+// --------------------------------------------------------------------------
 void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 
 	// apply model view matrix to vertex coordinate -> eye coordinates vertex
@@ -502,7 +498,8 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 
 	rasterPos->m_WindowCoords.x = EGL_Mul(clipCoords.x(), viewPortScale.x()) + m_ViewportOrigin.x();
 	rasterPos->m_WindowCoords.y = EGL_Mul(clipCoords.y(), viewPortScale.y()) + m_ViewportOrigin.y();
-	rasterPos->m_WindowCoords.w = clipCoords.w();
+	rasterPos->m_WindowCoords.w = clipCoords.w() >> 12;
+	// TODO: adjustment of w coordinate based on DepthRange setting
 
 	if (m_LightingEnabled) {
 		// for each light that is turned on, call into calculation
