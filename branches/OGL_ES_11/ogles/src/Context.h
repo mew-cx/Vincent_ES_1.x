@@ -371,7 +371,8 @@ private:
 
 		typedef void (Context::*GeometryFunction)(RasterPos * rasterPos);
 
-		void SetGeometryFunction();
+		void PrepareRendering();
+		void PrepareArray(VertexArray & array, bool enabled);
 
 		void CurrentValuesToRasterPosNoLight(RasterPos * rasterPos);
 		void CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos);
@@ -394,6 +395,8 @@ private:
 		EGL_Fixed FogDensity(EGL_Fixed eyeDistance) const;
 
 		void InitFogTable();
+
+		size_t * CurrentBufferForTarget(GLenum target);
 
 	private:
 		GLenum				m_LastError;
@@ -504,6 +507,14 @@ private:
 		// ----------------------------------------------------------------------
 
 		TextureArray		m_Textures;
+
+		// ----------------------------------------------------------------------
+		// vertex buffer related state
+		// ----------------------------------------------------------------------
+
+		BufferArray			m_Buffers;
+		size_t				m_CurrentArrayBuffer;
+		size_t				m_CurrentElementArrayBuffer;
 
 		// ----------------------------------------------------------------------
 		// Object-Life Cycle State

@@ -51,6 +51,10 @@ using namespace EGL;
 // Allocation and selection of texture objects
 // --------------------------------------------------------------------------
 
+GLboolean Context :: IsTexture(GLuint texture) {
+	return m_Textures.IsObject(texture);
+}
+
 void Context :: BindTexture(GLenum target, GLuint texture) { 
 
 	if (target != GL_TEXTURE_2D) {
@@ -58,7 +62,7 @@ void Context :: BindTexture(GLenum target, GLuint texture) {
 		return;
 	}
 
-	MultiTexture * multiTexture = m_Textures.GetTexture(texture);
+	MultiTexture * multiTexture = m_Textures.GetObject(texture);
 
 	if (multiTexture) {
 		GetRasterizer()->SetTexture(multiTexture);
@@ -76,8 +80,8 @@ void Context :: DeleteTextures(GLsizei n, const GLuint *textures) {
 		U32 texture = *textures++;
 
 		if (texture != 0) {
-			if (m_Textures.GetTexture(texture) == GetRasterizer()->GetTexture()) {
-				GetRasterizer()->SetTexture(m_Textures.GetTexture(0));
+			if (m_Textures.GetObject(texture) == GetRasterizer()->GetTexture()) {
+				GetRasterizer()->SetTexture(m_Textures.GetObject(0));
 			}
 
 			if (texture != 0) {
@@ -2043,11 +2047,6 @@ void Context :: UpdateMipmaps(void) {
 	}
 }
 
-
-GLboolean Context :: IsTexture(GLuint texture) {
-	assert(0);
-	return false;
-}
 
 void Context :: DrawTexs(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height) {
 	assert(0);
