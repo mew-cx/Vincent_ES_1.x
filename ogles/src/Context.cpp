@@ -95,6 +95,10 @@ Context :: Context(const Config & config)
 	m_ColorArrayEnabled(false),
 	m_TexCoordArrayEnabled(false),
 
+	// buffers
+	m_CurrentArrayBuffer(0),
+	m_CurrentElementArrayBuffer(0),
+
 	// general context state
 	m_Current(false),
 	m_Disposed(false),
@@ -114,7 +118,8 @@ Context :: Context(const Config & config)
 	ClearStencil(0);
 
 	m_Rasterizer = new Rasterizer(GetRasterizerState());	
-	m_Rasterizer->SetTexture(m_Textures.GetTexture(m_Textures.Allocate()));
+	m_Rasterizer->SetTexture(m_Textures.GetObject(m_Textures.Allocate()));
+	m_Buffers.Allocate();			// default buffer
 
 	m_LightModelAmbient.r = m_LightModelAmbient.g = m_LightModelAmbient.b = F(0.2f);
 	m_LightModelAmbient.a = F(1.0);

@@ -119,6 +119,7 @@ void Context :: ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvo
 	m_ColorArray.stride = stride;
 	m_ColorArray.type = type;
 	m_ColorArray.size = size;
+	m_ColorArray.boundBuffer = m_CurrentArrayBuffer;
 }
 
 void Context :: NormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer) { 
@@ -160,6 +161,7 @@ void Context :: NormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer
 	m_NormalArray.stride = stride;
 	m_NormalArray.type = type;
 	m_NormalArray.size = size;
+	m_NormalArray.boundBuffer = m_CurrentArrayBuffer;
 }
 
 void Context :: VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) { 
@@ -204,6 +206,7 @@ void Context :: VertexPointer(GLint size, GLenum type, GLsizei stride, const GLv
 	m_VertexArray.stride = stride;
 	m_VertexArray.type = type;
 	m_VertexArray.size = size;
+	m_VertexArray.boundBuffer = m_CurrentArrayBuffer;
 }
 
 void Context :: TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) { 
@@ -248,6 +251,7 @@ void Context :: TexCoordPointer(GLint size, GLenum type, GLsizei stride, const G
 	m_TexCoordArray.stride = stride;
 	m_TexCoordArray.type = type;
 	m_TexCoordArray.size = size;
+	m_TexCoordArray.boundBuffer = m_CurrentArrayBuffer;
 }
 
 
@@ -299,7 +303,7 @@ void Context :: DrawArrays(GLenum mode, GLint first, GLsizei count) {
 		return;
 	}
 
-	SetGeometryFunction();
+	PrepareRendering();
 
 	switch (mode) {
 	case GL_POINTS:
@@ -344,11 +348,28 @@ void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
 		return;
 	}
 
-	if (!m_VertexArrayEnabled || !indices) {
+	if (!m_VertexArrayEnabled) {
 		return;
 	}
 
-	SetGeometryFunction();
+	if (m_CurrentElementArrayBuffer) {
+		U8 * bufferBase =
+			static_cast<U8 *>(m_Buffers.GetObject(m_CurrentElementArrayBuffer)->GetData());
+
+		if (!bufferBase) {
+			RecordError(GL_INVALID_OPERATION);
+			return;
+		}
+
+		size_t offset = static_cast<const U8 *>(indices) - static_cast<const U8 *>(0);
+		indices = bufferBase + offset;
+	}
+
+	if (!indices) {
+		return;
+	}
+
+	PrepareRendering();
 
 	switch (mode) {
 	case GL_POINTS:
@@ -447,7 +468,7 @@ void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
 void Context :: SelectArrayElement(int index) {
 
 	// TO DO: this whole method should be redesigned for efficient pipelining
-	if (!m_VertexArrayEnabled || !m_VertexArray.pointer) {
+	if (!m_VertexArray.effectivePointer) {
 		m_CurrentVertex = Vec4D(0, 0, 0, EGL_ONE);
 	} else {
 		if (m_VertexArray.size == 3) {
@@ -471,7 +492,7 @@ void Context :: SelectArrayElement(int index) {
 		}
 	}
 
-	if (!m_NormalArrayEnabled || !m_NormalArray.pointer) {
+	if (!m_NormalArray.effectivePointer) {
 		m_CurrentNormal = m_DefaultNormal;
 	} else {
 		m_CurrentNormal = 
@@ -480,7 +501,7 @@ void Context :: SelectArrayElement(int index) {
 				  m_NormalArray.GetValue(index, 2));
 	}
 
-	if (!m_ColorArrayEnabled || !m_ColorArray.pointer) {
+	if (!m_ColorArray.effectivePointer) {
 		m_CurrentRGBA = m_DefaultRGBA;
 	} else {
 		m_CurrentRGBA =
@@ -490,7 +511,7 @@ void Context :: SelectArrayElement(int index) {
 							m_ColorArray.GetValue(index, 3));
 	}
 
-	if (!m_TexCoordArrayEnabled || !m_TexCoordArray.pointer) {
+	if (!m_TexCoordArray.effectivePointer) {
 		m_CurrentTextureCoords.tu = m_DefaultTextureCoords.tu;
 		m_CurrentTextureCoords.tv = m_DefaultTextureCoords.tv;
 	} else {
@@ -538,17 +559,31 @@ EGL_Fixed Context :: FogDensity(EGL_Fixed eyeDistance) const {
 }
 
 
-// --------------------------------------------------------------------------
-// Perform lightning and geometry transformation on the current vertex
-// and store the results in buffer for the rasterization stage of the
-// pipeline.
-//
-// Parameters:
-//	rasterPos	-	A pointer to a vertex parameter buffer for the
-//					rasterization stage
-// --------------------------------------------------------------------------
+void Context :: PrepareArray(VertexArray & array, bool enabled) {
 
-void Context :: SetGeometryFunction() {
+	array.effectivePointer = 0;
+
+	if (enabled) {
+		if (array.boundBuffer) {
+			if (m_Buffers.IsObject(array.boundBuffer)) {
+				U8 * bufferBase =
+					static_cast<U8 *>(m_Buffers.GetObject(array.boundBuffer)->GetData());
+
+				if (!bufferBase) {
+					return;
+				}
+
+				size_t offset = static_cast<const U8 *>(array.pointer) - static_cast<const U8 *>(0);
+				array.effectivePointer = bufferBase + offset;
+			} 
+		} else {
+			array.effectivePointer = array.pointer;
+		}
+	}
+}
+
+
+void Context :: PrepareRendering() {
 	if (m_LightingEnabled) {
 		if (m_ColorMaterialEnabled) {
 			if (m_TwoSidedLightning) {
@@ -566,7 +601,24 @@ void Context :: SetGeometryFunction() {
 	} else {
 		m_GeometryFunction = CurrentValuesToRasterPosNoLight;
 	}
+
+	PrepareArray(m_VertexArray,   m_VertexArrayEnabled);
+	PrepareArray(m_NormalArray,	  m_NormalArrayEnabled);
+	PrepareArray(m_ColorArray,    m_ColorArrayEnabled);
+	PrepareArray(m_TexCoordArray, m_TexCoordArrayEnabled);
 }
+
+
+// --------------------------------------------------------------------------
+// Perform lightning and geometry transformation on the current vertex
+// and store the results in buffer for the rasterization stage of the
+// pipeline.
+//
+// Parameters:
+//	rasterPos	-	A pointer to a vertex parameter buffer for the
+//					rasterization stage
+// --------------------------------------------------------------------------
+
 
 void Context :: CurrentValuesToRasterPosNoLight(RasterPos * rasterPos) {
 	FractionalColor color;

@@ -3807,6 +3807,10 @@ SOURCE=..\..\src\Arrays.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\src\Buffer.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\src\Color.h
 # End Source File
 # Begin Source File
