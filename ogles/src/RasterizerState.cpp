@@ -173,6 +173,7 @@ RasterizerState :: RasterizerState(const RasterizerState& other):
 	m_TextureMode(other.m_TextureMode),
 	m_MinFilterMode(other.m_MinFilterMode),
 	m_MagFilterMode(other.m_MagFilterMode),
+	m_MipmapFilterMode(other.m_MipmapFilterMode),
 	m_WrappingModeS(other.m_WrappingModeS),
 	m_WrappingModeT(other.m_WrappingModeT),
 	m_InternalFormat(other.m_InternalFormat),
@@ -245,6 +246,7 @@ RasterizerState& RasterizerState :: operator=(const RasterizerState& other) {
 	m_TextureMode = other.m_TextureMode;
 	m_MinFilterMode = other.m_MinFilterMode;
 	m_MagFilterMode = other.m_MagFilterMode;
+	m_MipmapFilterMode = other.m_MipmapFilterMode;
 	m_WrappingModeS = other.m_WrappingModeS;
 	m_WrappingModeT = other.m_WrappingModeT;
 	m_InternalFormat = other.m_InternalFormat;
