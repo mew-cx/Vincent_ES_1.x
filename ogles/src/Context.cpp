@@ -165,7 +165,7 @@ void Context :: RecordError(GLenum error) {
 void Context :: Clear(GLbitfield mask) { 
 
 	if (m_DrawSurface == 0) {
-		// TODO: record some error here
+		RecordError(GL_INVALID_OPERATION);
 		return;
 	}
 
@@ -236,7 +236,7 @@ void Context :: Toggle(GLenum cap, bool value) {
 		break;
 
 	case GL_DITHER:
-		//GetRasterizerState()->EnableFog(value);
+		//GetRasterizerState()->EnableDither(value);
 		break;
 
 	case GL_STENCIL_TEST:
@@ -339,26 +339,6 @@ void Context :: Flush(void) { }
 void Context :: FrontFace(GLenum mode) { }
 
 void Context :: CullFace(GLenum mode) { }
-
-
-void Context :: PixelStorei(GLenum pname, GLint param) { 
-	switch (pname) {
-		case GL_UNPACK_ALIGNMENT:
-			m_PixelStoreUnpackAlignment = param;
-			break;
-
-		case GL_PACK_ALIGNMENT:
-			m_PixelStorePackAlignment = param;
-			break;
-
-		default:
-			RecordError(GL_INVALID_ENUM);
-			break;
-	}
-}
-
-
-void Context :: ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels) { }
 
 
 // --------------------------------------------------------------------------

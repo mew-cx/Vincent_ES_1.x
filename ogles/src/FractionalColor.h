@@ -17,6 +17,7 @@
 
 #include "OGLES.h"
 #include "fixed.h"
+#include "Color.h"
 
 
 namespace EGL {
@@ -84,6 +85,7 @@ namespace EGL {
 				(EGL_IntFromFixed(a * 0xFF) & 0x80) << 8;
 		}
 
+#if 0
 		static inline FractionalColor From565(U16 u565) {
 			U8 r = (u565 & 0x001Fu) << 3;
 			U8 g = (u565 & 0x07E0u) >> 3;
@@ -107,6 +109,16 @@ namespace EGL {
 				EGL_FixedFromInt(g), 
 				EGL_FixedFromInt(b), 
 				EGL_FixedFromInt(a));
+		}
+#endif
+	
+		// convert fixed point to byte format
+		inline operator Color() const {
+			return Color(
+				EGL_IntFromFixed(0xFF * r),
+				EGL_IntFromFixed(0xFF * g),
+				EGL_IntFromFixed(0xFF * b),
+				EGL_IntFromFixed(0xFF * a));
 		}
 
 		inline void Clamp() {
