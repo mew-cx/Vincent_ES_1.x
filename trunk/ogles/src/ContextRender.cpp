@@ -1037,7 +1037,7 @@ void Context :: ClipPlanex(GLenum plane, const GLfixed *equation) {
 // Additional array pointers for matrix palette support
 // --------------------------------------------------------------------------
 
-void Context :: MatrixIndexPointer(GLint size, GLenum type, GLsizei stride, GLvoid *pointer) {
+void Context :: MatrixIndexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
 	if (type != GL_UNSIGNED_BYTE) {
 		RecordError(GL_INVALID_ENUM);
 		return;
@@ -1065,7 +1065,7 @@ void Context :: MatrixIndexPointer(GLint size, GLenum type, GLsizei stride, GLvo
 }
 
 
-void Context :: WeightPointer(GLint size, GLenum type, GLsizei stride, GLvoid *pointer) {
+void Context :: WeightPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
 	if (type != GL_FIXED && type != GL_FLOAT) {
 		RecordError(GL_INVALID_ENUM);
 		return;
