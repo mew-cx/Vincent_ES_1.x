@@ -2048,30 +2048,6 @@ void Context :: UpdateMipmaps(void) {
 }
 
 
-void Context :: DrawTexs(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height) {
-	assert(0);
-}
-
-void Context :: DrawTexi(GLint x, GLint y, GLint z, GLint width, GLint height) {
-	assert(0);
-}
-
-void Context :: DrawTexx(GLfixed x, GLfixed y, GLfixed z, GLfixed width, GLfixed height) {
-	assert(0);
-}
-
-void Context :: DrawTexsv(GLshort *coords) {
-	assert(0);
-}
-
-void Context :: DrawTexiv(GLint *coords) {
-	assert(0);
-}
-
-void Context :: DrawTexxv(GLfixed *coords) {
-	assert(0);
-}
-
 void Context :: GetTexEnviv(GLenum env, GLenum pname, GLint *params) {
 	assert(0);
 }

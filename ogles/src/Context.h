@@ -190,7 +190,6 @@ namespace EGL {
 		void TexEnvx(GLenum target, GLenum pname, GLfixed param);
 		void TexEnvxv(GLenum target, GLenum pname, const GLfixed *params);
 		void TexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
-		void TexParameterf(GLenum target, GLenum pname, GLfloat param);
 		void TexParameterx(GLenum target, GLenum pname, GLfixed param);
 		void TexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
 		void Translatex(GLfixed x, GLfixed y, GLfixed z);
@@ -240,29 +239,15 @@ namespace EGL {
 		void Scalef(GLfloat x, GLfloat y, GLfloat z);
 		void TexEnvf(GLenum target, GLenum pname, GLfloat param);
 		void TexEnvfv(GLenum target, GLenum pname, const GLfloat *params);
+		void TexParameterf(GLenum target, GLenum pname, GLfloat param);
 		void Translatef(GLfloat x, GLfloat y, GLfloat z);
 
 		// ----------------------------------------------------------------------
 		// Extensions
 		// ----------------------------------------------------------------------
 
-		/* OES_matrix_palette */
-		void CurrentPaletteMatrix(GLint index);
-		void LoadPaletteFromModelViewMatrix();
-		void MatrixIndexPointer(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
-		void WeightPointer(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
-
 		/* OES_point_size_array */
 		void PointSizePointer(GLenum type, GLsizei stride, const GLvoid *pointer);
-
-		/* OES_draw_texture */
-		void DrawTexs(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height);
-		void DrawTexi(GLint x, GLint y, GLint z, GLint width, GLint height);
-		void DrawTexx(GLfixed x, GLfixed y, GLfixed z, GLfixed width, GLfixed height);
-
-		void DrawTexsv(GLshort *coords);
-		void DrawTexiv(GLint *coords);
-		void DrawTexxv(GLfixed *coords);
 
 		// ----------------------------------------------------------------------
 		// Context Management Functions

@@ -2027,6 +2027,7 @@ DEP_CPP_CONTEXTRE=\
 	"..\..\src\WinCE\Surface.h"\
 	{$(INCLUDE)}"Cmnintrin.h"\
 	
+# ADD CPP /FAs
 
 !ENDIF 
 

@@ -2025,16 +2025,12 @@ void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 				load_register_arg(gen, inst->unary.operand.source, ARMREG_A1, inst);
 				kill_flags(gen);
 				kill_argument_registers(gen);
-				ARM_SUB_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, 4);
-				ARM_MOV_REG_REG(gen->cseg, ARMREG_A2, ARMREG_SP);
 				call_runtime(gen, gen->runtime->inv_LP_16_32s);
 
 				/* load result from stack position */
-				physical_reg = allocate_reg(gen, inst->unary.dest_value, 0);
+				physical_reg = allocate_reg(gen, inst->unary.dest_value, 1);
 				assign_reg(gen, physical_reg, inst->unary.dest_value);
 				physical_reg->dirty = physical_reg->defined = 1;
-				ARM_LDR_IMM(gen->cseg, physical_reg->regno, ARMREG_SP, 0);
-				ARM_ADD_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, 4);
 			}
 			break;
 
@@ -2046,16 +2042,12 @@ void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 				load_register_arg(gen, inst->binary.operand.source, ARMREG_A2, inst);
 				kill_flags(gen);
 				kill_argument_registers(gen);
-				ARM_SUB_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, 4);
-				ARM_MOV_REG_REG(gen->cseg, ARMREG_A3, ARMREG_SP);
 				call_runtime(gen, gen->runtime->div_LP_16_32s);
 
 				/* load result from stack position */
-				physical_reg = allocate_reg(gen, inst->unary.dest_value, 0);
+				physical_reg = allocate_reg(gen, inst->unary.dest_value, 1);
 				assign_reg(gen, physical_reg, inst->unary.dest_value);
 				physical_reg->dirty = physical_reg->defined = 1;
-				ARM_LDR_IMM(gen->cseg, physical_reg->regno, ARMREG_SP, 0);
-				ARM_ADD_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, 4);
 			}
 			break;
 
@@ -2067,16 +2059,12 @@ void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 				load_register_arg(gen, inst->unary.operand.source, ARMREG_A1, inst);
 				kill_flags(gen);
 				kill_argument_registers(gen);
-				ARM_SUB_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, 4);
-				ARM_MOV_REG_REG(gen->cseg, ARMREG_A2, ARMREG_SP);
 				call_runtime(gen, gen->runtime->sqrt_LP_16_32s);
 
 				/* load result from stack position */
-				physical_reg = allocate_reg(gen, inst->unary.dest_value, 0);
+				physical_reg = allocate_reg(gen, inst->unary.dest_value, 1);
 				assign_reg(gen, physical_reg, inst->unary.dest_value);
 				physical_reg->dirty = physical_reg->defined = 1;
-				ARM_LDR_IMM(gen->cseg, physical_reg->regno, ARMREG_SP, 0);
-				ARM_ADD_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, 4);
 			}
 			break;
 

@@ -383,7 +383,7 @@ void Context :: GetTexEnvfv(GLenum env, GLenum pname, GLfloat *params) {
 }
 
 void Context :: GetTexParameterfv(GLenum target, GLenum pname, GLfloat *params) {
-	assert(0);
+
 }
 
 void Context :: PointParameterf(GLenum pname, GLfloat param) {

@@ -97,9 +97,9 @@ typedef void (*_GLfuncptr)();
 
 /* Extensions */
 #define GL_OES_compressed_paletted_texture 1
-#define GL_OES_draw_texture               1
+#define GL_OES_draw_texture               0
 #define GL_OES_matrix_get                 1
-#define GL_OES_matrix_palette             1
+#define GL_OES_matrix_palette             0
 #define GL_OES_point_size_array           1
 #define GL_OES_point_sprite               1
 #define GL_OES_read_format                1
@@ -812,16 +812,26 @@ GLAPI void APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height)
 /*****************************************************************************************/
 /*                                 OES extension functions                               */
 /*****************************************************************************************/
-/* OES_matrix_palette */
+
+#if OES_matrix_palette
+
 GLAPI void APIENTRY glCurrentPaletteMatrixOES(GLint index);
 GLAPI void APIENTRY glLoadPaletteFromModelViewMatrixOES(void);
 GLAPI void APIENTRY glMatrixIndexPointerOES(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
 GLAPI void APIENTRY glWeightPointerOES(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
 
-/* OES_point_size_array */
+#endif /* OES_matrix_palette */
+
+
+#if OES_point_size_array 
+
 GLAPI void APIENTRY glPointSizePointerOES(GLenum type, GLsizei stride, const GLvoid *pointer);
 
-/* OES_draw_texture */
+#endif /* OES_point_size_array */
+
+
+#if GL_OES_draw_texture
+
 GLAPI void APIENTRY glDrawTexsOES(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height);
 GLAPI void APIENTRY glDrawTexiOES(GLint x, GLint y, GLint z, GLint width, GLint height);
 GLAPI void APIENTRY glDrawTexfOES(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height);
@@ -832,6 +842,7 @@ GLAPI void APIENTRY glDrawTexivOES(GLint *coords);
 GLAPI void APIENTRY glDrawTexfvOES(GLfloat *coords);
 GLAPI void APIENTRY glDrawTexxvOES(GLfixed *coords);
 
+#endif /* GL_OES_draw_texture */
 
 #ifdef __cplusplus
 }

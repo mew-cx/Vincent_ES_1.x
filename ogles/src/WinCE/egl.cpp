@@ -341,3 +341,20 @@ GLAPI EGLBoolean APIENTRY eglCopyBuffers (EGLDisplay dpy, EGLSurface surface, Na
 	eglRecordError(EGL_SUCCESS);
 	return EGL_TRUE;
 }
+
+GLAPI EGLBoolean APIENTRY eglSurfaceAttrib (EGLDisplay dpy, EGLSurface surface, EGLint attribute, EGLint value) {
+	return EGL_FALSE;
+}
+
+GLAPI EGLBoolean APIENTRY eglBindTexImage(EGLDisplay dpy, EGLSurface surface, EGLint buffer) {
+	return EGL_FALSE;
+}
+
+GLAPI EGLBoolean APIENTRY eglReleaseTexImage(EGLDisplay dpy, EGLSurface surface, EGLint buffer) {
+	return EGL_FALSE;
+}
+
+GLAPI EGLBoolean APIENTRY eglSwapInterval(EGLDisplay dpy, EGLint interval) {
+	return EGL_FALSE;
+}
+

@@ -70,15 +70,15 @@ typedef struct cg_runtime_info_t
 {
 	div_t (*div)				(I32 numer, I32 denom);	/* Std. C runtime	*/
 
-	void (*div_HP_16_32s)		(I32 num, I32 denom, I32* pDst);
-	void (*inv_HP_16_32s)		(I32 src, I32* pDst);
-	void (*sqrt_HP_16_32s)		(U32 src, U32* pDst);
-	void (*inv_sqrt_HP_16_32s)	(U32 src, U32* pDst);
+	I32 (*div_HP_16_32s)		(I32 num, I32 denom);
+	I32 (*inv_HP_16_32s)		(I32 src);
+	I32 (*sqrt_HP_16_32s)		(I32 src);
+	I32 (*inv_sqrt_HP_16_32s)	(I32 src);
 
-	void (*div_LP_16_32s)		(I32 num, I32 denom, I32* pDst);
-	void (*inv_LP_16_32s)		(I32 src, I32* pDst);
-	void (*sqrt_LP_16_32s)		(U32 src, U32* pDst);
-	void (*inv_sqrt_LP_16_32s)	(U32 src, U32* pDst);
+	I32 (*div_LP_16_32s)		(I32 num, I32 denom);
+	I32 (*inv_LP_16_32s)		(I32 src);
+	I32 (*sqrt_LP_16_32s)		(I32 src);
+	I32 (*inv_sqrt_LP_16_32s)	(I32 src);
 
 	/*
 	void (*sin_LP_16_32s)		(I32 theta, I32* sin_theta);

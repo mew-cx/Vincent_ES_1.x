@@ -82,48 +82,13 @@ using namespace EGL;
 
 
 namespace {
+
 	void Dump(const char * filename, cg_module_t * module)
 	{
 		FILE * fp = fopen(filename, "w");
 		cg_module_dump(module, fp);
 		fclose(fp);
 	}
-
-#ifndef EGL_USE_GPP
-
-	void gppDivHP_16_32s(I32 num, I32 denom, I32* pDst) {
-		*pDst = EGL_Div(num, denom);
-	}
-
-	void gppInvHP_16_32s(I32 src, I32* pDst) {
-		*pDst = EGL_Inverse(src);
-	}
-
-	void gppDivLP_16_32s(I32 num, I32 denom, I32* pDst) {
-		*pDst = EGL_Div(num, denom);
-	}
-
-	void gppInvLP_16_32s(I32 src, I32* pDst) {
-		*pDst = EGL_Inverse(src);
-	}
-
-	void gppSqrtHP_16_32s(U32 src, U32* pDst) {
-		*pDst = EGL_Sqrt(src);
-	}
-
-	void gppInvSqrtHP_16_32s(U32 src, U32* pDst) {
-		*pDst = EGL_InvSqrt(src);
-	}
-
-	void gppSqrtLP_16_32s(U32 src, U32* pDst) {
-		*pDst = EGL_Sqrt(src);
-	}
-
-	void gppInvSqrtLP_16_32s(U32 src, U32* pDst) {
-		*pDst = EGL_InvSqrt(src);
-	}
-
-#endif
 
 }
 
@@ -173,14 +138,14 @@ void CodeGenerator :: Compile(FunctionCache * target, FunctionCache::FunctionTyp
 
 	runtime.div = div;
 
-	runtime.div_HP_16_32s = gppDivHP_16_32s;
-	runtime.div_LP_16_32s = gppDivLP_16_32s;
-	runtime.inv_HP_16_32s = gppInvHP_16_32s;
-	runtime.inv_LP_16_32s = gppInvLP_16_32s;
-	runtime.inv_sqrt_HP_16_32s = gppInvSqrtHP_16_32s;
-	runtime.inv_sqrt_LP_16_32s = gppInvSqrtLP_16_32s;
-	runtime.sqrt_HP_16_32s = gppSqrtHP_16_32s;
-	runtime.sqrt_LP_16_32s = gppSqrtLP_16_32s;
+	runtime.div_HP_16_32s = EGL_Div;
+	runtime.div_LP_16_32s = EGL_Div;
+	runtime.inv_HP_16_32s = EGL_Inverse;
+	runtime.inv_LP_16_32s = EGL_Inverse;
+	runtime.inv_sqrt_HP_16_32s = EGL_InvSqrt;
+	runtime.inv_sqrt_LP_16_32s = EGL_InvSqrt;
+	runtime.sqrt_HP_16_32s = EGL_Sqrt;
+	runtime.sqrt_LP_16_32s = EGL_Sqrt;
 
 	cg_codegen_t * codegen = cg_codegen_create(heap, &runtime);
 	cg_codegen_emit_module(codegen, m_Module);
