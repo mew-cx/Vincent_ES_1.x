@@ -62,10 +62,10 @@ namespace EGL {
 
 		void Initialize(U32 width, U32 height, RasterizerState::TextureFormat format);
 
-		U32 GetWidth() const				{ return m_LogWidth; }
-		U32 GetHeight() const				{ return m_LogHeight; }
-		U32 GetLogWidth() const				{ return 1 << m_LogWidth; }
-		U32 GetLogHeight() const			{ return 1 << m_LogHeight; }
+		U32 GetWidth() const				{ return 1 << m_LogWidth; }
+		U32 GetHeight() const				{ return 1 << m_LogHeight; }
+		U32 GetLogWidth() const				{ return m_LogWidth; }
+		U32 GetLogHeight() const			{ return m_LogHeight; }
 		U32 GetLogBytesPerPixel() const;
 
 		RasterizerState::TextureFormat 
