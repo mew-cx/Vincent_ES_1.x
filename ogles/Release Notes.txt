@@ -25,6 +25,23 @@ This version addresses the following issues:
 996379 - Trap exceptions when context not set.
 997772 - compressed NULL texture fails.
 
+Notes:
+
+1.) Even though this build passes the mipmap interpolation test from the conformance test, tri-linear
+mipmapping is still not implemented yet. This should become available soon.
+
+2.) Users of previous builds of this library will notice a substantial reduction in performance (~15%)
+compared to previous builds when using mipmapping. This is due to the fact that the current build will
+perform mipmap selection on a per-pixel base; more precisely, per linearly interpolated sub-span of
+each scan line. The plan is to introduce several configurations, which will be either fully-conformant
+but slower, or not fully conformant but faster.
+
+3.) While the current build passes the conformance test, the current build still uses different
+rendering paths for point and line rasterization (non-JIT) than for triangle rasterization (JIT). The
+upcoming series of builds will convert point and line rasterization to use the JIT. Besides increased
+performance especially for rendering lines the most significant gain will be a reliable assessment of
+the correctness of this implementation by using a single path for all raster operations.
+
 
 Version 0.79
 ------------
