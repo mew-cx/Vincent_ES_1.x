@@ -12,6 +12,8 @@ This version addresses the following issues:
 
 1030170 - Support more than one texture unit
 1008793 - Static and Dynamic state queries
+1031202 - Bitmap handle leak
+1031201 - Device context leak
 
 
 Version 0.82
