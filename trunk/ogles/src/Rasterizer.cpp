@@ -166,7 +166,10 @@ Rasterizer :: ~Rasterizer() {
 
 void Rasterizer :: SetState(RasterizerState * state) {
 	m_State = state;
-	m_Texture = 0;
+
+	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		m_Texture[unit] = 0;
+	}
 }
 
 
@@ -175,31 +178,30 @@ RasterizerState * Rasterizer :: GetState() const {
 }
 
 
-void Rasterizer :: SetTexture(MultiTexture * texture) {
-	m_Texture = texture;
+void Rasterizer :: SetTexture(size_t unit, MultiTexture * texture) {
+	m_Texture[unit] = texture;
 }
 
 
 void Rasterizer :: PrepareTexture() {
-	if (m_Texture && m_State) {
-		m_State->SetWrappingModeS(m_Texture->GetWrappingModeS());
-		m_State->SetWrappingModeT(m_Texture->GetWrappingModeT());
-		m_State->SetMinFilterMode(m_Texture->GetMinFilterMode());
-		m_State->SetMagFilterMode(m_Texture->GetMagFilterMode());
-		m_State->SetMipmapFilterMode(m_Texture->GetMipmapFilterMode());
-		m_State->SetInternalFormat(m_Texture->GetInternalFormat());
+	if (m_Texture[0] && m_State) {
+		m_State->SetWrappingModeS(m_Texture[0]->GetWrappingModeS());
+		m_State->SetWrappingModeT(m_Texture[0]->GetWrappingModeT());
+		m_State->SetMinFilterMode(m_Texture[0]->GetMinFilterMode());
+		m_State->SetMagFilterMode(m_Texture[0]->GetMagFilterMode());
+		m_State->SetMipmapFilterMode(m_Texture[0]->GetMipmapFilterMode());
+		m_State->SetInternalFormat(m_Texture[0]->GetInternalFormat());
 
 		for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			m_RasterInfo.Textures[unit] = m_Texture->m_TextureLevels;
+			m_RasterInfo.Textures[unit] = m_Texture[unit]->m_TextureLevels;
 
-			m_UseMipmap = m_Texture->IsMipMap() && m_Texture->IsComplete();
-			m_RasterInfo.MaxMipmapLevel = EGL_Max(m_Texture->GetTexture(0)->GetLogWidth(), m_Texture->GetTexture(0)->GetLogHeight());
+			m_UseMipmap[unit] = m_Texture[unit]->IsMipMap() && m_Texture[unit]->IsComplete();
+			m_RasterInfo.MaxMipmapLevel = EGL_Max(m_Texture[0]->GetTexture(0)->GetLogWidth(), m_Texture[0]->GetTexture(0)->GetLogHeight());
 		}
 	} else {
-		m_UseMipmap = false;
-
 		for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 			m_RasterInfo.Textures[unit] = 0;
+			m_UseMipmap[unit] = false;
 		}
 	}
 }
