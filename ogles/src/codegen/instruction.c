@@ -1180,6 +1180,9 @@ cg_inst_t * cg_create_inst_unary(cg_block_t * block,
 {
 	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_unary_t), cg_inst_unary, op);
 
+	assert(dest->type == cg_reg_type_general);
+	assert(source->type == cg_reg_type_general);
+
 	inst->unary.dest_value = dest;
 	inst->unary.operand.source = source;
 
@@ -1194,6 +1197,10 @@ cg_inst_t * cg_create_inst_unary_s(cg_block_t * block,
 								   cg_virtual_reg_t * source)
 {
 	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_unary_t), cg_inst_unary, op);
+
+	assert(dest->type == cg_reg_type_general);
+	assert(flags->type == cg_reg_type_flags);
+	assert(source->type == cg_reg_type_general);
 
 	inst->unary.dest_value = dest;
 	inst->unary.dest_flags = flags;
@@ -1210,6 +1217,10 @@ cg_inst_t * cg_create_inst_binary(cg_block_t * block,
 								  cg_virtual_reg_t * operand)
 {
 	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_binary_t), cg_inst_binary, op);
+
+	assert(dest->type == cg_reg_type_general);
+	assert(source->type == cg_reg_type_general);
+	assert(operand->type == cg_reg_type_general);
 
 	inst->binary.dest_value = dest;
 	inst->binary.source = source;
@@ -1228,6 +1239,11 @@ cg_inst_t * cg_create_inst_binary_s(cg_block_t * block,
 {
 	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_binary_t), cg_inst_binary, op);
 
+	assert(dest->type == cg_reg_type_general);
+	assert(flags->type == cg_reg_type_flags);
+	assert(source->type == cg_reg_type_general);
+	assert(operand->type == cg_reg_type_general);
+
 	inst->binary.dest_value = dest;
 	inst->binary.dest_flags = flags;
 	inst->binary.source = source;
@@ -1245,6 +1261,10 @@ cg_inst_t * cg_create_inst_compare(cg_block_t * block,
 {
 	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_compare_t), cg_inst_compare, op);
 
+	assert(dest->type == cg_reg_type_flags);
+	assert(source->type == cg_reg_type_general);
+	assert(operand->type == cg_reg_type_general);
+
 	inst->compare.dest_flags = dest;
 	inst->compare.source = source;
 	inst->compare.operand.source = operand;
@@ -1260,6 +1280,9 @@ cg_inst_t * cg_create_inst_load(cg_block_t * block,
 {
 	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_load_t), cg_inst_load, op);
 
+	assert(dest->type == cg_reg_type_general);
+	assert(mem->type == cg_reg_type_general);
+
 	inst->load.dest = dest;
 	inst->load.mem.base = mem;
 
@@ -1274,6 +1297,9 @@ cg_inst_t * cg_create_inst_store(cg_block_t * block,
 {
 	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_store_t), cg_inst_store, op);
 
+	assert(source->type == cg_reg_type_general);
+	assert(mem->type == cg_reg_type_general);
+
 	inst->store.source = source;
 	inst->store.mem.base = mem;
 
@@ -1287,6 +1313,8 @@ cg_inst_t * cg_create_inst_load_immed(cg_block_t * block,
 									  U32 value)
 {
 	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_load_immed_t), cg_inst_load_immed, op);
+
+	assert(dest->type == cg_reg_type_general);
 
 	inst->immed.dest = dest;
 	inst->immed.value = value;
@@ -1313,6 +1341,8 @@ cg_inst_t * cg_create_inst_branch_cond(cg_block_t * block,
 									   cg_block_ref_t * target)
 {
 	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_branch_t), cg_inst_branch_cond, op);
+
+	assert(flags->type == cg_reg_type_flags);
 
 	inst->branch.cond = flags;
 	inst->branch.target = target;
@@ -1357,6 +1387,8 @@ cg_inst_t * cg_create_inst_call_func(cg_block_t * block,
 {
 	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_call_t), cg_inst_call, op);
 
+	assert(dest->type == cg_reg_type_general);
+
 	inst->call.dest = dest;
 	inst->call.proc = proc;
 	inst->call.args = args;
@@ -1381,6 +1413,8 @@ cg_inst_t * cg_create_inst_ret_value(cg_block_t * block,
 									 cg_virtual_reg_t * value)
 {
 	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_ret_t), cg_inst_ret, op);
+
+	assert(value->type == cg_reg_type_general);
 
 	inst->ret.result = value;
 
