@@ -47,6 +47,7 @@
 
 using namespace EGL;
 
+
 // --------------------------------------------------------------------------
 // Local helper functions
 // --------------------------------------------------------------------------
@@ -616,6 +617,15 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 }
 
 
+// --------------------------------------------------------------------------
+// number of pixels done with linear interpolation
+// --------------------------------------------------------------------------
+
+
+#define LOG_LINEAR_SPAN 3					// logarithm of value base 2
+#define LINEAR_SPAN (1 << LOG_LINEAR_SPAN)	// must be power of 2
+
+
 inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& end, U32 y) {
 
 	// In the edge buffer, z, tu and tv are actually divided by w
@@ -638,20 +648,61 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 	EGL_Fixed fogDensity = start.m_FogDensity;
 	I32 x = EGL_IntFromFixed(start.m_WindowCoords.x);
 	I32 xEnd = EGL_IntFromFixed(end.m_WindowCoords.x);
+	I32 xLinEnd = x + ((xEnd - x) & ~(LINEAR_SPAN - 1));
 
-	for (; x < xEnd; ++x) {
+	EGL_Fixed z = EGL_Inverse(invZ);
+	EGL_Fixed tu = EGL_Mul(invTu, z);
+	EGL_Fixed tv = EGL_Mul(invTv, z);
 
-		EGL_Fixed z = EGL_Inverse(invZ);
-		EGL_Fixed tu = EGL_Mul(invTu, z);
-		EGL_Fixed tv = EGL_Mul(invTv, z);
+	for (; x < xLinEnd;) {
 
-		Fragment(x, y, z, tu, tv, fogDensity, baseColor);
+		invZ += deltaInvZ << LOG_LINEAR_SPAN;
+		invTu += deltaInvU << LOG_LINEAR_SPAN;
+		invTv += deltaInvV << LOG_LINEAR_SPAN;
 
-		baseColor += colorIncrement;
-		invZ += deltaInvZ;
-		invTu += deltaInvU;
-		invTv += deltaInvV;
-		fogDensity += deltaFog;
+		EGL_Fixed endZ = EGL_Inverse(invZ);
+		EGL_Fixed endTu = EGL_Mul(invTu, endZ);
+		EGL_Fixed endTv = EGL_Mul(invTv, endZ);
+
+		EGL_Fixed deltaZ = (endZ - z) >> LOG_LINEAR_SPAN;
+		EGL_Fixed deltaTu = (endTu - tu) >> LOG_LINEAR_SPAN; 
+		EGL_Fixed deltaTv = (endTv - tv) >> LOG_LINEAR_SPAN;
+
+		int count = LINEAR_SPAN; 
+
+		do {
+			Fragment(x, y, z, tu, tv, fogDensity, baseColor);
+
+			baseColor += colorIncrement;
+			fogDensity += deltaFog;
+			z += deltaZ;
+			tu += deltaTu;
+			tv += deltaTv;
+			++x;
+		} while (--count);
+	}
+
+	if (x != xEnd) {
+		EGL_Fixed endZ = EGL_Inverse(end.m_WindowCoords.z);
+		EGL_Fixed endTu = EGL_Mul(end.m_TextureCoords.tu, endZ);
+		EGL_Fixed endTv = EGL_Mul(end.m_TextureCoords.tv, endZ);
+
+		invSpan = EGL_Inverse(EGL_FixedFromInt(xEnd - x));
+
+		EGL_Fixed deltaZ = EGL_Mul(endZ - z, invSpan);
+		EGL_Fixed deltaTu = EGL_Mul(endTu - tu, invSpan);
+		EGL_Fixed deltaTv = EGL_Mul(endTv - tv, invSpan);
+
+		for (; x < xEnd; ++x) {
+
+			Fragment(x, y, z, tu, tv, fogDensity, baseColor);
+
+			baseColor += colorIncrement;
+			z += deltaZ;
+			tu += deltaTu;
+			tv += deltaTv;
+			fogDensity += deltaFog;
+		}
 	}
 }
 
