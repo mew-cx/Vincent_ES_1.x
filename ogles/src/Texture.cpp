@@ -102,7 +102,8 @@ void Texture :: Initialize(U32 width, U32 height, RasterizerState::TextureFormat
 
 	U32 pixels = width * height;
 	m_InternalFormat = format;
-	m_Data = malloc(pixels * GetBytesPerPixel());
+	size_t bytes = pixels * GetBytesPerPixel();
+	m_Data = malloc(bytes);
 }
 
 
