@@ -10,6 +10,7 @@ Version 0.76
 
 This version addresses the following issues:
 
+960542 - fragment processing for clearing missing/incorrect
 960937 - Pixel ownership test not implemented correctly
 
 

@@ -141,24 +141,68 @@ void Surface :: SetCurrentContext(Context * context) {
 }
 
 
-void Surface :: ClearDepthBuffer(GLclampx depth) {
-	I32 depthValue = depth;//DepthBitsFromDepth(depth);
+namespace {
 
-	int count = GetPixels();
-	I32 * ptr = m_DepthBuffer;
+	template <class T> FillRect(T * base, const Rect & bufferRect, const Rect & fillRect,
+		const T& value, const T& mask) {
+		Rect rect = Rect::Intersect(fillRect, bufferRect);
 
-	while (--count > 0) {
-		*ptr++ = depthValue;
+		base += fillRect.x + fillRect.y * bufferRect.width;
+		size_t gap = bufferRect.width - fillRect.width;
+
+		size_t rows = fillRect.height;
+		T inverseMask = ~mask;
+		T maskedValue = value & mask;
+
+		while (rows--) {
+			for (size_t columns = fillRect.width; columns > 0; columns--) {
+				*base = (*base & inverseMask) | maskedValue;
+				++base;
+			}
+
+			base += gap;
+		}
+	}
+
+	template <class T> FillRect(T * base, const Rect & bufferRect, const Rect & fillRect,
+		const T& value) {
+		Rect rect = Rect::Intersect(fillRect, bufferRect);
+
+		base += fillRect.x + fillRect.y * bufferRect.width;
+		size_t gap = bufferRect.width - fillRect.width;
+
+		size_t rows = fillRect.height;
+
+		while (rows--) {
+			for (size_t columns = fillRect.width; columns > 0; columns--) {
+				*base = value;
+				++base;
+			}
+
+			base += gap;
+		}
 	}
 }
 
 
-void Surface :: ClearStencilBuffer(U32 value) {
-	int count = GetPixels();
-	U32 * ptr = m_StencilBuffer;
+void Surface :: ClearDepthBuffer(GLclampx depth, bool mask, const Rect& scissor) {
 
-	while (--count > 0) {
-		*ptr++ = value;
+	if (!mask || !m_DepthBuffer)
+		return;
+
+	FillRect(m_DepthBuffer, GetRect(), scissor, depth);
+}
+
+
+void Surface :: ClearStencilBuffer(U32 value, U32 mask, const Rect& scissor) {
+
+	if (!mask || !m_StencilBuffer)
+		return;
+
+	if (mask != ~0) {
+		FillRect(m_StencilBuffer, GetRect(), scissor, value, mask);
+	} else {
+		FillRect(m_StencilBuffer, GetRect(), scissor, value);
 	}
 }
 
@@ -170,14 +214,18 @@ I32 Surface :: DepthBitsFromDepth(GLclampx depth) {
 }
 */
 
-void Surface :: ClearColorBuffer(const Color & rgba) {
+void Surface :: ClearColorBuffer(const Color & rgba, const Color & mask, const Rect& scissor) {
 	U16 color = rgba.ConvertTo565();
+	U16 colorMask = mask.ConvertTo565();
 
-	int count = GetPixels();
-	U16 * ptr = m_ColorBuffer;
-
-	while (--count > 0) {
-		*ptr++ = color;
+	if (colorMask == 0xffff) {
+		FillRect(m_ColorBuffer, GetRect(), scissor, color);
+	} else {
+		FillRect(m_ColorBuffer, GetRect(), scissor, color, colorMask);
 	}
+
+	if (mask.A() && m_AlphaBuffer)
+		FillRect(m_AlphaBuffer, GetRect(), scissor, rgba.A());
+
 }
 

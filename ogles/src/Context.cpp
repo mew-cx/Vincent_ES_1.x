@@ -212,19 +212,37 @@ void Context :: Clear(GLbitfield mask) {
 		return;
 	}
 
-	if (mask & GL_COLOR_BUFFER_BIT) {
-		// is clamping [min, max] or [min, max)
-		m_DrawSurface->ClearColorBuffer(m_ColorClearValue);
-	}
+	if (m_ScissorTestEnabled) {
+		if (mask & GL_COLOR_BUFFER_BIT) {
+			// is clamping [min, max] or [min, max)
+			m_DrawSurface->ClearColorBuffer(m_ColorClearValue, 
+				m_RasterizerState.GetColorMask(), m_Scissor);
+		}
 
-	if (mask & GL_DEPTH_BUFFER_BIT) {
-		// actually need to transform depth to correct value
-		EGL_Fixed clearValue = EGL_Mul(EGL_MAP_0_1(m_DepthClearValue),m_DepthRangeFactor)  + m_DepthRangeBase;
-		m_DrawSurface->ClearDepthBuffer(clearValue);
-	}
+		if (mask & GL_DEPTH_BUFFER_BIT) {
+			// actually need to transform depth to correct value
+			EGL_Fixed clearValue = EGL_Mul(EGL_MAP_0_1(m_DepthClearValue),m_DepthRangeFactor)  + m_DepthRangeBase;
+			m_DrawSurface->ClearDepthBuffer(clearValue, m_RasterizerState.GetDepthMask(), m_Scissor);
+		}
 
-	if (mask & GL_STENCIL_BUFFER_BIT) {
-		m_DrawSurface->ClearStencilBuffer(m_StencilClearValue);
+		if (mask & GL_STENCIL_BUFFER_BIT) {
+			m_DrawSurface->ClearStencilBuffer(m_StencilClearValue, m_RasterizerState.GetStencilMask(), m_Scissor);
+		}
+	} else {
+		if (mask & GL_COLOR_BUFFER_BIT) {
+			// is clamping [min, max] or [min, max)
+			m_DrawSurface->ClearColorBuffer(m_ColorClearValue, m_RasterizerState.GetColorMask());
+		}
+
+		if (mask & GL_DEPTH_BUFFER_BIT) {
+			// actually need to transform depth to correct value
+			EGL_Fixed clearValue = EGL_Mul(EGL_MAP_0_1(m_DepthClearValue),m_DepthRangeFactor)  + m_DepthRangeBase;
+			m_DrawSurface->ClearDepthBuffer(clearValue, m_RasterizerState.GetDepthMask());
+		}
+
+		if (mask & GL_STENCIL_BUFFER_BIT) {
+			m_DrawSurface->ClearStencilBuffer(m_StencilClearValue, m_RasterizerState.GetStencilMask());
+		}
 	}
 }
 
