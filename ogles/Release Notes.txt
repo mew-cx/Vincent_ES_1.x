@@ -10,8 +10,15 @@ Version 0.82
 
 Version 0.82 is again a significant milestone build for Vincent. It incorporates the following enhancements:
 
+0.) In addition to the common lite profile, the library has been tested against the OpenGL ES 1.0
+    conformance test for the Common profile. For this reason, the suffix of the library has been
+    changed from _CL to _CM. In addition, the naming conventions for the library file names have
+    been accommodated for, which means that now the library file is called libGLES_CM.dll.
+ 
 1.) For ARM, all rasterization code is now generated using the JIT, including points and lines
+
 2.) A first series of performance enhancements has been included
+
 3.) In preparation for the OpenGL ES Coding Challenge, a series of new features from the OpenGL ES 1.1 API
     specification have been added:
     
@@ -24,6 +31,11 @@ Version 0.82 is again a significant milestone build for Vincent. It incorporates
 Please note that the conformance test suite for OpenGL ES 1.1 has not been released yet, which means that
 these new features have not undergone the kind of testing that all previous features have. However, the
 library is fully regression tested against the 1.0 conformance test suite.
+
+The following areas from the 1.1 specification have not been addressed yet:
+
+1.) Improved texture functionality including the availability of at least 2 texture units.
+2.) Full support for static and dynamic state queries.
 
 This version addresses the following issues:
 

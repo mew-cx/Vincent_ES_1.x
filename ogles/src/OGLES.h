@@ -68,7 +68,7 @@
 #endif
 
 #define EGL_CONFIG_VENDOR			"Hans-Martin Will"
-#define EGL_CONFIG_VERSION			"OpenGL ES-CL 1.0"
+#define EGL_CONFIG_VERSION			"OpenGL ES-CM 1.0"
 #define EGL_CONFIG_EXTENSIONS		"GL_OES_fixed_point "\
 									"GL_OES_single_precision "\
 									"GL_OES_read_format "\
