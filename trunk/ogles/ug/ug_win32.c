@@ -61,6 +61,7 @@ typedef struct ugwindow {
 static wchar_t WINDOW_CLASS_NAME[] = L"ug window";
 static SHACTIVATEINFO s_sai;
 static HINSTANCE instance;
+static UGCtx_t * context;
 
 
 UGCtx APIENTRY
@@ -74,8 +75,12 @@ abort:
 			return 0;
 		}
 		ug->egldpy = eglGetDisplay(ug->dpy);
-		if (!eglInitialize(ug->egldpy, NULL, NULL)) goto abort;
+
+		if (!eglInitialize(ug->egldpy, NULL, NULL)) 
+			goto abort;
     }
+
+	context = ug;
     return (UGCtx)ug;
 }
 
@@ -203,8 +208,6 @@ ugIdleFunc(UGCtx ug, void (*f)(UGWindow w)) {
     _ug->idle = f;
 }
 
-static UGCtx_t * context;
-
 static int GetKey(int vk) {
 	switch (vk) {
 	case VK_F1:			return UG_KEY_F1;
@@ -270,7 +273,10 @@ found:
 
 		case WM_PAINT:
 			if (w->draw) {
+				PAINTSTRUCT ps;
+				HDC hdc = BeginPaint(hWnd, &ps);
 				(w->draw)((UGWindow) w);
+				EndPaint(hWnd, &ps);
 			}
 
 			break; 
@@ -374,7 +380,7 @@ ugPostRedisplay(UGWindow uwin) {
 void APIENTRY
 ugSwapBuffers(UGWindow uwin) {
     UGWindow_t* w = (UGWindow_t*)uwin;
-    eglSwapBuffers(w->ug->dpy, w->surface);
+    eglSwapBuffers(GetDC(w->win), w->surface);
 }
 
 static ATOM UgRegisterClass(HINSTANCE hInstance, LPTSTR szWindowClass)
