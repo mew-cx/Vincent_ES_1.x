@@ -139,7 +139,7 @@ static void
 normalizef(float v[3]) {
     float r;
 
-    r = sqrtf(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+    r = (float)sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
     if (r == 0.0) return;
     r = 1.f/r;
 
