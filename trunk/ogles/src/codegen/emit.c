@@ -2150,7 +2150,7 @@ static void init_use_chains(cg_codegen_t * gen, cg_block_t * block)
 	size_t regno;
 	
 	cg_inst_list_t *** p_head =
-		(cg_inst_list_t ***) _alloca(sizeof(cg_inst_list_t **) * num_registers);
+		(cg_inst_list_t ***) malloc(sizeof(cg_inst_list_t **) * num_registers);
 	
 	for (regno = 0; regno != num_registers; ++regno) 
 	{
@@ -2175,6 +2175,8 @@ static void init_use_chains(cg_codegen_t * gen, cg_block_t * block)
 			p_head[regno] = &node->next;
 		}
 	}
+
+	free(p_head);
 }
 
 
@@ -2383,7 +2385,7 @@ static void select_global_regs(cg_codegen_t * gen, cg_proc_t * proc)
 			used_register_count++;
 	}
 
-	all_regs = (cg_virtual_reg_t **) _alloca(used_register_count * sizeof (cg_virtual_reg_t *));
+	all_regs = (cg_virtual_reg_t **) malloc(used_register_count * sizeof (cg_virtual_reg_t *));
 
 	for (reg = proc->registers, current_reg = all_regs; reg; reg = reg->next)
 	{
@@ -2414,6 +2416,8 @@ static void select_global_regs(cg_codegen_t * gen, cg_proc_t * proc)
 			proc->globals = node;
 		}
 	}
+
+	free(all_regs);
 }
 
 

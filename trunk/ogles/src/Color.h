@@ -225,12 +225,6 @@ namespace EGL {
 				(src.A() * alpha + dst.A() * oneMinusAlpha) >> 8);
 		}
 
-		static inline Color Blend(const Color& src, const Color& dst) {
-			return Blend(src, dst, s_alphaFactor[src.A()]);
-		}
-
-		static void InitAlphaFactorTable();
-
 		static inline Color Average(const Color & a, const Color & b) {
 			return Color((a.R() + b.R()) / 2,
 						 (a.G() + b.G()) / 2,
@@ -256,8 +250,6 @@ namespace EGL {
 
 			return (prod + (prod >> 7)) >> 8;
 		}
-
-		static EGL_Fixed s_alphaFactor[256];		// lookup table to convert 0..255 into 0 .. 1.0
 	};
 
 }

@@ -64,6 +64,7 @@ Surface * Surface :: NewLC(const Config & config) {
 
 
 void Surface :: ConstructL(const Config & config) {
+
 	m_Config = config;
 	m_Rect = Rect(0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
 	m_Bitmap = 0;
