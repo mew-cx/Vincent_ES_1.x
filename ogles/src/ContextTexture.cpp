@@ -763,30 +763,267 @@ namespace {
 	}
 }
 
-void Context :: CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data) { 
 
-	RasterizerState::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
-	TexImage2D(target, level, internalformat, width, height, border, 
-		internalformat, TypeForInternalFormat(internalFormat), data);
-}
+namespace {
 
-void Context :: CompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data) { 
+	enum PaletteFormat {
+		PaletteInvalid = -1,
+		PaletteRGB8,
+		PaletteRGBA8,
+		PaletteRGB565,
+		PaletteRGBA4444,
+		PaletteRGBA5551
+	};
 
-	if (target != GL_TEXTURE_2D) {
-		return;
+	template <class SrcAccessor> inline void CreatePalette(const U8 * data,
+		size_t numberOfColors, Color * colors, SrcAccessor& accessor) {
+
+		for (size_t index = 0; index < numberOfColors; ++index) {
+			colors[index] = accessor(data);
+		}
 	}
 
-	if (level < 0 || level >= MultiTexture::MAX_LEVELS) {
+	Color * ExtractColorPalette(const U8 *& data, PaletteFormat format, size_t numberOfColors) {
+
+		Color * colors = new Color[numberOfColors];
+
+		switch (format) {
+		case PaletteRGB8:
+			CreatePalette(data, numberOfColors, colors, RGB2Color());
+			break;
+
+		case PaletteRGBA8:
+			CreatePalette(data, numberOfColors, colors, RGBA2Color());
+			break;
+
+		case PaletteRGB565:
+			CreatePalette(data, numberOfColors, colors, RGB5652Color());
+			break;
+
+		case PaletteRGBA4444:
+			CreatePalette(data, numberOfColors, colors, RGBA44442Color());
+			break;
+
+		case PaletteRGBA5551:
+			CreatePalette(data, numberOfColors, colors, RGBA55512Color());
+			break;
+		}
+
+		return colors;
+	}
+
+	struct ConstU4Ptr {
+		ConstU4Ptr(const void * _ptr) {
+			ptr = reinterpret_cast<const U8 *>(ptr);
+			nibble = false;
+		}
+
+		U8 operator*() const {
+			U8 value = *ptr;
+
+			if (nibble) 
+				return value & 0xf;
+			else 
+				return value >> 4;
+		}
+
+		const ConstU4Ptr& operator++() {
+			if (nibble) {
+				++ptr;
+				nibble = false;
+			} else {
+				nibble = true;
+			}
+
+			return *this;
+		}
+
+		const U8 * ptr;
+		bool nibble;
+	};
+}
+
+
+void Context :: CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, 
+									 GLint border, GLsizei imageSize, const GLvoid *data) { 
+
+	if (target != GL_TEXTURE_2D) {
 		RecordError(GL_INVALID_VALUE);
 		return;
 	}
 
-	MultiTexture * multiTexture = GetCurrentTexture();
-	Texture * texture = multiTexture->GetTexture(level);
+	size_t paletteSize;
+	PaletteFormat paletteFormat;
+	bool hasAlpha;
 
-	RasterizerState::TextureFormat internalFormat = texture->GetInternalFormat();
-	TexSubImage2D(target, level, xoffset, yoffset, width, height, 
-		internalFormat, TypeForInternalFormat(internalFormat), data);
+	switch (internalformat) {
+	case GL_PALETTE4_RGB8_OES:
+		paletteSize = 16;
+		paletteFormat = PaletteRGB8;
+		hasAlpha = false;
+		break;
+
+	case GL_PALETTE4_RGBA8_OES:
+		paletteSize = 16;
+		paletteFormat = PaletteRGBA8;
+		hasAlpha = true;
+		break;
+
+	case GL_PALETTE4_R5_G6_B5_OES:
+		paletteSize = 16;
+		paletteFormat = PaletteRGB565;
+		hasAlpha = false;
+		break;
+
+	case GL_PALETTE4_RGBA4_OES:
+		paletteSize = 16;
+		paletteFormat = PaletteRGBA4444;
+		hasAlpha = true;
+		break;
+
+	case GL_PALETTE4_RGB5_A1_OES:
+		paletteSize = 16;
+		paletteFormat = PaletteRGBA5551;
+		hasAlpha = true;
+		break;
+
+	case GL_PALETTE8_RGB8_OES:
+		paletteSize = 256;
+		paletteFormat = PaletteRGB8;
+		hasAlpha = false;
+		break;
+
+	case GL_PALETTE8_RGBA8_OES:
+		paletteSize = 256;
+		paletteFormat = PaletteRGBA8;
+		hasAlpha = true;
+		break;
+
+	case GL_PALETTE8_R5_G6_B5_OES:
+		paletteSize = 256;
+		paletteFormat = PaletteRGB565;
+		hasAlpha = false;
+		break;
+
+	case GL_PALETTE8_RGBA4_OES:
+		paletteSize = 256;
+		paletteFormat = PaletteRGBA4444;
+		hasAlpha = true;
+		break;
+
+	case GL_PALETTE8_RGB5_A1_OES:
+		paletteSize = 256;
+		paletteFormat = PaletteRGBA5551;
+		hasAlpha = true;
+		break;
+
+	default:
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	// extract the palette
+	const U8 * dataPtr = reinterpret_cast<const U8 *>(data);
+	Color * colors = ExtractColorPalette(dataPtr, paletteFormat, paletteSize);
+	U16 * pixels = new U16[width * height];
+
+	GLint minLevel, maxLevel;
+
+	if (level >= 0) {
+		minLevel = maxLevel = level;
+	} else {
+		minLevel = 0;
+		maxLevel = -level - 1;
+	}
+
+	if (paletteSize == 16) {
+
+		ConstU4Ptr nibblePtr(dataPtr);
+
+		for (GLint level = minLevel; minLevel <= maxLevel; ++level) {
+
+			size_t pixelCount = width * height;
+
+			if (hasAlpha) {
+				U16 * expandedPixels = pixels;
+
+				while (pixelCount--) {
+					*expandedPixels++ = colors[*nibblePtr].ConvertTo5551();
+					++nibblePtr;
+				}
+
+				TexImage2D(target, level, GL_RGBA, width, height, 0, 
+						   GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, pixels);
+			} else {
+				U16 * expandedPixels = pixels;
+
+				while (pixelCount--) {
+					*expandedPixels++ = colors[*nibblePtr].ConvertTo565();
+					++nibblePtr;
+				}
+
+				TexImage2D(target, level, GL_RGB, width, height, 0, 
+						   GL_RGB, GL_UNSIGNED_SHORT_5_6_5, pixels);
+			}
+
+			if (width > 1)
+				width >>= 1;
+
+			if (height > 1) 
+				height >>= 1;
+		}
+	} else {
+		for (GLint level = minLevel; minLevel <= maxLevel; ++level) {
+
+			size_t pixelCount = width * height;
+
+			if (hasAlpha) {
+				U16 * expandedPixels = pixels;
+
+				while (pixelCount--) {
+					*expandedPixels++ = colors[*dataPtr++].ConvertTo5551();
+				}
+
+				TexImage2D(target, level, GL_RGBA, width, height, 0, 
+						   GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, pixels);
+			} else {
+				U16 * expandedPixels = pixels;
+
+				while (pixelCount--) {
+					*expandedPixels++ = colors[*dataPtr++].ConvertTo565();
+				}
+
+				TexImage2D(target, level, GL_RGB, width, height, 0, 
+						   GL_RGB, GL_UNSIGNED_SHORT_5_6_5, pixels);
+			}
+
+			if (width > 1)
+				width >>= 1;
+
+			if (height > 1) 
+				height >>= 1;
+		}
+	}
+
+	if (minLevel == 0 && maxLevel == 0 && m_GenerateMipmaps) {
+		UpdateMipmaps();
+	}
+
+	delete[] colors;
+	delete[] pixels;
+}
+
+void Context :: CompressedTexSubImage2D(GLenum target, GLint level, 
+										GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, 
+										GLsizei imageSize, const GLvoid *data) { 
+
+	if (target != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	// "Specifies the format of the pixel data. Currently, there is no supported format"
+	RecordError(GL_INVALID_OPERATION);
 }
 
 
@@ -799,7 +1036,7 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat,
 	}
 
 	if (level < 0 || level >= MultiTexture::MAX_LEVELS) {
-		RecordError(GL_INVALID_VALUE);
+		RecordError(GL_INVALID_ENUM);
 		return;
 	}
 
@@ -839,7 +1076,7 @@ void Context :: TexSubImage2D(GLenum target, GLint level,
 	}
 
 	if (level < 0 || level >= MultiTexture::MAX_LEVELS) {
-		RecordError(GL_INVALID_VALUE);
+		RecordError(GL_INVALID_ENUM);
 		return;
 	}
 
@@ -869,6 +1106,7 @@ void Context :: TexSubImage2D(GLenum target, GLint level,
 void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat, 
 							   GLint x, GLint y, GLsizei width, GLsizei height, GLint border) { 
 	if (target != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
 		return;
 	}
 
@@ -903,6 +1141,7 @@ void Context :: CopyTexSubImage2D(GLenum target, GLint level,
 								  GLint xoffset, GLint yoffset, 
 								  GLint x, GLint y, GLsizei width, GLsizei height) { 
 	if (target != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
 		return;
 	}
 
@@ -936,7 +1175,9 @@ void Context :: CopyTexSubImage2D(GLenum target, GLint level,
 // --------------------------------------------------------------------------
 
 void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) { 
+
 	if (target != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
 		return;
 	}
 
@@ -1007,7 +1248,9 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 }
 
 void Context :: TexEnvx(GLenum target, GLenum pname, GLfixed param) { 
+
 	if (target != GL_TEXTURE_ENV) {
+		RecordError(GL_INVALID_ENUM);
 		return;
 	}
 
@@ -1048,7 +1291,9 @@ void Context :: TexEnvx(GLenum target, GLenum pname, GLfixed param) {
 }
 
 void Context :: TexEnvxv(GLenum target, GLenum pname, const GLfixed *params) { 
+
 	if (target != GL_TEXTURE_ENV) {
+		RecordError(GL_INVALID_ENUM);
 		return;
 	}
 
@@ -1064,14 +1309,21 @@ void Context :: TexEnvxv(GLenum target, GLenum pname, const GLfixed *params) {
 }
 
 // --------------------------------------------------------------------------
-// The following methods are not really implemented
+// The following methods are not really implemented; we only have a single 
+// texture unit
 // --------------------------------------------------------------------------
 
 void Context :: ActiveTexture(GLenum texture) { 
+	if (texture != GL_TEXTURE0) {
+		RecordError(GL_INVALID_ENUM);
+	}
 }
 
 
 void Context :: ClientActiveTexture(GLenum texture) { 
+	if (texture != GL_TEXTURE0) {
+		RecordError(GL_INVALID_ENUM);
+	}
 }
 
 // --------------------------------------------------------------------------
