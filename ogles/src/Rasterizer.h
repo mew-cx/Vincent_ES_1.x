@@ -75,6 +75,12 @@ namespace EGL {
 
 	class OGLES_API Rasterizer {
 
+	private:
+		enum {
+			FOG_INTERVAL_BITS = 8,
+			FOG_INTERVAL = 1 << FOG_INTERVAL_BITS				// 256 steps for 0..1 depth
+		};
+
 	public:
 		enum PixelFormat {
 			PixelFormatRGBA,
@@ -153,6 +159,7 @@ namespace EGL {
 
 	private:
 		void RasterClippedXTriangle(RasterPos * pos1, RasterPos * pos2, RasterPos * pos3);
+		void InitFogTable();
 
 	private:
 		// ----------------------------------------------------------------------
@@ -173,6 +180,8 @@ namespace EGL {
 		EGL_Fixed				m_MaxX;
 		EGL_Fixed				m_MinY;
 		EGL_Fixed				m_MaxY;
+
+		U16						m_FogTable[FOG_INTERVAL + 1];	// we can optimize later
 
 		bool					m_IsPrepared;
 

@@ -83,6 +83,68 @@ RasterizerState * Rasterizer :: GetState() const {
 }
 
 
+void Rasterizer :: InitFogTable() {
+
+	// calculate fog table using floating point
+	float start = EGL_FloatFromFixed(m_State->m_FogStart);
+	float end = EGL_FloatFromFixed(m_State->m_FogEnd);
+	float density = EGL_FloatFromFixed(m_State->m_FogDensity);
+
+	U32 currentIndex = 0;
+	U32 upper = (U32) (start * FOG_INTERVAL);
+
+	// clear values before fog starts
+	while (currentIndex <= upper) {
+		m_FogTable[currentIndex++] = 0x100;
+	}
+
+	upper = (U32) (end * FOG_INTERVAL);
+
+	switch (m_State->m_FogMode) {
+		default:
+		case RasterizerState::FogLinear:
+			{
+				while (currentIndex <= upper) {
+					float distance = currentIndex * (1.0f/FOG_INTERVAL);
+					U16 value = (U16) (0x100 * (end - distance) / (end - start));
+
+					m_FogTable[currentIndex++] = value;
+				}
+			}
+			break;
+
+		case RasterizerState::FogModeExp:
+			{
+				while (currentIndex <= upper) {
+					float distance = currentIndex * (1.0f/FOG_INTERVAL);
+					U16 value = (U16) (0x100 * exp(-density * distance));
+
+					m_FogTable[currentIndex++] = value;
+				}
+			}
+			break;
+
+		case RasterizerState::FogModeExp2:
+			{
+				while (currentIndex <= upper) {
+					float distance = currentIndex * (1.0f/FOG_INTERVAL);
+					float densityDistance = (density * distance);
+					U16 value = (U16) (0x100 * exp(-densityDistance * densityDistance));
+
+					m_FogTable[currentIndex++] = value;
+				}
+			}
+			break;
+	}
+
+	// max out values after fog ends
+	while (currentIndex <= FOG_INTERVAL) {
+		m_FogTable[currentIndex++] = 0;
+	}
+
+}
+
+
 inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, Color color) {
 	// will have special cases based on settings
 	// for now, no special support for blending etc.
@@ -93,6 +155,12 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, Color color) {
 	if (m_Surface->GetWidth() <= x || x < 0 ||
 		m_Surface->GetHeight() <= y || y < 0) {
 		return;
+	}
+
+	// fog
+	if (m_State->m_FogEnabled) {
+		U16 blendingFactor = m_FogTable[depth >> (EGL_PRECISION - FOG_INTERVAL_BITS)];
+		color = Color::Blend(color, m_State->m_FogColor, blendingFactor);
 	}
 
 	U32 offset = x + y * m_Surface->GetWidth();
@@ -407,7 +475,7 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 
 	// TODO: The depth coordinate should really be interpolated perspectively
 
-	FractionalColor color = start.m_Color;
+	FractionalColor baseColor = start.m_Color;
 	EGL_Fixed invSpan = EGL_Inverse(end.m_WindowCoords.x - start.m_WindowCoords.x);
 
 	FractionalColor colorIncrement = (end.m_Color - start.m_Color) * invSpan;
@@ -422,6 +490,8 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 
 	for (; x < xEnd; ++x) {
 
+		FractionalColor color;
+
 		if (m_State->m_TextureEnabled) {
 			FractionalColor texColor = m_State->m_Texture->GetTexture(0)->GetPixel(tu, tv);
 
@@ -434,12 +504,13 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 				case TextureModeModulate:
 			}
 #endif
-			Fragment(x, y, w, color * texColor);
+			color = baseColor * texColor;
 		} else {
-			Fragment(x, y, w, color);
+			color = baseColor;
 		}
 
-		color += colorIncrement;
+		Fragment(x, y, w, color);
+		baseColor += colorIncrement;
 		w += deltaW;
 		tu += deltaU;
 		tv += deltaV;
@@ -452,6 +523,7 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 // --------------------------------------------------------------------------
 void Rasterizer :: PreparePoint() {
 	if (!m_IsPrepared) {
+		InitFogTable();
 	}
 
 	m_IsPrepared = true;
@@ -459,6 +531,7 @@ void Rasterizer :: PreparePoint() {
 
 void Rasterizer :: PrepareLine() {
 	if (!m_IsPrepared) {
+		InitFogTable();
 	}
 
 	m_IsPrepared = true;
@@ -466,6 +539,7 @@ void Rasterizer :: PrepareLine() {
 
 void Rasterizer :: PrepareTriangle() {
 	if (!m_IsPrepared) {
+		InitFogTable();
 	}
 
 	m_IsPrepared = true;
