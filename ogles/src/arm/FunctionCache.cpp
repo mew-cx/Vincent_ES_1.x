@@ -164,6 +164,7 @@ void FunctionCache :: CompactCode() {
 
 		function->m_Flags = 1;
 		++countFunctions;
+		countMemory += function->m_Size;
 	}
 
 	for (; function; function = function->m_Next) {
