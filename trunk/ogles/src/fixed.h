@@ -169,8 +169,7 @@ inline OGLES_API float EGL_FloatFromFixed(EGL_Fixed value) {
 //	b			-	second operand
 // --------------------------------------------------------------------------
 inline OGLES_API EGL_Fixed EGL_Mul(EGL_Fixed a, EGL_Fixed b) {
-	return 
-		EGL_FixedFromFloat(EGL_FloatFromFixed(a) * EGL_FloatFromFixed(b));
+	return (EGL_Fixed) (((I64) a * (I64) b)  >> EGL_PRECISION);
 }
 
 
@@ -182,7 +181,7 @@ inline OGLES_API EGL_Fixed EGL_Mul(EGL_Fixed a, EGL_Fixed b) {
 //	b			-	divisor
 // --------------------------------------------------------------------------
 inline OGLES_API EGL_Fixed EGL_Div(EGL_Fixed a, EGL_Fixed b) {
-	return EGL_FixedFromFloat(EGL_FloatFromFixed(a) / EGL_FloatFromFixed(b));
+	return (EGL_Fixed) ((((I64) a) << EGL_PRECISION) / ((I64) b));
 }
 
 

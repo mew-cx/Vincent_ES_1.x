@@ -76,13 +76,11 @@ namespace EGL {
 
 		void * GetData() const				{ return m_Data; }
 
-		Color GetPixel(EGL_Fixed tu, EGL_Fixed tv) const;
-
 	private:
-		void *					m_Data;
-		U32						m_Width;
-		U32						m_Height;
-		U32						m_Exponent;
+		void *			m_Data;
+		U32				m_Width;
+		U32				m_Height;
+		U32				m_Exponent;
 		TextureFormat	m_InternalFormat;
 
 		static U8 s_BytesPerPixel[];
@@ -134,9 +132,6 @@ namespace EGL {
 		WrappingMode GetWrappingModeS() const		{ return m_WrappingModeS; }
 		WrappingMode GetWrappingModeT() const		{ return m_WrappingModeT; }
 
-		EGL_Fixed GetWrappedS(EGL_Fixed s) const;
-		EGL_Fixed GetWrappedT(EGL_Fixed t) const;
-
 		Texture::TextureFormat 
 			GetInternalFormat() const				{ return m_TextureLevels[0]->GetInternalFormat(); }
 
@@ -152,66 +147,6 @@ namespace EGL {
 		WrappingMode	m_WrappingModeT;
 		U32				m_Levels;
 	};
-
-	inline EGL_Fixed MultiTexture :: GetWrappedS(EGL_Fixed s) const {
-		switch (m_WrappingModeS) {
-			case WrappingModeClampToEdge:
-				return EGL_CLAMP(s, 0, EGL_ONE);
-
-			default:
-			case WrappingModeRepeat:
-				return s & 0xffff;
-		}
-	}
-
-
-	inline EGL_Fixed MultiTexture :: GetWrappedT(EGL_Fixed t) const {
-		switch (m_WrappingModeT) {
-			case WrappingModeClampToEdge:
-				return EGL_CLAMP(t, 0, EGL_ONE);
-
-			default:
-			case WrappingModeRepeat:
-				return t & 0xffff;
-		}
-	}
-
-
-	inline Color Texture :: GetPixel(EGL_Fixed tu, EGL_Fixed tv) const {
-		I32 x = EGL_IntFromFixed(m_Width * EGL_CLAMP(tu, 0, EGL_ONE));
-		I32 y = EGL_IntFromFixed(m_Height * EGL_CLAMP(tv, 0, EGL_ONE));
-
-		// do wrapping mode here
-		I32 offset = x + (y << m_Exponent);
-
-		switch (m_InternalFormat) {
-			case TextureFormatAlpha:				// 8
-				return Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(m_Data)[offset]);
-
-			case TextureFormatLuminance:			// 8
-				{
-				U8 luminance = reinterpret_cast<const U8 *>(m_Data)[offset];
-				return Color (luminance, luminance, luminance, 0xff);
-				}
-
-			case TextureFormatLuminanceAlpha:		// 8-8
-				{
-				U8 luminance = reinterpret_cast<const U8 *>(m_Data)[offset * 2];
-				U8 alpha = reinterpret_cast<const U8 *>(m_Data)[offset * 2 + 1];
-				return Color (luminance, luminance, luminance, alpha);
-				}
-
-			case TextureFormatRGB:					// 5-6-5
-				return Color::From565(reinterpret_cast<const U16 *>(m_Data)[offset]);
-
-			case TextureFormatRGBA:					// 5-5-5-1
-				return Color::From5551(reinterpret_cast<const U16 *>(m_Data)[offset]);
-
-			default:
-				return Color(0xff, 0xff, 0xff, 0xff);
-		}
-	}
-
 
 	inline bool MultiTexture :: IsMipMap() const {
 		return 
