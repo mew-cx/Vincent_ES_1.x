@@ -2937,6 +2937,7 @@ void CodeGenerator :: CompileRasterScanLine() {
 	//Dump("dump35.txt", m_Module);
 
 	cg_module_dataflow(m_Module);
+	cg_module_interferences(m_Module);
 
 	Dump("dump4.txt", m_Module);
 
