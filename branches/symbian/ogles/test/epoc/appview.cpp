@@ -40,6 +40,8 @@ void CAppView::ConstructL(const TRect& aRect)
 void CAppView::Exit()
 {
     delete iCallBack;
+    delete iTimer;
+    iTimer = NULL;
     ShutdownOpenGL();
 }
 
