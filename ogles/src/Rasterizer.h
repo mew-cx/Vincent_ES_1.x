@@ -114,8 +114,9 @@ namespace EGL {
 		U8 *	AlphaBuffer;
 
 		// texture info
-		I32		TextureWidth;
-		I32		TextureHeight;
+		I32		TextureLogWidth;
+		I32		TextureLogHeight;
+		I32		TextureLogBytesPerPixel;
 		I32		TextureExponent;
 		void *	TextureData;
 	};
