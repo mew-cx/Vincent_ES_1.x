@@ -51,6 +51,8 @@
 #include "arm-dis.h"
 
 
+#ifdef EGL_ON_WINCE
+
 // --------------------------------------------------------------------------
 // These declarations for coredll are extracted from platform builder
 // source code
@@ -73,6 +75,7 @@ extern "C" {
 	void CacheRangeFlush (LPVOID pAddr, DWORD dwLength, DWORD dwFlags);
 }
 
+#endif
 
 using namespace EGL;
 
@@ -193,7 +196,7 @@ void CodeGenerator :: CompileRasterScanLine(FunctionCache * target) {
 	void * targetBuffer = target->AddFunction(*m_State, cg_segment_size(cseg));
 	cg_segment_get_block(cseg, 0, targetBuffer, cg_segment_size(cseg));
 
-#if defined(ARM) || defined(_ARM_)
+#if defined(EGL_ON_WINCE) && (defined(ARM) || defined(_ARM_))
 	// flush data cache and clear instruction cache to make new code visible to execution unit
 	CacheSync(CACHE_SYNC_INSTRUCTIONS | CACHE_SYNC_WRITEBACK);		
 #endif
