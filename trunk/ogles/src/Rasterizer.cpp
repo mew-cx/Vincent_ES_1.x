@@ -78,6 +78,82 @@ Rasterizer :: Rasterizer(RasterizerState * state):
 	m_State(state)
 {
 	m_FunctionCache = new FunctionCache();
+
+	memset(m_RasterTriangleFunctions, 0, sizeof m_RasterTriangleFunctions);
+
+	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)	] = RasterTriangle_cTdfs;
+	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  | 
+							  (1 << RasterTriangleFog)		] = RasterTriangle_cTdFs;
+	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  | 
+							  (1 << RasterTriangleDepth)	] = RasterTriangle_cTDfs;
+	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  | 
+							  (1 << RasterTriangleDepth)	|
+							  (1 << RasterTriangleFog)		] = RasterTriangle_cTDFs;
+
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	] = RasterTriangle_Ctdfs;
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	| 
+							  (1 << RasterTriangleFog)		] = RasterTriangle_CtdFs;
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	| 
+							  (1 << RasterTriangleDepth)	] = RasterTriangle_CtDfs;
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	| 
+							  (1 << RasterTriangleDepth)	|
+							  (1 << RasterTriangleFog)		] = RasterTriangle_CtDFs;
+
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
+							  (1 << RasterTriangleTexture)	] = RasterTriangle_CTdfs;
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
+							  (1 << RasterTriangleTexture)	| 
+							  (1 << RasterTriangleFog)		] = RasterTriangle_CTdFs;
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
+							  (1 << RasterTriangleTexture)	| 
+							  (1 << RasterTriangleDepth)	] = RasterTriangle_CTDfs;
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
+							  (1 << RasterTriangleTexture)	| 
+							  (1 << RasterTriangleDepth)	|
+							  (1 << RasterTriangleFog)		] = RasterTriangle_CTDFs;
+
+	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)	|
+							  (1 << RasterTriangleScissor)	] = RasterTriangle_cTdfS;
+	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  | 
+							  (1 << RasterTriangleFog)		|
+							  (1 << RasterTriangleScissor)	] = RasterTriangle_cTdFS;
+	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  | 
+							  (1 << RasterTriangleDepth)	|
+							  (1 << RasterTriangleScissor)	] = RasterTriangle_cTDfS;
+	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  | 
+							  (1 << RasterTriangleDepth)	|
+							  (1 << RasterTriangleFog)		|
+							  (1 << RasterTriangleScissor)	] = RasterTriangle_cTDFS;
+
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
+							  (1 << RasterTriangleScissor)	] = RasterTriangle_CtdfS;
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	| 
+							  (1 << RasterTriangleFog)		|
+							  (1 << RasterTriangleScissor)	] = RasterTriangle_CtdFS;
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	| 
+							  (1 << RasterTriangleDepth)	|
+							  (1 << RasterTriangleScissor)	] = RasterTriangle_CtDfS;
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	| 
+							  (1 << RasterTriangleDepth)	|
+							  (1 << RasterTriangleFog)		|
+							  (1 << RasterTriangleScissor)	] = RasterTriangle_CtDFS;
+
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
+							  (1 << RasterTriangleTexture)	|
+							  (1 << RasterTriangleScissor)	] = RasterTriangle_CTdfS;
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
+							  (1 << RasterTriangleTexture)	| 
+							  (1 << RasterTriangleFog)		|
+							  (1 << RasterTriangleScissor)	] = RasterTriangle_CTdFS;
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
+							  (1 << RasterTriangleTexture)	| 
+							  (1 << RasterTriangleDepth)	|
+							  (1 << RasterTriangleScissor)	] = RasterTriangle_CTDfS;
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
+							  (1 << RasterTriangleTexture)	| 
+							  (1 << RasterTriangleDepth)	|
+							  (1 << RasterTriangleFog)		|
+							  (1 << RasterTriangleScissor)	] = RasterTriangle_CTDFS;
 }
 
 

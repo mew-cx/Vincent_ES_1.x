@@ -328,6 +328,17 @@ private:
 		}
 
 		void CurrentValuesToRasterPos(RasterPos * rasterPos);
+
+		typedef void (Context::*GeometryFunction)(RasterPos * rasterPos);
+
+		void SetGeometryFunction();
+
+		void CurrentValuesToRasterPosNoLight(RasterPos * rasterPos);
+		void CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos);
+		void CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos);
+		void CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos);
+		void CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos);
+
 		void InterpolateRasterPos(RasterPos * a, RasterPos * b, GLfixed x, RasterPos * result);
 
 private:
@@ -444,6 +455,7 @@ private:
 
 		RasterizerState		m_RasterizerState;
 		Rasterizer *		m_Rasterizer;
+		GeometryFunction	m_GeometryFunction;
 
 		// ----------------------------------------------------------------------
 		// texturing related state
@@ -489,6 +501,12 @@ private:
 	inline Surface * Context :: GetReadSurface() const {
 		return m_ReadSurface;
 	}
+
+
+	inline void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
+		(this->*m_GeometryFunction)(rasterPos);
+	}
+
 
 }
 
