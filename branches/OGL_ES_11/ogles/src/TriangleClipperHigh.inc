@@ -51,7 +51,7 @@
 	RasterPos * current;
 	int resultCount = 0;
 
-	for (int index = 0; index < inputCount; ++index) {
+	for (size_t index = 0; index < inputCount; ++index) {
 
 		current = input[index];
 
@@ -60,7 +60,6 @@
 			if (previous->m_ClipCoords.COORDINATE < previous->m_ClipCoords.w()) {
 				// line segment between previous and current is fully contained in cube
 				output[resultCount++] = current;
-				//previous = current;
 			} else {
 				// line segment between previous and current is intersected;
 				// create vertex at intersection, then add current
@@ -76,7 +75,6 @@
 				newVertex.m_ClipCoords.SET_COORDINATE(newVertex.m_ClipCoords.w());
 
 				output[resultCount++] = current;
-				//previous = current;
 			}
 		} else {
 			if (previous->m_ClipCoords.COORDINATE < previous->m_ClipCoords.w()) {
@@ -92,8 +90,6 @@
 				
 				Interpolate(newVertex, *current, *previous, p_w - p_x, (p_w - p_x) - (c_w - c_x)); 
 				newVertex.m_ClipCoords.SET_COORDINATE(newVertex.m_ClipCoords.w());
-
-				//previous = current;
 			}
 		}
 

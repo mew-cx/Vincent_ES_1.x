@@ -119,7 +119,17 @@ void Context :: RenderPoints(GLsizei count, const GLushort * indices) {
 
 void Context :: RenderPoint(RasterPos& point, EGL_Fixed size) {
 
-	// clip at frustrum
+	// any user defined clip planes?
+	if (m_ClipPlaneEnabled) {
+		for (size_t index = 0, mask = 1; index < NUM_CLIP_PLANES; ++index, mask <<= 1) {
+			if (m_ClipPlaneEnabled & mask) {
+				if (point.m_ClipCoords * m_ClipPlanes[index] < 0) {
+					return;
+				}
+			}
+		}
+	}
+	
 	// in principle, the scissor test can be included in here
 	if (point.m_ClipCoords.x() < -point.m_ClipCoords.w() ||
 		point.m_ClipCoords.x() >  point.m_ClipCoords.w() ||

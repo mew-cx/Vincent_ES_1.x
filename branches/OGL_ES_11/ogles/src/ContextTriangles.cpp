@@ -485,7 +485,7 @@ namespace {
 		result.m_FogDensity = Interpolate(dst.m_FogDensity, src.m_FogDensity, num, denom);
 	}
 
-	inline int ClipXLow(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+	inline size_t ClipXLow(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 
 #		define SET_COORDINATE setX
 #		define COORDINATE x()
@@ -495,7 +495,7 @@ namespace {
 
 	}
 
-	inline int ClipXHigh(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+	inline size_t ClipXHigh(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 
 #		define SET_COORDINATE setX
 #		define COORDINATE x()
@@ -505,7 +505,7 @@ namespace {
 
 	}
 
-	inline int ClipYLow(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+	inline size_t ClipYLow(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 
 #		define SET_COORDINATE setY
 #		define COORDINATE y()
@@ -515,7 +515,7 @@ namespace {
 
 	}
 
-	inline int ClipYHigh(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+	inline size_t ClipYHigh(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 
 #		define SET_COORDINATE setY
 #		define COORDINATE y()
@@ -525,7 +525,7 @@ namespace {
 
 	}
 
-	inline int ClipZLow(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+	inline size_t ClipZLow(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 
 #		define SET_COORDINATE setZ
 #		define COORDINATE z()
@@ -535,7 +535,7 @@ namespace {
 
 	}
 
-	inline int ClipZHigh(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+	inline size_t ClipZHigh(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 
 #		define SET_COORDINATE setZ
 #		define COORDINATE z()
@@ -543,6 +543,53 @@ namespace {
 #		undef COORDINATE
 #		undef SET_COORDINATE
 
+	}
+
+
+	size_t ClipUser(const Vec4D& plane, RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+		if (inputCount < 3) {
+			return 0;
+		}
+
+		RasterPos * previous = input[inputCount - 1];
+		RasterPos * current;
+		int resultCount = 0;
+
+		for (size_t index = 0; index < inputCount; ++index) {
+
+			current = input[index];
+
+			EGL_Fixed c = current->m_ClipCoords * plane;
+			EGL_Fixed p = previous->m_ClipCoords * plane;
+
+			if (c >= 0) {
+				if (p >= 0) {
+					// line segment between previous and current is fully contained in cube
+					output[resultCount++] = current;
+				} else {
+					// line segment between previous and current is intersected;
+					// create vertex at intersection, then add current
+					RasterPos & newVertex = *nextTemporary++;
+					output[resultCount++] = &newVertex;
+										
+					Interpolate(newVertex, *current, *previous, p, p - c); 
+					output[resultCount++] = current;
+				}
+			} else {
+				if (p >= 0) {
+					// line segment between previous and current is intersected;
+					// create vertex at intersection and add it
+					RasterPos & newVertex = *nextTemporary++;
+					output[resultCount++] = &newVertex;
+					
+					Interpolate(newVertex, *current, *previous, p, p - c); 
+				}
+			}
+
+			previous = current;
+		}
+
+		return resultCount;
 	}
 
 
@@ -665,7 +712,23 @@ void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
 	RasterPos * array2[16];
 	RasterPos * tempVertices = m_Temporary;
 
-	int numVertices = 3;
+	size_t numVertices = 3;
+
+	if (m_ClipPlaneEnabled) {
+		for (size_t index = 0, mask = 1; index < NUM_CLIP_PLANES; ++index, mask <<= 1) {
+			if (m_ClipPlaneEnabled & mask) {
+				numVertices = ClipUser(m_ClipPlanes[index], array1, numVertices, array2, tempVertices);
+
+				if (!numVertices) {
+					return;
+				}
+
+				for (size_t idx = 0; idx < numVertices; ++idx) {
+					array1[idx] = array2[idx];
+				}
+			}
+		}
+	}
 
 	numVertices = ClipXLow(array1, numVertices, array2, tempVertices);
 	numVertices = ClipXHigh(array2, numVertices, array1, tempVertices);
@@ -678,7 +741,7 @@ void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
 		ClipCoordsToWindowCoords(*array1[0]);
 		ClipCoordsToWindowCoords(*array1[1]);
 
-		for (int index = 2; index < numVertices; ++index) {
+		for (size_t index = 2; index < numVertices; ++index) {
 			ClipCoordsToWindowCoords(*array1[index]);
 			m_Rasterizer->RasterTriangle(*array1[0], *array1[index - 1], *array1[index]);
 		}

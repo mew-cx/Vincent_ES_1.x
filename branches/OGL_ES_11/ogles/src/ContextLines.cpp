@@ -368,6 +368,34 @@ namespace {
 #		include "LineClipper.inc"
 #		undef COORDINATE
 	}
+
+	inline bool ClipUser(const Vec4D& plane, RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices) {
+
+		EGL_Fixed f = from->m_ClipCoords * plane;
+		EGL_Fixed t = to->m_ClipCoords * plane;
+
+		if (f < 0) {
+			if (t < 0) {
+				return false;
+			}
+
+			Interpolate(*tempVertices, *from, *to, t, t - f);
+			from = tempVertices++;
+
+			return true;
+
+		} else if (t < 0) {
+
+			Interpolate(*tempVertices, *to, *from, f, f - t);
+			to = tempVertices++;
+
+			return true;
+
+		} else {
+			// no clipping
+			return true;
+		}
+	}
 }
 
 
@@ -376,6 +404,16 @@ void Context :: RenderLine(RasterPos& from, RasterPos& to) {
 	RasterPos * tempVertices = m_Temporary;
 	RasterPos * pFrom = &from;
 	RasterPos * pTo = &to;
+
+	if (m_ClipPlaneEnabled) {
+		for (size_t index = 0, mask = 1; index < NUM_CLIP_PLANES; ++index, mask <<= 1) {
+			if (m_ClipPlaneEnabled & mask) {
+				if (!ClipUser(m_ClipPlanes[index], pFrom, pTo, tempVertices)) {
+					return;
+				}
+			}
+		}
+	}
 
 	if (ClipX(pFrom, pTo, tempVertices) &&
 		ClipY(pFrom, pTo, tempVertices) &&
