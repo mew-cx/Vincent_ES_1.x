@@ -107,20 +107,20 @@ void Context :: UpdateScissorTest() {
 
 	if (m_ScissorTestEnabled) {
 		Rect rect = Rect::Intersect(m_DrawSurface->GetRect(), m_Scissor);
+		m_RasterizerState.SetScissor(rect.x, rect.y, rect.width, rect.height);
 
 		if (rect.Contains(m_Viewport)) {
 			m_RasterizerState.EnableScissorTest(false);
 		} else {
-			m_RasterizerState.SetScissor(rect.x, rect.y, rect.width, rect.height);
 			m_RasterizerState.EnableScissorTest(true);
 		}
 	} else {
 		const Rect& rect = m_DrawSurface->GetRect();
+		m_RasterizerState.SetScissor(rect.x, rect.y, rect.width, rect.height);
 
 		if (rect.Contains(m_Viewport)) {
 			m_RasterizerState.EnableScissorTest(false);
 		} else {
-			m_RasterizerState.SetScissor(rect.x, rect.y, rect.width, rect.height);
 			m_RasterizerState.EnableScissorTest(true);
 		}
 	}
