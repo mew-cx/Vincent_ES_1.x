@@ -111,7 +111,12 @@ void Texture :: Initialize(U32 width, U32 height, RasterizerState::TextureFormat
 // --------------------------------------------------------------------------
 
 
-MultiTexture :: MultiTexture() {
+MultiTexture :: MultiTexture():
+	m_MinFilterMode(RasterizerState::MinFilterModeNearest),
+	m_MagFilterMode(RasterizerState::MagFilterModeNearest),
+	m_WrappingModeS(RasterizerState::WrappingModeRepeat),
+	m_WrappingModeT(RasterizerState::WrappingModeRepeat)
+{
 	for (int index = 0; index < MAX_LEVELS; ++index) {
 		m_TextureLevels[index] = new Texture();
 	}
