@@ -108,6 +108,12 @@ namespace EGL {
 			VIEWPORT_FAR = EGL_ONE
 		};
 
+		enum CullMode {
+			CullModeBack,
+			CullModeFront,
+			CullModeBackAndFront
+		};
+
 	public:
 		Context(const Config & config);
 
@@ -332,6 +338,7 @@ private:
 		void RenderPoint(RasterPos& point);
 		void RenderLine(RasterPos& from, RasterPos& to);
 		void RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c);
+		bool IsCulled(RasterPos& a, RasterPos& b, RasterPos& c);
 
 		void ClipCoordsToWindowCoords(RasterPos & pos);
 
@@ -405,6 +412,7 @@ private:
 
 		bool				m_LightingEnabled;	// is lightning enabled?
 		bool				m_CullFaceEnabled;
+		bool				m_ReverseFaceOrientation;
 		bool				m_ColorMaterialEnabled;
 		bool				m_NormalizeEnabled;
 		bool				m_RescaleNormalEnabled;
@@ -416,6 +424,8 @@ private:
 
 		I32					m_PixelStorePackAlignment;
 		I32					m_PixelStoreUnpackAlignment;
+
+		CullMode			m_CullMode;
 
 		RasterizerState		m_RasterizerState;
 		Rasterizer *		m_Rasterizer;

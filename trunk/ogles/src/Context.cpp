@@ -66,6 +66,8 @@ Context :: Context(const Config & config)
 	m_LightingEnabled(false),
 	m_LightEnabled(1),				// only light 0 is on
 	m_CullFaceEnabled(false),
+	m_ReverseFaceOrientation(false),
+	m_CullMode(CullModeBack),
 	m_ColorMaterialEnabled(false),
 	m_NormalizeEnabled(false),
 	m_RescaleNormalEnabled(false),
@@ -458,11 +460,6 @@ const GLubyte * Context :: GetString(GLenum name) {
 
 void Context :: Finish(void) { }
 void Context :: Flush(void) { }
-
-void Context :: FrontFace(GLenum mode) { }
-
-void Context :: CullFace(GLenum mode) { }
-
 
 // --------------------------------------------------------------------------
 // Context Management
