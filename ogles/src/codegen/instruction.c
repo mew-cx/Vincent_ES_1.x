@@ -282,7 +282,7 @@ void cg_module_eliminate_dead_code(cg_module_t * module)
 	{
 		for (block = proc->blocks; block; block = block->next)
 		{
-			for (inst = block->insts; inst; inst = inst->base.next)
+			for (inst = block->insts.head; inst; inst = inst->base.next)
 			{
 				inst->base.used = 0;
 			}
@@ -297,7 +297,7 @@ void cg_module_eliminate_dead_code(cg_module_t * module)
 	{
 		for (block = proc->blocks; block; block = block->next)
 		{
-			for (inst = block->insts; inst; inst = inst->base.next)
+			for (inst = block->insts.head; inst; inst = inst->base.next)
 			{
 				if (inst->base.kind == cg_inst_store ||
 					inst->base.kind == cg_inst_arm_store_immed_offset ||
@@ -321,7 +321,7 @@ void cg_module_eliminate_dead_code(cg_module_t * module)
 	{
 		for (block = proc->blocks; block; block = block->next)
 		{
-			for (pinst = &block->insts; *pinst; )
+			for (pinst = &block->insts.head; *pinst; )
 			{
 				if ((*pinst)->base.used) 
 				{
@@ -346,7 +346,7 @@ static void block_dataflow(cg_block_t * block)
 	block->live_in =	cg_bitset_create(block->proc->module->heap, block->proc->num_registers);
 	block->live_out =	cg_bitset_create(block->proc->module->heap, block->proc->num_registers);
 
-	for (inst = block->insts; inst; inst = inst->base.next)
+	for (inst = block->insts.head; inst; inst = inst->base.next)
 	{
 		cg_virtual_reg_t * buffer[64];
 		cg_virtual_reg_t **iter, ** end = cg_inst_use(inst, buffer, buffer + 64);
@@ -436,7 +436,7 @@ static void proc_controlflow(cg_proc_t * proc)
 	{
 		int last_inst_is_bra = 0;
 
-		for (inst = block->insts; inst; inst = inst->base.next)
+		for (inst = block->insts.head; inst; inst = inst->base.next)
 		{
 			if (inst->base.kind == cg_inst_branch_cond ||
 				inst->base.kind == cg_inst_branch_label) 
@@ -447,7 +447,7 @@ static void proc_controlflow(cg_proc_t * proc)
 				add_predecessor(target, block);
 			}
 
-			last_inst_is_bra = inst->base.opcode != cg_op_bra;
+			last_inst_is_bra = inst->base.opcode == cg_op_bra;
 		}
 
 		if (!last_inst_is_bra && block->next) 
@@ -822,7 +822,7 @@ void cg_module_amode(cg_module_t * module)
 	{
 		for (block = proc->blocks; block; block = block->next)
 		{
-			for (inst = block->insts; inst; inst = inst->base.next)
+			for (inst = block->insts.head; inst; inst = inst->base.next)
 			{
 				inst_amode(inst);
 			}
@@ -934,7 +934,7 @@ void cg_module_unify_registers(cg_module_t * module)
 		{
 			cg_virtual_reg_list_t * list;
 
-			for (inst = block->insts; inst && inst->base.opcode == cg_op_phi; 
+			for (inst = block->insts.head; inst && inst->base.opcode == cg_op_phi; 
 				 inst = inst->base.next)
 			{
 				for (list = inst->phi.regs; list; list = list->next)
@@ -980,7 +980,7 @@ static void proc_inst_def(cg_proc_t * proc)
 
 	for (block = proc->blocks; block; block = block->next)
 	{
-		for (inst = block->insts; inst; inst = inst->base.next)
+		for (inst = block->insts.head; inst; inst = inst->base.next)
 		{
 			cg_virtual_reg_t * buffer[64];
 			cg_virtual_reg_t **iter, ** end = cg_inst_def(inst, buffer, buffer + 64);
@@ -1027,7 +1027,7 @@ static void proc_inst_use_chains(cg_proc_t * proc)
 
 	for (block = proc->blocks; block; block = block->next)
 	{
-		for (inst = block->insts; inst; inst = inst->base.next)
+		for (inst = block->insts.head; inst; inst = inst->base.next)
 		{
 			cg_virtual_reg_t * buffer[64];
 			cg_virtual_reg_t **iter, ** end = cg_inst_use(inst, buffer, buffer + 64);
@@ -1147,14 +1147,14 @@ static void block_add(cg_block_t * block, cg_inst_t * inst)
 {
 	inst->base.block = block;
 
-	if (block->insts)
+	if (block->insts.head)
 	{
-		block->last_inst->base.next = inst;
-		block->last_inst = inst;
+		block->insts.tail->base.next = inst;
+		block->insts.tail = inst;
 	}
 	else 
 	{
-		block->insts = block->last_inst = inst;
+		block->insts.head = block->insts.tail = inst;
 	}
 }
 
@@ -1796,12 +1796,93 @@ void cg_module_dump(cg_module_t * module, FILE * out)
 			dump_bitset("in", block->live_in, out);
 			dump_bitset("out", block->live_out, out);
 
-			for (inst = block->insts; inst; inst = inst->base.next)
+			for (inst = block->insts.head; inst; inst = inst->base.next)
 			{
 				inst_dump(inst, out);
 			}
 
 			fprintf(out, "\n");
+		}
+	}
+}
+
+
+static void inst_list_append(cg_inst_list_head_t * insts, cg_inst_t * inst)
+{
+	if (insts->head) 
+	{
+		assert(insts->tail);
+		insts->tail->base.next = inst;
+		inst->base.next = NULL;
+		insts->tail = inst;
+	}
+	else 
+	{
+		assert(!insts->tail);
+		inst->base.next = NULL;
+		insts->head = insts->tail = inst;
+	}
+}
+
+
+static void block_reschedule(cg_block_t * block, cg_inst_list_head_t * insts)
+{
+}
+
+
+static void block_reorder_instructions(cg_block_t * block)
+{
+	// phi, branch, ret have to stay in order
+
+	cg_inst_t * insts = block->insts.head;
+	block->insts.head = block->insts.tail = NULL;
+
+	/* copy all phi instructions back in place */
+
+	while (insts && insts->base.opcode == cg_op_phi)
+	{
+		cg_inst_t * inst = insts;
+		insts = inst->base.next;
+		inst_list_append(&block->insts, inst);
+	}
+
+	while (insts)
+	{
+		/* collect the next sequence of instructions until we reach a branch or ret */
+		cg_inst_list_head_t temp_list;
+		cg_inst_t * last_inst;
+		memset(&temp_list, 0, sizeof temp_list);
+
+		do 
+		{
+			last_inst = insts;
+			insts = insts->base.next;
+			inst_list_append(&temp_list, last_inst);
+		}
+		while (insts && last_inst->base.opcode != cg_op_beq &&
+			last_inst->base.opcode != cg_op_bne &&
+			last_inst->base.opcode != cg_op_blt &&
+			last_inst->base.opcode != cg_op_bgt &&
+			last_inst->base.opcode != cg_op_ble &&
+			last_inst->base.opcode != cg_op_bge &&
+			last_inst->base.opcode != cg_op_bra &&
+			last_inst->base.opcode != cg_op_ret);
+
+		block_reschedule(block, &temp_list);
+	}
+}
+
+
+void cg_module_reorder_instructions(cg_module_t * module)
+{
+	cg_proc_t * proc;
+	cg_block_t * block;
+
+	for (proc = module->procs; proc; proc = proc->next)
+	{
+		for (block = proc->blocks; block; block = block->next) 
+		{
+			block_reorder_instructions(block);
 		}
 	}
 }

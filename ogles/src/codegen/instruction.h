@@ -285,13 +285,20 @@ typedef struct cg_block_list_t
 cg_block_list_t;
 
 
+typedef struct cg_inst_list_head_t
+{
+	cg_inst_t *					head;
+	cg_inst_t *					tail;
+}
+cg_inst_list_head_t;
+
+
 struct cg_block_t 
 {
 	struct cg_block_t *		next;
 	cg_proc_t *				proc;
 	struct cg_label_t *		label;
-	cg_inst_t *				insts;
-	cg_inst_t *				last_inst;		/* ptr. to last instruction		*/
+	cg_inst_list_head_t		insts;
 	struct cg_bitset_t *	def;			/* set of defined regs			*/
 	struct cg_bitset_t *	use;			/* set of used regs				*/
 	struct cg_bitset_t *	live_in;		/* set of regs live on entering */
@@ -605,6 +612,7 @@ void cg_module_eliminate_dead_code(cg_module_t * module);
 void cg_module_unify_registers(cg_module_t * module);
 void cg_module_allocate_variables(cg_module_t * module);
 void cg_module_inst_use_chains(cg_module_t * module);
+void cg_module_reorder_instructions(cg_module_t * module);
 void cg_module_dataflow(cg_module_t * module);
 
 void cg_module_dump(cg_module_t * module, FILE * out);

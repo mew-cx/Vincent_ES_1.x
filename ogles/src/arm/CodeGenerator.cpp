@@ -1638,7 +1638,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		LSL		(regShiftedB, regColorB, regConstant11);
 		LSL		(regShiftedG, regColorG, regConstant5);
 		OR		(regRG, regColorR, regShiftedG);
-		OR		(regColor565, regRG, regShiftedB);
+		OR		(regNewColor565, regRG, regShiftedB);
 
 		regColor565 = regNewColor565;
 	}
@@ -2324,20 +2324,6 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	// Create instructions to calculate addresses of individual fields of
 	// edge buffer input arguments
 
-	// texture data, width, height, exponent
-	cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, regInfo, OFFSET_TEXTURE_DATA);
-	cg_virtual_reg_t * regTextureWidth =		LOAD_DATA(block, regInfo, OFFSET_TEXTURE_WIDTH);
-	cg_virtual_reg_t * regTextureHeight =		LOAD_DATA(block, regInfo, OFFSET_TEXTURE_HEIGHT);
-	cg_virtual_reg_t * regTextureExponent =		LOAD_DATA(block, regInfo, OFFSET_TEXTURE_EXPONENT);
-
-
-	// surface color buffer, depth buffer, alpha buffer, stencil buffer
-	cg_virtual_reg_t * regColorBuffer =			LOAD_DATA(block, regInfo, OFFSET_SURFACE_COLOR_BUFFER);
-	cg_virtual_reg_t * regDepthBuffer =			LOAD_DATA(block, regInfo, OFFSET_SURFACE_DEPTH_BUFFER);
-	cg_virtual_reg_t * regAlphaBuffer =			LOAD_DATA(block, regInfo, OFFSET_SURFACE_ALPHA_BUFFER);
-	cg_virtual_reg_t * regStencilBuffer =		LOAD_DATA(block, regInfo, OFFSET_SURFACE_STENCIL_BUFFER);
-	cg_virtual_reg_t * regSurfaceWidth =		LOAD_DATA(block, regInfo, OFFSET_SURFACE_WIDTH);
-
 	// x coordinate
 	DECL_REG	(regOffsetWindowX);
 	DECL_REG	(regAddrStartWindowX);
@@ -2551,6 +2537,20 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	TRUNC	(regIntDiffX, regDiffX);
 	AND_S	(regMaskedSpan, regCompare0, regIntDiffX, regSpanMask);
 	ADD		(regXLinEnd, regX, regMaskedSpan);
+
+	// texture data, width, height, exponent
+	cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, regInfo, OFFSET_TEXTURE_DATA);
+	cg_virtual_reg_t * regTextureWidth =		LOAD_DATA(block, regInfo, OFFSET_TEXTURE_WIDTH);
+	cg_virtual_reg_t * regTextureHeight =		LOAD_DATA(block, regInfo, OFFSET_TEXTURE_HEIGHT);
+	cg_virtual_reg_t * regTextureExponent =		LOAD_DATA(block, regInfo, OFFSET_TEXTURE_EXPONENT);
+
+
+	// surface color buffer, depth buffer, alpha buffer, stencil buffer
+	cg_virtual_reg_t * regColorBuffer =			LOAD_DATA(block, regInfo, OFFSET_SURFACE_COLOR_BUFFER);
+	cg_virtual_reg_t * regDepthBuffer =			LOAD_DATA(block, regInfo, OFFSET_SURFACE_DEPTH_BUFFER);
+	cg_virtual_reg_t * regAlphaBuffer =			LOAD_DATA(block, regInfo, OFFSET_SURFACE_ALPHA_BUFFER);
+	cg_virtual_reg_t * regStencilBuffer =		LOAD_DATA(block, regInfo, OFFSET_SURFACE_STENCIL_BUFFER);
+	cg_virtual_reg_t * regSurfaceWidth =		LOAD_DATA(block, regInfo, OFFSET_SURFACE_WIDTH);
 
 	//for (; x < xLinEnd;) {
 
@@ -2932,6 +2932,10 @@ void CodeGenerator :: CompileRasterScanLine() {
 	cg_module_unify_registers(m_Module);
 	cg_module_allocate_variables(m_Module);
 	cg_module_inst_use_chains(m_Module);
+	//cg_module_reorder_instructions(m_Module);
+
+	//Dump("dump35.txt", m_Module);
+
 	cg_module_dataflow(m_Module);
 
 	Dump("dump4.txt", m_Module);
