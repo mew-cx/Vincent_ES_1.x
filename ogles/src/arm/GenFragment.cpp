@@ -1192,7 +1192,11 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			}
 
 no_write:
-			BRA		(continuation);
+			if (passedTest == cg_op_nop) {
+				return;
+			} else {
+				BRA		(continuation);
+			}
 		//}
 		}
 
