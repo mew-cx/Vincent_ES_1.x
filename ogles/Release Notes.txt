@@ -8,6 +8,8 @@ the bug database on sourceforge.
 Version 0.75
 ------------
 
+This version addresses the following issues:
+
 864080 - PolygonOffset is not implemented
 944663 - Does not handle the case Z=0 properly
 937516 - Context::TexEnv target should be checked against GL_TEXTURE_ 
@@ -28,7 +30,7 @@ Version 0.75
 Version 0.70a
 -------------
 
-This version incorporates critical fixes for 0.7.
+This version incorporates critical fixes for 0.7:
 
 930264 - Texture loading raises an exception 
 930207 - enums incorrectly mapped to fixed 
