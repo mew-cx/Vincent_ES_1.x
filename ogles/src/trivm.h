@@ -1,0 +1,575 @@
+#ifndef EGL_TRIVM_H
+#define EGL_TRIVM_H 1
+
+#pragma once
+
+// ==========================================================================
+//
+// triVM.h		triVM Intermediate Language for OpenGL (R) ES Implementation
+//				
+//				This class is part of the runtime compiler infrastructure
+//				used by the OpenGL|ES implementation for compiling
+//				shader code at runtime into machine language.
+//
+// --------------------------------------------------------------------------
+//
+// 11-21-2003	Hans-Martin Will	initial version
+//
+// --------------------------------------------------------------------------
+//
+// Copyright (c) 2004, Hans-Martin Will. All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without 
+// modification, are permitted provided that the following conditions are 
+// met:
+// 
+//	 *  Redistributions of source code must retain the above copyright
+// 		notice, this list of conditions and the following disclaimer. 
+//   *	Redistributions in binary form must reproduce the above copyright
+// 		notice, this list of conditions and the following disclaimer in the 
+// 		documentation and/or other materials provided with the distribution. 
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+// THE POSSIBILITY OF SUCH DAMAGE.
+//
+// ==========================================================================
+
+
+#include <list>
+#include <map>
+#include <set>
+#include <vector>
+
+
+namespace EGL {
+namespace triVM {
+
+	enum Opcode {
+
+		nop,			// no operation
+
+		// computational (integer)
+		add,
+		and,
+		asr,
+		cmp,
+		div,
+		lsl,
+		lsr,
+		mod,
+		mul,
+		neg,
+		not,
+		or,
+		sub,
+		udiv,
+		umod,
+		xor,
+
+		// computational (float)
+		fadd,
+		fcmp,
+		fdiv,
+		fmul,
+		fneg,
+		fsub,
+
+		finv,			// inverse
+		fsqrt,			// sqrt
+
+		// conversion (int <-> float)
+		trunc,			// float -> int by truncation
+		round,			// float -> int by rounding
+		fcnv,			// int -> float
+
+		// branch
+		bae,
+		bbl,
+		beq,
+		bge,
+		ble,			// less equal than added
+		bgt,			// greater than added
+		blt,
+		bne,
+		bra,
+
+		// load/store
+		ldb,
+		ldh,
+		ldi,
+		ldw,
+
+		stb,
+		sth,
+		stw,
+
+		// load/store volatile
+		vldb,
+		vldh,
+		vldw,
+
+		vstb,
+		vsth,
+		vstw,
+
+		// special
+		call,
+		ret,
+		phi
+	};
+
+	union Label;
+	struct Instruction;
+	struct Block;
+	struct Procedure;
+	struct Module;
+
+	enum LabelKind {
+		LabelUndefined,
+		LabelProcedure,
+		LabelBlock,
+		LabelGlobalConst,
+		LabelGlobalData,
+		LabelStaticConst,
+		LabelStaticData,
+		LabelLocalConst,
+		LabelLocalData
+	};
+
+	struct LabelBaseType {
+		enum LabelKind		kind;
+		const char *		name;
+	};
+
+	struct LabelProcedureType {
+		LabelBaseType	base;
+		Procedure *		procedure;
+	};
+
+	struct LabelBlockType {
+		LabelBaseType	base;
+		Block *			block;
+	};
+
+	struct LabelConstType {
+		LabelBaseType	base;
+	};
+
+	struct LabelDataType {
+		LabelBaseType	base;
+	};
+
+	union Label {
+		LabelBaseType		base;
+		LabelProcedureType	procedure;
+		LabelBlockType		block;
+		LabelConstType		constant;
+		LabelDataType		data;
+
+		static Label * create(const char * aName, LabelKind aKind) {
+			Label * result = new Label();
+			result->base.name = aName;
+			result->base.kind = aKind;
+			return result;
+		}
+	};
+
+	typedef std::vector<Label *> LabelList;
+
+	enum ConstantKind {
+		ConstantInt,
+		ConstantFloat,
+		ConstantString,
+		ConstantLabel
+	};
+
+	struct ConstantBaseType {
+		ConstantKind kind;
+	};
+
+	struct ConstantIntType {
+		ConstantBaseType base;
+		int				 value;
+	};
+
+	struct ConstantFloatType {
+		ConstantBaseType base;
+		float			 value;
+	};
+
+	struct ConstantStringType {
+		ConstantBaseType base;
+		const char *	 value;
+	};
+
+	struct ConstantLabelType {
+		ConstantBaseType base;
+		Label *			 value;
+	};
+
+	union Constant {
+		ConstantBaseType	base;
+		ConstantIntType		intConstant;
+		ConstantFloatType	floatConstant;
+		ConstantStringType	stringConstant;
+		ConstantLabelType	labelConstant;
+
+		static Constant * createInt(int value) {
+			Constant * result = new Constant;
+			result->base.kind = ConstantInt;
+			result->intConstant.value = value;
+			return result;
+		}
+
+		static Constant * createFloat(float value) {
+			Constant * result = new Constant;
+			result->base.kind = ConstantFloat;
+			result->floatConstant.value = value;
+			return result;
+		}
+
+		static Constant * createString(const char * value) {
+			Constant * result = new Constant;
+			result->base.kind = ConstantString;
+			result->stringConstant.value = value;
+			return result;
+		}
+
+		static Constant * createLabel(Label * value) {
+			Constant * result = new Constant;
+			result->base.kind = ConstantLabel;
+			result->labelConstant.value = value;
+			return result;
+		} 
+	};
+
+	typedef std::vector<Constant *> ConstantList;
+	typedef std::vector<int> RegisterList;
+
+	enum InstructionKind {
+		InstructionUnary,
+		InstructionBinary,
+		InstructionCompare,
+		InstructionLoad,
+		InstructionStore,
+		InstructionLoadImmediate,
+		InstructionBranchReg,
+		InstructionBranchLabel,
+		InstructionBranchConditionally,
+		InstructionPhi,
+		InstructionCall,
+		InstructionRet
+	};
+
+	struct InstructionBaseType {
+		InstructionKind	kind;
+		Opcode opcode;
+		Block * block;
+	};
+
+	struct InstructionUnaryType {
+		InstructionBaseType	base;
+		int rS;
+		int rD;
+		int rC;
+	};
+
+	struct InstructionBinaryType {
+		InstructionBaseType	base;
+		int rS;
+		int rD;
+		int rC;
+		int rM;
+	};
+
+	struct InstructionCompareType {
+		InstructionBaseType	base;
+		int rS;
+		int rD;
+		int rC;
+	};
+
+	struct InstructionLoadType {
+		InstructionBaseType	base;
+		int rS;
+		int rD;
+	};
+
+	struct InstructionStoreType {
+		InstructionBaseType	base;
+		int rS;
+		int rD;
+	};
+
+	struct InstructionLoadImmediateType {
+		InstructionBaseType	base;
+		int rD;
+		Constant * constant;
+	};
+
+	struct InstructionBranchRegType {
+		InstructionBaseType	base;
+		int rS;
+	};
+
+	struct InstructionBranchLabelType {
+		InstructionBaseType	base;
+		Label * label;
+	};
+
+	struct InstructionBranchConditionallyType {
+		InstructionBaseType	base;
+		int rS;
+		Label * label;
+	};
+
+	struct InstructionPhiType {
+		InstructionBaseType	base;
+		int rD;
+		RegisterList * registers;
+	};
+
+	struct InstructionCallType {
+		InstructionBaseType	base;
+		int rS;
+		RegisterList * args;
+		RegisterList * results;
+	};
+
+	struct InstructionRetType {
+		InstructionBaseType	base;
+		RegisterList * registers;
+	};
+
+	struct Instruction {
+
+		union {
+			InstructionBaseType					base;
+			InstructionUnaryType				unary;
+			InstructionBinaryType				binary;
+			InstructionCompareType				compare;
+			InstructionLoadType					load;
+			InstructionStoreType				store;
+			InstructionLoadImmediateType		loadImmediate;
+			InstructionBranchConditionallyType	branchConditionally;
+			InstructionBranchRegType			branchReg;
+			InstructionBranchLabelType			branchLabel;
+			InstructionPhiType					phi;
+			InstructionCallType					call;
+			InstructionRetType					ret;
+		};
+
+		static Instruction * createUnary(Opcode anOpcode, int rD, int rS) {
+			Instruction * result = new Instruction();
+			result->base.kind = InstructionUnary;
+			result->base.opcode = anOpcode;
+			result->unary.rD = rD;
+			result->unary.rS = rS;
+			result->unary.rC = -1;
+			return result;
+		}
+
+		static Instruction * createUnary(Opcode anOpcode, int rD, int rC, int rS) {
+			Instruction * result = new Instruction();
+			result->base.kind = InstructionUnary;
+			result->base.opcode = anOpcode;
+			result->unary.rD = rD;
+			result->unary.rS = rS;
+			result->unary.rC = rC;
+			return result;
+		}
+
+		static Instruction * createBinary(Opcode anOpcode, int rD, int rS, int rM) {
+			Instruction * result = new Instruction();
+			result->base.kind = InstructionBinary;
+			result->base.opcode = anOpcode;
+			result->binary.rD = rD;
+			result->binary.rS = rS;
+			result->binary.rC = -1;
+			result->binary.rM = rM;
+			return result;
+		}
+
+		static Instruction * createBinary(Opcode anOpcode, int rD, int rC, int rS, int rM) {
+			Instruction * result = new Instruction();
+			result->base.kind = InstructionBinary;
+			result->base.opcode = anOpcode;
+			result->binary.rD = rD;
+			result->binary.rS = rS;
+			result->binary.rC = rC;
+			result->binary.rM = rM;
+			return result;
+		}
+
+		static Instruction * createCompare(Opcode anOpcode, int rD, int rS, int rC) {
+			Instruction * result = new Instruction();
+			result->base.kind = InstructionCompare;
+			result->base.opcode = anOpcode;
+			result->compare.rD = rD;
+			result->compare.rC = rC;
+			result->compare.rS = rS;
+			return result;
+		}
+
+		static Instruction * createLoad(Opcode anOpcode, int rD, int rS) {
+			Instruction * result = new Instruction();
+			result->base.kind = InstructionLoad;
+			result->base.opcode = anOpcode;
+			result->load.rD = rD;
+			result->load.rS = rS;
+			return result;
+		}
+
+		static Instruction * createStore(Opcode anOpcode, int rD, int rS) {
+			Instruction * result = new Instruction();
+			result->base.kind = InstructionStore;
+			result->base.opcode = anOpcode;
+			result->store.rD = rD;
+			result->store.rS = rS;
+			return result;
+		}
+
+		static Instruction * createLoadImmediate(Opcode anOpcode, int rD, Constant * value) {
+			Instruction * result = new Instruction();
+			result->base.kind = InstructionLoadImmediate;
+			result->base.opcode = anOpcode;
+			result->loadImmediate.rD = rD;
+			result->loadImmediate.constant = value;
+			return result;
+		}
+
+		static Instruction * createBranchReg(Opcode anOpcode, int rS) {
+			Instruction * result = new Instruction();
+			result->base.kind = InstructionBranchReg;
+			result->base.opcode = anOpcode;
+			result->branchReg.rS = rS;
+			return result;
+		}
+
+		static Instruction * createBranchLabel(Opcode anOpcode, Label * label) {
+			Instruction * result = new Instruction();
+			result->base.kind = InstructionBranchLabel;
+			result->base.opcode = anOpcode;
+			result->branchLabel.label = label;
+			return result;
+		}
+
+		static Instruction * createBranchConditionally(Opcode anOpcode, int rS, Label * label) {
+			Instruction * result = new Instruction();
+			result->base.kind = InstructionBranchConditionally;
+			result->base.opcode = anOpcode;
+			result->branchConditionally.rS = rS;
+			result->branchConditionally.label = label;
+			return result;
+		}
+
+		static Instruction * createPhi(Opcode anOpcode, int rD, RegisterList * registers) {
+			Instruction * result = new Instruction();
+			result->base.kind = InstructionPhi;
+			result->base.opcode = anOpcode;
+			result->phi.rD = rD;
+			result->phi.registers = registers;
+			return result;
+		}
+
+		static Instruction * createCall(Opcode anOpcode, int rS, RegisterList * args,
+			RegisterList * results) {
+			Instruction * result = new Instruction();
+			result->base.kind = InstructionCall;
+			result->base.opcode = anOpcode;
+			result->call.rS = rS;
+			result->call.args = args;
+			result->call.results = results;
+			return result;
+		}
+
+		static Instruction * createRet(Opcode anOpcode, RegisterList * registers) {
+			Instruction * result = new Instruction();
+			result->base.kind = InstructionRet;
+			result->base.opcode = anOpcode;
+			result->ret.registers = registers;
+			return result;
+		}
+	};
+
+	typedef std::vector<Instruction *> InstructionList;
+	typedef std::map<int, Instruction *> Definition;
+
+	struct Block;
+
+	typedef std::vector<Block *> BlockList;
+
+	struct Block {
+		int					number;			// assigned during ROP ordering of blocks
+		Procedure	*		procedure;
+		LabelList			labels;
+		InstructionList		instructions;
+		BlockList			predecessors;
+		BlockList			successors;
+
+		Block(Procedure * owner) {
+			procedure = owner;
+		}
+
+		Block& operator+=(Instruction * inst) {
+			instructions.push_back(inst);
+			return *this;
+		}
+	};
+
+	struct Procedure {
+		Label *			def;
+		Module *		module;
+		Definition		definitions;
+		BlockList		blocks;
+		LabelList		labels;
+		int				parameters;
+		int				returnValues;
+
+		Procedure(Label * label, Module * owner, int args, int retVals) {
+			def = label;
+			module = owner;
+			parameters = args;
+			returnValues = retVals;
+		}
+
+	};
+
+	typedef std::vector<Procedure *> ProcedureList;
+
+	struct Module {
+		const char *	name;
+		ProcedureList	procedures;
+		LabelList		labels;
+		ConstantList	constants;
+
+		Module(const char * aName) {
+			name = aName;
+		}
+	};
+
+	struct StringCompare {
+		typedef const char * Key ;
+
+		bool operator()(const Key& _Left, const Key& _Right) const {
+			return strcmp(_Left, _Right) < 0;
+		}
+	};
+
+	typedef std::map<const char *, Label *, StringCompare> IdentifierMap;
+
+} // namespace triVM
+} // namespace EGL
+
+
+#endif //ndef EGL_TRIVM_H
+
