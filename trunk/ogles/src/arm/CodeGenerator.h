@@ -51,15 +51,13 @@
 #include "FractionalColor.h"
 #include <map>
 
-namespace EGL {
 
-	namespace triVM {
-		union Label;
-		struct InstructionBaseType;
-		struct Block;
-		struct Procedure;
-		struct Module;
-	}
+extern "C" {
+	struct cg_module_t;
+}
+
+
+namespace EGL {
 
 	struct FragmentGenerationInfo;
 
@@ -103,7 +101,7 @@ namespace EGL {
 	private:
 		RasterizerState *	m_State;
 		MultiTexture *		m_Texture;
-		triVM::Module *		m_Module;
+		struct cg_module_t *m_Module;
 	};
 
 }
