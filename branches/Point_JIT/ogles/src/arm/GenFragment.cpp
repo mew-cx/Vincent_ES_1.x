@@ -1969,7 +1969,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 			case RasterizerState::CompFuncLess:		
 				//stencilTest = stencilRef < stencil;	
-				passedTest = cg_op_bge;
+				passedTest = cg_op_bgt;
 				break;
 
 			case RasterizerState::CompFuncEqual:	
@@ -1979,12 +1979,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 			case RasterizerState::CompFuncLEqual:	
 				//stencilTest = stencilRef <= stencil;
-				passedTest = cg_op_bgt;
+				passedTest = cg_op_bge;
 				break;
 
 			case RasterizerState::CompFuncGreater:	
 				//stencilTest = stencilRef > stencil;	
-				passedTest = cg_op_ble;
+				passedTest = cg_op_blt;
 				break;
 
 			case RasterizerState::CompFuncNotEqual:	
@@ -1994,7 +1994,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 			case RasterizerState::CompFuncGEqual:	
 				//stencilTest = stencilRef >= stencil;
-				passedTest = cg_op_blt;
+				passedTest = cg_op_ble;
 				break;
 
 			case RasterizerState::CompFuncAlways:	
