@@ -192,9 +192,9 @@ namespace EGL {
 		void SetSurface(Surface * surface);
 		Surface * GetSurface() const;
 
-		void SetTexture(MultiTexture * texture);
-		MultiTexture * GetTexture()					{ return m_Texture; }
-		const MultiTexture * GetTexture() const		{ return m_Texture; }
+		void SetTexture(size_t unit, MultiTexture * texture);
+		MultiTexture * GetTexture(size_t unit)				{ return m_Texture[unit]; }
+		const MultiTexture * GetTexture(size_t unit) const	{ return m_Texture[unit]; }
 		void PrepareTexture();
 
 		// ----------------------------------------------------------------------
@@ -305,7 +305,7 @@ namespace EGL {
 
 		RasterInfo				m_RasterInfo;
 		Surface *				m_Surface;			// rendering surface
-		MultiTexture *			m_Texture;			// current texture 
+		MultiTexture *			m_Texture[EGL_NUM_TEXTURE_UNITS];	// current texture 
 		RasterizerState *		m_State;			// current rasterization settings
 		FunctionCache *			m_FunctionCache;
 
@@ -325,7 +325,7 @@ namespace EGL {
 		EGL_Fixed				m_MinY;
 		EGL_Fixed				m_MaxY;
 
-		bool					m_UseMipmap;
+		bool					m_UseMipmap[EGL_NUM_TEXTURE_UNITS];
 
 	};
 

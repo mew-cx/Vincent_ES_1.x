@@ -278,12 +278,12 @@ namespace EGL {
 			return m_Rasterizer;
 		}
 
-		MultiTexture * GetCurrentTexture() {
-			return m_Rasterizer->GetTexture();
+		MultiTexture * GetCurrentTexture(size_t unit) {
+			return m_Rasterizer->GetTexture(unit);
 		}
 
-		const MultiTexture * GetCurrentTexture() const {
-			return m_Rasterizer->GetTexture();
+		const MultiTexture * GetCurrentTexture(size_t unit) const {
+			return m_Rasterizer->GetTexture(unit);
 		}
 
 		static void SetCurrentContext(Context * context);
