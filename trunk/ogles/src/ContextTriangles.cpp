@@ -65,7 +65,7 @@ void Context :: RenderTriangles(GLint first, GLsizei count) {
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos2);
 
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 	}
 }
 
@@ -85,7 +85,7 @@ void Context :: RenderTriangles(GLsizei count, const GLubyte * indices) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
 
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 	}
 }
 
@@ -105,7 +105,7 @@ void Context :: RenderTriangles(GLsizei count, const GLushort * indices) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
 
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 	}
 }
 
@@ -137,54 +137,54 @@ void Context :: RenderTriangleStrip(GLint first, GLsizei count) {
 
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos1);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos1);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 	}
 
 	switch (count) {
 	case 5:
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 	case 4:
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 
 	case 3:
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos1);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 	case 2:
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 
 	case 1:
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 	}
 
 }
@@ -212,54 +212,54 @@ void Context :: RenderTriangleStrip(GLsizei count, const GLubyte * indices) {
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos1);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos1);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 	}
 
 	switch (count) {
 	case 5:
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 	case 4:
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 
 	case 3:
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos1);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 	case 2:
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 
 	case 1:
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 	}
 
 }
@@ -287,54 +287,54 @@ void Context :: RenderTriangleStrip(GLsizei count, const GLushort * indices) {
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos1);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos1);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 	}
 
 	switch (count) {
 	case 5:
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 	case 4:
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 
 	case 3:
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos1);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 	case 2:
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 
 	case 1:
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 	}
 }
 
@@ -366,17 +366,17 @@ void Context :: RenderTriangleFan(GLint first, GLsizei count) {
 
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos1);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 	}
 
 	if (count >= 1) {
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 	}
 }
 
@@ -403,17 +403,17 @@ void Context :: RenderTriangleFan(GLsizei count, const GLubyte * indices) {
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos1);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 	}
 
 	if (count >= 1) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 	}
 }
 
@@ -440,17 +440,139 @@ void Context :: RenderTriangleFan(GLsizei count, const GLushort * indices) {
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos1);
-		m_Rasterizer->RasterTriangle(pos0, pos2, pos1);
+		RenderTriangle(pos0, pos2, pos1);
 	}
 
 	if (count >= 1) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos2);
-		m_Rasterizer->RasterTriangle(pos0, pos1, pos2);
+		RenderTriangle(pos0, pos1, pos2);
 	}
 }
 
+
+namespace {
+
+	inline EGL_Fixed InterpolationCoefficient(EGL_Fixed a, EGL_Fixed b, EGL_Fixed c) {
+		return EGL_Div(b - a, c - a);
+	}
+
+	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed y0, EGL_Fixed x1, EGL_Fixed y1) {
+		return EGL_Mul(x0, y0) + EGL_Mul(x1, y1);
+	}
+
+	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, EGL_Fixed scale) {
+		EGL_Fixed invScale = EGL_ONE - scale;
+
+		result.m_ClipCoords = dst.m_ClipCoords * scale + src.m_ClipCoords * invScale;
+		result.m_Color = dst.m_Color * scale + src.m_Color * invScale;
+		result.m_TextureCoords.tu = Interpolate(dst.m_TextureCoords.tu, scale, src.m_TextureCoords.tu, invScale);
+		result.m_TextureCoords.tv = Interpolate(dst.m_TextureCoords.tv, scale, src.m_TextureCoords.tv, invScale);
+	}
+
+	inline int ClipXLow(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+
+#		define COORDINATE x()
+#		define CLIP_VALUE(p) (-(p)->m_ClipCoords.w())
+#		define COMPARISON >=
+#		include "TriangleClipper.inc"
+#		undef COMPARISON
+#		undef CLIP_VALUE
+#		undef COORDINATE
+
+	}
+
+	inline int ClipXHigh(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+
+#		define COORDINATE x()
+#		define CLIP_VALUE(p) ((p)->m_ClipCoords.w())
+#		define COMPARISON <=
+#		include "TriangleClipper.inc"
+#		undef COMPARISON
+#		undef CLIP_VALUE
+#		undef COORDINATE
+
+	}
+
+	inline int ClipYLow(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+
+#		define COORDINATE y()
+#		define CLIP_VALUE(p) (-(p)->m_ClipCoords.w())
+#		define COMPARISON >=
+#		include "TriangleClipper.inc"
+#		undef COMPARISON
+#		undef CLIP_VALUE
+#		undef COORDINATE
+
+	}
+
+	inline int ClipYHigh(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+
+#		define COORDINATE y()
+#		define CLIP_VALUE(p) ((p)->m_ClipCoords.w())
+#		define COMPARISON <=
+#		include "TriangleClipper.inc"
+#		undef COMPARISON
+#		undef CLIP_VALUE
+#		undef COORDINATE
+
+	}
+
+	inline int ClipZLow(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+
+#		define COORDINATE z()
+#		define CLIP_VALUE(p) (-(p)->m_ClipCoords.w())
+#		define COMPARISON >=
+#		include "TriangleClipper.inc"
+#		undef COMPARISON
+#		undef CLIP_VALUE
+#		undef COORDINATE
+
+	}
+
+	inline int ClipZHigh(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+
+#		define COORDINATE z()
+#		define CLIP_VALUE(p) ((p)->m_ClipCoords.w())
+#		define COMPARISON <=
+#		include "TriangleClipper.inc"
+#		undef COMPARISON
+#		undef CLIP_VALUE
+#		undef COORDINATE
+
+	}
+}
+
+
+void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
+
+	RasterPos * array1[16];
+	array1[0] = &a;
+	array1[1] = &b;
+	array1[2] = &c;
+	RasterPos * array2[16];
+	RasterPos * tempVertices = m_Temporary;
+
+	int numVertices = 3;
+
+	numVertices = ClipXLow(array1, numVertices, array2, tempVertices);
+	numVertices = ClipXHigh(array2, numVertices, array1, tempVertices);
+	numVertices = ClipYLow(array1, numVertices, array2, tempVertices);
+	numVertices = ClipYHigh(array2, numVertices, array1, tempVertices);
+	numVertices = ClipZLow(array1, numVertices, array2, tempVertices);
+	numVertices = ClipZHigh(array2, numVertices, array1, tempVertices);
+
+	if (numVertices >= 3) {
+		ClipCoordsToWindowCoords(*array1[0]);
+		ClipCoordsToWindowCoords(*array1[1]);
+
+		for (int index = 2; index < numVertices; ++index) {
+			ClipCoordsToWindowCoords(*array1[index]);
+			m_Rasterizer->RasterTriangle(*array1[0], *array1[1], *array1[index]);
+		}
+	}
+}

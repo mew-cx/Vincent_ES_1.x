@@ -60,8 +60,7 @@ void Context :: RenderPoints(GLint first, GLsizei count) {
 		RasterPos pos0;
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos0);
-
-		m_Rasterizer->RasterPoint(pos0);
+		RenderPoint(pos0);
 	}
 }
 
@@ -76,8 +75,7 @@ void Context :: RenderPoints(GLsizei count, const GLubyte * indices) {
 		RasterPos pos0;
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
-
-		m_Rasterizer->RasterPoint(pos0);
+		RenderPoint(pos0);
 	}
 }
 
@@ -92,8 +90,25 @@ void Context :: RenderPoints(GLsizei count, const GLushort * indices) {
 		RasterPos pos0;
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
-
-		m_Rasterizer->RasterPoint(pos0);
+		RenderPoint(pos0);
 	}
 }
+
+
+void Context :: RenderPoint(RasterPos& point) {
+
+	// clip at frustrum
+	// in principle, the scissor test can be included in here
+	if (point.m_ClipCoords.x() < -point.m_ClipCoords.w() ||
+		point.m_ClipCoords.x() >  point.m_ClipCoords.w() ||
+		point.m_ClipCoords.y() < -point.m_ClipCoords.w() ||
+		point.m_ClipCoords.y() >  point.m_ClipCoords.w() ||
+		point.m_ClipCoords.z() < -point.m_ClipCoords.w() ||
+		point.m_ClipCoords.z() >  point.m_ClipCoords.w()) 
+		return;
+
+	ClipCoordsToWindowCoords(point);
+	m_Rasterizer->RasterPoint(point);
+}
+
 

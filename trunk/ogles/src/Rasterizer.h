@@ -66,31 +66,28 @@ namespace EGL {
 	};
 
 	struct ScreenCoord {
-		EGL_Fixed		x, y;		// x, y window coords
-		EGL_Fixed		w;			// z before division (0..1)
+		EGL_Fixed		x, y, z;	// x, y, z window coords
+		EGL_Fixed		w;			// w clip coordinate
 	};
 
 	struct EdgeCoord {
-		EGL_Fixed		x;			// x window coords
-		EGL_Fixed		w;			// z before division
+		EGL_Fixed		x, z;		// x window coords
+		EGL_Fixed		w;			// w clip coordinate
 	};
 
 	// ----------------------------------------------------------------------
 	// Vertex information as input for rasterizer
 	// ----------------------------------------------------------------------
+
 	struct RasterPos {
-		ScreenCoord			m_WindowCoords;		// x, y window coords
-												// z
-												// w, i.e. z before division
+		Vec4D				m_ClipCoords;
+		ScreenCoord			m_WindowCoords;		
 		FractionalColor		m_Color;			// color in range 0..255
 		TexCoord			m_TextureCoords;	// texture coords 0..1
-
 	};
 
 	struct EdgePos {
-		EdgeCoord			m_WindowCoords;		// x, window coords
-												// z
-												// w, i.e. z before division
+		EdgeCoord			m_WindowCoords;		
 		FractionalColor		m_Color;			// color in range 0..255
 		TexCoord			m_TextureCoords;	// texture coords 0..1
 

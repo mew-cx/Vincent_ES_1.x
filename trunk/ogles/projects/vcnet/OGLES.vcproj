@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding = "Windows-1252"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
@@ -19,6 +19,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions=""
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)..\..\src&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OGLES_EXPORTS"
@@ -28,18 +29,12 @@
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="FALSE"
-				DebugInformationFormat="4">
-				<IntelOptions
-					Optimization="0"
-					MinimalRebuild="1"
-					BasicRuntimeChecks="3"
-					RuntimeLibrary="1"
-					AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_USRDLL&quot; /D &quot;OGLES_EXPORTS&quot; /D &quot;_WINDLL&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /Yu&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\OGLES\x86\Debug/GLES_CL.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\OGLES\x86\Debug/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\OGLES\x86\Debug/vc70.pdb&quot; /Gd /TP"/>
-			</Tool>
+				DebugInformationFormat="4"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalOptions=""
 				OutputFile="$(OutDir)/GLES_CL.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
@@ -47,10 +42,7 @@
 				ProgramDatabaseFile="$(OutDir)/vcnet.pdb"
 				SubSystem="2"
 				ImportLibrary="$(OutDir)/GLES_CL.lib"
-				TargetMachine="1">
-				<IntelOptions
-					AllOptions="/NOLOGO /DLL /OUT:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/GLES_CL.dll&quot; /INCREMENTAL /DEBUG /PDB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/vcnet.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /IMPLIB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/GLES_CL.lib&quot; /MACHINE:IX86  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
-			</Tool>
+				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -80,27 +72,19 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions=""
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)..\..\src&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OGLES_EXPORTS"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="FALSE"
-				DebugInformationFormat="3">
-				<IntelOptions
-					Optimization="2"
-					InlineFunctionExpansion="1"
-					OmitFramePointers="1"
-					StringPooling="1"
-					RuntimeLibrary="0"
-					BufferSecurityCheck="1"
-					EnableFunctionLevelLinking="1"
-					AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /Zi /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_USRDLL&quot; /D &quot;OGLES_EXPORTS&quot; /D &quot;_WINDLL&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /Yu&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\OGLES\x86\Release/GLES_CL.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\OGLES\x86\Release/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\OGLES\x86\Release/vc70.pdb&quot; /Gd /TP"/>
-			</Tool>
+				DebugInformationFormat="3"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalOptions=""
 				OutputFile="$(OutDir)/GLES_CL.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -109,10 +93,7 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				ImportLibrary="$(OutDir)/GLES_CL.lib"
-				TargetMachine="1">
-				<IntelOptions
-					AllOptions="/NOLOGO /DLL /OUT:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/GLES_CL.dll&quot; /INCREMENTAL:NO /DEBUG /PDB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/OGLES.pdb&quot; /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /TLBID:1 /IMPLIB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/GLES_CL.lib&quot; /MACHINE:IX86  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
-			</Tool>
+				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -135,145 +116,196 @@
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
-	<References/>
+	<References>
+	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\..\src\Color.cpp"/>
+				RelativePath="..\..\src\Color.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\Config.cpp"/>
+				RelativePath="..\..\src\Config.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\Context.cpp"/>
+				RelativePath="..\..\src\Context.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\ContextFloat.cpp"/>
+				RelativePath="..\..\src\ContextFloat.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\ContextLight.cpp"/>
+				RelativePath="..\..\src\ContextLight.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\ContextMaterial.cpp"/>
+				RelativePath="..\..\src\ContextMaterial.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\ContextMatrix.cpp"/>
+				RelativePath="..\..\src\ContextMatrix.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\ContextPoints.cpp"/>
+				RelativePath="..\..\src\ContextPoints.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\ContextRaster.cpp"/>
+				RelativePath="..\..\src\ContextRaster.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\ContextRender.cpp"/>
+				RelativePath="..\..\src\ContextRender.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\ContextTexture.cpp"/>
+				RelativePath="..\..\src\ContextTexture.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\ContextTriangles.cpp"/>
+				RelativePath="..\..\src\ContextTriangles.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\ContextViewport.cpp"/>
+				RelativePath="..\..\src\ContextViewport.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\Display.cpp"/>
+				RelativePath="..\..\src\Display.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\egl.cpp"/>
+				RelativePath="..\..\src\egl.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\gl.cpp"/>
+				RelativePath="..\..\src\gl.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\Light.cpp"/>
+				RelativePath="..\..\src\Light.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\linalg.cpp"/>
+				RelativePath="..\..\src\linalg.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\Lines.cpp"/>
+				RelativePath="..\..\src\LineClipper.inc">
+			</File>
 			<File
-				RelativePath="..\..\src\Material.cpp"/>
+				RelativePath="..\..\src\Lines.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\MatrixStack.cpp"/>
+				RelativePath="..\..\src\Material.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\OGLES.cpp"/>
+				RelativePath="..\..\src\MatrixStack.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\Rasterizer.cpp"/>
+				RelativePath="..\..\src\OGLES.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\RasterizerState.cpp"/>
+				RelativePath="..\..\src\Rasterizer.cpp">
+			</File>
+			<File
+				RelativePath="..\..\src\RasterizerState.cpp">
+			</File>
 			<File
 				RelativePath="..\..\src\stdafx.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1">
-						<IntelOptions
-							AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_USRDLL&quot; /D &quot;OGLES_EXPORTS&quot; /D &quot;_WINDLL&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /Yc&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\OGLES\x86\Debug/GLES_CL.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\OGLES\x86\Debug/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\OGLES\x86\Debug/vc70.pdb&quot; /Gd /TP"/>
-					</Tool>
+						AdditionalOptions=""
+						UsePrecompiledHeader="1"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1">
-						<IntelOptions
-							AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /Zi /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_USRDLL&quot; /D &quot;OGLES_EXPORTS&quot; /D &quot;_WINDLL&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /Yc&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\OGLES\x86\Release/GLES_CL.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\OGLES\x86\Release/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\OGLES\x86\Release/vc70.pdb&quot; /Gd /TP"/>
-					</Tool>
+						AdditionalOptions=""
+						UsePrecompiledHeader="1"/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\Surface.cpp"/>
+				RelativePath="..\..\src\Surface.cpp">
+			</File>
 			<File
-				RelativePath="..\..\src\Texture.cpp"/>
+				RelativePath="..\..\src\Texture.cpp">
+			</File>
+			<File
+				RelativePath="..\..\src\TriangleClipper.inc">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath="..\..\src\Color.h"/>
+				RelativePath="..\..\src\Color.h">
+			</File>
 			<File
-				RelativePath="..\..\src\Config.h"/>
+				RelativePath="..\..\src\Config.h">
+			</File>
 			<File
-				RelativePath="..\..\src\Context.h"/>
+				RelativePath="..\..\src\Context.h">
+			</File>
 			<File
-				RelativePath="..\..\src\Display.h"/>
+				RelativePath="..\..\src\Display.h">
+			</File>
 			<File
-				RelativePath="..\..\src\fixed.h"/>
+				RelativePath="..\..\src\fixed.h">
+			</File>
 			<File
-				RelativePath="..\..\src\FractionalColor.h"/>
+				RelativePath="..\..\src\FractionalColor.h">
+			</File>
 			<File
-				RelativePath="..\..\src\Init.h"/>
+				RelativePath="..\..\src\Init.h">
+			</File>
 			<File
-				RelativePath="..\..\src\Light.h"/>
+				RelativePath="..\..\src\Light.h">
+			</File>
 			<File
-				RelativePath="..\..\src\linalg.h"/>
+				RelativePath="..\..\src\linalg.h">
+			</File>
 			<File
-				RelativePath="..\..\src\Material.h"/>
+				RelativePath="..\..\src\Material.h">
+			</File>
 			<File
-				RelativePath="..\..\src\MatrixStack.h"/>
+				RelativePath="..\..\src\MatrixStack.h">
+			</File>
 			<File
-				RelativePath="..\..\src\OGLES.h"/>
+				RelativePath="..\..\src\OGLES.h">
+			</File>
 			<File
-				RelativePath="..\..\src\Rasterizer.h"/>
+				RelativePath="..\..\src\Rasterizer.h">
+			</File>
 			<File
-				RelativePath="..\..\src\RasterizerState.h"/>
+				RelativePath="..\..\src\RasterizerState.h">
+			</File>
 			<File
-				RelativePath="..\..\src\stdafx.h"/>
+				RelativePath="..\..\src\stdafx.h">
+			</File>
 			<File
-				RelativePath="..\..\src\Surface.h"/>
+				RelativePath="..\..\src\Surface.h">
+			</File>
 			<File
-				RelativePath=".\SymTab.h"/>
-			<File
-				RelativePath="..\..\src\SymTab.h"/>
-			<File
-				RelativePath="..\..\src\Texture.h"/>
+				RelativePath="..\..\src\Texture.h">
+			</File>
 			<Filter
 				Name="GLES"
 				Filter="">
 				<File
-					RelativePath="..\..\src\Gles\egl.h"/>
+					RelativePath="..\..\src\Gles\egl.h">
+				</File>
 				<File
-					RelativePath="..\..\src\Gles\egltypes.h"/>
+					RelativePath="..\..\src\Gles\egltypes.h">
+				</File>
 				<File
-					RelativePath="..\..\src\Gles\gl.h"/>
+					RelativePath="..\..\src\Gles\gl.h">
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"/>
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
+		</Filter>
 		<File
-			RelativePath=".\VTune\OGLES.vpj"/>
+			RelativePath=".\VTune\OGLES.vpj">
+		</File>
+		<File
+			RelativePath="..\..\src\todo.txt">
+		</File>
 	</Files>
-	<Globals/>
+	<Globals>
+	</Globals>
 </VisualStudioProject>

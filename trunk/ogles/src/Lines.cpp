@@ -68,7 +68,7 @@ void Context :: RenderLines(GLint first, GLsizei count) {
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos1);
 
-		m_Rasterizer->RasterLine(pos0, pos1);
+		RenderLine(pos0, pos1);
 	}
 }
 
@@ -86,7 +86,7 @@ void Context :: RenderLines(GLsizei count, const GLubyte * indices) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos1);
 
-		m_Rasterizer->RasterLine(pos0, pos1);
+		RenderLine(pos0, pos1);
 	}
 }
 
@@ -104,7 +104,7 @@ void Context :: RenderLines(GLsizei count, const GLushort * indices) {
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos1);
 
-		m_Rasterizer->RasterLine(pos0, pos1);
+		RenderLine(pos0, pos1);
 	}
 }
 
@@ -129,17 +129,17 @@ void Context :: RenderLineStrip(GLint first, GLsizei count) {
 
 			SelectArrayElement(first++);
 			CurrentValuesToRasterPos(&pos1);
-			m_Rasterizer->RasterLine(pos0, pos1);
+			RenderLine(pos0, pos1);
 
 			SelectArrayElement(first++);
 			CurrentValuesToRasterPos(&pos0);
-			m_Rasterizer->RasterLine(pos1, pos0);
+			RenderLine(pos1, pos0);
 		}
 
 		if (count >= 1) {
 			SelectArrayElement(first++);
 			CurrentValuesToRasterPos(&pos1);
-			m_Rasterizer->RasterLine(pos0, pos1);
+			RenderLine(pos0, pos1);
 		}
 	}
 }
@@ -160,17 +160,17 @@ void Context :: RenderLineStrip(GLsizei count, const GLubyte * indices) {
 
 			SelectArrayElement(*indices++);
 			CurrentValuesToRasterPos(&pos1);
-			m_Rasterizer->RasterLine(pos0, pos1);
+			RenderLine(pos0, pos1);
 
 			SelectArrayElement(*indices++);
 			CurrentValuesToRasterPos(&pos0);
-			m_Rasterizer->RasterLine(pos1, pos0);
+			RenderLine(pos1, pos0);
 		}
 
 		if (count >= 1) {
 			SelectArrayElement(*indices++);
 			CurrentValuesToRasterPos(&pos1);
-			m_Rasterizer->RasterLine(pos0, pos1);
+			RenderLine(pos0, pos1);
 		}
 	}
 }
@@ -191,17 +191,17 @@ void Context :: RenderLineStrip(GLsizei count, const GLushort * indices) {
 
 			SelectArrayElement(*indices++);
 			CurrentValuesToRasterPos(&pos1);
-			m_Rasterizer->RasterLine(pos0, pos1);
+			RenderLine(pos0, pos1);
 
 			SelectArrayElement(*indices++);
 			CurrentValuesToRasterPos(&pos0);
-			m_Rasterizer->RasterLine(pos1, pos0);
+			RenderLine(pos1, pos0);
 		}
 
 		if (count >= 1) {
 			SelectArrayElement(*indices++);
 			CurrentValuesToRasterPos(&pos1);
-			m_Rasterizer->RasterLine(pos0, pos1);
+			RenderLine(pos0, pos1);
 		}
 	}
 }
@@ -222,7 +222,7 @@ void Context :: RenderLineLoop(GLint first, GLsizei count) {
 		CurrentValuesToRasterPos(&start);
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterLine(start, pos0);
+		RenderLine(start, pos0);
 
 		count -= 2;
 
@@ -231,20 +231,20 @@ void Context :: RenderLineLoop(GLint first, GLsizei count) {
 
 			SelectArrayElement(first++);
 			CurrentValuesToRasterPos(&pos1);
-			m_Rasterizer->RasterLine(pos0, pos1);
+			RenderLine(pos0, pos1);
 
 			SelectArrayElement(first++);
 			CurrentValuesToRasterPos(&pos0);
-			m_Rasterizer->RasterLine(pos1, pos0);
+			RenderLine(pos1, pos0);
 		}
 
 		if (count >= 1) {
 			SelectArrayElement(first++);
 			CurrentValuesToRasterPos(&pos1);
-			m_Rasterizer->RasterLine(pos0, pos1);
-			m_Rasterizer->RasterLine(pos1, start);
+			RenderLine(pos0, pos1);
+			RenderLine(pos1, start);
 		} else {
-			m_Rasterizer->RasterLine(pos0, start);
+			RenderLine(pos0, start);
 		}
 	}
 }
@@ -260,7 +260,7 @@ void Context :: RenderLineLoop(GLsizei count, const GLubyte * indices) {
 		CurrentValuesToRasterPos(&start);
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterLine(start, pos0);
+		RenderLine(start, pos0);
 
 		count -= 2;
 
@@ -269,20 +269,20 @@ void Context :: RenderLineLoop(GLsizei count, const GLubyte * indices) {
 
 			SelectArrayElement(*indices++);
 			CurrentValuesToRasterPos(&pos1);
-			m_Rasterizer->RasterLine(pos0, pos1);
+			RenderLine(pos0, pos1);
 
 			SelectArrayElement(*indices++);
 			CurrentValuesToRasterPos(&pos0);
-			m_Rasterizer->RasterLine(pos1, pos0);
+			RenderLine(pos1, pos0);
 		}
 
 		if (count >= 1) {
 			SelectArrayElement(*indices++);
 			CurrentValuesToRasterPos(&pos1);
-			m_Rasterizer->RasterLine(pos0, pos1);
-			m_Rasterizer->RasterLine(pos1, start);
+			RenderLine(pos0, pos1);
+			RenderLine(pos1, start);
 		} else {
-			m_Rasterizer->RasterLine(pos0, start);
+			RenderLine(pos0, start);
 		}
 	}
 }
@@ -298,7 +298,7 @@ void Context :: RenderLineLoop(GLsizei count, const GLushort * indices) {
 		CurrentValuesToRasterPos(&start);
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
-		m_Rasterizer->RasterLine(start, pos0);
+		RenderLine(start, pos0);
 
 		count -= 2;
 
@@ -307,21 +307,73 @@ void Context :: RenderLineLoop(GLsizei count, const GLushort * indices) {
 
 			SelectArrayElement(*indices++);
 			CurrentValuesToRasterPos(&pos1);
-			m_Rasterizer->RasterLine(pos0, pos1);
+			RenderLine(pos0, pos1);
 
 			SelectArrayElement(*indices++);
 			CurrentValuesToRasterPos(&pos0);
-			m_Rasterizer->RasterLine(pos1, pos0);
+			RenderLine(pos1, pos0);
 		}
 
 		if (count >= 1) {
 			SelectArrayElement(*indices++);
 			CurrentValuesToRasterPos(&pos1);
-			m_Rasterizer->RasterLine(pos0, pos1);
-			m_Rasterizer->RasterLine(pos1, start);
+			RenderLine(pos0, pos1);
+			RenderLine(pos1, start);
 		} else {
-			m_Rasterizer->RasterLine(pos0, start);
+			RenderLine(pos0, start);
 		}
 	}
 }
+
+
+namespace {
+
+	inline EGL_Fixed InterpolationCoefficient(EGL_Fixed a, EGL_Fixed b, EGL_Fixed c) {
+		return EGL_Div(b - a, c - a);
+	}
+
+	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed y0, EGL_Fixed x1, EGL_Fixed y1) {
+		return EGL_Mul(x0, y0) + EGL_Mul(x1, y1);
+	}
+
+	inline void Adjust(RasterPos& dst, const RasterPos& src, EGL_Fixed scale) {
+		EGL_Fixed invScale = EGL_ONE - scale;
+
+		dst.m_ClipCoords = dst.m_ClipCoords * scale + src.m_ClipCoords * invScale;
+		dst.m_Color = dst.m_Color * scale + src.m_Color * invScale;
+		dst.m_TextureCoords.tu = Interpolate(dst.m_TextureCoords.tu, scale, src.m_TextureCoords.tu, invScale);
+		dst.m_TextureCoords.tv = Interpolate(dst.m_TextureCoords.tv, scale, src.m_TextureCoords.tv, invScale);
+	}
+
+	inline bool ClipX(RasterPos& from, RasterPos& to) {
+#		define COORDINATE x()
+#		include "LineClipper.inc"
+#		undef COORDINATE
+	}
+
+	inline bool ClipY(RasterPos& from, RasterPos& to) {
+#		define COORDINATE y()
+#		include "LineClipper.inc"
+#		undef COORDINATE
+	}
+
+	inline bool ClipZ(RasterPos& from, RasterPos& to) {
+#		define COORDINATE z()
+#		include "LineClipper.inc"
+#		undef COORDINATE
+	}
+}
+
+
+void Context :: RenderLine(RasterPos& from, RasterPos& to) {
+
+	if (ClipX(from, to) &&
+		ClipY(from, to) &&
+		ClipZ(from, to)) {
+		ClipCoordsToWindowCoords(from);
+		ClipCoordsToWindowCoords(to);
+		m_Rasterizer->RasterLine(from, to);
+	}
+}
+
 
