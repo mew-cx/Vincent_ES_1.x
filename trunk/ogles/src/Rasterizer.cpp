@@ -450,12 +450,12 @@ inline void Rasterizer :: Fragment(I32 offset, EGL_Fixed depth, I32 texOffset,
 		switch (m_State->m_StencilFunc) {
 			default:
 			case RasterizerState::CompFuncNever:	stencilTest = false;				break;
-			case RasterizerState::CompFuncLess:		stencilTest = stencil < stencilRef;	break;
-			case RasterizerState::CompFuncEqual:	stencilTest = stencil == stencilRef;break;
-			case RasterizerState::CompFuncLEqual:	stencilTest = stencil <= stencilRef;break;
-			case RasterizerState::CompFuncGreater:	stencilTest = stencil > stencilRef;	break;
-			case RasterizerState::CompFuncNotEqual:	stencilTest = stencil != stencilRef;break;
-			case RasterizerState::CompFuncGEqual:	stencilTest = stencil >= stencilRef;break;
+			case RasterizerState::CompFuncLess:		stencilTest = stencilRef < stencil;	break;
+			case RasterizerState::CompFuncEqual:	stencilTest = stencilRef == stencil;break;
+			case RasterizerState::CompFuncLEqual:	stencilTest = stencilRef <= stencil;break;
+			case RasterizerState::CompFuncGreater:	stencilTest = stencilRef > stencil;	break;
+			case RasterizerState::CompFuncNotEqual:	stencilTest = stencilRef != stencil;break;
+			case RasterizerState::CompFuncGEqual:	stencilTest = stencilRef >= stencil;break;
 			case RasterizerState::CompFuncAlways:	stencilTest = true;					break;
 		}
 
