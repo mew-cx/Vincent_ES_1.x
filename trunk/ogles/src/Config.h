@@ -47,7 +47,12 @@
 
 namespace EGL {
 
+	class Context;
+
 	class OGLES_API Config {
+
+		friend Context;
+
 	public:
 		Config(
 			EGLint	bufferSize,

@@ -54,8 +54,18 @@ void Context :: Viewport(GLint x, GLint y, GLsizei width, GLsizei height) {
 	// TODO: clamp to frame buffer limitations
 	m_ViewportX = x;
 	m_ViewportY = y;
-	m_ViewportWidth = width;
-	m_ViewportHeight = height;
+
+	if (width > m_Config.m_Width) {
+		m_ViewportWidth = m_Config.m_Width;
+	} else {
+		m_ViewportWidth = width;
+	}
+
+	if (height > m_Config.m_Height) {
+		m_ViewportHeight = m_Config.m_Height;
+	} else {
+		m_ViewportHeight = height;
+	}
 
 	m_ViewportOrigin = Vec3D(EGL_FixedFromInt(x + (width / 2)), EGL_FixedFromInt(y + (height / 2)), m_ViewportOrigin.z());
 	m_ViewportScale = Vec3D(EGL_FixedFromInt(width / 2), EGL_FixedFromInt(height / 2), m_ViewportScale.z());

@@ -664,9 +664,11 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat,
 		GetRasterizerState()->SetInternalFormat(internalFormat);
 	}
 
-	CopyPixels(const_cast<const void *>(pixels), width, height, 0, 0, width, height,
-		texture->GetData(), width, height, 0, 0, internalFormat, type,
-		InternalTypeForInternalFormat(internalFormat));
+	if (pixels != 0) {
+		CopyPixels(const_cast<const void *>(pixels), width, height, 0, 0, width, height,
+			texture->GetData(), width, height, 0, 0, internalFormat, type,
+			InternalTypeForInternalFormat(internalFormat));
+	}
 
 	if (level == 0 && m_GenerateMipmaps) {
 		UpdateMipmaps();
@@ -697,9 +699,11 @@ void Context :: TexSubImage2D(GLenum target, GLint level,
 		return;
 	}
 
-	CopyPixels(const_cast<const void *>(pixels), width, height, 0, 0, width, height,
-		texture->GetData(), texture->GetWidth(), texture->GetHeight(),
-		xoffset, yoffset, internalFormat, type, InternalTypeForInternalFormat(internalFormat));
+	if (pixels != 0) {
+		CopyPixels(const_cast<const void *>(pixels), width, height, 0, 0, width, height,
+			texture->GetData(), texture->GetWidth(), texture->GetHeight(),
+			xoffset, yoffset, internalFormat, type, InternalTypeForInternalFormat(internalFormat));
+	}
 
 	if (level == 0 && m_GenerateMipmaps) {
 		UpdateMipmaps();

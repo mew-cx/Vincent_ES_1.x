@@ -104,13 +104,21 @@ void Context :: MultMatrixx(const GLfixed *m) {
 }
 
 void Context :: PopMatrix(void) { 
-	RecordError(CurrentMatrixStack()->PopMatrix());
 
-	RebuildMatrices();
+	if (CurrentMatrixStack()->PopMatrix()) {
+		RebuildMatrices();
+		RecordError(GL_NO_ERROR);
+	} else {
+		RecordError(GL_STACK_UNDERFLOW);
+	}
 }
 
 void Context :: PushMatrix(void) { 
-	RecordError(CurrentMatrixStack()->PushMatrix());
+	if (CurrentMatrixStack()->PushMatrix()) {
+		RecordError(GL_NO_ERROR);
+	} else {
+		RecordError(GL_STACK_OVERFLOW);
+	}
 }
 
 // --------------------------------------------------------------------------

@@ -441,6 +441,19 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		params[0] = 1;
 		break;
 
+	case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
+		params[0] = GL_UNSIGNED_SHORT_5_6_5;
+		break;
+
+	case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
+		params[0] = GL_RGB;
+		break;
+
+	case GL_MAX_VIEWPORT_DIMS:
+		params[0] = m_Config.m_Width;
+		params[1] = m_Config.m_Height;
+		break;
+
 	default:
 		RecordError(GL_INVALID_ENUM);
 	}

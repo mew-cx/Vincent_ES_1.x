@@ -10,6 +10,7 @@ Version 0.71
 
 This version incorporates critical fixes for 0.7.
 
+928046 - GL coverage test fails 
 923737 - glBindTexture can fail 
 863660 - Provide support for meshes (experimental)
 

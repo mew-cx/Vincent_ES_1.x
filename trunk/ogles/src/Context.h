@@ -240,11 +240,12 @@ namespace EGL {
 		void TexEnvfv(GLenum target, GLenum pname, const GLfloat *params);
 		void Translatef(GLfloat x, GLfloat y, GLfloat z);
 
-		void DrawMesh(GLsizei count, GLenum type, GLsizei stride, const GLvoid *pointer,
+		void DrawMesh(GLsizei count, GLenum type, GLsizei stride,
 					  GLsizei offsetVertex, GLsizei strideVertex,
 					  GLsizei offsetNormal, GLsizei strideNormal,
 					  GLsizei offsetTexture, GLsizei strideTexture,
-					  GLsizei offsetColor, GLsizei strideColor);
+					  GLsizei offsetColor, GLsizei strideColor, 
+					  const GLvoid *pointer);
 
 		// ----------------------------------------------------------------------
 		// Context Management Functions
