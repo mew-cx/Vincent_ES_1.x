@@ -726,7 +726,7 @@ inline void Rasterizer :: Fragment(I32 offset, EGL_Fixed depth, I32 texOffset,
 #define LINEAR_SPAN (1 << LOG_LINEAR_SPAN)	// must be power of 2
 
 
-#if defined(ARM) || defined(_ARM_)
+#if !defined(NO_COMPILE) && (defined(ARM) || defined(_ARM_))
 
 inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& end, U32 y) {
 	RasterInfo rasterInfo;
