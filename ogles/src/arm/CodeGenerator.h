@@ -83,7 +83,8 @@ namespace EGL {
 	private:
 		void GenerateRasterScanLine();
 		void GenerateFragment(cg_proc_t * procedure, cg_block_t * currentBlock,
-			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo);
+			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
+			int weight);
 
 	private:
 		RasterizerState *	m_State;
