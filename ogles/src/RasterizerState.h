@@ -217,8 +217,9 @@ namespace EGL {
 
 		void EnableTexture(bool enabled);
 
-		void SetPointSize(EGL_Fixed size);
 		void SetPointSmoothEnabled(bool enabled);
+		void SetPointSpriteEnabled(bool enabled);
+		void SetPointCoordReplaceEnabled(bool enabled);
 
 		void EnablePolygonOffsetFill(bool enabled);
 		void SetPolygonOffset(EGL_Fixed factor, EGL_Fixed units);
@@ -260,27 +261,33 @@ namespace EGL {
 		struct PointState {
 			PointState() {
 				SmoothEnabled = false;
-				Size = EGL_ONE;
+				SpriteEnabled = false;
+				CoordReplaceEnabled = false;
 			}
 
 			PointState(const PointState& other) {
 				SmoothEnabled = other.SmoothEnabled;
-				Size = other.Size;
+				SpriteEnabled = other.SpriteEnabled;
+				CoordReplaceEnabled = other.CoordReplaceEnabled;
 			}
 
 			PointState& operator=(const PointState& other) {
 				SmoothEnabled = other.SmoothEnabled;
-				Size = other.Size;
+				SpriteEnabled = other.SpriteEnabled;
+				CoordReplaceEnabled = other.CoordReplaceEnabled;
 				return *this;
 			}
 
 			bool operator==(const PointState& other) const {
 				return	SmoothEnabled == other.SmoothEnabled &&
-					Size == other.Size;
+					SpriteEnabled == other.SpriteEnabled &&
+					(!SpriteEnabled ||
+					 CoordReplaceEnabled == other.CoordReplaceEnabled);
 			}
 
 			bool				SmoothEnabled;
-			EGL_Fixed			Size;	// current point size
+			bool				SpriteEnabled;
+			bool				CoordReplaceEnabled;
 		}
 								m_Point;
 
@@ -770,10 +777,6 @@ namespace EGL {
 		m_Texture.Enabled = enabled;
 	}
 
-	inline void RasterizerState :: SetPointSize(EGL_Fixed size) {
-		m_Point.Size = size;
-	}
-
 	inline void RasterizerState :: EnablePolygonOffsetFill(bool enabled) {
 		m_Polygon.OffsetFillEnabled = enabled;
 	}
@@ -885,6 +888,14 @@ namespace EGL {
 
 	inline void RasterizerState :: SetPointSmoothEnabled(bool enabled) {
 		m_Point.SmoothEnabled = enabled;
+	}
+
+	inline void RasterizerState :: SetPointSpriteEnabled(bool enabled) {
+		m_Point.SpriteEnabled = enabled;
+	}
+
+	inline void RasterizerState :: SetPointCoordReplaceEnabled(bool enabled) {
+		m_Point.CoordReplaceEnabled = enabled;
 	}
 
 	inline bool RasterizerState :: IsEnabledFog() const {

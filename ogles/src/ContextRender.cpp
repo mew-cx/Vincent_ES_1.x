@@ -603,6 +603,7 @@ void Context :: PrepareRendering() {
 	PrepareArray(m_NormalArray,	  m_NormalArrayEnabled);
 	PrepareArray(m_ColorArray,    m_ColorArrayEnabled);
 	PrepareArray(m_TexCoordArray, m_TexCoordArrayEnabled);
+	PrepareArray(m_PointSizeArray,m_PointSizeArrayEnabled);
 }
 
 

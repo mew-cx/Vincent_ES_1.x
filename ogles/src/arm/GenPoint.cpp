@@ -97,8 +97,9 @@ void CodeGenerator :: GenerateRasterPoint() {
 
 	DECL_REG	(regInfo);		// virtual register containing info structure pointer
 	DECL_REG	(regPos);		// virtual register containing vertex coordinate pointer
+	DECL_REG	(regSize);		// virtual register containing point size
 
-	procedure->num_args = 2;	// the previous two declarations make up the arguments
+	procedure->num_args = 3;	// the previous three declarations make up the arguments
 
 	cg_block_t * block = cg_block_create(procedure, 1);
 

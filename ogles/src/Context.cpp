@@ -94,6 +94,7 @@ Context :: Context(const Config & config)
 	m_NormalArrayEnabled(false),
 	m_ColorArrayEnabled(false),
 	m_TexCoordArrayEnabled(false),
+	m_PointSizeArrayEnabled(false),
 
 	// buffers
 	m_CurrentArrayBuffer(0),
@@ -350,6 +351,10 @@ void Context :: Toggle(GLenum cap, bool value) {
 
 	case GL_POINT_SMOOTH:
 		GetRasterizerState()->SetPointSmoothEnabled(value);
+		break;
+
+	case GL_POINT_SPRITE_OES:
+		GetRasterizerState()->SetPointSpriteEnabled(value);
 		break;
 
 	case GL_LINE_SMOOTH:
