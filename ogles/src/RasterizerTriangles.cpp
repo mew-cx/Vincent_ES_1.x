@@ -524,8 +524,8 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	EGL_Fixed deltaY3	= pos3.m_WindowCoords.y - pos1.m_WindowCoords.y;
 	EGL_Fixed deltaY23	= pos3.m_WindowCoords.y - pos2.m_WindowCoords.y;
 
-	if (y == y3) {
-		// Always, the traingle is empty
+	if (y >= y3) {
+		// Always, the triangle is empty
 		return;
 	}
 
@@ -559,9 +559,9 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			start.m_WindowCoords.invZ	= invZ1					+ EGL_Mul(dInvZdX, xPreStep1)	+ EGL_Mul(dInvZdY, yPreStep1); 
 			start.m_WindowCoords.depth	= depth1				+ EGL_Mul(dDepthdX, xPreStep1)	+ EGL_Mul(dDepthdY, yPreStep1); 
 
-			start.m_Color.r				= EGL_ONE;//pos1.m_Color.r		+ EGL_Mul(dRdX, xPreStep1)		+ EGL_Mul(dRdY, yPreStep1);
-			start.m_Color.g				= 0;//pos1.m_Color.g		+ EGL_Mul(dGdX, xPreStep1)		+ EGL_Mul(dGdY, yPreStep1);
-			start.m_Color.b				= 0;//pos1.m_Color.b		+ EGL_Mul(dBdX, xPreStep1)		+ EGL_Mul(dBdY, yPreStep1);
+			start.m_Color.r				= pos1.m_Color.r		+ EGL_Mul(dRdX, xPreStep1)		+ EGL_Mul(dRdY, yPreStep1);
+			start.m_Color.g				= pos1.m_Color.g		+ EGL_Mul(dGdX, xPreStep1)		+ EGL_Mul(dGdY, yPreStep1);
+			start.m_Color.b				= pos1.m_Color.b		+ EGL_Mul(dBdX, xPreStep1)		+ EGL_Mul(dBdY, yPreStep1);
 			start.m_Color.a				= pos1.m_Color.a		+ EGL_Mul(dAdX, xPreStep1)		+ EGL_Mul(dAdY, yPreStep1);
 			
 			start.m_TextureCoords.tu	= tuOverZ1				+ EGL_Mul(dTuOverZdX, xPreStep1) + EGL_Mul(dTuOverZdY, yPreStep1);
@@ -576,9 +576,9 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			// determine integer x step/y
 			I32 dXdYStep1Int = dXdY3 >= 0 ? EGL_IntFromFixed(dXdY3) : -EGL_IntFromFixed(-dXdY3);
 
-			EdgePos delta3Small, delta3Big;
+			EdgePos delta3Small;
 
-			delta3Small.m_WindowCoords.x = dXdY3;	// x offset is stepped for each line (could consider removing fractional part from scanline function)
+			delta3Small.m_WindowCoords.x	= dXdY3;	// x offset is stepped for each line (could consider removing fractional part from scanline function)
 
 			delta3Small.m_WindowCoords.invZ	= dInvZdX * dXdYStep1Int	+ dInvZdY; 
 			delta3Small.m_WindowCoords.depth= dDepthdX * dXdYStep1Int	+ dDepthdY; 
@@ -593,25 +593,37 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 			delta3Small.m_FogDensity		= dFogdX * dXdYStep1Int		+ dFogdY;
 
-			// determine fractional x step/y
-			// For a fractional step, we add the integer part in right away, because this will
-			// simplify the stepping code in the rasterization loop
-			EGL_Fixed dXdYStep1Frac = dXdY3 >= 0 ? dXdY3 - EGL_FixedFromInt(dXdYStep1Int) : dXdY3 + EGL_FixedFromInt(dXdYStep1Int);
+			EdgePos delta3Big;
 
-			delta3Big.m_WindowCoords.x = dXdY3;
+			delta3Big.m_WindowCoords.x		= dXdY3;
 
-			delta3Big.m_WindowCoords.invZ	= dInvZdX	+ delta3Small.m_WindowCoords.invZ; 
-			delta3Big.m_WindowCoords.depth	= dDepthdX	+ delta3Small.m_WindowCoords.depth; 
+			if (dXdY3 >= 0) {
+				delta3Big.m_WindowCoords.invZ	= delta3Small.m_WindowCoords.invZ	+ dInvZdX; 
+				delta3Big.m_WindowCoords.depth	= delta3Small.m_WindowCoords.depth	+ dDepthdX; 
 
-			delta3Big.m_Color.r				= dRdX		+ delta3Small.m_Color.r;
-			delta3Big.m_Color.g				= dGdX		+ delta3Small.m_Color.g;
-			delta3Big.m_Color.b				= dBdX		+ delta3Small.m_Color.b;
-			delta3Big.m_Color.a				= dAdX		+ delta3Small.m_Color.a;
-			
-			delta3Big.m_TextureCoords.tu	= dTuOverZdX+ delta3Small.m_TextureCoords.tu;
-			delta3Big.m_TextureCoords.tv	= dTvOverZdX+ delta3Small.m_TextureCoords.tv;
+				delta3Big.m_Color.r				= delta3Small.m_Color.r				+ dRdX;
+				delta3Big.m_Color.g				= delta3Small.m_Color.g				+ dGdX;
+				delta3Big.m_Color.b				= delta3Small.m_Color.b				+ dBdX;
+				delta3Big.m_Color.a				= delta3Small.m_Color.a				+ dAdX;
+				
+				delta3Big.m_TextureCoords.tu	= delta3Small.m_TextureCoords.tu	+ dTuOverZdX;
+				delta3Big.m_TextureCoords.tv	= delta3Small.m_TextureCoords.tv	+ dTvOverZdX;
 
-			delta3Big.m_FogDensity			= dFogdX	+ delta3Small.m_FogDensity;
+				delta3Big.m_FogDensity			= delta3Small.m_FogDensity			+ dFogdX;
+			} else {
+				delta3Big.m_WindowCoords.invZ	= delta3Small.m_WindowCoords.invZ	- dInvZdX; 
+				delta3Big.m_WindowCoords.depth	= delta3Small.m_WindowCoords.depth	- dDepthdX; 
+
+				delta3Big.m_Color.r				= delta3Small.m_Color.r				- dRdX;
+				delta3Big.m_Color.g				= delta3Small.m_Color.g				- dGdX;
+				delta3Big.m_Color.b				= delta3Small.m_Color.b				- dBdX;
+				delta3Big.m_Color.a				= delta3Small.m_Color.a				- dAdX;
+				
+				delta3Big.m_TextureCoords.tu	= delta3Small.m_TextureCoords.tu	- dTuOverZdX;
+				delta3Big.m_TextureCoords.tv	= delta3Small.m_TextureCoords.tv	- dTvOverZdX;
+
+				delta3Big.m_FogDensity			= delta3Small.m_FogDensity			- dFogdX;
+			}
 
 			// ------------------------------------------------------------------
 			// Stepping for right edge
@@ -626,8 +638,15 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			// initialize the x-step error
 			// ------------------------------------------------------------------
 
-			EGL_Fixed xStepError = EGL_Abs(dXdYStep1Frac);
-			EGL_Fixed xError = EGL_FractionFromFixed(xStepped1L);
+			EGL_Fixed xStepError, xError;
+
+			if (dXdY3 >= 0) {
+				xStepError = dXdY3 - EGL_FixedFromInt(dXdYStep1Int);
+				xError = EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
+			} else {
+				xStepError = -dXdY3 - EGL_FixedFromInt(dXdYStep1Int);
+				xError = EGL_ONE - EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
+			}
 
 			// ------------------------------------------------------------------
 			// Raster the top part of the triangle
@@ -692,9 +711,9 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			start.m_WindowCoords.invZ	= invZ2				+ EGL_Mul(dInvZdX, xPreStep2)	+ EGL_Mul(dInvZdY, yPreStep2); 
 			start.m_WindowCoords.depth	= depth2			+ EGL_Mul(dDepthdX, xPreStep2)	+ EGL_Mul(dDepthdY, yPreStep2); 
 
-			start.m_Color.r				= 0;//pos2.m_Color.r	+ EGL_Mul(dRdX, xPreStep2)		+ EGL_Mul(dRdY, yPreStep2);
-			start.m_Color.g				= EGL_ONE;//pos2.m_Color.g	+ EGL_Mul(dGdX, xPreStep2)		+ EGL_Mul(dGdY, yPreStep2);
-			start.m_Color.b				= 0;//pos2.m_Color.b	+ EGL_Mul(dBdX, xPreStep2)		+ EGL_Mul(dBdY, yPreStep2);
+			start.m_Color.r				= pos2.m_Color.r	+ EGL_Mul(dRdX, xPreStep2)		+ EGL_Mul(dRdY, yPreStep2);
+			start.m_Color.g				= pos2.m_Color.g	+ EGL_Mul(dGdX, xPreStep2)		+ EGL_Mul(dGdY, yPreStep2);
+			start.m_Color.b				= pos2.m_Color.b	+ EGL_Mul(dBdX, xPreStep2)		+ EGL_Mul(dBdY, yPreStep2);
 			start.m_Color.a				= pos2.m_Color.a	+ EGL_Mul(dAdX, xPreStep2)		+ EGL_Mul(dAdY, yPreStep2);
 			
 			start.m_TextureCoords.tu	= tuOverZ2			+ EGL_Mul(dTuOverZdX, xPreStep2) + EGL_Mul(dTuOverZdY, yPreStep2);
@@ -709,7 +728,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			// determine integer x step/y
 			I32 dXdYStep2Int = dXdY23 >= 0 ? EGL_IntFromFixed(dXdY23) : -EGL_IntFromFixed(-dXdY23);
 
-			EdgePos delta23Small, delta23Big;
+			EdgePos delta23Small;
 
 			delta23Small.m_WindowCoords.x		= dXdY23;	// x offset is stepped for each line (could consider removing fractional part from scanline function)
 
@@ -726,25 +745,37 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 			delta23Small.m_FogDensity			= dFogdX * dXdYStep2Int + dFogdY;
 
-			// determine fractional x step/y
-			// For a fractional step, we add the integer part in right away, because this will
-			// simplify the stepping code in the rasterization loop
-			EGL_Fixed dXdYStep2Frac = dXdY23 >= 0 ? dXdY23 - EGL_FixedFromInt(dXdYStep2Int) : dXdY23 + EGL_FixedFromInt(dXdYStep2Int);
+			EdgePos delta23Big;
 
 			delta23Big.m_WindowCoords.x		= dXdY23;
 
-			delta23Big.m_WindowCoords.invZ	= dInvZdX		+ delta23Small.m_WindowCoords.invZ; 
-			delta23Big.m_WindowCoords.depth	= dDepthdX		+ delta23Small.m_WindowCoords.depth; 
+			if (dXdY23 >= 0) {
+				delta23Big.m_WindowCoords.depth	= delta23Small.m_WindowCoords.depth		+ dDepthdX; 
 
-			delta23Big.m_Color.r			= dRdX			+ delta23Small.m_Color.r;
-			delta23Big.m_Color.g			= dGdX			+ delta23Small.m_Color.g;
-			delta23Big.m_Color.b			= dBdX			+ delta23Small.m_Color.b;
-			delta23Big.m_Color.a			= dAdX			+ delta23Small.m_Color.a;
-			
-			delta23Big.m_TextureCoords.tu	= dTuOverZdX	+ delta23Small.m_TextureCoords.tu;
-			delta23Big.m_TextureCoords.tv	= dTvOverZdX	+ delta23Small.m_TextureCoords.tv;
+				delta23Big.m_Color.r			= delta23Small.m_Color.r				+ dRdX;
+				delta23Big.m_Color.g			= delta23Small.m_Color.g				+ dGdX;
+				delta23Big.m_Color.b			= delta23Small.m_Color.b				+ dBdX;
+				delta23Big.m_Color.a			= delta23Small.m_Color.a				+ dAdX;
+				
+				delta23Big.m_WindowCoords.invZ	= delta23Small.m_WindowCoords.invZ		+ dInvZdX; 
+				delta23Big.m_TextureCoords.tu	= delta23Small.m_TextureCoords.tu		+ dTuOverZdX;
+				delta23Big.m_TextureCoords.tv	= delta23Small.m_TextureCoords.tv		+ dTvOverZdX;
 
-			delta23Big.m_FogDensity			= dFogdX		+ delta23Small.m_FogDensity;
+				delta23Big.m_FogDensity			= delta23Small.m_FogDensity				+ dFogdX;
+			} else {
+				delta23Big.m_WindowCoords.depth	= delta23Small.m_WindowCoords.depth		- dDepthdX; 
+
+				delta23Big.m_Color.r			= delta23Small.m_Color.r				- dRdX;
+				delta23Big.m_Color.g			= delta23Small.m_Color.g				- dGdX;
+				delta23Big.m_Color.b			= delta23Small.m_Color.b				- dBdX;
+				delta23Big.m_Color.a			= delta23Small.m_Color.a				- dAdX;
+				
+				delta23Big.m_WindowCoords.invZ	= delta23Small.m_WindowCoords.invZ		- dInvZdX; 
+				delta23Big.m_TextureCoords.tu	= delta23Small.m_TextureCoords.tu		- dTuOverZdX;
+				delta23Big.m_TextureCoords.tv	= delta23Small.m_TextureCoords.tv		- dTvOverZdX;
+
+				delta23Big.m_FogDensity			= delta23Small.m_FogDensity				- dFogdX;
+			}
 
 			// ------------------------------------------------------------------
 			// initialize the x coordinate for right edge
@@ -758,8 +789,20 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			// initialize the x-step error
 			// ------------------------------------------------------------------
 
-			EGL_Fixed xStepError = EGL_Abs(dXdYStep2Frac);
-			EGL_Fixed xError = EGL_FractionFromFixed(xStepped2L);
+			//EGL_Fixed dXdYStep2Frac = dXdY23 >= 0 ? dXdY23 - EGL_FixedFromInt(dXdYStep2Int) : dXdY23 + EGL_FixedFromInt(dXdYStep2Int);
+
+			//EGL_Fixed xStepError = EGL_Abs(dXdYStep2Frac);
+			//EGL_Fixed xError = EGL_FractionFromFixed(xStepped2L);
+
+			EGL_Fixed xStepError, xError;
+
+			if (dXdY23 >= 0) {
+				xStepError = dXdY23 - EGL_FixedFromInt(dXdYStep2Int);
+				xError = EGL_FractionFromFixed(xStepped2L + EGL_ONE/2);
+			} else {
+				xStepError = -dXdY23 - EGL_FixedFromInt(dXdYStep2Int);
+				xError = EGL_ONE - EGL_FractionFromFixed(xStepped2L + EGL_ONE/2);
+			}
 
 			// ------------------------------------------------------------------
 			// Raster the triangle
@@ -831,7 +874,6 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		start.m_WindowCoords.x = 
 			xStepped1L + ((EGL_ONE/2) - 1);	// added offset so round down will be round to nearest
 
-		start.m_WindowCoords.invZ = invZ1 + EGL_Mul(dInvZdX, xPreStep1) + EGL_Mul(dInvZdY, yPreStep1); 
 		start.m_WindowCoords.depth = depth1 + EGL_Mul(dDepthdX, xPreStep1) + EGL_Mul(dDepthdY, yPreStep1); 
 
 		start.m_Color.r = EGL_ONE;//pos1.m_Color.r + EGL_Mul(dRdX, xPreStep1) + EGL_Mul(dRdY, yPreStep1);
@@ -839,6 +881,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		start.m_Color.b = 0;//pos1.m_Color.b + EGL_Mul(dBdX, xPreStep1) + EGL_Mul(dBdY, yPreStep1);
 		start.m_Color.a = pos1.m_Color.a + EGL_Mul(dAdX, xPreStep1) + EGL_Mul(dAdY, yPreStep1);
 		
+		start.m_WindowCoords.invZ = invZ1 + EGL_Mul(dInvZdX, xPreStep1) + EGL_Mul(dInvZdY, yPreStep1); 
 		start.m_TextureCoords.tu = tuOverZ1 + EGL_Mul(dTuOverZdX, xPreStep1) + EGL_Mul(dTuOverZdY, yPreStep1);
 		start.m_TextureCoords.tv = tvOverZ1 + EGL_Mul(dTvOverZdX, xPreStep1) + EGL_Mul(dTvOverZdY, yPreStep1);
 
@@ -851,11 +894,10 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		// determine integer x step/y
 		I32 dXdYStep1Int = dXdY2 >= 0 ? EGL_IntFromFixed(dXdY2) : -EGL_IntFromFixed(-dXdY2);
 
-		EdgePos delta2Small, delta2Big;
+		EdgePos delta2Small;
 
 		delta2Small.m_WindowCoords.x = dXdY2;	// x offset is stepped for each line (could consider removing fractional part from scanline function)
 
-		delta2Small.m_WindowCoords.invZ		= dInvZdX * dXdYStep1Int	+ dInvZdY; 
 		delta2Small.m_WindowCoords.depth	= dDepthdX * dXdYStep1Int	+ dDepthdY; 
 
 		delta2Small.m_Color.r				= dRdX * dXdYStep1Int		+ dRdY;
@@ -863,30 +905,43 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		delta2Small.m_Color.b				= dBdX * dXdYStep1Int		+ dBdY;
 		delta2Small.m_Color.a				= dAdX * dXdYStep1Int		+ dAdY;
 		
+		delta2Small.m_WindowCoords.invZ		= dInvZdX * dXdYStep1Int	+ dInvZdY; 
 		delta2Small.m_TextureCoords.tu		= dTuOverZdX * dXdYStep1Int + dTuOverZdY;
 		delta2Small.m_TextureCoords.tv		= dTvOverZdX * dXdYStep1Int + dTvOverZdY;
 
 		delta2Small.m_FogDensity			= dFogdX * dXdYStep1Int		+ dFogdY;
 
-		// determine fractional x step/y
-		// For a fractional step, we add the integer part in right away, because this will
-		// simplify the stepping code in the rasterization loop
-		EGL_Fixed dXdYStep1Frac = dXdY2 >= 0 ? dXdY2 - EGL_FixedFromInt(dXdYStep1Int) : dXdY2 + EGL_FixedFromInt(dXdYStep1Int);
+		EdgePos delta2Big;
 
 		delta2Big.m_WindowCoords.x		= dXdY2;
 
-		delta2Big.m_WindowCoords.invZ	= dInvZdX		+ delta2Small.m_WindowCoords.invZ; 
-		delta2Big.m_WindowCoords.depth	= dDepthdX		+ delta2Small.m_WindowCoords.depth; 
+		if (dXdY2 >= 0) {
+			delta2Big.m_WindowCoords.depth	= delta2Small.m_WindowCoords.depth	+ dDepthdX; 
 
-		delta2Big.m_Color.r				= dRdX			+ delta2Small.m_Color.r;
-		delta2Big.m_Color.g				= dGdX			+ delta2Small.m_Color.g;
-		delta2Big.m_Color.b				= dBdX			+ delta2Small.m_Color.b;
-		delta2Big.m_Color.a				= dAdX			+ delta2Small.m_Color.a;
-		
-		delta2Big.m_TextureCoords.tu	= dTuOverZdX	+ delta2Small.m_TextureCoords.tu;
-		delta2Big.m_TextureCoords.tv	= dTvOverZdX	+ delta2Small.m_TextureCoords.tv;
+			delta2Big.m_Color.r				= delta2Small.m_Color.r				+ dRdX;
+			delta2Big.m_Color.g				= delta2Small.m_Color.g				+ dGdX;
+			delta2Big.m_Color.b				= delta2Small.m_Color.b				+ dBdX;
+			delta2Big.m_Color.a				= delta2Small.m_Color.a				+ dAdX;
+			
+			delta2Big.m_WindowCoords.invZ	= delta2Small.m_WindowCoords.invZ	+ dInvZdX; 
+			delta2Big.m_TextureCoords.tu	= delta2Small.m_TextureCoords.tu	+ dTuOverZdX;
+			delta2Big.m_TextureCoords.tv	= delta2Small.m_TextureCoords.tv	+ dTvOverZdX;
 
-		delta2Big.m_FogDensity			= dFogdX		+ delta2Small.m_FogDensity;
+			delta2Big.m_FogDensity			= delta2Small.m_FogDensity			+ dFogdX;
+		} else {
+			delta2Big.m_WindowCoords.depth	= delta2Small.m_WindowCoords.depth	- dDepthdX; 
+
+			delta2Big.m_Color.r				= delta2Small.m_Color.r				- dRdX;
+			delta2Big.m_Color.g				= delta2Small.m_Color.g				- dGdX;
+			delta2Big.m_Color.b				= delta2Small.m_Color.b				- dBdX;
+			delta2Big.m_Color.a				= delta2Small.m_Color.a				- dAdX;
+			
+			delta2Big.m_WindowCoords.invZ	= delta2Small.m_WindowCoords.invZ	- dInvZdX; 
+			delta2Big.m_TextureCoords.tu	= delta2Small.m_TextureCoords.tu	- dTuOverZdX;
+			delta2Big.m_TextureCoords.tv	= delta2Small.m_TextureCoords.tv	- dTvOverZdX;
+
+			delta2Big.m_FogDensity			= delta2Small.m_FogDensity			- dFogdX;
+		}
 
 		// ------------------------------------------------------------------
 		// initialize the x coordinate for right edge
@@ -900,8 +955,20 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		// initialize the x-step error
 		// ------------------------------------------------------------------
 
-		EGL_Fixed xStepError = EGL_Abs(dXdYStep1Frac);
-		EGL_Fixed xError = EGL_FractionFromFixed(xStepped1L);
+		//EGL_Fixed dXdYStep1Frac = dXdY2 >= 0 ? dXdY2 - EGL_FixedFromInt(dXdYStep1Int) : dXdY2 + EGL_FixedFromInt(dXdYStep1Int);
+
+		//EGL_Fixed xStepError = EGL_Abs(dXdYStep1Frac);
+		//EGL_Fixed xError = EGL_FractionFromFixed(xStepped1L);
+
+		EGL_Fixed xStepError, xError;
+
+		if (dXdY2 >= 0) {
+			xStepError = dXdY2 - EGL_FixedFromInt(dXdYStep1Int);
+			xError = EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
+		} else {
+			xStepError = -dXdY2 - EGL_FixedFromInt(dXdYStep1Int);
+			xError = EGL_ONE - EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
+		}
 
 		// ------------------------------------------------------------------
 		// Raster the top part of the triangle
@@ -986,11 +1053,10 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		// determine integer x step/y
 		I32 dXdYStep2Int = dXdY23 >= 0 ? EGL_IntFromFixed(dXdY23) : -EGL_IntFromFixed(-dXdY23);
 
-		EdgePos delta23Small, delta23Big;
+		EdgePos delta23Small;
 
 		delta23Small.m_WindowCoords.x		= dXdY23;	// x offset is stepped for each line (could consider removing fractional part from scanline function)
 
-		delta23Small.m_WindowCoords.invZ	= dInvZdX * dXdYStep2Int	+ dInvZdY; 
 		delta23Small.m_WindowCoords.depth	= dDepthdX * dXdYStep2Int	+ dDepthdY; 
 
 		delta23Small.m_Color.r				= dRdX * dXdYStep2Int		+ dRdY;
@@ -998,40 +1064,64 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		delta23Small.m_Color.b				= dBdX * dXdYStep2Int		+ dBdY;
 		delta23Small.m_Color.a				= dAdX * dXdYStep2Int		+ dAdY;
 		
+		delta23Small.m_WindowCoords.invZ	= dInvZdX * dXdYStep2Int	+ dInvZdY; 
 		delta23Small.m_TextureCoords.tu		= dTuOverZdX * dXdYStep2Int + dTuOverZdY;
 		delta23Small.m_TextureCoords.tv		= dTvOverZdX * dXdYStep2Int + dTvOverZdY;
 
 		delta23Small.m_FogDensity			= dFogdX * dXdYStep2Int		+ dFogdY;
 
-		// determine fractional x step/y
-		// For a fractional step, we add the integer part in right away, because this will
-		// simplify the stepping code in the rasterization loop
-		EGL_Fixed dXdYStep2Frac = dXdY23 >= 0 ? dXdY23 - EGL_FixedFromInt(dXdYStep2Int) : dXdY23 + EGL_FixedFromInt(dXdYStep2Int);
+		EdgePos delta23Big;
 
 		delta23Big.m_WindowCoords.x			= dXdY23;
 
-		delta23Big.m_WindowCoords.invZ		= dInvZdX		+ delta23Small.m_WindowCoords.invZ; 
-		delta23Big.m_WindowCoords.depth		= dDepthdX		+ delta23Small.m_WindowCoords.depth; 
+		if (dXdY23 >= 0) {
+			delta23Big.m_WindowCoords.depth		= delta23Small.m_WindowCoords.depth	+ dDepthdX; 
 
-		delta23Big.m_Color.r				= dRdX			+ delta23Small.m_Color.r;
-		delta23Big.m_Color.g				= dGdX			+ delta23Small.m_Color.g;
-		delta23Big.m_Color.b				= dBdX			+ delta23Small.m_Color.b;
-		delta23Big.m_Color.a				= dAdX			+ delta23Small.m_Color.a;
-		
-		delta23Big.m_TextureCoords.tu		= dTuOverZdX	+ delta23Small.m_TextureCoords.tu;
-		delta23Big.m_TextureCoords.tv		= dTvOverZdX	+ delta23Small.m_TextureCoords.tv;
+			delta23Big.m_Color.r				= delta23Small.m_Color.r			+ dRdX;
+			delta23Big.m_Color.g				= delta23Small.m_Color.g			+ dGdX;
+			delta23Big.m_Color.b				= delta23Small.m_Color.b			+ dBdX;
+			delta23Big.m_Color.a				= delta23Small.m_Color.a			+ dAdX;
+			
+			delta23Big.m_WindowCoords.invZ		= delta23Small.m_WindowCoords.invZ	+ dInvZdX; 
+			delta23Big.m_TextureCoords.tu		= delta23Small.m_TextureCoords.tu	+ dTuOverZdX;
+			delta23Big.m_TextureCoords.tv		= delta23Small.m_TextureCoords.tv	+ dTvOverZdX;
 
-		delta23Big.m_FogDensity				= dFogdX		+ delta23Small.m_FogDensity;
+			delta23Big.m_FogDensity				= delta23Small.m_FogDensity			+ dFogdX;
+		} else {
+			delta23Big.m_WindowCoords.depth		= delta23Small.m_WindowCoords.depth	- dDepthdX; 
+
+			delta23Big.m_Color.r				= delta23Small.m_Color.r			- dRdX;
+			delta23Big.m_Color.g				= delta23Small.m_Color.g			- dGdX;
+			delta23Big.m_Color.b				= delta23Small.m_Color.b			- dBdX;
+			delta23Big.m_Color.a				= delta23Small.m_Color.a			- dAdX;
+			
+			delta23Big.m_WindowCoords.invZ		= delta23Small.m_WindowCoords.invZ	- dInvZdX; 
+			delta23Big.m_TextureCoords.tu		= delta23Small.m_TextureCoords.tu	- dTuOverZdX;
+			delta23Big.m_TextureCoords.tv		= delta23Small.m_TextureCoords.tv	- dTvOverZdX;
+
+			delta23Big.m_FogDensity				= delta23Small.m_FogDensity			- dFogdX;
+		}
 
 		// ------------------------------------------------------------------
 		// initialize the x-step error
 		// ------------------------------------------------------------------
 
-		xStepError = EGL_Abs(dXdYStep2Frac);
-		xError = EGL_FractionFromFixed(xStepped2L);
+		//EGL_Fixed dXdYStep2Frac = dXdY23 >= 0 ? dXdY23 - EGL_FixedFromInt(dXdYStep2Int) : dXdY23 + EGL_FixedFromInt(dXdYStep2Int);
+
+		//xStepError = EGL_Abs(dXdYStep2Frac);
+		//xError = EGL_FractionFromFixed(xStepped2L);
+
+		if (dXdY23 >= 0) {
+			xStepError = dXdY23 - EGL_FixedFromInt(dXdYStep2Int);
+			xError = EGL_FractionFromFixed(xStepped2L + EGL_ONE/2);
+		} else {
+			xStepError = -dXdY23 - EGL_FixedFromInt(dXdYStep2Int);
+			xError = EGL_ONE - EGL_FractionFromFixed(xStepped2L + EGL_ONE/2);
+		}
+
 
 		// ------------------------------------------------------------------
-		// Raster the top part of the triangle
+		// Raster the bottom part of the triangle
 		// ------------------------------------------------------------------
 
 		for (; y < y3; ++y) {
@@ -1082,21 +1172,21 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		EGL_Fixed xPreStep1 = xRounded1 + (EGL_ONE/2) - pos1.m_WindowCoords.x;
 
 		EdgePos start;
-		start.m_WindowCoords.x = 
-			xStepped1L + ((EGL_ONE/2) - 1);	// added offset so round down will be round to nearest
 
-		start.m_WindowCoords.invZ = invZ1 + EGL_Mul(dInvZdX, xPreStep1) + EGL_Mul(dInvZdY, yPreStep1); 
-		start.m_WindowCoords.depth = depth1 + EGL_Mul(dDepthdX, xPreStep1) + EGL_Mul(dDepthdY, yPreStep1); 
+		start.m_WindowCoords.x		= xStepped1L + ((EGL_ONE/2) - 1);	// added offset so round down will be round to nearest
 
-		start.m_Color.r = EGL_ONE;//pos1.m_Color.r + EGL_Mul(dRdX, xPreStep1) + EGL_Mul(dRdY, yPreStep1);
-		start.m_Color.g = 0;//pos1.m_Color.g + EGL_Mul(dGdX, xPreStep1) + EGL_Mul(dGdY, yPreStep1);
-		start.m_Color.b = EGL_ONE;//pos1.m_Color.b + EGL_Mul(dBdX, xPreStep1) + EGL_Mul(dBdY, yPreStep1);
-		start.m_Color.a = pos1.m_Color.a + EGL_Mul(dAdX, xPreStep1) + EGL_Mul(dAdY, yPreStep1);
+		start.m_WindowCoords.depth	= depth1			+ EGL_Mul(dDepthdX, xPreStep1)	+ EGL_Mul(dDepthdY, yPreStep1); 
+
+		start.m_Color.r				= EGL_ONE;//pos1.m_Color.r + EGL_Mul(dRdX, xPreStep1) + EGL_Mul(dRdY, yPreStep1);
+		start.m_Color.g				= 0;//pos1.m_Color.g + EGL_Mul(dGdX, xPreStep1) + EGL_Mul(dGdY, yPreStep1);
+		start.m_Color.b				= EGL_ONE;//pos1.m_Color.b + EGL_Mul(dBdX, xPreStep1) + EGL_Mul(dBdY, yPreStep1);
+		start.m_Color.a				= pos1.m_Color.a	+ EGL_Mul(dAdX, xPreStep1)	+ EGL_Mul(dAdY, yPreStep1);
 		
-		start.m_TextureCoords.tu = tuOverZ1 + EGL_Mul(dTuOverZdX, xPreStep1) + EGL_Mul(dTuOverZdY, yPreStep1);
-		start.m_TextureCoords.tv = tvOverZ1 + EGL_Mul(dTvOverZdX, xPreStep1) + EGL_Mul(dTvOverZdY, yPreStep1);
+		start.m_WindowCoords.invZ	= invZ1				+ EGL_Mul(dInvZdX, xPreStep1)	+ EGL_Mul(dInvZdY, yPreStep1); 
+		start.m_TextureCoords.tu	= tuOverZ1			+ EGL_Mul(dTuOverZdX, xPreStep1) + EGL_Mul(dTuOverZdY, yPreStep1);
+		start.m_TextureCoords.tv	= tvOverZ1			+ EGL_Mul(dTvOverZdX, xPreStep1) + EGL_Mul(dTvOverZdY, yPreStep1);
 
-		start.m_FogDensity = pos1.m_FogDensity + EGL_Mul(dFogdX, xPreStep1) + EGL_Mul(dFogdY, yPreStep1);
+		start.m_FogDensity			= pos1.m_FogDensity + EGL_Mul(dFogdX, xPreStep1) + EGL_Mul(dFogdY, yPreStep1);
 
 		// ------------------------------------------------------------------
 		// initialize edge buffer delta2Int & delta2Frac
@@ -1105,10 +1195,10 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		// determine integer x step/y
 		I32 dXdYStep1Int = dXdY3 >= 0 ? EGL_IntFromFixed(dXdY3) : -EGL_IntFromFixed(-dXdY3);
 
-		EdgePos delta3Big, delta3Small;
+		EdgePos delta3Small;
+
 		delta3Small.m_WindowCoords.x		= dXdY3;	// x offset is stepped for each line (could consider removing fractional part from scanline function)
 
-		delta3Small.m_WindowCoords.invZ		= dInvZdX * dXdYStep1Int	+ dInvZdY; 
 		delta3Small.m_WindowCoords.depth	= dDepthdX * dXdYStep1Int	+ dDepthdY; 
 
 		delta3Small.m_Color.r				= dRdX * dXdYStep1Int		+ dRdY;
@@ -1116,30 +1206,43 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		delta3Small.m_Color.b				= dBdX * dXdYStep1Int		+ dBdY;
 		delta3Small.m_Color.a				= dAdX * dXdYStep1Int		+ dAdY;
 		
+		delta3Small.m_WindowCoords.invZ		= dInvZdX * dXdYStep1Int	+ dInvZdY; 
 		delta3Small.m_TextureCoords.tu		= dTuOverZdX * dXdYStep1Int + dTuOverZdY;
 		delta3Small.m_TextureCoords.tv		= dTvOverZdX * dXdYStep1Int + dTvOverZdY;
 
 		delta3Small.m_FogDensity			= dFogdX * dXdYStep1Int		+ dFogdY;
 
-		// determine fractional x step/y
-		// For a fractional step, we add the integer part in right away, because this will
-		// simplify the stepping code in the rasterization loop
-		EGL_Fixed dXdYStep1Frac = dXdY3 >= 0 ? dXdY3 - EGL_FixedFromInt(dXdYStep1Int) : dXdY3 + EGL_FixedFromInt(dXdYStep1Int);
+		EdgePos delta3Big;
 
 		delta3Big.m_WindowCoords.x		= dXdY3;
 
-		delta3Big.m_WindowCoords.invZ	= dInvZdX		+ delta3Small.m_WindowCoords.invZ; 
-		delta3Big.m_WindowCoords.depth	= dDepthdX		+ delta3Small.m_WindowCoords.depth; 
+		if (dXdY3 >= 0) {
+			delta3Big.m_WindowCoords.depth	= delta3Small.m_WindowCoords.depth	+ dDepthdX; 
 
-		delta3Big.m_Color.r				= dRdX			+ delta3Small.m_Color.r;
-		delta3Big.m_Color.g				= dGdX			+ delta3Small.m_Color.g;
-		delta3Big.m_Color.b				= dBdX			+ delta3Small.m_Color.b;
-		delta3Big.m_Color.a				= dAdX			+ delta3Small.m_Color.a;
-		
-		delta3Big.m_TextureCoords.tu	= dTuOverZdX	+ delta3Small.m_TextureCoords.tu;
-		delta3Big.m_TextureCoords.tv	= dTvOverZdX	+ delta3Small.m_TextureCoords.tv;
+			delta3Big.m_Color.r				= delta3Small.m_Color.r				+ dRdX;
+			delta3Big.m_Color.g				= delta3Small.m_Color.g				+ dGdX;
+			delta3Big.m_Color.b				= delta3Small.m_Color.b				+ dBdX;
+			delta3Big.m_Color.a				= delta3Small.m_Color.a				+ dAdX;
+			
+			delta3Big.m_WindowCoords.invZ	= delta3Small.m_WindowCoords.invZ	+ dInvZdX; 
+			delta3Big.m_TextureCoords.tu	= delta3Small.m_TextureCoords.tu	+ dTuOverZdX;
+			delta3Big.m_TextureCoords.tv	= delta3Small.m_TextureCoords.tv	+ dTvOverZdX;
 
-		delta3Big.m_FogDensity			= dFogdX		+ delta3Small.m_FogDensity;
+			delta3Big.m_FogDensity			= delta3Small.m_FogDensity			+ dFogdX;
+		} else {
+			delta3Big.m_WindowCoords.depth	= delta3Small.m_WindowCoords.depth	- dDepthdX; 
+
+			delta3Big.m_Color.r				= delta3Small.m_Color.r				- dRdX;
+			delta3Big.m_Color.g				= delta3Small.m_Color.g				- dGdX;
+			delta3Big.m_Color.b				= delta3Small.m_Color.b				- dBdX;
+			delta3Big.m_Color.a				= delta3Small.m_Color.a				- dAdX;
+			
+			delta3Big.m_WindowCoords.invZ	= delta3Small.m_WindowCoords.invZ	- dInvZdX; 
+			delta3Big.m_TextureCoords.tu	= delta3Small.m_TextureCoords.tu	- dTuOverZdX;
+			delta3Big.m_TextureCoords.tv	= delta3Small.m_TextureCoords.tv	- dTvOverZdX;
+
+			delta3Big.m_FogDensity			= delta3Small.m_FogDensity			- dFogdX;
+		}
 
 		// ------------------------------------------------------------------
 		// initialize the x coordinate for right edge
@@ -1153,8 +1256,20 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		// initialize the x-step error
 		// ------------------------------------------------------------------
 
-		EGL_Fixed xStepError = EGL_Abs(dXdYStep1Frac);
-		EGL_Fixed xError = EGL_FractionFromFixed(xStepped1L);
+		//EGL_Fixed dXdYStep1Frac = dXdY3 >= 0 ? dXdY3 - EGL_FixedFromInt(dXdYStep1Int) : dXdY3 + EGL_FixedFromInt(dXdYStep1Int);
+
+		//EGL_Fixed xStepError = EGL_Abs(dXdYStep1Frac);
+		//EGL_Fixed xError = EGL_FractionFromFixed(xStepped1L);
+
+		EGL_Fixed xStepError, xError;
+
+		if (dXdY3 >= 0) {
+			xStepError = dXdY3 - EGL_FixedFromInt(dXdYStep1Int);
+			xError = EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
+		} else {
+			xStepError = -dXdY3 - EGL_FixedFromInt(dXdYStep1Int);
+			xError = EGL_ONE - EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
+		}
 
 		// ------------------------------------------------------------------
 		// Raster the top part of the triangle
