@@ -2,7 +2,7 @@
 
 REM ==========================================================================
 REM
-REM makedist		Create Dsitribution package for a specific platform
+REM makezips		Create Distribution package for a specific platform
 REM
 REM --------------------------------------------------------------------------
 REM
@@ -12,7 +12,7 @@ REM --------------------------------------------------------------------------
 REM
 REM Usage:
 REM
-REM makedist.cmd	<root-folder> <platform> <version>
+REM makezips.cmd	<root-folder> <platform> <version number>
 REM
 REM
 REM --------------------------------------------------------------------------
@@ -43,26 +43,20 @@ REM THE POSSIBILITY OF SUCH DAMAGE.
 REM
 REM ==========================================================================
 
+
 set ROOT=%1
 set PLATFORM=%2
-set BUILD=%3
+set VERSION=%3
 
-set GLES_SRC=%ROOT%\src
-set GLES_BIN=%ROOT%\bin
+call makedist %ROOT% %PLATFORM% Debug
+call makedist %ROOT% %PLATFORM% Release
+
 set GLES_DIST=%ROOT%\dist
+set GLES_DIST_PACKAGE=%ROOT%\dist\%PLATFORM%
+set ZIP_FILE=%GLES_DIST%\ogl-es-%PLATFORM%-%VERSION%.zip
 
-del /s /q %GLES_DIST%\%PLATFORM%\%BUILD%
-mkdir %GLES_DIST%\%PLATFORM%\%BUILD%
-mkdir %GLES_DIST%\%PLATFORM%\%BUILD%\include\GLES
-mkdir %GLES_DIST%\%PLATFORM%\%BUILD%\lib
+echo "GLES_DIST=" %GLES_DIST%
+echo "ZIP_FILE=" %ZIP_FILE%
 
-copy %ROOT%\Readme.txt %GLES_DIST%\%PLATFORM%\
-copy "%ROOT%\Release Notes.txt" %GLES_DIST%\%PLATFORM%\
-copy %ROOT%\License.txt %GLES_DIST%\%PLATFORM%\
-
-copy %GLES_SRC%\GLES\gl.h %GLES_DIST%\%PLATFORM%\%BUILD%\include\GLES
-copy %GLES_SRC%\GLES\egl.h %GLES_DIST%\%PLATFORM%\%BUILD%\include\GLES
-copy %GLES_SRC%\GLES\egltypes.h %GLES_DIST%\%PLATFORM%\%BUILD%\include\GLES
-
-copy %GLES_BIN%\%PLATFORM%\%BUILD%\GLES_CL.lib %GLES_DIST%\%PLATFORM%\%BUILD%\lib
-copy %GLES_BIN%\%PLATFORM%\%BUILD%\GLES_CL.dll %GLES_DIST%\%PLATFORM%\%BUILD%\lib
+del /s /q %ZIP_FILE%
+pkzipc -add -recurse -directories=relative %ZIP_FILE% %GLES_DIST_PACKAGE%\*
