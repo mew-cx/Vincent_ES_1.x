@@ -978,7 +978,7 @@ static void proc_inst_def(cg_proc_t * proc)
 	/* Add def qand use information for each register						*/
 	/************************************************************************/
 
-	for (block = proc->blocks; proc; block = block->next)
+	for (block = proc->blocks; block; block = block->next)
 	{
 		for (inst = block->insts; inst; inst = inst->base.next)
 		{
@@ -1025,7 +1025,7 @@ static void proc_inst_use_chains(cg_proc_t * proc)
 	/* Add def qand use information for each register						*/
 	/************************************************************************/
 
-	for (block = proc->blocks; proc; block = block->next)
+	for (block = proc->blocks; block; block = block->next)
 	{
 		for (inst = block->insts; inst; inst = inst->base.next)
 		{
@@ -1167,7 +1167,7 @@ static cg_inst_t * inst_create(cg_block_t * block, size_t size,
 		cg_heap_allocate(block->proc->module->heap, size);
 	block_add(block, inst);
 
-	inst->base.kind = cg_inst_unary;
+	inst->base.kind = kind;
 	inst->base.opcode = op;
 	CG_INST_SET_DEBUG(inst);
 
@@ -1474,6 +1474,10 @@ static void inst_dump(cg_inst_t * inst, FILE * out)
 {
 	cg_virtual_reg_list_t * list;
 
+#ifndef NDEBUG
+	fprintf(out, "%8.8s %5.5d: ", inst->base.file, inst->base.line);
+#endif
+
 	switch (inst->base.kind)
 	{
 	case cg_inst_unary:		
@@ -1485,7 +1489,7 @@ static void inst_dump(cg_inst_t * inst, FILE * out)
 		else
 		{
 			fprintf(out, "\t%s\tr%d, r%d\n", opcodes[inst->base.opcode],
-				inst->unary.dest_value->reg_no, inst->unary.operand.source);
+				inst->unary.dest_value->reg_no, inst->unary.operand.source->reg_no);
 		}
 
 		break;
@@ -1524,7 +1528,7 @@ static void inst_dump(cg_inst_t * inst, FILE * out)
 		break;
 
 	case cg_inst_load_immed:
-		fprintf(out, "\t%s\tr%d, %x\n", opcodes[inst->base.opcode],
+		fprintf(out, "\t%s\tr%d, %d\n", opcodes[inst->base.opcode],
 			inst->immed.dest->reg_no, inst->immed.value);
 		break;
 
@@ -1680,7 +1684,7 @@ static void inst_dump(cg_inst_t * inst, FILE * out)
 	case cg_inst_arm_binary_shift_immed:	
 		if (inst->binary.dest_flags)
 		{
-			fprintf(out, "\t%s\t(r%d, r%d), r%d, r%d %s r%d\n", opcodes[inst->base.opcode],
+			fprintf(out, "\t%s\t(r%d, r%d), r%d, r%d %s %d\n", opcodes[inst->base.opcode],
 				inst->binary.dest_value->reg_no, inst->binary.dest_flags->reg_no, 
 				inst->binary.source->reg_no,
 				inst->binary.operand.shift_immed.source->reg_no,
@@ -1689,7 +1693,7 @@ static void inst_dump(cg_inst_t * inst, FILE * out)
 		} 
 		else
 		{
-			fprintf(out, "\t%s\tr%d, r%d, r%d %s r%d\n", opcodes[inst->base.opcode],
+			fprintf(out, "\t%s\tr%d, r%d, r%d %s %d\n", opcodes[inst->base.opcode],
 				inst->binary.dest_value->reg_no, 
 				inst->binary.source->reg_no,
 				inst->binary.operand.shift_immed.source->reg_no,
@@ -1753,6 +1757,29 @@ static void inst_dump(cg_inst_t * inst, FILE * out)
 }
 
 
+static void dump_bitset(const char * name, cg_bitset_t * bitset, FILE * out)
+{
+	if (bitset)
+	{
+		const char * separator = " ";
+		size_t index;
+
+		fprintf(out, "; %s = {", name);
+	
+		for (index = 0; index < bitset->elements; ++index)
+		{
+			if (CG_BITSET_TEST(bitset, index))
+			{
+				fprintf(out, "%s%d", separator, index);
+				separator = ", ";
+			}
+		}
+
+		fprintf(out, " }\n");
+	}
+}
+
+
 void cg_module_dump(cg_module_t * module, FILE * out)
 {
 	cg_proc_t * proc;
@@ -1764,6 +1791,10 @@ void cg_module_dump(cg_module_t * module, FILE * out)
 		for (block = proc->blocks; block; block = block->next) 
 		{
 			fprintf(out, "%p:\n", block);
+			dump_bitset("def", block->def, out);
+			dump_bitset("use", block->use, out);
+			dump_bitset("in", block->live_in, out);
+			dump_bitset("out", block->live_out, out);
 
 			for (inst = block->insts; inst; inst = inst->base.next)
 			{
