@@ -138,7 +138,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		MoveWindow(hWnd, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, FALSE);
 	}
 
-	SetTimer(hWnd, 1, 40, NULL);
+	SetTimer(hWnd, 1, 10, NULL);
 
 	if (!InitOpenGL(hWnd))
 		return FALSE;

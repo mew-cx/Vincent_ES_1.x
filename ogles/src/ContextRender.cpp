@@ -679,7 +679,7 @@ void Context :: CurrentValuesToRasterPosNoLight(RasterPos * rasterPos) {
 
 	// apply projection matrix to eye coordinates 
 	if (!m_MatrixPaletteEnabled) {
-		rasterPos->m_EyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
+		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	} else {
 		rasterPos->m_EyeCoords = m_MatrixPalette[m_PaletteMatrixIndex[0]] * (m_CurrentVertex * m_CurrentWeights[0]);
 
@@ -711,7 +711,7 @@ void Context :: CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos) {
 
 	// apply projection matrix to eye coordinates 
 	if (!m_MatrixPaletteEnabled) {
-		rasterPos->m_EyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
+		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	} else {
 		rasterPos->m_EyeCoords = m_MatrixPalette[m_PaletteMatrixIndex[0]] * (m_CurrentVertex * m_CurrentWeights[0]);
 
@@ -769,7 +769,7 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos) {
 
 	// apply projection matrix to eye coordinates 
 	if (!m_MatrixPaletteEnabled) {
-		rasterPos->m_EyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
+		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	} else {
 		rasterPos->m_EyeCoords = m_MatrixPalette[m_PaletteMatrixIndex[0]] * (m_CurrentVertex * m_CurrentWeights[0]);
 
@@ -826,7 +826,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos) {
 
 	// apply projection matrix to eye coordinates 
 	if (!m_MatrixPaletteEnabled) {
-		rasterPos->m_EyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
+		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	} else {
 		rasterPos->m_EyeCoords = m_MatrixPalette[m_PaletteMatrixIndex[0]] * (m_CurrentVertex * m_CurrentWeights[0]);
 
@@ -889,7 +889,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 
 	// apply projection matrix to eye coordinates 
 	if (!m_MatrixPaletteEnabled) {
-		rasterPos->m_EyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
+		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	} else {
 		rasterPos->m_EyeCoords = m_MatrixPalette[m_PaletteMatrixIndex[0]] * (m_CurrentVertex * m_CurrentWeights[0]);
 
