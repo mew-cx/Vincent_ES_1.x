@@ -148,6 +148,7 @@ ugCreateWindow(UGCtx ug,  const char* config,
 		EGLConfig configs[1];
 		wchar_t * str;
 		int size;
+		RECT rect;
 
 		/*XXXblythe horrible hack, need to parse config string*/
 		static int attribs[] = { EGL_RED_SIZE, 1, EGL_NONE }; /*XXXblythe*/
@@ -173,8 +174,6 @@ ugCreateWindow(UGCtx ug,  const char* config,
 			//x, y, width, height, 
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 
 			NULL, NULL, instance, NULL);
-		SetTimer(w->win, 1, 40, NULL);
-
 
 		free(str);
 
@@ -184,6 +183,7 @@ ugCreateWindow(UGCtx ug,  const char* config,
 			return 0;
 		}
 
+		SetTimer(w->win, 1, 40, NULL);
 
         //Create the menubar.
         memset (&mbi, 0, sizeof (SHMENUBARINFO));
@@ -207,6 +207,11 @@ ugCreateWindow(UGCtx ug,  const char* config,
 		_ug->winlist = w;
 		w->prev = 0;
 		if (w->next) w->next->prev = w;
+
+		GetClientRect(w->win, &rect);
+		w->width = rect.right - rect.left;
+		w->height = rect.bottom - rect.top;
+
 		w->surface = eglCreateWindowSurface(_ug->egldpy, w->eglconfig, (NativeWindowType)(w->win), 0);
 		/*XXXblythe share*/
 		w->eglctx = eglCreateContext(_ug->egldpy, w->eglconfig, NULL, NULL);
@@ -306,6 +311,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int key;
 	POINT point;
 	WORD fActive;
+	int width, height;
 
 	for(w = context->winlist; w; w = w->next) {
 		if (w->win == hWnd) goto found;
@@ -350,8 +356,21 @@ found:
 			break; 
 
 		case WM_SIZE:
-			if (w->reshape) {
-				(w->reshape)((UGWindow)w, LOWORD(lParam), HIWORD(lParam));
+			width = LOWORD(lParam);
+			height = HIWORD(lParam);
+
+			if (w->width != width || w->height != height) {
+				w->width = width;
+				w->height = height;
+
+				if (w->surface) {
+				    eglDestroySurface(w->ug->egldpy, w->surface);
+					w->surface = eglCreateWindowSurface(w->ug->egldpy, w->eglconfig, (NativeWindowType)(w->win), 0);
+				}
+
+				if (w->reshape) {
+					(w->reshape)((UGWindow)w, width, height);
+				}
 			}
 
 			break;
