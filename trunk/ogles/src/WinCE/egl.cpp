@@ -321,9 +321,11 @@ GLAPI EGLBoolean APIENTRY eglSwapBuffers (EGLDisplay dpy, EGLSurface draw) {
 		memoryDC = CreateCompatibleDC(nativeDisplay);
 	}
 
-	SelectObject(memoryDC, draw->GetBitmap());
+	HBITMAP old_map = (HBITMAP)SelectObject(memoryDC, draw->GetBitmap());
 
 	BitBlt(nativeDisplay, 0, 0, draw->GetWidth(), draw->GetHeight(), memoryDC, 0, 0, SRCCOPY);
+
+	SelectObject(memoryDC, old_map);
 
 	if (memoryDC != draw->GetMemoryDC()) {
 		DeleteDC(memoryDC);
@@ -349,10 +351,15 @@ GLAPI EGLBoolean APIENTRY eglCopyBuffers (EGLDisplay dpy, EGLSurface surface, Na
 		memoryDC = CreateCompatibleDC(nativeDisplay);
 	}
 
-	SelectObject(memoryDC, surface->GetBitmap());
-	SelectObject(targetDC, target);
+	HBITMAP old_memmap = (HBITMAP) SelectObject(memoryDC, surface->GetBitmap());
+	HBITMAP old_targetmap = (HBITMAP)SelectObject(targetDC, target);
 
-	if (!BitBlt(targetDC, 0, 0, surface->GetWidth(), surface->GetHeight(), memoryDC, 0, 0, SRCCOPY))
+	BOOL result = BitBlt(targetDC, 0, 0, surface->GetWidth(), surface->GetHeight(), memoryDC, 0, 0, SRCCOPY);
+
+	SelectObject(memoryDC, old_memmap);
+	SelectObject(targetDC, old_targetmap);
+
+	if (! result)
 		return EGL_BAD_MATCH;
 
 	if (memoryDC != surface->GetMemoryDC()) {
