@@ -14,6 +14,7 @@ This version addresses the following issues:
 1008793 - Static and Dynamic state queries
 1031202 - Bitmap handle leak
 1031201 - Device context leak
+1028995 - Clip planes cannot be disabled
 
 
 Version 0.82
