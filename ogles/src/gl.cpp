@@ -467,3 +467,14 @@ GLAPI void APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height)
 	Context::DefaultContext()->Viewport(x, y, width, height);
 }
 
+GLAPI void APIENTRY glDrawMeshHM(GLsizei count, GLenum type, GLsizei stride, const GLvoid *pointer,
+								 GLsizei offsetVertex, GLsizei strideVertex,
+								 GLsizei offsetNormal, GLsizei strideNormal,
+								 GLsizei offsetTexture, GLsizei strideTexture,
+								 GLsizei offsetColor, GLsizei strideColor) {
+	Context::DefaultContext()->DrawMesh(count, type, stride, pointer,
+										offsetVertex, strideVertex,
+										offsetNormal, strideNormal,
+										offsetTexture, strideTexture,
+										offsetColor, strideColor);
+}

@@ -407,7 +407,7 @@ void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
 //	index		-	The array index from which any array coordinates should
 //					be retrieved.
 // --------------------------------------------------------------------------
-void Context :: SelectArrayElement(int index) {
+void Context :: SelectArrayElement(int vertexIndex, int normalIndex, int textureIndex, int colorIndex) {
 
 	// TO DO: this whole method should be redesigned for efficient pipelining
 	if (!m_VertexArrayEnabled) {
@@ -415,20 +415,20 @@ void Context :: SelectArrayElement(int index) {
 	} else {
 		if (m_VertexArray.size == 3) {
 			m_CurrentVertex = 
-				Vec3D(m_VertexArray.GetValue(index, 0),
-					  m_VertexArray.GetValue(index, 1),
-					  m_VertexArray.GetValue(index, 2));
+				Vec3D(m_VertexArray.GetValue(vertexIndex, 0),
+					  m_VertexArray.GetValue(vertexIndex, 1),
+					  m_VertexArray.GetValue(vertexIndex, 2));
 		} else if (m_VertexArray.size == 2) {
 			m_CurrentVertex = 
-				Vec3D(m_VertexArray.GetValue(index, 0),
-					  m_VertexArray.GetValue(index, 1),
+				Vec3D(m_VertexArray.GetValue(vertexIndex, 0),
+					  m_VertexArray.GetValue(vertexIndex, 1),
 					  0);
 		} else {
 			m_CurrentVertex = 
-				Vec4D(m_VertexArray.GetValue(index, 0),
-					  m_VertexArray.GetValue(index, 1),
-					  m_VertexArray.GetValue(index, 2),
-					  m_VertexArray.GetValue(index, 3));
+				Vec4D(m_VertexArray.GetValue(vertexIndex, 0),
+					  m_VertexArray.GetValue(vertexIndex, 1),
+					  m_VertexArray.GetValue(vertexIndex, 2),
+					  m_VertexArray.GetValue(vertexIndex, 3));
 		}
 	}
 
@@ -436,19 +436,19 @@ void Context :: SelectArrayElement(int index) {
 		m_CurrentNormal = m_DefaultNormal;
 	} else {
 		m_CurrentNormal = 
-			Vec3D(m_NormalArray.GetValue(index, 0),
-				  m_NormalArray.GetValue(index, 1),
-				  m_NormalArray.GetValue(index, 2));
+			Vec3D(m_NormalArray.GetValue(normalIndex, 0),
+				  m_NormalArray.GetValue(normalIndex, 1),
+				  m_NormalArray.GetValue(normalIndex, 2));
 	}
 
 	if (!m_ColorArrayEnabled) {
 		m_CurrentRGBA = m_DefaultRGBA;
 	} else {
 		m_CurrentRGBA =
-			FractionalColor(m_ColorArray.GetValue(index, 0),
-							m_ColorArray.GetValue(index, 1),
-							m_ColorArray.GetValue(index, 2),
-							m_ColorArray.GetValue(index, 3));
+			FractionalColor(m_ColorArray.GetValue(colorIndex, 0),
+							m_ColorArray.GetValue(colorIndex, 1),
+							m_ColorArray.GetValue(colorIndex, 2),
+							m_ColorArray.GetValue(colorIndex, 3));
 	}
 
 	if (!m_TexCoordArrayEnabled) {
@@ -456,12 +456,12 @@ void Context :: SelectArrayElement(int index) {
 		m_CurrentTextureCoords.tv = m_DefaultTextureCoords.tv;
 	} else {
 		if (m_TexCoordArray.size < 4) {
-			m_CurrentTextureCoords.tu = m_TexCoordArray.GetValue(index, 0);
-			m_CurrentTextureCoords.tv = m_TexCoordArray.GetValue(index, 1);
+			m_CurrentTextureCoords.tu = m_TexCoordArray.GetValue(textureIndex, 0);
+			m_CurrentTextureCoords.tv = m_TexCoordArray.GetValue(textureIndex, 1);
 		} else {
-			I32 factor = EGL_Inverse(m_TexCoordArray.GetValue(index, 3));
-			m_CurrentTextureCoords.tu = EGL_Mul(m_TexCoordArray.GetValue(index, 0), factor);
-			m_CurrentTextureCoords.tv = EGL_Mul(m_TexCoordArray.GetValue(index, 1), factor);
+			I32 factor = EGL_Inverse(m_TexCoordArray.GetValue(textureIndex, 3));
+			m_CurrentTextureCoords.tu = EGL_Mul(m_TexCoordArray.GetValue(textureIndex, 0), factor);
+			m_CurrentTextureCoords.tv = EGL_Mul(m_TexCoordArray.GetValue(textureIndex, 1), factor);
 		}
 	}
 }

@@ -591,6 +591,16 @@ GLAPI void APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height)
 #define GL_GENERATE_MIPMAP_HINT_SGIS	0x8192
 
 
+/****************************************************************************/
+/* Extension: HM_render_mesh												*/
+/****************************************************************************/
+
+GLAPI void APIENTRY glDrawMeshHM(GLsizei count, GLenum type, GLsizei stride, const GLvoid *pointer,
+								 GLsizei offsetVertex, GLsizei strideVertex,
+								 GLsizei offsetNormal, GLsizei strideNormal,
+								 GLsizei offsetTexture, GLsizei strideTexture,
+								 GLsizei offsetColor, GLsizei strideColor);
+
 #ifdef __cplusplus
 }
 #endif

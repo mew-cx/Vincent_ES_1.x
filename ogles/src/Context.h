@@ -240,6 +240,12 @@ namespace EGL {
 		void TexEnvfv(GLenum target, GLenum pname, const GLfloat *params);
 		void Translatef(GLfloat x, GLfloat y, GLfloat z);
 
+		void DrawMesh(GLsizei count, GLenum type, GLsizei stride, const GLvoid *pointer,
+					  GLsizei offsetVertex, GLsizei strideVertex,
+					  GLsizei offsetNormal, GLsizei strideNormal,
+					  GLsizei offsetTexture, GLsizei strideTexture,
+					  GLsizei offsetColor, GLsizei strideColor);
+
 		// ----------------------------------------------------------------------
 		// Context Management Functions
 		// ----------------------------------------------------------------------
@@ -338,7 +344,12 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 
 private:
-		void SelectArrayElement(int index);
+		void SelectArrayElement(int vertexIndex, int normalIndex, int textureIndex, int colorIndex);
+
+		void SelectArrayElement(int index) {
+			SelectArrayElement(index, index, index, index);
+		}
+
 		void CurrentValuesToRasterPos(RasterPos * rasterPos);
 		void InterpolateRasterPos(RasterPos * a, RasterPos * b, GLfixed x, RasterPos * result);
 
