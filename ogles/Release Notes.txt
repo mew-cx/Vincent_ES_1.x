@@ -8,6 +8,9 @@ the bug database on sourceforge.
 Version 0.78
 ------------
 
+This build addresses all known failures of the conformance test that are not related to
+texture sampling. Notably, it passes the lightning, fog and blending tests.
+
 This version addresses the following issues:
 
 970897 - Vertex Order test (Test number #5) failed.
