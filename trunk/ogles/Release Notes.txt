@@ -20,6 +20,8 @@ In addition, a couple of defects that showed up in those examples have been addr
 1001354 - Stray red pixels in examples
 1001356 - Polyoff example shows stippling
  960543 - BindTexture should record an error for invalid targets
+1008798 - Clipping issue invovling points at infinity
+863654  - Create specialized pipeline functions for geometry stage 
 
 
 Version 0.80
