@@ -35,6 +35,9 @@
 #include "arm-codegen.h"
 
 
+#define SAVE_AREA_SIZE (10 * sizeof(U32))		/* this really depends on the function prolog */
+
+
 typedef struct reference_t
 {
 	struct reference_t *	next;
@@ -298,17 +301,35 @@ struct cg_codegen_t
 	literal_t *				literals;
 	cg_label_t *			literal_base;
 	size_t					literal_pool_size;
+	size_t					locals_size_offset;
 	cg_inst_list_t **		use_chains;			
 };
 
 
-size_t cg_codegen_emit_literal(cg_codegen_t * gen, U32 value)
+int is_simple_inst(cg_inst_t * inst) {
+	switch (inst->base.opcode)
+	{
+		case cg_op_finv:
+		case cg_op_fdiv:
+		case cg_op_fsqrt:
+		case cg_op_div:
+		case cg_op_mod:
+		case cg_op_call:
+			return 0;
+			
+		default:
+			return 1;
+	}
+}
+
+
+size_t cg_codegen_emit_literal(cg_codegen_t * gen, U32 value, int distinct)
 {
 	literal_t ** literal;
 
 	for (literal = &gen->literals; (*literal) != (literal_t *) 0; literal = &(*literal)->next)
 	{
-		if ((*literal)->value == value)
+		if (!distinct && (*literal)->value == value)
 			return (*literal)->offset;
 	}
 
@@ -566,7 +587,7 @@ static void call_runtime(cg_codegen_t * gen, void * target)
 	ARM_MOV_REG_REG(gen->cseg, ARMREG_LR, ARMREG_PC);
 	cg_codegen_reference(gen, gen->literal_base, cg_reference_offset12);
 	ARM_LDR_IMM(gen->cseg, ARMREG_PC, ARMREG_PC, 
-		(cg_codegen_emit_literal(gen, (U32) target) - 8) & 0xfff);
+		(cg_codegen_emit_literal(gen, (U32) target, 0) - 8) & 0xfff);
 }
 
 
@@ -1699,6 +1720,25 @@ static cg_physical_reg_t * spill_candidate(cg_codegen_t * gen,
 }
 
 
+static I32 fp_offset(cg_codegen_t * gen, cg_virtual_reg_t * reg) {
+
+	if (reg->fp_offset == ~0) {
+
+		if (reg->representative->fp_offset == ~0)
+		{
+			cg_proc_t * proc = gen->current_block->proc;
+
+			proc->local_storage += sizeof(U32);
+			reg->representative->fp_offset = - (int) proc->local_storage - SAVE_AREA_SIZE;	
+		}
+
+		reg->fp_offset = reg->representative->fp_offset;
+	}
+
+	return reg->fp_offset;
+}
+
+
 static void save_reg(cg_codegen_t * gen, cg_physical_reg_t * physical_reg,
 					 cg_virtual_reg_t * reg)
 	/************************************************************************/
@@ -1708,7 +1748,8 @@ static void save_reg(cg_codegen_t * gen, cg_physical_reg_t * physical_reg,
 	assert(physical_reg->dirty);
 	
 	// generate code to save the register; reg -> FP + offset
-	ARM_STR_IMM(gen->cseg, physical_reg->regno, ARMREG_FP, reg->representative->fp_offset);
+	ARM_STR_IMM(gen->cseg, physical_reg->regno, ARMREG_FP, 
+			    fp_offset(gen, reg));
 	
 	physical_reg->dirty = 0;
 	
@@ -1724,7 +1765,8 @@ static void restore_reg(cg_codegen_t * gen, cg_physical_reg_t * physical_reg,
 	assert(!physical_reg->defined);
 	
 	// generate code to save the register; FP + offset -> reg
-	ARM_LDR_IMM(gen->cseg, physical_reg->regno, ARMREG_FP, reg->representative->fp_offset);
+	ARM_LDR_IMM(gen->cseg, physical_reg->regno, ARMREG_FP, 
+				fp_offset(gen, reg));
 	
 	physical_reg->defined = 1;
 	
@@ -1911,6 +1953,8 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 	cg_virtual_reg_t * buffer[64];
 	cg_virtual_reg_t **iter, ** end = cg_inst_use(inst, buffer, buffer + 64);
 	int update_flags = 0;
+	int prefetch_mask = ~0;
+
 
 	for (iter = buffer; iter != end; ++iter)
 	{
@@ -1957,6 +2001,7 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 		}
 
 		physical_reg = load_reg(gen, reg, 0);
+		prefetch_mask &= ~physical_reg->regno;
 	}
 	
 	/************************************************************************/
@@ -2010,6 +2055,7 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 					assign_reg(gen, physical_reg, gen->flags.virtual_reg);
 					save_flags(gen, physical_reg);
 					physical_reg->dirty = physical_reg->defined = 1;
+					prefetch_mask &= ~physical_reg->regno;
 				}
 			}
 
@@ -2021,6 +2067,7 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 
 		physical_reg = allocate_reg(gen, reg, 0);
 		assign_reg(gen, physical_reg, reg);
+		prefetch_mask &= ~physical_reg->regno;
 	}
 
 #if 0
@@ -2028,7 +2075,7 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 	** At this point, we might want to check for potential preloads
 	*/
 
-	if (inst->base.next) 
+	if (inst->base.next && is_simple_inst(inst->base.next)) 
 	{
 		/********************************************************************/
 		/* At this point, we might want to check for potential preloads		*/
@@ -2047,21 +2094,31 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 		{
 			cg_virtual_reg_t * reg = *iter_next;
 
-			if (reg->type != cg_reg_type_general || reg->def == inst) 
+			if (reg->type != cg_reg_type_general) 
 			{
 				/* not general register or direct dependency on current		*/
 				/* instruction -> skip										*/
 				continue;	
 			}
 
-			if (reg->physical_reg != NULL && reg->physical_reg->virtual_reg != 0 &&
-				reg->physical_reg->virtual_reg->representative == reg->representative)
+			for (iter = buffer; iter != end; ++iter)
+			{
+				cg_virtual_reg_t * def_reg = *iter;
+
+				if (def_reg->representative == reg->representative)
+					goto next_iter;
+			}
+
+			if (reg->physical_reg != NULL && reg->physical_reg->virtual_reg != 0)
 			{
 				/* value already/still in physical register -> skip			*/
 				continue;
 			}
 
-			load_reg(gen, reg, 0);					/* mask == 0?			*/
+			load_reg(gen, reg, prefetch_mask);	
+
+next_iter:
+			;
 		}
 	}
 #endif
@@ -2450,14 +2507,6 @@ static void begin_proc(cg_codegen_t * gen, cg_proc_t * proc)
 	size_t index, reg_args = 4;
 	
 	/************************************************************************/
-	/* Initialize literal pool for this procedure							*/
-	/************************************************************************/
-
-	gen->literal_pool_size = 0;
-	gen->literals = (literal_t *) 0;
-	gen->literal_base = cg_codegen_create_label(gen);
-
-	/************************************************************************/
 	/* Initialize register free lists										*/
 	/************************************************************************/
 
@@ -2499,8 +2548,6 @@ static void begin_proc(cg_codegen_t * gen, cg_proc_t * proc)
 
 static void emit_prolog(cg_codegen_t * gen, cg_proc_t * proc)
 {
-	size_t local_storage;
-
 	ARM_MOV_REG_REG(gen->cseg, ARMREG_IP, ARMREG_IP);	/* dummy op for breakpoint */
 	ARM_MOV_REG_REG(gen->cseg,	ARMREG_IP, ARMREG_SP);
 	ARM_SUB_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, sizeof(U32) * 4);
@@ -2511,18 +2558,20 @@ static void emit_prolog(cg_codegen_t * gen, cg_proc_t * proc)
 	ARM_SUB_REG_IMM8(gen->cseg, ARMREG_FP, ARMREG_IP, sizeof(U32) * 4);
 	// SP := SP - #local storage
 
-	local_storage = proc->local_storage /*>> 2*/;		/* we know it's a multiple of 4	*/
+	/************************************************************************/
+	/* Initialize literal pool for this procedure							*/
+	/************************************************************************/
 
-	while (local_storage) 
-	{
-		/* while generally inefficient, for the type of procedures we are	*/
-		/* generating here we'll typically only create 1 or 2 iterations,	*/
-		/* in which case the code is optimal.								*/
-		size_t decrement = local_storage > 0xff ? 0xff : local_storage;
-		ARM_SUB_REG_IMM(gen->cseg, ARMREG_SP, ARMREG_SP, decrement, 0);
-		local_storage -= decrement;
-	}
+	gen->literal_pool_size = 0;
+	gen->literals = (literal_t *) 0;
+	gen->literal_base = cg_codegen_create_label(gen);
 
+	gen->locals_size_offset = cg_codegen_emit_literal(gen, SAVE_AREA_SIZE, 1);
+
+	cg_codegen_reference(gen, gen->literal_base, cg_reference_offset12);
+	ARM_LDR_IMM(gen->cseg, ARMREG_LR, ARMREG_PC, 
+		(gen->locals_size_offset - 8) & 0xfff);
+	ARM_SUB_REG_REG(gen->cseg, ARMREG_SP, ARMREG_SP, ARMREG_LR);
 }
 
 
@@ -2584,7 +2633,7 @@ static void select_global_regs(cg_codegen_t * gen, cg_proc_t * proc)
 	   allocation of that register */
 	/* initially, we do global allocation only among "permanent" ARM registers */
 
-	for (index = 0, reg_index = 0; index < ARM_NUM_VARIABLE_REGS && reg_index < used_register_count; ++reg_index)
+	for (index = 0, reg_index = 0; index < ARM_NUM_GLOBAL_REGS && reg_index < used_register_count; ++reg_index)
 	{
 		cg_virtual_reg_t * reg = all_regs[reg_index];
 
@@ -2654,12 +2703,18 @@ void cg_codegen_emit_proc(cg_codegen_t * gen, cg_proc_t * proc)
 	/* Append the literal pool												*/
 	/************************************************************************/
 
+	/* patch the local memory size */
+
 	cg_segment_align(gen->cseg, sizeof(U32));
 	cg_codegen_define(gen, gen->literal_base);
 
 	for (literal = gen->literals; literal != (literal_t *) 0; literal = literal->next)
 	{
-		cg_segment_emit_u32(gen->cseg, literal->value);
+		if (literal->offset == gen->locals_size_offset) {
+			cg_segment_emit_u32(gen->cseg, literal->value + proc->local_storage);
+		} else {
+			cg_segment_emit_u32(gen->cseg, literal->value);
+		}
 	}
 
 	gen->literal_base = 0;

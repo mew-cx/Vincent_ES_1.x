@@ -112,7 +112,7 @@ void cg_codegen_emit_proc(cg_codegen_t * gen, cg_proc_t * proc);
 void cg_codegen_emit_block(cg_codegen_t * gen, cg_block_t * block, int reinit);
 void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst);
 
-size_t cg_codegen_emit_literal(cg_codegen_t * gen, U32 literal);
+size_t cg_codegen_emit_literal(cg_codegen_t * gen, U32 literal, int distinct);
 
 void cg_codegen_fix_refs(cg_codegen_t * gen);
 

@@ -494,9 +494,9 @@ void Context :: SelectArrayElement(int index) {
 		}
 	}
 
-	if (!m_VertexArray.effectivePointer) {
-		m_CurrentVertex = Vec4D(0, 0, 0, EGL_ONE);
-	} else {
+	assert(m_VertexArray.effectivePointer);
+
+	{
 		EGL_Fixed coords[4];
 
 		m_VertexArray.FetchValues(index, coords);
@@ -510,18 +510,14 @@ void Context :: SelectArrayElement(int index) {
 		}
 	}
 
-	if (!m_NormalArray.effectivePointer) {
-		m_CurrentNormal = m_DefaultNormal;
-	} else {
+	if (m_NormalArray.effectivePointer) {
 		EGL_Fixed coords[3];
 
 		m_NormalArray.FetchValues(index, coords);
 		m_CurrentNormal = Vec3D(coords);
 	}
 
-	if (!m_ColorArray.effectivePointer) {
-		m_CurrentRGBA = m_DefaultRGBA;
-	} else {
+	if (m_ColorArray.effectivePointer) {
 		EGL_Fixed coords[4];
 
 		m_ColorArray.FetchValues(index, coords);
@@ -529,10 +525,7 @@ void Context :: SelectArrayElement(int index) {
 	}
 
 	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		if (!m_TexCoordArray[unit].effectivePointer) {
-			m_CurrentTextureCoords[unit].tu = m_DefaultTextureCoords[unit].tu;
-			m_CurrentTextureCoords[unit].tv = m_DefaultTextureCoords[unit].tv;
-		} else {
+		if (m_TexCoordArray[unit].effectivePointer) {
 			EGL_Fixed coords[4];
 
 			m_TexCoordArray[unit].FetchValues(index, coords);
@@ -629,11 +622,26 @@ void Context :: PrepareRendering() {
 	}
 
 	PrepareArray(m_VertexArray,   m_VertexArrayEnabled);
+
 	PrepareArray(m_NormalArray,	  m_NormalArrayEnabled);
+
+	if (!m_NormalArray.effectivePointer) {
+		m_CurrentNormal = m_DefaultNormal;
+	}
+
 	PrepareArray(m_ColorArray,    m_ColorArrayEnabled, true);
+
+	if (!m_ColorArray.effectivePointer) {
+		m_CurrentRGBA = m_DefaultRGBA;
+	}
 
 	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		PrepareArray(m_TexCoordArray[unit], m_TexCoordArrayEnabled[unit]);
+
+		if (!m_TexCoordArray[unit].effectivePointer) {
+			m_CurrentTextureCoords[unit].tu = m_DefaultTextureCoords[unit].tu;
+			m_CurrentTextureCoords[unit].tv = m_DefaultTextureCoords[unit].tv;
+		}
 	}
 
 	PrepareArray(m_PointSizeArray,m_PointSizeArrayEnabled);
@@ -644,6 +652,7 @@ void Context :: PrepareRendering() {
 		memset(m_CurrentWeights, 0, sizeof m_CurrentWeights);
 		memset(m_PaletteMatrixIndex, 0, sizeof m_PaletteMatrixIndex);
 	}
+
 }
 
 

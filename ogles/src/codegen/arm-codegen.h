@@ -159,8 +159,11 @@ typedef enum {
 /* number of argument registers */
 #define ARM_NUM_ARG_REGS 4
 
-/* number of argument registers */
+/* number of non-argument registers */
 #define ARM_NUM_VARIABLE_REGS 7
+
+/* number of global registers */
+#define ARM_NUM_GLOBAL_REGS 5
 
 /* bitvector for all argument regs (A1-A4) */
 #define ARM_ALL_ARG_REGS \

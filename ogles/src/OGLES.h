@@ -111,6 +111,10 @@ typedef unsigned int 		U32;
 
 #endif
 
+#ifdef EGL_XSCALE
+#define EGL_USE_CLZ
+#endif
+
 #ifdef EGL_ON_WINCE
 typedef unsigned __int64	U64;
 typedef __int64				I64;

@@ -22,6 +22,7 @@ This version addresses the following issues:
 1033799 - Under-/overflow in fog calculation
 1034326 - use CLZ in emit_unary_log2 for XScale builds
 1034149 - Addressing mode for min/max operations
+1001373 - optimize register allocation
 
 
 Version 0.82
