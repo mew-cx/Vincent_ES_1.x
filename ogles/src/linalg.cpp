@@ -53,60 +53,52 @@ using namespace EGL;
 
 
 namespace {
-	inline EGL_Fixed Det2X2(const Matrix4x4& matrix, int index0, int index1) {
-
-		EGL_Fixed prod1 = 
-			EGL_Mul(matrix.Element((index0 + 1) % 3, (index1 + 1) % 3), 
-					matrix.Element((index0 + 2) % 3, (index1 + 2) % 3));
-
-		EGL_Fixed prod2 = 
-			EGL_Mul(matrix.Element((index0 + 1) % 3, (index1 + 2) % 3), 
-					matrix.Element((index0 + 2) % 3, (index1 + 1) % 3));
-
-		return prod1 - prod2;
+	inline EGL_Fixed Det2X2(EGL_Fixed a, EGL_Fixed b, EGL_Fixed c, EGL_Fixed d) {
+		return EGL_Mul(a,d) - EGL_Mul(c,b);
 	}
-
-	inline EGL_Fixed Det3X3(const Matrix4x4& matrix) {
-
-		EGL_Fixed prod1 = EGL_Mul(matrix.Element(0, 0), Det2X2(matrix, 0, 0));
-		EGL_Fixed prod2 = EGL_Mul(matrix.Element(1, 0), Det2X2(matrix, 1, 0));
-		EGL_Fixed prod3 = EGL_Mul(matrix.Element(2, 0), Det2X2(matrix, 2, 0));
-
-		return prod1 - prod2 + prod3;
-	}
-
-	inline EGL_Fixed ScaledDet2X2(const Matrix4x4& matrix, int index0, int index1, EGL_Fixed scale) {
-		return EGL_Mul(Det2X2(matrix, index0, index1), scale);
-	}
-
 }
-
 
 Matrix4x4 Matrix4x4 :: Inverse(bool rescale) const {
 
 	Matrix4x4 result;
-	const Matrix4x4& matrix = *this;
 
-	EGL_Fixed det = Det3X3(matrix);
+    int i = 0;
+    EGL_Fixed d, r;
+    /* compute 3x3 inverse using Cramer's rule: A^-1 = adj(A)/det(A) */
+    /* cofactors */
+    result.Element(0,0) =  Det2X2(Element(1,1), Element(1,2), Element(2,1), Element(2,2));
+    result.Element(0,1) = -Det2X2(Element(1,0), Element(1,2), Element(2,0), Element(2,2));
+    result.Element(0,2) =  Det2X2(Element(1,0), Element(1,1), Element(2,0), Element(2,1));
 
-	if (det == 0) {
+    result.Element(1,0) = -Det2X2(Element(0,1), Element(0,2), Element(2,1), Element(2,2));
+    result.Element(1,1) =  Det2X2(Element(0,0), Element(0,2), Element(2,0), Element(2,2));
+    result.Element(1,2) = -Det2X2(Element(0,0), Element(0,1), Element(2,0), Element(2,1));
+
+    result.Element(2,0) =  Det2X2(Element(0,1), Element(0,2), Element(1,1), Element(1,2));
+    result.Element(2,1) = -Det2X2(Element(0,0), Element(0,2), Element(1,0), Element(1,2));
+    result.Element(2,2) =  Det2X2(Element(0,0), Element(0,1), Element(1,0), Element(1,1));
+
+    /* determinant */
+    d = 0;
+
+    for(i = 0; i < 3; i++)
+		d += EGL_Mul(Element(0,i),result.Element(0,i));
+
+	if (d == 0) {
 		// singluar matrix
 		return result;
 	}
 
-	EGL_Fixed inverseDet = EGL_Inverse(det);
+    r = EGL_Inverse(d);
 
-	result.Element(0, 0) =  ScaledDet2X2(matrix, 0, 0, inverseDet);
-	result.Element(0, 1) = -ScaledDet2X2(matrix, 0, 1, inverseDet);
-	result.Element(0, 2) =  ScaledDet2X2(matrix, 0, 2, inverseDet);
+    i = 0;
+    do {
+		int j = 0;
 
-	result.Element(1, 0) = -ScaledDet2X2(matrix, 1, 0, inverseDet);
-	result.Element(1, 1) =  ScaledDet2X2(matrix, 1, 1, inverseDet);
-	result.Element(1, 2) = -ScaledDet2X2(matrix, 1, 2, inverseDet);
-
-	result.Element(2, 0) =  ScaledDet2X2(matrix, 2, 0, inverseDet);
-	result.Element(2, 1) = -ScaledDet2X2(matrix, 2, 1, inverseDet);
-	result.Element(2, 2) =  ScaledDet2X2(matrix, 2, 2, inverseDet);
+		do {
+			result.Element(i,j) = EGL_Mul(result.Element(i,j), r);
+		} while(++j < 3);
+    } while(++i < 3);
 
 	result.m_identity = false;
 

@@ -544,7 +544,7 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 		EGL_Fixed eyeDistance = EGL_Abs(eyeCoords.z());
 
 		// apply inverse of model view matrix to normals -> eye coordinates normals
-		Vec3D eyeNormal = (m_InverseModelViewMatrix * m_CurrentNormal).Project();
+		Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
 
 		if (m_NormalizeEnabled) {
 			eyeNormal.Normalize();

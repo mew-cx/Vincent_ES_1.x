@@ -12,7 +12,7 @@ This version addresses the following issues:
 
 970913 - Fog Linear test failed.
 970918 - Fog Exponential test failed.
-
+970916 - Transformation Normal test failed.
 
 Version 0.77
 ------------
