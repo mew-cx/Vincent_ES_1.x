@@ -1405,6 +1405,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 }
 
 
+# if 0
 // --------------------------------------------------------------------------
 // Rasterizer implementation using plane equation approach
 // --------------------------------------------------------------------------
@@ -1877,3 +1878,4 @@ void Rasterizer :: RasterTriangle0(const RasterPos& a, const RasterPos& b,
 }
 
 
+#endif
