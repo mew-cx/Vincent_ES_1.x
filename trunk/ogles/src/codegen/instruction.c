@@ -441,7 +441,7 @@ static void proc_controlflow(cg_proc_t * proc)
 			if (inst->base.kind == cg_inst_branch_cond ||
 				inst->base.kind == cg_inst_branch_label) 
 			{
-				cg_block_t * target = inst->branch.target;
+				cg_block_t * target = inst->branch.target->block;
 
 				add_successor(block, target);
 				add_predecessor(target, block);
@@ -1297,7 +1297,7 @@ cg_inst_t * cg_create_inst_load_immed(cg_block_t * block,
 
 cg_inst_t * cg_create_inst_branch_label(cg_block_t * block, 
 										cg_opcode_t op, 
-										cg_block_t * target)
+										cg_block_ref_t * target)
 {
 	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_branch_t), cg_inst_branch_label, op);
 
@@ -1310,7 +1310,7 @@ cg_inst_t * cg_create_inst_branch_label(cg_block_t * block,
 cg_inst_t * cg_create_inst_branch_cond(cg_block_t * block, 
 									   cg_opcode_t op, 
 									   cg_virtual_reg_t * flags, 
-									   cg_block_t * target)
+									   cg_block_ref_t * target)
 {
 	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_branch_t), cg_inst_branch_cond, op);
 
@@ -1387,3 +1387,9 @@ cg_inst_t * cg_create_inst_ret_value(cg_block_t * block,
 	return inst;
 }
 
+
+cg_block_ref_t * cg_block_ref_create(cg_proc_t * proc)
+{
+	cg_block_ref_t * result = (cg_block_ref_t *) cg_heap_allocate(proc->module->heap, sizeof(cg_block_ref_t));
+	return result;
+}
