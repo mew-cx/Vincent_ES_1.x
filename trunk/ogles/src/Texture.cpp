@@ -59,13 +59,14 @@ const U8 Texture :: s_BytesPerPixel[] = {
 };
 
 
-Texture :: Texture():
-	m_Data(0), m_InternalFormat(static_cast<RasterizerState::TextureFormat>(0))
+Texture :: Init()	
 {
+	m_Data = 0;
+	m_InternalFormat = RasterizerState::TextureFormatInvalid;
 }
 
 
-Texture :: ~Texture() {
+Texture :: Dispose() {
 	if (m_Data != 0) {
 		free(m_Data);
 		m_Data = 0;
@@ -122,10 +123,16 @@ MultiTexture :: MultiTexture():
 	m_WrappingModeS(RasterizerState::WrappingModeRepeat),
 	m_WrappingModeT(RasterizerState::WrappingModeRepeat)
 {
+	for (size_t index = 0; index < MAX_LEVELS; ++index) {
+		m_TextureLevels[index].Init();
+	}
 }
 
 
 MultiTexture :: ~MultiTexture() {
+	for (size_t index = 0; index < MAX_LEVELS; ++index) {
+		m_TextureLevels[index].Dispose();
+	}
 }
 
 
