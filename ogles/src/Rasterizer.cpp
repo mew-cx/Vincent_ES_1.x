@@ -283,6 +283,8 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 	I32 offset = x;
 
+	depth = EGL_CLAMP(depth, 0, 0xffff);
+	assert(depth >= 0 && depth <= 0xffff);
 	I32 zBufferValue = rasterInfo->DepthBuffer[offset];
 
 	switch (m_State->m_DepthFunc) {

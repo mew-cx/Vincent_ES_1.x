@@ -681,7 +681,7 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 			EGL_Mul(EGL_Mul(y >> 8, invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
 
 		pos.m_WindowCoords.depth = 
-			EGL_Mul(z >> 8, EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase;
+			EGL_CLAMP(EGL_Mul(z >> 8, EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase, 0, 0xffff);
 
 	} else {
 		// keep this value around for perspective-correct texturing
@@ -699,7 +699,7 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 			EGL_Mul(EGL_Mul(y, invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
 		pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x800) & ~0xfff);
 		pos.m_WindowCoords.depth = 
-			EGL_Mul(EGL_Mul(z, invDenominator), m_DepthRangeFactor)  + m_DepthRangeBase;
+			EGL_CLAMP(EGL_Mul(EGL_Mul(z, invDenominator), m_DepthRangeFactor)  + m_DepthRangeBase, 0, 0xffff);
 
 	}
 }

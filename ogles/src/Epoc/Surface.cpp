@@ -74,7 +74,7 @@ void Surface :: ConstructL(const Config & config) {
 	U32 height = GetHeight();
 
 	m_AlphaBuffer = new U8[width * height];
-	m_DepthBuffer = new I32[width * height];
+	m_DepthBuffer = new U16[width * height];
 	m_StencilBuffer = new U32[width * height];
 
 	// Ideally, we would have another configuration to support 12-bit 4-4-4 format
@@ -179,7 +179,7 @@ namespace {
 }
 
 
-void Surface :: ClearDepthBuffer(GLclampx depth, bool mask, const Rect& scissor) {
+void Surface :: ClearDepthBuffer(U16 depth, bool mask, const Rect& scissor) {
 
 	if (!mask || !m_DepthBuffer)
 		return;

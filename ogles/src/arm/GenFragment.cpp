@@ -68,8 +68,11 @@ namespace {
 		return value;
 	}
 
+#define ALLOC_REG(reg) reg = cg_virtual_reg_create(procedure, cg_reg_type_general)
+#define ALLOC_FLAGS(reg) reg = cg_virtual_reg_create(procedure, cg_reg_type_flags)
 #define DECL_REG(reg) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_general)
 #define DECL_FLAGS(reg) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_flags)
+#define DECL_CONST_REG(reg, value) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_general); LDI(reg, value)
 
 	// This function will create the color components after multiplication scaled by a factor
 	// of 256
@@ -854,8 +857,23 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	LDI		(regConstant2, 2);
 	LSL		(regOffset2, regOffset, regConstant1);
 	LSL		(regOffset4, regOffset, regConstant2);
-	ADD		(regZBufferAddr, regDepthBuffer, regOffset4);
-	LDW		(regZBufferValue, regZBufferAddr);
+	ADD		(regZBufferAddr, regDepthBuffer, regOffset2);
+	LDH		(regZBufferValue, regZBufferAddr);
+
+	/*
+	 * Enable this piece if we want to clamp the depth value to 0 .. 0xffff
+	{
+		DECL_CONST_REG	(regConstant0, 0);
+		DECL_CONST_REG	(regConstant1, 0xffff);
+		DECL_REG		(regNewDepth);
+		DECL_REG		(regTempDepth);
+
+		MIN				(regTempDepth, fragmentInfo.regDepth, regConstant1);
+		MAX				(regNewDepth, regTempDepth, regConstant0);
+
+		fragmentInfo.regDepth = regNewDepth;
+	}*/
+
 	CMP		(regDepthTest, fragmentInfo.regDepth, regZBufferValue);
 
 	cg_opcode_t branchOnDepthTestPassed, branchOnDepthTestFailed;
@@ -2674,7 +2692,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	// Masking and write to framebuffer
 	if (m_State->m_MaskDepth) {
 		//m_Surface->GetDepthBuffer()[offset] = depth;
-		STW		(fragmentInfo.regDepth, regZBufferAddr);
+		STH		(fragmentInfo.regDepth, regZBufferAddr);
 	}
 
 	{

@@ -119,7 +119,7 @@ namespace EGL {
 		// surface info
 		I32			SurfaceWidth;
 		I32			SurfaceHeight;
-		I32 *		DepthBuffer;
+		U16 *		DepthBuffer;
 		U16 *		ColorBuffer;
 		U32 *		StencilBuffer;
 		U8 *		AlphaBuffer;

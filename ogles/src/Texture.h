@@ -57,8 +57,8 @@ namespace EGL {
 
 	public:
 
-		Init();
-		Dispose();
+		void Init();
+		void Dispose();
 
 		void Initialize(U32 width, U32 height, RasterizerState::TextureFormat format);
 
