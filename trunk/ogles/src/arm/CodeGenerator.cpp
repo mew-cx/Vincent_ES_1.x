@@ -52,7 +52,7 @@
 
 
 // --------------------------------------------------------------------------
-// This declarations for coredll are extracted from platform builder
+// These declarations for coredll are extracted from platform builder
 // source code
 // --------------------------------------------------------------------------
 
@@ -2934,16 +2934,10 @@ void CodeGenerator :: CompileRasterScanLine(FunctionCache * target) {
 
 	GenerateRasterScanLine();
 
-	Dump("dump1.txt", m_Module);
-
 	cg_module_inst_def(m_Module);
 	cg_module_amode(m_Module);
 
-	Dump("dump2.txt", m_Module);
-
 	cg_module_eliminate_dead_code(m_Module);
-
-	Dump("dump3.txt", m_Module);
 
 	cg_module_unify_registers(m_Module);
 	cg_module_allocate_variables(m_Module);
@@ -2955,7 +2949,9 @@ void CodeGenerator :: CompileRasterScanLine(FunctionCache * target) {
 	cg_module_dataflow(m_Module);
 	cg_module_interferences(m_Module);
 
+#ifndef NDEBEUG
 	Dump("dump4.txt", m_Module);
+#endif
 
 	cg_runtime_info_t runtime; 
 	memset(&runtime, 0, sizeof runtime);
@@ -2978,11 +2974,13 @@ void CodeGenerator :: CompileRasterScanLine(FunctionCache * target) {
 	cg_codegen_emit_module(codegen, m_Module);
 	cg_codegen_fix_refs(codegen);
 
-	ARMDis dis;
-	armdis_init(&dis);
 	cg_segment_t * cseg = cg_codegen_segment(codegen);
 
+#ifndef NDEBEUG
+	ARMDis dis;
+	armdis_init(&dis);
 	armdis_dump(&dis, "dump5.txt", cseg);
+#endif
 
 	void * targetBuffer = target->AddFunction(*m_State, cg_segment_size(cseg));
 	cg_segment_get_block(cseg, 0, targetBuffer, cg_segment_size(cseg));

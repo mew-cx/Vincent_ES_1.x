@@ -138,6 +138,7 @@ void * FunctionCache :: AddFunction(const RasterizerState & state, size_t size) 
 
 	function->m_Flags = 0;
 	function->m_Offset = m_Used;
+	function->m_Size = size;
 	m_Used += size;
 	function->m_State = state;
 

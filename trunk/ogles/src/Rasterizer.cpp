@@ -747,9 +747,7 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 		rasterInfo.TextureData = texture->GetData();
 	}
 
-	ScanlineFunction * func = (ScanlineFunction *) m_CodeSegment;
-
-	func(&rasterInfo, &start, &end);
+	m_ScanlineFunction(&rasterInfo, &start, &end);
 }
 
 #else 
@@ -871,6 +869,7 @@ void Rasterizer :: PrepareTriangle() {
 
 
 void Rasterizer :: Finish() {
+	m_IsPrepared = false;
 }
 
 
