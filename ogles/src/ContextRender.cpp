@@ -537,6 +537,10 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 
 	// apply projection matrix to eye coordinates 
 	rasterPos->m_ClipCoords = m_VertexTransformation * m_CurrentVertex;
+
+	if (rasterPos->m_ClipCoords.w() < 0) {
+		rasterPos->m_ClipCoords = -rasterPos->m_ClipCoords;
+	}
 	
 	if (m_LightingEnabled) {
 

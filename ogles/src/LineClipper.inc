@@ -54,8 +54,7 @@
 		EGL_Fixed p_x = to.m_ClipCoords.COORDINATE;
 		EGL_Fixed p_w = -to.m_ClipCoords.w();
 		
-		EGL_Fixed factor = EGL_Div(p_w - p_x, (p_w - p_x) - (c_w - c_x)); 
-		Interpolate(from, from, to, factor);
+		Interpolate(from, from, to, p_w - p_x, (p_w - p_x) - (c_w - c_x));
 
 		return true;
 
@@ -69,8 +68,7 @@
 		EGL_Fixed p_x = to.m_ClipCoords.COORDINATE;
 		EGL_Fixed p_w = to.m_ClipCoords.w();
 		
-		EGL_Fixed factor = EGL_Div(p_w - p_x, (p_w - p_x) - (c_w - c_x)); 
-		Interpolate(from, from, to, factor);
+		Interpolate(from, from, to, p_w - p_x, (p_w - p_x) - (c_w - c_x));
 
 
 		return true;
@@ -82,8 +80,7 @@
 		EGL_Fixed p_x = from.m_ClipCoords.COORDINATE;
 		EGL_Fixed p_w = -from.m_ClipCoords.w();
 		
-		EGL_Fixed factor = EGL_Div(p_w - p_x, (p_w - p_x) - (c_w - c_x)); 
-		Interpolate(to, to, from, factor);
+		Interpolate(to, to, from, p_w - p_x, (p_w - p_x) - (c_w - c_x));
 
 		return true;
 
@@ -94,8 +91,7 @@
 		EGL_Fixed p_x = from.m_ClipCoords.COORDINATE;
 		EGL_Fixed p_w = from.m_ClipCoords.w();
 		
-		EGL_Fixed factor = EGL_Div(p_w - p_x, (p_w - p_x) - (c_w - c_x)); 
-		Interpolate(to, to, from, factor);
+		Interpolate(to, to, from, p_w - p_x, (p_w - p_x) - (c_w - c_x));
 
 		return true;
 

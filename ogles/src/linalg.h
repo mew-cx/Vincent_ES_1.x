@@ -355,6 +355,10 @@ namespace EGL {
 			return *this;
 		}
 
+		inline Vec4D operator-() const {
+			return Vec4D(-m_x, -m_y, -m_z, -m_w);
+		}
+
 		// ----------------------------------------------------------------------
 		// Scaling of vector
 		//

@@ -467,33 +467,29 @@ void Context :: RenderTriangleFan(GLsizei count, const GLushort * indices) {
 
 namespace {
 
-	inline EGL_Fixed InterpolationCoefficient(EGL_Fixed a, EGL_Fixed b, EGL_Fixed c) {
-		return EGL_Div(b - a, c - a);
+	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed x1, EGL_Fixed num, EGL_Fixed denom) {
+		return x1 + (EGL_Fixed)((((I64)(x0-x1))*num)/denom);
 	}
 
-	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed y0, EGL_Fixed x1, EGL_Fixed y1) {
-		return EGL_Mul(x0, y0) + EGL_Mul(x1, y1);
-	}
-
-	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, EGL_Fixed scale) {
-		EGL_Fixed invScale = EGL_ONE - scale;
-
-		result.m_ClipCoords = dst.m_ClipCoords * scale + src.m_ClipCoords * invScale;
-		result.m_Color = dst.m_Color * scale + src.m_Color * invScale;
-		result.m_TextureCoords.tu = Interpolate(dst.m_TextureCoords.tu, scale, src.m_TextureCoords.tu, invScale);
-		result.m_TextureCoords.tv = Interpolate(dst.m_TextureCoords.tv, scale, src.m_TextureCoords.tv, invScale);
-		result.m_FogDensity = Interpolate(dst.m_FogDensity, scale, src.m_FogDensity, invScale);
+	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, EGL_Fixed num, EGL_Fixed denom) {
+		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), num, denom));
+		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), num, denom));
+		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), num, denom));
+		result.m_ClipCoords.setW(Interpolate(dst.m_ClipCoords.w(), src.m_ClipCoords.w(), num, denom));
+		result.m_Color.r = Interpolate(dst.m_Color.r, src.m_Color.r, num, denom);
+		result.m_Color.g = Interpolate(dst.m_Color.g, src.m_Color.g, num, denom);
+		result.m_Color.b = Interpolate(dst.m_Color.b, src.m_Color.b, num, denom);
+		result.m_Color.a = Interpolate(dst.m_Color.a, src.m_Color.a, num, denom);
+		result.m_TextureCoords.tu = Interpolate(dst.m_TextureCoords.tu, src.m_TextureCoords.tu, num, denom);
+		result.m_TextureCoords.tv = Interpolate(dst.m_TextureCoords.tv, src.m_TextureCoords.tv, num, denom);
+		result.m_FogDensity = Interpolate(dst.m_FogDensity, src.m_FogDensity, num, denom);
 	}
 
 	inline int ClipXLow(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 
 #		define SET_COORDINATE setX
 #		define COORDINATE x()
-#		define CLIP_VALUE(p) (-(p)->m_ClipCoords.w())
-#		define COMPARISON >=
-#		include "TriangleClipper.inc"
-#		undef COMPARISON
-#		undef CLIP_VALUE
+#		include "TriangleClipperLow.inc"
 #		undef COORDINATE
 #		undef SET_COORDINATE
 
@@ -503,11 +499,7 @@ namespace {
 
 #		define SET_COORDINATE setX
 #		define COORDINATE x()
-#		define CLIP_VALUE(p) ((p)->m_ClipCoords.w())
-#		define COMPARISON <
-#		include "TriangleClipper.inc"
-#		undef COMPARISON
-#		undef CLIP_VALUE
+#		include "TriangleClipperHigh.inc"
 #		undef COORDINATE
 #		undef SET_COORDINATE
 
@@ -517,11 +509,7 @@ namespace {
 
 #		define SET_COORDINATE setY
 #		define COORDINATE y()
-#		define CLIP_VALUE(p) (-(p)->m_ClipCoords.w())
-#		define COMPARISON >=
-#		include "TriangleClipper.inc"
-#		undef COMPARISON
-#		undef CLIP_VALUE
+#		include "TriangleClipperLow.inc"
 #		undef COORDINATE
 #		undef SET_COORDINATE
 
@@ -531,11 +519,7 @@ namespace {
 
 #		define SET_COORDINATE setY
 #		define COORDINATE y()
-#		define CLIP_VALUE(p) ((p)->m_ClipCoords.w())
-#		define COMPARISON <
-#		include "TriangleClipper.inc"
-#		undef COMPARISON
-#		undef CLIP_VALUE
+#		include "TriangleClipperHigh.inc"
 #		undef COORDINATE
 #		undef SET_COORDINATE
 
@@ -545,11 +529,7 @@ namespace {
 
 #		define SET_COORDINATE setZ
 #		define COORDINATE z()
-#		define CLIP_VALUE(p) (-(p)->m_ClipCoords.w())
-#		define COMPARISON >=
-#		include "TriangleClipper.inc"
-#		undef COMPARISON
-#		undef CLIP_VALUE
+#		include "TriangleClipperLow.inc"
 #		undef COORDINATE
 #		undef SET_COORDINATE
 
@@ -559,11 +539,7 @@ namespace {
 
 #		define SET_COORDINATE setZ
 #		define COORDINATE z()
-#		define CLIP_VALUE(p) ((p)->m_ClipCoords.w())
-#		define COMPARISON <
-#		include "TriangleClipper.inc"
-#		undef COMPARISON
-#		undef CLIP_VALUE
+#		include "TriangleClipperHigh.inc"
 #		undef COORDINATE
 #		undef SET_COORDINATE
 
