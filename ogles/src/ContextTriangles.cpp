@@ -545,10 +545,90 @@ namespace {
 #		undef COORDINATE
 
 	}
+
+
+	inline EGL_Fixed Det3x3(EGL_Fixed x0, EGL_Fixed x1, EGL_Fixed x2,
+							EGL_Fixed y0, EGL_Fixed y1, EGL_Fixed y2,
+							EGL_Fixed z0, EGL_Fixed z1, EGL_Fixed z2) {
+		return 
+			+EGL_Mul(EGL_Mul(x0, y1), z2)
+			+EGL_Mul(EGL_Mul(x1, y2), z0)
+			+EGL_Mul(EGL_Mul(x2, y0), z1)
+			-EGL_Mul(EGL_Mul(x0, y2), z1)
+			-EGL_Mul(EGL_Mul(x1, y0), z2)
+			-EGL_Mul(EGL_Mul(x2, y1), z0);
+	}
+}
+
+
+
+void Context :: FrontFace(GLenum mode) { 
+
+	switch (mode) {
+		case GL_CW:
+			m_ReverseFaceOrientation = true;
+			break;
+
+		case GL_CCW:
+			m_ReverseFaceOrientation = false;
+			break;
+
+		default:
+			RecordError(GL_INVALID_ENUM);
+			break;
+	}
+}
+
+void Context :: CullFace(GLenum mode) { 
+
+	switch (mode) { 
+		case GL_FRONT:
+			m_CullMode = CullModeFront;
+			break;
+
+		case GL_BACK:
+			m_CullMode = CullModeBack;
+			break;
+
+		case GL_FRONT_AND_BACK:
+			m_CullMode = CullModeBackAndFront;
+			break;
+
+		default:
+			RecordError(GL_INVALID_ENUM);
+			break;
+	}
+}
+
+
+inline bool Context :: IsCulled(RasterPos& a, RasterPos& b, RasterPos& c) {
+
+	EGL_Fixed sign = 
+		Det3x3(a.m_ClipCoords.w() >> 8, a.m_ClipCoords.x() >> 8, a.m_ClipCoords.y() >> 8,
+			   b.m_ClipCoords.w() >> 8, b.m_ClipCoords.x() >> 8, b.m_ClipCoords.y() >> 8,
+			   c.m_ClipCoords.w() >> 8, c.m_ClipCoords.x() >> 8, c.m_ClipCoords.y() >> 8);
+
+	switch (m_CullMode) {
+		case CullModeBack:
+			return (sign <= 0) ^ m_ReverseFaceOrientation;
+
+		case CullModeFront:
+			return (sign >= 0) ^ m_ReverseFaceOrientation;
+
+		default:
+		case CullModeBackAndFront:
+			return true;
+	}
 }
 
 
 void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
+
+	if (m_CullFaceEnabled) {
+		if (IsCulled(a, b, c)) {
+			return;
+		}
+	}
 
 	RasterPos * array1[16];
 	array1[0] = &a;
@@ -576,3 +656,6 @@ void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
 		}
 	}
 }
+
+
+
