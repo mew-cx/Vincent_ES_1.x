@@ -1,0 +1,33 @@
+TO-DO List
+==========
+
+Completion:
+-----------
+
+- Test calling through real API functions
+- Load full model and render it
+- Implement query API
+- Complete lightning model
+- Culling and object space clipping
+- Mipmapping for textures
+- Move allocation of TLS variables to DLL initialization code
+- Build script to allow creation of all versions of libraries
+- Make distrubutions available on SF
+- Compressed bitmaps
+
+
+Optimization:
+-------------
+
+- Create configuration header file
+- Make stencil support configuration parameter
+- Create specialized rasterization functions
+- XScale support
+- investigate blitting options
+- JIT and shading language
+
+
+API improvements:
+-----------------
+
+- Meshes and mesh-rendering
