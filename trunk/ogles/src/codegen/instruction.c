@@ -1095,10 +1095,11 @@ cg_block_t * cg_block_create(cg_proc_t * proc)
 }
 
 
-cg_virtual_reg_t * cg_virtual_reg_create(cg_proc_t * proc)
+cg_virtual_reg_t * cg_virtual_reg_create(cg_proc_t * proc, cg_reg_type_t type)
 {
 	cg_virtual_reg_t * reg = cg_heap_allocate(proc->module->heap, sizeof (cg_virtual_reg_t));
 	reg->reg_no = proc->num_registers++;
+	reg->type = type;
 
 	if (proc->registers)
 	{
@@ -1142,7 +1143,7 @@ cg_virtual_reg_list_t * cg_create_virtual_reg_list(cg_heap_t * heap, ...)
 
 
 // add an instruction to a block
-void cg_block_add(cg_block_t * block, cg_inst_t * inst)
+static void block_add(cg_block_t * block, cg_inst_t * inst)
 {
 	inst->base.block = block;
 
@@ -1156,3 +1157,233 @@ void cg_block_add(cg_block_t * block, cg_inst_t * inst)
 		block->insts = block->last_inst = inst;
 	}
 }
+
+
+static cg_inst_t * inst_create(cg_block_t * block, size_t size, 
+							   cg_inst_kind_t kind, cg_opcode_t op)
+{
+	cg_inst_t * inst = (cg_inst_t *)
+		cg_heap_allocate(block->proc->module->heap, size);
+	block_add(block, inst);
+
+	inst->base.kind = cg_inst_unary;
+	inst->base.opcode = op;
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_unary(cg_block_t * block, 
+								 cg_opcode_t op, 
+								 cg_virtual_reg_t * dest, 
+								 cg_virtual_reg_t * source)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_unary_t), cg_inst_unary, op);
+
+	inst->unary.dest_value = dest;
+	inst->unary.operand.source = source;
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_unary_s(cg_block_t * block, 
+								   cg_opcode_t op, 
+								   cg_virtual_reg_t * dest, 
+								   cg_virtual_reg_t * flags, 
+								   cg_virtual_reg_t * source)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_unary_t), cg_inst_unary, op);
+
+	inst->unary.dest_value = dest;
+	inst->unary.dest_flags = flags;
+	inst->unary.operand.source = source;
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_binary(cg_block_t * block, 
+								  cg_opcode_t op, 
+								  cg_virtual_reg_t * dest, 
+								  cg_virtual_reg_t * source, 
+								  cg_virtual_reg_t * operand)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_binary_t), cg_inst_binary, op);
+
+	inst->binary.dest_value = dest;
+	inst->binary.source = source;
+	inst->binary.operand.source = operand;
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_binary_s(cg_block_t * block, 
+									cg_opcode_t op, 
+									cg_virtual_reg_t * dest, 
+									cg_virtual_reg_t * flags, 
+									cg_virtual_reg_t * source, 
+									cg_virtual_reg_t * operand)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_binary_t), cg_inst_binary, op);
+
+	inst->binary.dest_value = dest;
+	inst->binary.dest_flags = flags;
+	inst->binary.source = source;
+	inst->binary.operand.source = operand;
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_compare(cg_block_t * block, 
+								   cg_opcode_t op, 
+								   cg_virtual_reg_t * dest, 
+								   cg_virtual_reg_t * source, 
+								   cg_virtual_reg_t * operand)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_compare_t), cg_inst_compare, op);
+
+	inst->compare.dest_flags = dest;
+	inst->compare.source = source;
+	inst->compare.operand.source = operand;
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_load(cg_block_t * block, 
+								cg_opcode_t op, 
+								cg_virtual_reg_t * dest, 
+								cg_virtual_reg_t * mem)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_load_t), cg_inst_load, op);
+
+	inst->load.dest = dest;
+	inst->load.mem.base = mem;
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_store(cg_block_t * block, 
+								 cg_opcode_t op, 
+								 cg_virtual_reg_t * source, 
+								 cg_virtual_reg_t * mem)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_store_t), cg_inst_store, op);
+
+	inst->store.source = source;
+	inst->store.mem.base = mem;
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_load_immed(cg_block_t * block, 
+									  cg_opcode_t op, 
+									  cg_virtual_reg_t * dest, 
+									  U32 value)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_load_immed_t), cg_inst_load_immed, op);
+
+	inst->immed.dest = dest;
+	inst->immed.value = value;
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_branch_label(cg_block_t * block, 
+										cg_opcode_t op, 
+										cg_block_t * target)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_branch_t), cg_inst_branch_label, op);
+
+	inst->branch.target = target;
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_branch_cond(cg_block_t * block, 
+									   cg_opcode_t op, 
+									   cg_virtual_reg_t * flags, 
+									   cg_block_t * target)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_branch_t), cg_inst_branch_cond, op);
+
+	inst->branch.cond = flags;
+	inst->branch.target = target;
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_phi(cg_block_t * block, 
+							   cg_opcode_t op, 
+							   cg_virtual_reg_t * dest, 
+							   cg_virtual_reg_list_t * regs)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_phi_t), cg_inst_phi, op);
+
+	inst->phi.dest = dest;
+	inst->phi.regs = regs;
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_call_proc(cg_block_t * block, 
+									 cg_opcode_t op, 
+									 cg_proc_t * proc, 
+									 cg_virtual_reg_list_t * args)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_call_t), cg_inst_call, op);
+
+	inst->call.proc = proc;
+	inst->call.args = args;
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_call_func(cg_block_t * block, 
+									 cg_opcode_t op, 
+									 cg_virtual_reg_t * dest, 
+									 cg_proc_t * proc, 
+									 cg_virtual_reg_list_t * args)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_call_t), cg_inst_call, op);
+
+	inst->call.dest = dest;
+	inst->call.proc = proc;
+	inst->call.args = args;
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_ret(cg_block_t * block, 
+							   cg_opcode_t op)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_ret_t), cg_inst_ret, op);
+
+	/* nothing */
+
+	return inst;
+}
+
+
+cg_inst_t * cg_create_inst_ret_value(cg_block_t * block, 
+									 cg_opcode_t op, 
+									 cg_virtual_reg_t * value)
+{
+	cg_inst_t * inst = inst_create(block, sizeof(cg_inst_ret_t), cg_inst_ret, op);
+
+	inst->ret.result = value;
+
+	return inst;
+}
+
