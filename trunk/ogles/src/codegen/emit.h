@@ -92,11 +92,19 @@ typedef struct cg_runtime_info_t
 cg_runtime_info_t;
 
 
+typedef struct cg_processor_info_t 
+{
+	int		useV5;				/* can use instructions from V5 arch.		*/
+}
+cg_processor_info_t;
+
 /****************************************************************************/
 /* Code generator															*/
 /****************************************************************************/
 
-cg_codegen_t * cg_codegen_create(cg_heap_t * heap, cg_runtime_info_t * runtime);
+cg_codegen_t * cg_codegen_create(cg_heap_t * heap, cg_runtime_info_t * runtime,
+								 cg_processor_info_t * processor);
+
 void cg_codegen_destroy(cg_codegen_t * gen);
 
 void cg_codegen_emit_module(cg_codegen_t * gen, cg_module_t * module);

@@ -20,6 +20,7 @@ This version addresses the following issues:
 1028995 - Clip planes cannot be disabled
 1001371 - Use CLZ for XScale and retire GPP
 1033799 - Under-/overflow in fog calculation
+1034326 - use CLZ in emit_unary_log2 for XScale builds
 
 
 Version 0.82

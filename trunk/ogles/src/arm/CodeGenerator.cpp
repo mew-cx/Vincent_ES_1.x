@@ -155,7 +155,15 @@ void CodeGenerator :: Compile(FunctionCache * target, FunctionCache::FunctionTyp
 	runtime.sqrt_HP_16_32s = EGL_Sqrt;
 	runtime.sqrt_LP_16_32s = EGL_Sqrt;
 
-	cg_codegen_t * codegen = cg_codegen_create(heap, &runtime);
+	cg_processor_info_t processor;
+
+#ifdef EGL_USE_CLZ
+	processor.useV5 = 1;
+#else
+	processor.useV5 = 0;
+#endif
+
+	cg_codegen_t * codegen = cg_codegen_create(heap, &runtime, &processor);
 	cg_codegen_emit_module(codegen, m_Module);
 	cg_codegen_fix_refs(codegen);
 
