@@ -611,10 +611,10 @@ inline bool Context :: IsCulled(RasterPos& a, RasterPos& b, RasterPos& c) {
 
 	switch (m_CullMode) {
 		case CullModeBack:
-			return (sign <= 0) ^ m_ReverseFaceOrientation;
+			return (sign < 0) ^ m_ReverseFaceOrientation;
 
 		case CullModeFront:
-			return (sign >= 0) ^ m_ReverseFaceOrientation;
+			return (sign > 0) ^ m_ReverseFaceOrientation;
 
 		default:
 		case CullModeBackAndFront:
