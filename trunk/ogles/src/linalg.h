@@ -391,6 +391,14 @@ namespace EGL {
 				EGL_Mul(m_w, other.m_w);
 		}
 
+		inline I64 longProduct(const Vec4D& other) const {
+			return 
+				(static_cast<I64>(m_x) * static_cast<I64>(other.m_x) +
+				 static_cast<I64>(m_y) * static_cast<I64>(other.m_y) +
+				 static_cast<I64>(m_z) * static_cast<I64>(other.m_z) +
+				 static_cast<I64>(m_w) * static_cast<I64>(other.m_w)) >> EGL_PRECISION;
+		}
+
 		// ----------------------------------------------------------------------
 		// Euclidean length of vector
 		// ----------------------------------------------------------------------
@@ -769,6 +777,19 @@ namespace EGL {
 		// Compute general inverse of a 4 by 4 matrix
 		// ----------------------------------------------------------------------
 		Matrix4x4 Inverse() const;
+
+		Matrix4x4 Transpose() const {
+			Matrix4x4 result;
+
+			for (int i = 0; i < ROWS; ++i) {
+				for (int j = 0; j < COLUMNS; ++j) {
+					result.Element(i, j) = Element(j, i);
+				}
+			}
+
+			result.m_identity = m_identity;
+			return result;
+		}
 
 		// ----------------------------------------------------------------------
 		// Create a transformation matrix that scales in x, y and z direction
