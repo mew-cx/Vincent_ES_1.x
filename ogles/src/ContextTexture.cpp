@@ -775,7 +775,7 @@ namespace {
 		PaletteRGBA5551
 	};
 
-	template <class SrcAccessor> inline void CreatePalette(const U8 * data,
+	template <class SrcAccessor> inline void CreatePalette(const U8 *& data,
 		size_t numberOfColors, Color * colors, SrcAccessor& accessor) {
 
 		for (size_t index = 0; index < numberOfColors; ++index) {
@@ -814,7 +814,7 @@ namespace {
 
 	struct ConstU4Ptr {
 		ConstU4Ptr(const void * _ptr) {
-			ptr = reinterpret_cast<const U8 *>(ptr);
+			ptr = reinterpret_cast<const U8 *>(_ptr);
 			nibble = false;
 		}
 
@@ -940,7 +940,7 @@ void Context :: CompressedTexImage2D(GLenum target, GLint level, GLenum internal
 
 		ConstU4Ptr nibblePtr(dataPtr);
 
-		for (GLint level = minLevel; minLevel <= maxLevel; ++level) {
+		for (GLint level = minLevel; level <= maxLevel; ++level) {
 
 			size_t pixelCount = width * height;
 
@@ -973,7 +973,7 @@ void Context :: CompressedTexImage2D(GLenum target, GLint level, GLenum internal
 				height >>= 1;
 		}
 	} else {
-		for (GLint level = minLevel; minLevel <= maxLevel; ++level) {
+		for (GLint level = minLevel; level <= maxLevel; ++level) {
 
 			size_t pixelCount = width * height;
 
