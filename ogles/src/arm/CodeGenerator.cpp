@@ -2775,7 +2775,6 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regEndWindowX);
 	DECL_REG	(regStartWindowX);
 	DECL_REG	(regDiffX);
-	DECL_REG	(regInvSpan);
 	DECL_FLAGS	(flagXCompare);
 
 	cg_block_ref_t * endProc = cg_block_ref_create(procedure);
@@ -2784,7 +2783,6 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	LDW		(regStartWindowX, regAddrStartWindowX);
 	SUB_S	(regDiffX, flagXCompare, regEndWindowX, regStartWindowX);
 	BLE		(flagXCompare, endProc);
-	FINV	(regInvSpan, regDiffX);
 
 	//FractionalColor baseColor = start.m_Color;
 	DECL_REG	(regStartColorR);
@@ -2797,91 +2795,52 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	LDW		(regStartColorB, regAddrStartColorB);
 	LDW		(regStartColorA, regAddrStartColorA);
 
-	//FractionalColor colorIncrement = (end.m_Color - start.m_Color) * invSpan;
-	DECL_REG	(regEndColorR);
-	DECL_REG	(regEndColorG);
-	DECL_REG	(regEndColorB);
-	DECL_REG	(regEndColorA);
-
-	LDW		(regEndColorR, regAddrEndColorR);
-	LDW		(regEndColorG, regAddrEndColorG);
-	LDW		(regEndColorB, regAddrEndColorB);
-	LDW		(regEndColorA, regAddrEndColorA);
-
-	DECL_REG	(regDiffColorR);
-	DECL_REG	(regDiffColorG);
-	DECL_REG	(regDiffColorB);
-	DECL_REG	(regDiffColorA);
-
-	SUB		(regDiffColorR, regEndColorR, regStartColorR);
-	SUB		(regDiffColorG, regEndColorG, regStartColorG);
-	SUB		(regDiffColorB, regEndColorB, regStartColorB);
-	SUB		(regDiffColorA, regEndColorA, regStartColorA);
-
+	//const FractionalColor& colorIncrement = delta.m_Color;
 	DECL_REG	(regColorIncrementR);
 	DECL_REG	(regColorIncrementG);
 	DECL_REG	(regColorIncrementB);
 	DECL_REG	(regColorIncrementA);
 
-	FMUL	(regColorIncrementR, regDiffColorR, regInvSpan);
-	FMUL	(regColorIncrementG, regDiffColorG, regInvSpan);
-	FMUL	(regColorIncrementB, regDiffColorB, regInvSpan);
-	FMUL	(regColorIncrementA, regDiffColorA, regInvSpan);
+	LDW		(regColorIncrementR, regAddrEndColorR);
+	LDW		(regColorIncrementG, regAddrEndColorG);
+	LDW		(regColorIncrementB, regAddrEndColorB);
+	LDW		(regColorIncrementA, regAddrEndColorA);
 
-	//EGL_Fixed deltaInvZ = EGL_Mul(end.m_WindowCoords.z - start.m_WindowCoords.z, invSpan);
-	DECL_REG	(regEndWindowZ);
+	//EGL_Fixed deltaInvZ = delta.m_WindowCoords.invZ;
 	DECL_REG	(regStartWindowZ);
-	DECL_REG	(regDiffInvZ);
 	DECL_REG	(regDeltaInvZ);
 
-	LDW		(regEndWindowZ, regAddrEndWindowZ);
+	LDW		(regDeltaInvZ, regAddrEndWindowZ);
 	LDW		(regStartWindowZ, regAddrStartWindowZ);
-	SUB		(regDiffInvZ, regEndWindowZ, regStartWindowZ);
-	FMUL	(regDeltaInvZ, regDiffInvZ, regInvSpan);
 
-	//EGL_Fixed deltaInvU = EGL_Mul(end.m_TextureCoords.tu - start.m_TextureCoords.tu, invSpan);
-	DECL_REG	(regEndTextureU);
+	//EGL_Fixed deltaInvU = delta.m_TextureCoords.tu;
 	DECL_REG	(regStartTextureU);
-	DECL_REG	(regDiffInvU);
 	DECL_REG	(regDeltaInvU);
 
-	LDW		(regEndTextureU, regAddrEndTextureU);
+	LDW		(regDeltaInvU, regAddrEndTextureU);
 	LDW		(regStartTextureU, regAddrStartTextureU);
-	SUB		(regDiffInvU, regEndTextureU, regStartTextureU);
-	FMUL	(regDeltaInvU, regDiffInvU, regInvSpan);
 
-	//EGL_Fixed deltaInvV = EGL_Mul(end.m_TextureCoords.tv - start.m_TextureCoords.tv, invSpan);
-	DECL_REG	(regEndTextureV);
+	//EGL_Fixed deltaInvV = delta.m_TextureCoords.tv;
 	DECL_REG	(regStartTextureV);
-	DECL_REG	(regDiffInvV);
 	DECL_REG	(regDeltaInvV);
 
-	LDW		(regEndTextureV, regAddrEndTextureV);
+	LDW		(regDeltaInvV, regAddrEndTextureV);
 	LDW		(regStartTextureV, regAddrStartTextureV);
-	SUB		(regDiffInvV, regEndTextureV, regStartTextureV);
-	FMUL	(regDeltaInvV, regDiffInvV, regInvSpan);
 
-	//EGL_Fixed deltaFog = EGL_Mul(end.m_FogDensity - start.m_FogDensity, invSpan);
-	DECL_REG	(regEndFog);
+
+	//EGL_Fixed deltaFog = delta.m_FogDensity;
 	DECL_REG	(regStartFog);
-	DECL_REG	(regDiffFog);
 	DECL_REG	(regDeltaFog);
 
-	LDW		(regEndFog, regAddrEndFog);
+	LDW		(regDeltaFog, regAddrEndFog);
 	LDW		(regStartFog, regAddrStartFog);
-	SUB		(regDiffFog, regEndFog, regStartFog);
-	FMUL	(regDeltaFog, regDiffFog, regInvSpan);
 
-	//EGL_Fixed deltaDepth = EGL_Mul(end.m_WindowCoords.depth - start.m_WindowCoords.depth, invSpan);
-	DECL_REG	(regEndDepth);
+	//EGL_Fixed deltaDepth = delta.m_WindowCoords.depth;
 	DECL_REG	(regStartDepth);
-	DECL_REG	(regDiffDepth);
 	DECL_REG	(regDeltaDepth);
 
-	LDW		(regEndDepth, regAddrEndWindowDepth);
+	LDW		(regDeltaDepth, regAddrEndWindowDepth);
 	LDW		(regStartDepth, regAddrStartWindowDepth);
-	SUB		(regDiffDepth, regEndDepth, regStartDepth);
-	FMUL	(regDeltaDepth, regDiffDepth, regInvSpan);
 
 
 	//EGL_Fixed invTu = start.m_TextureCoords.tu;
@@ -3167,9 +3126,15 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regBlock4Z);
 	DECL_REG	(regBlock4U);
 	DECL_REG	(regBlock4V);
+	DECL_REG	(regBlock4InvZ);
+	DECL_REG	(regBlock4InvU);
+	DECL_REG	(regBlock4InvV);
 	DECL_REG	(regBlock4DiffX);
 	DECL_FLAGS	(regBlock4Condition);
 
+	PHI		(regBlock4InvZ, cg_create_virtual_reg_list(procedure->module->heap, regLoop0InvZ, regStartWindowZ, NULL));
+	PHI		(regBlock4InvU, cg_create_virtual_reg_list(procedure->module->heap, regLoop0InvU, regStartTextureU, NULL));
+	PHI		(regBlock4InvV, cg_create_virtual_reg_list(procedure->module->heap, regLoop0InvV, regStartTextureV, NULL));
 	PHI		(regBlock4X, cg_create_virtual_reg_list(procedure->module->heap, regX, regLoop1X, NULL));
 	PHI		(regBlock4Z, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Z, regZ, NULL));
 	PHI		(regBlock4U, cg_create_virtual_reg_list(procedure->module->heap, regLoop0U, regU, NULL));
@@ -3177,18 +3142,37 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	SUB_S	(regBlock4DiffX, regBlock4Condition, regXEnd, regBlock4X);
 	BEQ		(regBlock4Condition, endLoop2);
 
-		//EGL_Fixed endZ = EGL_Inverse(end.m_WindowCoords.z);
-		//EGL_Fixed endTu = EGL_Mul(end.m_TextureCoords.tu, endZ);
-		//EGL_Fixed endTv = EGL_Mul(end.m_TextureCoords.tv, endZ);
+		//I32 deltaX = xEnd - x;
+
+		//EGL_Fixed endZ = EGL_Inverse(invZ + deltaX * deltaInvZ);
+		//EGL_Fixed endTu = EGL_Mul(invTu + deltaX * deltaInvU, endZ);
+		//EGL_Fixed endTv = EGL_Mul(invTv + deltaX * deltaInvV, endZ);
+	DECL_REG(regDeltaXDeltaInvZ);
+	DECL_REG(regDeltaXDeltaInvU);
+	DECL_REG(regDeltaXDeltaInvV);
+
+	DECL_REG(regEndWindowZ);
+	DECL_REG(regEndTextureU);
+	DECL_REG(regEndTextureV);
+
 	DECL_REG	(regEndZ);
 	DECL_REG	(regEndU);
 	DECL_REG	(regEndV);
 
+	MUL		(regDeltaXDeltaInvZ, regBlock4DiffX, regDeltaInvZ);
+	FADD	(regEndWindowZ, regBlock4InvZ, regDeltaXDeltaInvZ);
 	FINV	(regEndZ, regEndWindowZ);
+
+	MUL		(regDeltaXDeltaInvU, regBlock4DiffX, regDeltaInvU);
+	MUL		(regDeltaXDeltaInvV, regBlock4DiffX, regDeltaInvV);
+		
+	FADD	(regEndTextureU, regBlock4InvU, regDeltaXDeltaInvU);
+	FADD	(regEndTextureV, regBlock4InvV, regDeltaXDeltaInvV);
+
 	FMUL	(regEndU, regEndZ, regEndTextureU);
 	FMUL	(regEndV, regEndZ, regEndTextureV);
 
-		//invSpan = EGL_Inverse(EGL_FixedFromInt(xEnd - x));
+		//invSpan = EGL_Inverse(EGL_FixedFromInt(deltaX));
 	DECL_REG	(regFixedBlock4DiffX);
 	DECL_REG	(regBlock4InvSpan);
 
