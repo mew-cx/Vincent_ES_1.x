@@ -8,11 +8,19 @@ the bug database on sourceforge.
 Version 0.76
 ------------
 
-This version addresses the following issues:
+Key changes in this version of the library are tracked under the following tracker numbers:
+
+958793 - Create math library for non-XScale processors
+937679 - Employ plane equations for rasterization
+
+In addition, this version addresses the following issues:
 
 960542 - fragment processing for clearing missing/incorrect
 960937 - Pixel ownership test not implemented correctly
-
+958787 - GL_OES_query_matrix extension missing
+951114 - glLineWidth causes freeze
+958791 - eglCopyBuffers not implemented
+958797 - eglGetProcAddress not implemented
 
 
 Version 0.75 (beta)
