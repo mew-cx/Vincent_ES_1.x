@@ -739,7 +739,7 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 	rasterInfo.StencilBuffer = m_Surface->GetStencilBuffer() + offset;
 	rasterInfo.AlphaBuffer = m_Surface->GetAlphaBuffer() + offset;
 
-// texture info
+	// texture info
 	Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
 
 	if (texture)
@@ -1403,3 +1403,477 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		}
 	}
 }
+
+
+// --------------------------------------------------------------------------
+// Rasterizer implementation using plane equation approach
+// --------------------------------------------------------------------------
+
+inline void Rasterizer :: RasterScanLine0(const EdgePos& start, const EdgePos& delta, U32 y) {
+
+	// In the edge buffer, z, tu and tv are actually divided by w
+
+	FractionalColor baseColor = start.m_Color;
+	I32 numPixels = delta.m_WindowCoords.x;
+
+	if (!numPixels) {
+		return;
+	}
+
+	EGL_Fixed invTu = start.m_TextureCoords.tu;
+	EGL_Fixed invTv = start.m_TextureCoords.tv;
+	EGL_Fixed invZ = start.m_WindowCoords.z;
+
+	EGL_Fixed fogDensity = start.m_FogDensity;
+	I32 x = EGL_IntFromFixed(start.m_WindowCoords.x);
+
+	EGL_Fixed z = EGL_Inverse(invZ);
+	EGL_Fixed tu = EGL_Mul(invTu, z);
+	EGL_Fixed tv = EGL_Mul(invTv, z);
+
+	for (I32 numSpans = numPixels >> LOG_LINEAR_SPAN; numSpans; --numSpans) {
+
+		invZ += delta.m_WindowCoords.z << LOG_LINEAR_SPAN;
+		invTu += delta.m_TextureCoords.tu << LOG_LINEAR_SPAN;
+		invTv += delta.m_TextureCoords.tv << LOG_LINEAR_SPAN;
+
+		EGL_Fixed endZ = EGL_Inverse(invZ);
+		EGL_Fixed endTu = EGL_Mul(invTu, endZ);
+		EGL_Fixed endTv = EGL_Mul(invTv, endZ);
+
+		EGL_Fixed deltaZ = (endZ - z) >> LOG_LINEAR_SPAN;
+		EGL_Fixed deltaTu = (endTu - tu) >> LOG_LINEAR_SPAN; 
+		EGL_Fixed deltaTv = (endTv - tv) >> LOG_LINEAR_SPAN;
+
+		int count = LINEAR_SPAN; 
+
+		do {
+			Fragment(x, y, z, tu, tv, fogDensity, baseColor);
+
+			baseColor += delta.m_Color;
+			fogDensity += delta.m_FogDensity;
+			z += deltaZ;
+			tu += deltaTu;
+			tv += deltaTv;
+			++x;
+		} while (--count);
+	}
+
+	I32 deltaX = numPixels & (LINEAR_SPAN - 1);
+
+	if (deltaX) {
+		EGL_Fixed deltaZ = delta.m_WindowCoords.z;
+		EGL_Fixed endZ =  EGL_Inverse(invZ + EGL_Mul(deltaX, deltaZ));
+		EGL_Fixed endTu = EGL_Mul(invTu + EGL_Mul(deltaX, delta.m_TextureCoords.tu), endZ);
+		EGL_Fixed endTv = EGL_Mul(invTv + EGL_Mul(deltaX, delta.m_TextureCoords.tv), endZ);
+
+		EGL_Fixed invSpan = EGL_Inverse(EGL_FixedFromInt(deltaX));
+
+		EGL_Fixed deltaTu = EGL_Mul(endTu - tu, invSpan);
+		EGL_Fixed deltaTv = EGL_Mul(endTv - tv, invSpan);
+
+		for (; deltaX; --deltaX) {
+
+			Fragment(x, y, z, tu, tv, fogDensity, baseColor);
+
+			baseColor += delta.m_Color;
+			z += deltaZ;
+			tu += deltaTu;
+			tv += deltaTv;
+			fogDensity += delta.m_FogDensity;
+		}
+	}
+}
+
+
+// ---------------------------------------------------------------------------
+// Render the triangle specified by the three transformed and lit vertices
+// passed as arguments. Before calling into the actual rasterization, the
+// triangle will be subject to the scissor test, which may subdivide it
+// into up to 3 sub-triangles.
+//
+// Parameters:
+//		a, b, c		The three vertices of the triangle
+//
+// Returns:
+//		N/A
+// --------------------------------------------------------------------------
+void Rasterizer :: RasterTriangle0(const RasterPos& a, const RasterPos& b,
+								  const RasterPos& c) {
+	
+	// determine the appropriate mipmapping level
+	if (m_State->m_TextureEnabled) {
+		if (m_Texture->IsMipMap()) {
+			int logWidth = Log2(m_Texture->GetTexture(0)->GetWidth());
+			int logHeight = Log2(m_Texture->GetTexture(0)->GetHeight());
+
+			int logWidthA = logWidth >> 1;
+			int logHeightA = logHeight >> 1;
+			int logWidthB = logWidth - logWidthA;
+			int logHeightB = logHeight - logHeightA;
+
+			EGL_Fixed textureArea = 
+				TriangleArea(a.m_TextureCoords.tu << logWidthA, a.m_TextureCoords.tv << logHeightA,
+							 b.m_TextureCoords.tu << logWidthA, b.m_TextureCoords.tv << logHeightA,
+							 c.m_TextureCoords.tu << logWidthA, c.m_TextureCoords.tv << logHeightA);
+
+
+			EGL_Fixed screenArea = 
+				TriangleArea(a.m_WindowCoords.x >> logWidthB, a.m_WindowCoords.y >> logHeightB,
+							 b.m_WindowCoords.x >> logWidthB, b.m_WindowCoords.y >> logHeightB,
+							 c.m_WindowCoords.x >> logWidthB, c.m_WindowCoords.y >> logHeightB);
+			EGL_Fixed invScreenArea;
+			
+			if (screenArea != 0)
+				invScreenArea = EGL_Inverse(screenArea);
+			else 
+				invScreenArea = EGL_FixedFromInt(256);
+
+			EGL_Fixed ratio = EGL_Mul(textureArea, invScreenArea) >> EGL_PRECISION;
+			
+			int logRatio = Log2(ratio);
+			int maxLevel = (logWidth > logHeight) ? logWidth : logHeight;
+
+			if (logRatio <= 0) {
+				m_MipMapLevel = 0;
+			} else {
+				m_MipMapLevel = logRatio / 2;
+
+				if (m_MipMapLevel > maxLevel) {
+					m_MipMapLevel = maxLevel;
+				}
+			}
+			
+		} else {
+			m_MipMapLevel = 0;
+		}
+	}
+	
+	const RasterPos * pos[3];
+	pos[0] = &a;
+	pos[1] = &b;
+	pos[2] = &c;
+
+	// sort by y
+	I8 * permutation = SortPermutation(a.m_WindowCoords.y, b.m_WindowCoords.y, c.m_WindowCoords.y);
+	const RasterPos &pos1 = *pos[permutation[0]];
+	const RasterPos &pos2 = *pos[permutation[1]];
+	const RasterPos &pos3 = *pos[permutation[2]];
+
+	EGL_Fixed invZ1;
+	EGL_Fixed invZ2;
+	EGL_Fixed invZ3;
+
+	if (pos1.m_WindowCoords.z)
+		invZ1 = EGL_Inverse(pos1.m_WindowCoords.z);
+	else
+		invZ1 = EGL_ONE;
+
+	if (pos2.m_WindowCoords.z)
+		invZ2 = EGL_Inverse(pos2.m_WindowCoords.z);
+	else
+		invZ2 = EGL_ONE;
+
+	if (pos3.m_WindowCoords.z)
+		invZ3 = EGL_Inverse(pos3.m_WindowCoords.z);
+	else
+		invZ3 = EGL_ONE;
+
+	EdgePos start, deltaX, deltaY;
+
+
+	start.m_WindowCoords.x = end.m_WindowCoords.x = pos1.m_WindowCoords.x;
+	start.m_WindowCoords.z = end.m_WindowCoords.z = invZ1;
+	start.m_Color = end.m_Color = pos1.m_Color;
+	start.m_TextureCoords.tu = end.m_TextureCoords.tu = EGL_Mul(pos1.m_TextureCoords.tu, invZ1);
+	start.m_TextureCoords.tv = end.m_TextureCoords.tv = EGL_Mul(pos1.m_TextureCoords.tv, invZ1);
+	start.m_FogDensity = end.m_FogDensity = pos1.m_FogDensity;
+
+	// set up the triangle
+	// init start, end, deltas
+	EGL_Fixed deltaY21 = pos2.m_WindowCoords.y - pos1.m_WindowCoords.y;
+
+	EGL_Fixed invDeltaY2;
+
+	EGL_Fixed incX2;
+	EGL_Fixed incR2;
+	EGL_Fixed incG2;
+	EGL_Fixed incB2;
+	EGL_Fixed incA2;
+	EGL_Fixed incFog2;
+
+	// perspective interpolation
+	EGL_Fixed incZ2;
+
+	if (deltaY21) {
+		invDeltaY2 = EGL_Inverse(pos2.m_WindowCoords.y - pos1.m_WindowCoords.y);
+
+		incX2 = EGL_Mul(pos2.m_WindowCoords.x - pos1.m_WindowCoords.x, invDeltaY2);
+		incR2 = EGL_Mul(pos2.m_Color.r - pos1.m_Color.r, invDeltaY2);
+		incG2 = EGL_Mul(pos2.m_Color.g - pos1.m_Color.g, invDeltaY2);
+		incB2 = EGL_Mul(pos2.m_Color.b - pos1.m_Color.b, invDeltaY2);
+		incA2 = EGL_Mul(pos2.m_Color.a - pos1.m_Color.a, invDeltaY2);
+		incFog2 = EGL_Mul(pos2.m_FogDensity - pos1.m_FogDensity, invDeltaY2);
+
+		// perspective interpolation
+		incZ2 = EGL_Mul(invZ2 - invZ1, invDeltaY2);
+
+	} else {
+		invDeltaY2 = 0;
+
+		incX2 = pos2.m_WindowCoords.x - pos1.m_WindowCoords.x;
+		incR2 = 0;
+		incG2 = 0;
+		incB2 = 0;
+		incA2 = 0;
+		incFog2 = 0;
+
+		// perspective interpolation
+		incZ2 = 0;
+
+	}
+
+	EGL_Fixed incTu2 = EGL_Mul(EGL_Mul(pos2.m_TextureCoords.tu, invZ2) - 
+							   start.m_TextureCoords.tu, invDeltaY2);
+
+	EGL_Fixed incTv2 = EGL_Mul(EGL_Mul(pos2.m_TextureCoords.tv, invZ2) - 
+							   start.m_TextureCoords.tv, invDeltaY2);
+
+
+	EGL_Fixed deltaY31 = pos3.m_WindowCoords.y - pos1.m_WindowCoords.y;
+
+	EGL_Fixed invDeltaY3;
+
+	EGL_Fixed incX3;
+	EGL_Fixed incR3;
+	EGL_Fixed incG3;
+	EGL_Fixed incB3;
+	EGL_Fixed incA3;
+	EGL_Fixed incFog3;
+
+	// perspective interpolation
+	EGL_Fixed incZ3;
+
+	if (deltaY31) {
+		invDeltaY3 = EGL_Inverse(deltaY31);
+
+		incX3 = EGL_Mul(pos3.m_WindowCoords.x - pos1.m_WindowCoords.x, invDeltaY3);
+		incR3 = EGL_Mul(pos3.m_Color.r - pos1.m_Color.r, invDeltaY3);
+		incG3 = EGL_Mul(pos3.m_Color.g - pos1.m_Color.g, invDeltaY3);
+		incB3 = EGL_Mul(pos3.m_Color.b - pos1.m_Color.b, invDeltaY3);
+		incA3 = EGL_Mul(pos3.m_Color.a - pos1.m_Color.a, invDeltaY3);
+		incFog3 = EGL_Mul(pos3.m_FogDensity - pos1.m_FogDensity, invDeltaY3);
+
+		// perspective interpolation
+		incZ3 = EGL_Mul(invZ3 - invZ1, invDeltaY3);
+	} else {
+		invDeltaY3 = 0;
+
+		incX3 = pos3.m_WindowCoords.x - pos1.m_WindowCoords.x;
+		incR3 = 0;
+		incG3 = 0;
+		incB3 = 0;
+		incA3 = 0;
+		incFog3 = 0;
+
+		// perspective interpolation
+		incZ3 = 0;
+	}
+
+	EGL_Fixed incTu3 = EGL_Mul(EGL_Mul(pos3.m_TextureCoords.tu, invZ3) - 
+							   start.m_TextureCoords.tu, invDeltaY3);
+
+	EGL_Fixed incTv3 = EGL_Mul(EGL_Mul(pos3.m_TextureCoords.tv, invZ3) - 
+							   start.m_TextureCoords.tv, invDeltaY3);
+
+	EGL_Fixed deltaY32 = pos3.m_WindowCoords.y - pos2.m_WindowCoords.y;
+	EGL_Fixed invDeltaY23;
+
+	EGL_Fixed incX23;
+	EGL_Fixed incR23;
+	EGL_Fixed incG23;
+	EGL_Fixed incB23;
+	EGL_Fixed incA23;
+	EGL_Fixed incFog23;
+
+	// perspective interpolation
+	EGL_Fixed incZ23;
+
+	if (deltaY32) {
+		invDeltaY23 = EGL_Inverse(deltaY32);
+
+		incX23 = EGL_Mul(pos3.m_WindowCoords.x - pos2.m_WindowCoords.x, invDeltaY23);
+		incR23 = EGL_Mul(pos3.m_Color.r - pos2.m_Color.r, invDeltaY23);
+		incG23 = EGL_Mul(pos3.m_Color.g - pos2.m_Color.g, invDeltaY23);
+		incB23 = EGL_Mul(pos3.m_Color.b - pos2.m_Color.b, invDeltaY23);
+		incA23 = EGL_Mul(pos3.m_Color.a - pos2.m_Color.a, invDeltaY23);
+		incFog23 = EGL_Mul(pos3.m_FogDensity - pos2.m_FogDensity, invDeltaY23);
+
+		// perspective interpolation
+		incZ23 = EGL_Mul(invZ3 - invZ2, invDeltaY23);
+
+	} else {
+		invDeltaY23 = 0;
+
+		incX23 = pos3.m_WindowCoords.x - pos2.m_WindowCoords.x;
+		incR23 = 0;
+		incG23 = 0;
+		incB23 = 0;
+		incA23 = 0;
+		incFog23 = 0;
+
+		// perspective interpolation
+		incZ23 = 0;
+
+	}
+
+	EGL_Fixed incTu23 = EGL_Mul(EGL_Mul(pos3.m_TextureCoords.tu, invZ3) - 
+								EGL_Mul(pos2.m_TextureCoords.tu, invZ2), invDeltaY23);
+
+	EGL_Fixed incTv23 = EGL_Mul(EGL_Mul(pos3.m_TextureCoords.tv, invZ3) - 
+								EGL_Mul(pos2.m_TextureCoords.tv, invZ2), invDeltaY23);
+
+	I32 yStart = EGL_IntFromFixed(pos1.m_WindowCoords.y);
+	I32 yEnd = EGL_IntFromFixed(pos2.m_WindowCoords.y);
+	I32 y;
+
+	if (incX2 < incX3) {
+		for (y = yStart; y < yEnd; ++y) {
+			RasterScanLine(start, end, y);
+
+			// update start
+			start.m_WindowCoords.x += incX2;
+			start.m_Color.r += incR2;
+			start.m_Color.g += incG2;
+			start.m_Color.b += incB2;
+			start.m_Color.a += incA2;
+
+			start.m_WindowCoords.z += incZ2;
+			start.m_TextureCoords.tu += incTu2;
+			start.m_TextureCoords.tv += incTv2;
+
+			start.m_FogDensity += incFog2;
+
+			// update end
+			end.m_WindowCoords.x += incX3;
+			end.m_Color.r += incR3;
+			end.m_Color.g += incG3;
+			end.m_Color.b += incB3;
+			end.m_Color.a += incA3;
+
+			end.m_WindowCoords.z += incZ3;
+			end.m_TextureCoords.tu += incTu3;
+			end.m_TextureCoords.tv += incTv3;
+
+			end.m_FogDensity += incFog3;
+		}
+
+		yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
+
+		start.m_WindowCoords.x = pos2.m_WindowCoords.x;
+		start.m_WindowCoords.z = invZ2;
+		start.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
+		start.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
+		start.m_Color = pos2.m_Color;
+		start.m_FogDensity = pos2.m_FogDensity;
+
+		for (; y < yEnd; ++y) {
+			RasterScanLine(start, end, y);
+			// update start
+			start.m_WindowCoords.x += incX23;
+			start.m_Color.r += incR23;
+			start.m_Color.g += incG23;
+			start.m_Color.b += incB23;
+			start.m_Color.a += incA23;
+
+			start.m_WindowCoords.z += incZ23;
+			start.m_TextureCoords.tu += incTu23;
+			start.m_TextureCoords.tv += incTv23;
+
+			start.m_FogDensity += incFog23;
+
+			// update end
+			end.m_WindowCoords.x += incX3;
+			end.m_Color.r += incR3;
+			end.m_Color.g += incG3;
+			end.m_Color.b += incB3;
+			end.m_Color.a += incA3;
+
+			end.m_WindowCoords.z += incZ3;
+			end.m_TextureCoords.tu += incTu3;
+			end.m_TextureCoords.tv += incTv3;
+
+			end.m_FogDensity += incFog3;
+		}
+	} else {
+		for (y = yStart; y < yEnd; ++y) {
+			RasterScanLine(start, end, y);
+
+			// update start
+			start.m_WindowCoords.x += incX3;
+			start.m_Color.r += incR3;
+			start.m_Color.g += incG3;
+			start.m_Color.b += incB3;
+			start.m_Color.a += incA3;
+
+			start.m_WindowCoords.z += incZ3;
+			start.m_TextureCoords.tu += incTu3;
+			start.m_TextureCoords.tv += incTv3;
+
+			start.m_FogDensity += incFog3;
+
+			// update end
+			end.m_WindowCoords.x += incX2;
+			end.m_Color.r += incR2;
+			end.m_Color.g += incG2;
+			end.m_Color.b += incB2;
+			end.m_Color.a += incA2;
+
+			end.m_WindowCoords.z += incZ2;
+			end.m_TextureCoords.tu += incTu2;
+			end.m_TextureCoords.tv += incTv2;
+
+			end.m_FogDensity += incFog2;
+		}
+
+		yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
+
+		end.m_WindowCoords.x = pos2.m_WindowCoords.x;
+		end.m_Color = pos2.m_Color;
+		end.m_WindowCoords.z = invZ2;
+		end.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
+		end.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
+		end.m_FogDensity = pos2.m_FogDensity;
+
+		for (; y < yEnd; ++y) {
+			RasterScanLine(start, end, y);
+			// update start
+			start.m_WindowCoords.x += incX3;
+			start.m_Color.r += incR3;
+			start.m_Color.g += incG3;
+			start.m_Color.b += incB3;
+			start.m_Color.a += incA3;
+
+			start.m_WindowCoords.z += incZ3;
+			start.m_TextureCoords.tu += incTu3;
+			start.m_TextureCoords.tv += incTv3;
+
+			start.m_FogDensity += incFog3;
+
+			// update end
+			end.m_WindowCoords.x += incX23;
+			end.m_Color.r += incR23;
+			end.m_Color.g += incG23;
+			end.m_Color.b += incB23;
+			end.m_Color.a += incA23;
+
+			end.m_WindowCoords.z += incZ23;
+			end.m_TextureCoords.tu += incTu23;
+			end.m_TextureCoords.tv += incTv23;
+
+			end.m_FogDensity += incFog23;
+		}
+	}
+}
+
+

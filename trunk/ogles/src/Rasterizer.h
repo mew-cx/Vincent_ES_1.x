@@ -166,6 +166,8 @@ namespace EGL {
 		void RasterLine(const RasterPos& from, const RasterPos& to);
 		void RasterTriangle(const RasterPos& a, const RasterPos& b,
 			const RasterPos& c);
+		void RasterTriangle0(const RasterPos& a, const RasterPos& b,
+			const RasterPos& c);
 
 		// ----------------------------------------------------------------------
 		// State management
@@ -187,6 +189,7 @@ namespace EGL {
 		// Rasterization of triangle scan line
 		// ----------------------------------------------------------------------
 		void RasterScanLine(const EdgePos& start, const EdgePos& end, U32 y);
+		void RasterScanLine0(const EdgePos& start, const EdgePos& delta, U32 y);
 
 		// ----------------------------------------------------------------------
 		// Rasterization of fragment
