@@ -108,11 +108,11 @@ namespace {
 
 			case 3:
 			case GL_RGB:
-				return RasterizerState::TextureFormatRGB;
+				return RasterizerState::TextureFormatRGB565;
 
 			case 4:
 			case GL_RGBA:
-				return RasterizerState::TextureFormatRGBA;
+				return RasterizerState::TextureFormatRGBA5551;
 
 			default:
 				return RasterizerState::TextureFormatInvalid;
@@ -127,10 +127,10 @@ namespace {
 			default:
 				return GL_UNSIGNED_BYTE;
 
-			case RasterizerState::TextureFormatRGB:
+			case RasterizerState::TextureFormatRGB565:
 				return GL_UNSIGNED_SHORT_5_6_5;
 
-			case RasterizerState::TextureFormatRGBA:
+			case RasterizerState::TextureFormatRGBA5551:
 				return GL_UNSIGNED_SHORT_5_5_5_1;
 		}
 	}
@@ -517,7 +517,7 @@ namespace {
 					reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
 				break;
 
-			case RasterizerState::TextureFormatRGB:
+			case RasterizerState::TextureFormatRGB565:
 				switch (srcType) {
 					case GL_UNSIGNED_BYTE:
 						switch (dstType) {
@@ -553,7 +553,7 @@ namespace {
 
 				break;
 
-			case RasterizerState::TextureFormatRGBA:
+			case RasterizerState::TextureFormatRGBA5551:
 				switch (srcType) {
 					case GL_UNSIGNED_BYTE:
 						switch (dstType) {
@@ -672,7 +672,7 @@ namespace {
 		// ---------------------------------------------------------------------
 
 		switch (format) {
-			case RasterizerState::TextureFormatRGBA:
+			case RasterizerState::TextureFormatRGBA5551:
 				switch (dstType) {
 				case GL_UNSIGNED_BYTE:
 					CopySurfacePixels(src, srcX, srcY,
@@ -699,7 +699,7 @@ namespace {
 
 				return false;
 
-			case RasterizerState::TextureFormatRGB:
+			case RasterizerState::TextureFormatRGB565:
 				switch (dstType) {
 				case GL_UNSIGNED_BYTE:
 					CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
@@ -784,14 +784,14 @@ namespace {
 
 				break;
 
-			case RasterizerState::TextureFormatRGB:
+			case RasterizerState::TextureFormatRGB565:
 				if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT_5_6_5) {
 					return false;
 				}
 
 				break;
 
-			case RasterizerState::TextureFormatRGBA:
+			case RasterizerState::TextureFormatRGBA5551:
 				if (type != GL_UNSIGNED_BYTE &&
 					type != GL_UNSIGNED_SHORT_4_4_4_4 &&
 					type != GL_UNSIGNED_SHORT_5_5_5_1) {
@@ -813,10 +813,10 @@ namespace {
 			case RasterizerState::TextureFormatLuminanceAlpha:
 				return GL_UNSIGNED_BYTE;
 
-			case RasterizerState::TextureFormatRGB:
+			case RasterizerState::TextureFormatRGB565:
 				return GL_UNSIGNED_SHORT_5_6_5;
 
-			case RasterizerState::TextureFormatRGBA:
+			case RasterizerState::TextureFormatRGBA5551:
 				return GL_UNSIGNED_SHORT_5_5_5_1;
 		}
 	}
@@ -1546,7 +1546,7 @@ void Context :: UpdateMipmaps(void) {
 			}
 			break;
 
-		case RasterizerState::TextureFormatRGB:
+		case RasterizerState::TextureFormatRGB565:
 			{
 				U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 				U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -1565,7 +1565,7 @@ void Context :: UpdateMipmaps(void) {
 			}
 			break;
 
-		case RasterizerState::TextureFormatRGBA:
+		case RasterizerState::TextureFormatRGBA5551:
 			{
 				U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 				U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -1655,7 +1655,7 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
-			case RasterizerState::TextureFormatRGB:
+			case RasterizerState::TextureFormatRGB565:
 				{
 					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -1672,7 +1672,7 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
-			case RasterizerState::TextureFormatRGBA:
+			case RasterizerState::TextureFormatRGBA5551:
 				{
 					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -1759,7 +1759,7 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
-			case RasterizerState::TextureFormatRGB:
+			case RasterizerState::TextureFormatRGB565:
 				{
 					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -1776,7 +1776,7 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
-			case RasterizerState::TextureFormatRGBA:
+			case RasterizerState::TextureFormatRGBA5551:
 				{
 					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());

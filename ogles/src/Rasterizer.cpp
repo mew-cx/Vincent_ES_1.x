@@ -363,7 +363,7 @@ inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
 				}
 				break;
 
-			case RasterizerState::TextureFormatRGB:
+			case RasterizerState::TextureFormatRGB565:
 				texColor = Color::From565(reinterpret_cast<const U16 *>(data)[texOffset]);
 
 				switch (m_State->m_TextureMode) {
@@ -442,7 +442,7 @@ inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
 				}
 				break;
 
-			case RasterizerState::TextureFormatRGBA:
+			case RasterizerState::TextureFormatRGBA5551:
 				texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
 
 				switch (m_State->m_TextureMode) {
