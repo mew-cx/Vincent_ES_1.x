@@ -175,6 +175,9 @@
 				RelativePath="..\..\src\gl.cpp">
 			</File>
 			<File
+				RelativePath="..\..\src\Inst.cpp">
+			</File>
+			<File
 				RelativePath="..\..\src\Light.cpp">
 			</File>
 			<File
@@ -222,6 +225,9 @@
 				RelativePath="..\..\src\Surface.cpp">
 			</File>
 			<File
+				RelativePath="..\..\src\Sweep.cpp">
+			</File>
+			<File
 				RelativePath="..\..\src\Texture.cpp">
 			</File>
 			<File
@@ -229,6 +235,15 @@
 			</File>
 			<File
 				RelativePath="..\..\src\trivm.cpp">
+			</File>
+			<File
+				RelativePath="..\..\src\trivmDump.cpp">
+			</File>
+			<File
+				RelativePath="..\..\src\trivmFindDefinition.cpp">
+			</File>
+			<File
+				RelativePath="..\..\src\trivmMarkUsed.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -257,6 +272,9 @@
 				RelativePath="..\..\src\Init.h">
 			</File>
 			<File
+				RelativePath="..\..\src\Inst.h">
+			</File>
+			<File
 				RelativePath="..\..\src\Light.h">
 			</File>
 			<File
@@ -282,6 +300,9 @@
 			</File>
 			<File
 				RelativePath="..\..\src\Surface.h">
+			</File>
+			<File
+				RelativePath="..\..\src\Sweep.h">
 			</File>
 			<File
 				RelativePath="..\..\src\Texture.h">

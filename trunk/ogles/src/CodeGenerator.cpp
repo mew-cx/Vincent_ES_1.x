@@ -44,23 +44,24 @@
 #include "Surface.h"
 #include "Texture.h"
 #include "trivm.h"
+#include "Inst.h"
 
 using namespace EGL;
 using namespace triVM;
 
 
-#define IMMEDIATE	Instruction::createLoadImmediate
-#define UNARY		Instruction::createUnary
-#define BINARY		Instruction::createBinary
-#define COMPARE		Instruction::createCompare
-#define LOAD		Instruction::createLoad
-#define STORE		Instruction::createStore
-#define	BCOND		Instruction::createBranchConditionally
-#define	BLABEL		Instruction::createBranchLabel
-#define	BREG		Instruction::createBranchReg
-#define CALL		Instruction::createCall
-#define RET			Instruction::createRet
-#define PHI			Instruction::createPhi
+#define IMMEDIATE	new InstructionLoadImmediateType
+#define UNARY		new InstructionUnaryType
+#define BINARY		new InstructionBinaryType
+#define COMPARE		new InstructionCompareType
+#define LOAD		new InstructionLoadType
+#define STORE		new InstructionStoreType
+#define	BCOND		new InstructionBranchConditionallyType
+#define	BLABEL		new InstructionBranchLabelType
+#define	BREG		new InstructionBranchRegType
+#define CALL		new InstructionCallType
+#define RET			new InstructionRetType
+#define PHI			new InstructionPhiType
 
 namespace {
 	RegisterList * REG_LIST(I32 r1) {
