@@ -21,6 +21,7 @@ In addition, this version addresses the following issues:
 951114 - glLineWidth causes freeze
 958791 - eglCopyBuffers not implemented
 958797 - eglGetProcAddress not implemented
+958790 - Pixmap rendering surface not implemented
 
 
 Version 0.75 (beta)

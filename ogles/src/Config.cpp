@@ -411,7 +411,7 @@ EGLBoolean Config :: ChooseConfig(const EGLint * attribList, EGLConfig * result,
 Config Config :: s_AllConfigurations[1] = {
 	// ----------------------------------------------------------------------
 	// Initial default configuration 
-	// RGB 565, as PBuffer only
+	// RGB 565, as PBuffer or Windows surface
 	// ----------------------------------------------------------------------
 	Config(
 		32,				//	EGLint	bufferSize,
@@ -432,7 +432,7 @@ Config Config :: s_AllConfigurations[1] = {
 		0,				//	EGLint	sampleBuffers,
 		0,				//	EGLint	samples,
 		32,				//	EGLint	stencilSize,
-		EGL_PBUFFER_BIT,//	EGLint	surfaceType,
+		EGL_PBUFFER_BIT | EGL_WINDOW_BIT,//	EGLint	surfaceType,
 		EGL_NONE,		//	EGLint	transparentType,
 		0,				//	EGLint	transparentRedValue,
 		0,				//	EGLint	transparentGreenValue,
