@@ -1,5 +1,5 @@
-3D Rendering Library for Pocket PC
-==================================
+Vincent 3D Rendering Library for Pocket PC
+==========================================
 
 
 http://sourceforge.net/projects/ogl-es/
@@ -9,8 +9,9 @@ http://sourceforge.net/projects/ogl-es/
 Overview
 --------
 
-The goal of this project is to work towards an implementation of the OpenGL (R) ES specification 
-for PocketPCs. The initial target platform will be PocketPCs using the Intel XScale PA2xx processor.
+The goal of this project is create a compliant implementation of the OpenGL (R) ES specification 
+for mobile dvices. The initial target platform are Windows Mobile 2003 devices using the Intel 
+StrongARM or XScale PA2xx processor.
 
 
 
@@ -20,7 +21,7 @@ How the project is organized
 This project has build configurations for the following configurations:
 
 - Visual Studio.NET 2003 for IA32/Windows
-- Embedded Visual C++ 4.0 SP2 (both Emulator and ARM) for PocketPC 2003
+- Embedded Visual C++ 4.0 SP3 (both Emulator, ARM and XScale) for PocketPC 2003 or Smartphone 2003
 
 You will need at least one of these environments installed on your computer. Please refer
 to the project home page for links on how to obtain these tools.
@@ -44,6 +45,9 @@ folder structure is as follows:
 	/x86			- for Windows
 		/Debug
 		/Release
+	/xscale			- for Intel XScale
+		/Debug
+		/Release
 
 /bin				- Final binaries
 	/arm
@@ -55,6 +59,9 @@ folder structure is as follows:
 	/x86
 		/Debug
 		/Release
+	/xscale
+		/Debug
+		/Release
 
 /dist				- Distribution folders
 	/arm
@@ -64,6 +71,9 @@ folder structure is as follows:
 		/Debug
 		/Release
 	/x86
+		/Debug
+		/Release
+	/xscale
 		/Debug
 		/Release
 
