@@ -618,3 +618,19 @@ GLAPI void APIENTRY glPointSizePointerOES(GLenum type, GLsizei stride, const GLv
 	CONTEXT_EXEC(PointSizePointer(type, stride, pointer));
 }
 
+/* OES_matrix_palette */
+GLAPI void APIENTRY glCurrentPaletteMatrixOES(GLint index) {
+	CONTEXT_EXEC(CurrentPaletteMatrix(index));
+}
+
+GLAPI void APIENTRY glLoadPaletteFromModelViewMatrixOES(void) {
+	CONTEXT_EXEC(LoadPaletteFromModelViewMatrix());
+}
+
+GLAPI void APIENTRY glMatrixIndexPointerOES(GLint size, GLenum type, GLsizei stride, GLvoid *pointer) {
+	CONTEXT_EXEC(MatrixIndexPointer(size, type, stride, pointer));
+}
+
+GLAPI void APIENTRY glWeightPointerOES(GLint size, GLenum type, GLsizei stride, GLvoid *pointer) {
+	CONTEXT_EXEC(WeightPointer(size, type, stride, pointer));
+}
