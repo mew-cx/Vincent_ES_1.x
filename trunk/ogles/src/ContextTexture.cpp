@@ -259,6 +259,53 @@ namespace {
 		}
 	};
 
+	struct Color2Luminance {
+		enum {
+			baseIncr = 1
+		};
+
+		void operator()(U8 * &ptr, const Color& value) {
+			U8 luminance = value.R();
+			
+			/*if (value.G() > luminance)
+				luminance = value.G();
+
+			if (value.B() > luminance)
+				luminance = value.B();*/
+
+			*ptr++ = luminance;
+		}
+	};
+
+	struct Color2Alpha {
+		enum {
+			baseIncr = 1
+		};
+
+		void operator()(U8 * &ptr, const Color& value) {
+			*ptr++ = value.A();
+		}
+	};
+
+	struct Color2LuminanceAlpha {
+		enum {
+			baseIncr = 2
+		};
+
+		void operator()(U8 * &ptr, const Color& value) {
+			U8 luminance = value.R();
+			
+			/*if (value.G() > luminance)
+				luminance = value.G();
+
+			if (value.B() > luminance)
+				luminance = value.B();*/
+
+			*ptr++ = luminance;
+			*ptr++ = value.A();
+		}
+	};
+
 	struct RGBA44442Color {
 		enum {
 			baseIncr = 2
@@ -673,7 +720,11 @@ namespace {
 			case RasterizerState::TextureFormatLuminance:
 				switch (dstType) {
 				case GL_UNSIGNED_BYTE:
-					;
+					CopySurfacePixels(src, srcX, srcY,
+						copyWidth, copyHeight,
+						dst, dstWidth, dstHeight, dstX, dstY,
+						Color2Luminance(), dstAlignment);
+					return true;
 				}
 
 				return false;
@@ -681,7 +732,11 @@ namespace {
 			case RasterizerState::TextureFormatAlpha:
 				switch (dstType) {
 				case GL_UNSIGNED_BYTE:
-					;
+					CopySurfacePixels(src, srcX, srcY,
+						copyWidth, copyHeight,
+						dst, dstWidth, dstHeight, dstX, dstY,
+						Color2Alpha(), dstAlignment);
+					return true;
 				}
 
 				return false;
@@ -689,7 +744,11 @@ namespace {
 			case RasterizerState::TextureFormatLuminanceAlpha:
 				switch (dstType) {
 				case GL_UNSIGNED_BYTE:
-					;
+					CopySurfacePixels(src, srcX, srcY,
+						copyWidth, copyHeight,
+						dst, dstWidth, dstHeight, dstX, dstY,
+						Color2LuminanceAlpha(), dstAlignment);
+					return true;
 				}
 
 				return false;
