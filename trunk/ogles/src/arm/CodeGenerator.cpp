@@ -49,6 +49,30 @@
 #include "emit.h"
 #include "arm-dis.h"
 
+
+// --------------------------------------------------------------------------
+// This declarations for coredll are extracted from platform builder
+// source code
+// --------------------------------------------------------------------------
+
+/* Flags for CacheSync/CacheRangeFlush */
+#define CACHE_SYNC_DISCARD      0x001   /* write back & discard all cached data */
+#define CACHE_SYNC_INSTRUCTIONS 0x002   /* discard all cached instructions */
+#define CACHE_SYNC_WRITEBACK    0x004   /* write back but don't discard data cache*/
+#define CACHE_SYNC_FLUSH_I_TLB  0x008   /* flush I-TLB */
+#define CACHE_SYNC_FLUSH_D_TLB  0x010   /* flush D-TLB */
+#define CACHE_SYNC_FLUSH_TLB    (CACHE_SYNC_FLUSH_I_TLB|CACHE_SYNC_FLUSH_D_TLB)    /* flush all TLB */
+#define CACHE_SYNC_L2_WRITEBACK 0x020   /* write-back L2 Cache */
+#define CACHE_SYNC_L2_DISCARD   0x040   /* discard L2 Cache */
+
+#define CACHE_SYNC_ALL          0x07F   /* sync and discard everything in Cache/TLB */
+
+extern "C" {
+	void CacheSync(int flags);
+	void CacheRangeFlush (LPVOID pAddr, DWORD dwLength, DWORD dwFlags);
+}
+
+
 using namespace EGL;
 
 
@@ -88,21 +112,6 @@ namespace {
 //	texture->GetData()
 
 namespace {
-	struct RasterInfo {
-		// surface info
-		I32		SurfaceWidth;
-		I32		SurfaceHeight;
-		I32 *	DepthBuffer;
-		I32 *	ColorBuffer;
-		U32 *	StencilBuffer;
-		U8 *	AlphaBuffer;
-
-		// texture info
-		I32		TextureWidth;
-		I32		TextureHeight;
-		I32		TextureExponent;
-		void *	TextureData;
-	};
 
 	// -------------------------------------------------------------------------
 	// Offsets of structure members within info structure
@@ -2910,7 +2919,7 @@ namespace {
 	}
 }
 
-void CodeGenerator :: CompileRasterScanLine() {
+void CodeGenerator :: CompileRasterScanLine(void * targetBuffer) {
 
 	cg_heap_t * heap = cg_heap_create(4096);
 	cg_module_t * module = cg_module_create(heap);
@@ -2945,15 +2954,32 @@ void CodeGenerator :: CompileRasterScanLine() {
 	cg_runtime_info_t runtime; 
 	memset(&runtime, 0, sizeof runtime);
 
+#if defined(ARM) || defined(_ARM_)
+
+	runtime.div = div;
+	runtime.div_HP_16_32s = gppDivHP_16_32s;
+	runtime.div_LP_16_32s = gppDivLP_16_32s;
+	runtime.inv_HP_16_32s = gppInvHP_16_32s;
+	runtime.inv_LP_16_32s = gppInvLP_16_32s;
+	runtime.inv_sqrt_HP_16_32s = gppInvSqrtHP_16_32s;
+	runtime.inv_sqrt_LP_16_32s = gppInvSqrtLP_16_32s;
+	runtime.sqrt_HP_16_32s = gppSqrtHP_16_32s;
+	runtime.sqrt_LP_16_32s = gppSqrtLP_16_32s;
+
+#endif
+
 	cg_codegen_t * codegen = cg_codegen_create(heap, &runtime);
 	cg_codegen_emit_module(codegen, m_Module);
 	cg_codegen_fix_refs(codegen);
 
 	ARMDis dis;
 	armdis_init(&dis);
-	armdis_dump(&dis, "dump5.txt", cg_codegen_segment(codegen));
+	cg_segment_t * cseg = cg_codegen_segment(codegen);
 
-#ifdef WINCE
+	armdis_dump(&dis, "dump5.txt", cseg);
+
+#if defined(ARM) || defined(_ARM_)
+	cg_segment_get_block(cseg, 0, targetBuffer, cg_segment_size(cseg));
 	// flush data cache and clear instruction cache to make new code visible to execution unit
 	CacheSync(CACHE_SYNC_INSTRUCTIONS | CACHE_SYNC_WRITEBACK);		
 

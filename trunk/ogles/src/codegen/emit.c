@@ -779,12 +779,15 @@ static void emit_binary_shifter(cg_codegen_t * gen, cg_inst_binary_t * inst,
 			
 		case cg_op_lsl:
 			shift_type = ARMSHIFT_LSL;
+			break;
 			
 		case cg_op_lsr:
 			shift_type = ARMSHIFT_LSR;
+			break;
 			
 		case cg_op_asr:
 			shift_type = ARMSHIFT_ASR;
+			break;
 	}
 	
 	switch (inst->base.kind)
@@ -2203,6 +2206,7 @@ static void emit_prolog(cg_codegen_t * gen, cg_proc_t * proc)
 {
 	size_t local_storage;
 
+	ARM_MOV_REG_REG(gen->cseg, ARMREG_IP, ARMREG_IP);	/* dummy op for breakpoint */
 	ARM_MOV_REG_REG(gen->cseg,	ARMREG_IP, ARMREG_SP);
 	ARM_SUB_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, sizeof(U32) * 4);
 	ARM_STMDB(gen->cseg, ARMREG_SP, 
@@ -2212,7 +2216,7 @@ static void emit_prolog(cg_codegen_t * gen, cg_proc_t * proc)
 	ARM_SUB_REG_IMM8(gen->cseg, ARMREG_FP, ARMREG_IP, sizeof(U32) * 4);
 	// SP := SP - #local storage
 
-	local_storage = proc->local_storage >> 2;		/* we know it's a multiple of 4	*/
+	local_storage = proc->local_storage /*>> 2*/;		/* we know it's a multiple of 4	*/
 
 	while (local_storage) 
 	{
@@ -2220,7 +2224,7 @@ static void emit_prolog(cg_codegen_t * gen, cg_proc_t * proc)
 		/* generating here we'll typically only create 1 or 2 iterations,	*/
 		/* in which case the code is optimal.								*/
 		size_t decrement = local_storage > 0xff ? 0xff : local_storage;
-		ARM_SUB_REG_IMM(gen->cseg, ARMREG_SP, ARMREG_SP, decrement, 0xf);
+		ARM_SUB_REG_IMM(gen->cseg, ARMREG_SP, ARMREG_SP, decrement, 0);
 		local_storage -= decrement;
 	}
 

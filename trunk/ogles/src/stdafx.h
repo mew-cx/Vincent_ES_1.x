@@ -43,7 +43,7 @@
 // --------------------------------------------------------------------------
 
 
-#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+//#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 
 #include <windows.h>
 
@@ -57,3 +57,10 @@
 #include <math.h>
 #include <assert.h>
 
+// --------------------------------------------------------------------------
+// Intel Header Files
+// --------------------------------------------------------------------------
+
+#if defined(ARM) || defined(_ARM_)
+#include <gpp.h>
+#endif
