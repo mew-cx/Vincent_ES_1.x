@@ -197,7 +197,7 @@ namespace EGL {
 		void Materialf(GLenum face, GLenum pname, GLfloat param);
 		void Materialfv(GLenum face, GLenum pname, const GLfloat *params);
 		void MultMatrixf(const GLfloat *m);
-		void QueryMatrixx(GLfixed mantissa[16], GLint exponent[16]);
+		GLbitfield QueryMatrixx(GLfixed mantissa[16], GLint exponent[16]);
 		void MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
 		void Normal3f(GLfloat nx, GLfloat ny, GLfloat nz);
 		void Orthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);

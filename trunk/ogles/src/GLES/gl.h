@@ -588,7 +588,7 @@ GLAPI void APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height)
 /****************************************************************************/
 
 
-GLAPI void APIENTRY glQueryMatrixxOES(GLfixed mantissa[16], GLint exponent[16]);
+GLAPI GLbitfield APIENTRY glQueryMatrixxOES(GLfixed mantissa[16], GLint exponent[16]);
 
 
 /****************************************************************************/

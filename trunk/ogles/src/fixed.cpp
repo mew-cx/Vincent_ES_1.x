@@ -39,6 +39,8 @@
 #include "fixed.h"
 
 
+#ifndef EGL_USE_GPP
+
 // --------------------------------------------------------------------------
 // Calculate inverse of fixed point number
 //
@@ -196,6 +198,8 @@ OGLES_API EGL_Fixed EGL_Sqrt(EGL_Fixed a) {
     return s;
 }
 
+#endif //ndef EGL_USE_GPP
+
 /* assume 0 <= x <= 1 and y >= 0 */
 static __inline EGL_Fixed
 xpow(EGL_Fixed x, EGL_Fixed y) {
@@ -240,9 +244,8 @@ xpow(EGL_Fixed x, EGL_Fixed y) {
 		__gl_alog_tab[p])>>exp;
 }
 
-
 // --------------------------------------------------------------------------
-// Poor man's exponentiation, only exponents of 0, 1 and 2 are supported
+// Exponentiation function
 //
 // Parameters:
 //	value		-	the basis; assume 0 <= value <= 1
