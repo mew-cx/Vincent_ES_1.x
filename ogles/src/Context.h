@@ -506,6 +506,7 @@ private:
 		bool				m_SampleCoverageEnabled;
 		bool				m_GenerateMipmaps;
 		bool				m_MatrixPaletteEnabled;
+		bool				m_MatrixModePaletteEnabled;
 
 		I32					m_PixelStorePackAlignment;
 		I32					m_PixelStoreUnpackAlignment;

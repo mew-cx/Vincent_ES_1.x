@@ -83,6 +83,7 @@ Context :: Context(const Config & config)
 	m_SampleCoverageEnabled(false),
 	m_ScissorTestEnabled(false),
 	m_MatrixPaletteEnabled(false),
+	m_MatrixModePaletteEnabled(false),
 
 	// point parameters
 	m_PointSize(EGL_ONE),
@@ -429,6 +430,10 @@ void Context :: Toggle(GLenum cap, bool value) {
 
 	case GL_SAMPLE_COVERAGE:
 		m_SampleCoverageEnabled = value;
+		break;
+
+	case GL_MATRIX_PALETTE_OES:
+		m_MatrixPaletteEnabled = value;
 		break;
 
 	default:

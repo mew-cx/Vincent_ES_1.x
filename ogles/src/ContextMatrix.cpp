@@ -52,21 +52,21 @@ void Context :: MatrixMode(GLenum mode) {
 	switch (mode) {
 	case GL_MODELVIEW:
 		m_CurrentMatrixStack = &m_ModelViewMatrixStack;
-		m_MatrixPaletteEnabled = false;
+		m_MatrixModePaletteEnabled = false;
 		return;
 
 	case GL_PROJECTION:
 		m_CurrentMatrixStack = &m_ProjectionMatrixStack;
-		m_MatrixPaletteEnabled = false;
+		m_MatrixModePaletteEnabled = false;
 		return;
 
 	case GL_TEXTURE:
 		m_CurrentMatrixStack = &m_TextureMatrixStack;
-		m_MatrixPaletteEnabled = false;
+		m_MatrixModePaletteEnabled = false;
 		return;
 
 	case GL_MATRIX_PALETTE_OES:
-		m_MatrixPaletteEnabled = true;
+		m_MatrixModePaletteEnabled = true;
 		return;
 
 	default:
@@ -92,7 +92,7 @@ void Context :: UpdateInverseModelViewMatrix(void) {
 
 void Context :: LoadIdentity(void) { 
 
-	if (!m_MatrixPaletteEnabled) {
+	if (!m_MatrixModePaletteEnabled) {
 		CurrentMatrixStack()->LoadIdentity();
 		RebuildMatrices();
 	} else {
@@ -103,7 +103,7 @@ void Context :: LoadIdentity(void) {
 
 void Context :: LoadMatrixx(const GLfixed *m) { 
 
-	if (!m_MatrixPaletteEnabled) {
+	if (!m_MatrixModePaletteEnabled) {
 		CurrentMatrixStack()->LoadMatrix(m);
 		RebuildMatrices();
 	} else {
@@ -113,7 +113,7 @@ void Context :: LoadMatrixx(const GLfixed *m) {
 }
 
 void Context :: MultMatrix(const Matrix4x4 & m) {
-	if (!m_MatrixPaletteEnabled) {
+	if (!m_MatrixModePaletteEnabled) {
 		CurrentMatrixStack()->MultMatrix(m);
 		RebuildMatrices();
 	} else {
@@ -128,7 +128,7 @@ void Context :: MultMatrixx(const GLfixed *m) {
 
 void Context :: PopMatrix(void) { 
 
-	if (m_MatrixPaletteEnabled) {
+	if (m_MatrixModePaletteEnabled) {
 		RecordError(GL_INVALID_OPERATION);
 		return;
 	}
@@ -142,7 +142,7 @@ void Context :: PopMatrix(void) {
 }
 
 void Context :: PushMatrix(void) { 
-	if (m_MatrixPaletteEnabled) {
+	if (m_MatrixModePaletteEnabled) {
 		RecordError(GL_INVALID_OPERATION);
 		return;
 	}
@@ -192,7 +192,7 @@ GLbitfield Context :: QueryMatrixx(GLfixed mantissa[16], GLint exponent[16]) {
 
 	const Matrix4x4* currentMatrix;
 	
-	if (!m_MatrixPaletteEnabled) {
+	if (!m_MatrixModePaletteEnabled) {
 		currentMatrix = &CurrentMatrixStack()->CurrentMatrix();
 	} else {
 		currentMatrix = m_MatrixPalette + m_CurrentPaletteMatrix;
