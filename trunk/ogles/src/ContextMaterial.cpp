@@ -111,6 +111,21 @@ void Context :: Materialxv(GLenum face, GLenum pname, const GLfixed *params) {
 }
 
 void Context :: GetMaterialxv(GLenum face, GLenum pname, GLfixed *params) {
-	assert(0);
+	if (face != GL_FRONT_AND_BACK) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	switch (pname) {
+	case GL_AMBIENT:
+	case GL_DIFFUSE:
+	case GL_SPECULAR:
+	case GL_EMISSION:
+	case GL_SHININESS:
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
 }
 

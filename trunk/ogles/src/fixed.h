@@ -328,9 +328,22 @@ inline EGL_Fixed EGL_Inverse(EGL_Fixed value) {
 // Parameters:
 //	value		-	the number whose square root should be calculated
 // --------------------------------------------------------------------------
-inline EGL_Fixed EGL_Sqrt(EGL_Fixed value) {
+inline EGL_Fixed EGL_FastSqrt(EGL_Fixed value) {
 	U32 result;
 	gppSqrtLP_16_32s(static_cast<U32>(value), &result);
+	return static_cast<I32>(result);
+}
+
+
+// --------------------------------------------------------------------------
+// Calculate square root of fixed point number
+//
+// Parameters:
+//	value		-	the number whose square root should be calculated
+// --------------------------------------------------------------------------
+inline EGL_Fixed EGL_Sqrt(EGL_Fixed value) {
+	U32 result;
+	gppSqrtHP_16_32s(static_cast<U32>(value), &result);
 	return static_cast<I32>(result);
 }
 
