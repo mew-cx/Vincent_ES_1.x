@@ -53,12 +53,14 @@ using namespace EGL;
 
 void Context :: Viewport(GLint x, GLint y, GLsizei width, GLsizei height) { 
 
-	if (width > m_Config.m_Width) {
-		width = m_Config.m_Width;
+	if (width > m_Config.m_Width || width < 0) {
+		RecordError(GL_INVALID_VALUE);
+		return;
 	}
 
-	if (height > m_Config.m_Height) {
-		height = m_Config.m_Height;
+	if (height > m_Config.m_Height || height < 0) {
+		RecordError(GL_INVALID_VALUE);
+		return;
 	}
 
 	m_Viewport = Rect(x, y, width, height);
