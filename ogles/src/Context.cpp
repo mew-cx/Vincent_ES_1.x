@@ -59,8 +59,6 @@ Context :: Context(const Config & config)
 
 	// transformation matrices
 	m_ModelViewMatrixStack(16),
-	m_ProjectionMatrixStack(2),
-	m_TextureMatrixStack(2),
 	m_CurrentMatrixStack(&m_ModelViewMatrixStack),
 	m_MatrixMode(GL_MODELVIEW),
 	m_Scissor(0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
@@ -672,7 +670,7 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_MAX_TEXTURE_STACK_DEPTH:
-		params[0] = m_TextureMatrixStack.GetStackSize();
+		params[0] = m_TextureMatrixStack[m_ActiveTexture].GetStackSize();
 		break;
 
 	case GL_MAX_TEXTURE_SIZE:
@@ -1082,7 +1080,7 @@ bool Context :: GetFixedv(GLenum pname, GLfixed *params) {
 		break;
 
 	case GL_TEXTURE_MATRIX:
-		CopyMatrix(m_TextureMatrixStack.CurrentMatrix(), params);
+		CopyMatrix(m_TextureMatrixStack[m_ActiveTexture].CurrentMatrix(), params);
 		break;
 
 	case GL_FOG_COLOR:
