@@ -278,10 +278,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	DECL_REG	(regStartWindowZ);
 	DECL_REG	(regStartTextureU);
-	DECL_REG	(regDuDx);
 	DECL_REG	(regStartTextureDuDy);
 	DECL_REG	(regStartTextureV);
-	DECL_REG	(regDvDx);
 	DECL_REG	(regStartTextureDvDy);
 	DECL_REG	(regStartFog);
 	DECL_REG	(regStartDepth);
@@ -314,6 +312,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FMUL	(regV, regStartTextureV, regZ);
 
 	// texture gradients for mipmap selection
+	DECL_REG	(regDuDx);
+	DECL_REG	(regDvDx);
 	DECL_REG	(regAbsDuDx);
 	DECL_REG	(regAbsDvDx);
 

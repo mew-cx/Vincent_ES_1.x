@@ -62,7 +62,7 @@ extern "C" {
 #endif
 
 
-#define GL_OES_querymatrix		    1
+#define GL_OES_query_matrix		    1
 
 /* OES_query_matrix */
 GLAPI GLbitfield APIENTRY glQueryMatrixxOES(GLfixed *mantissa, GLint *exponent);

@@ -9,14 +9,18 @@ Version 0.80
 ------------
 
 This version constitutes a major milestone for Vincent. First of all, Vincent has become
-feature complete and can pass the full OpenGL ES conformance test in internal runs.
+feature complete and can pass the full OpenGL ES conformance test in internal runs. From this
+point on, all releases of Vincent will be fully regression tested against the conformance
+test.
 
-Second, initial support for Symbian has been added; specifically support for implementations
-of Nokia's Series 60 platform.
+Second, first steps towards support for Symbian has been added; specifically support for implementations
+of Nokia's Series 60 platform. The implementations is not fully working yet, but at least will compile
+without errors. If you are interested in completing this port, please contact the project administrator.
 
 This version addresses the following issues:
 
 980877 - Mipmaps Selection test failed.
+980878 - Mipmaps Interpolation test failed.
 
 
 Version 0.79

@@ -778,11 +778,14 @@ static void emit_unary_log2(cg_codegen_t * gen, cg_inst_unary_t * inst, int upda
 	ARM_MOV_REG_IMM8(gen->cseg,
 					 inst->dest_value->physical_reg->regno,
 					 0);
+	ARM_MOV_REG_REG(gen->cseg,
+					temp_physical_reg0->regno,
+					inst->operand.source->physical_reg->regno);	    
 
     //if (f & 0xff00) { exp += 8; f >>= 8; }
 	ARM_ANDS_REG_IMM(gen->cseg,
 					 temp_physical_reg1->regno,
-					 inst->operand.source->physical_reg->regno,
+					 temp_physical_reg0->regno,
 					 0xff, 
 					 calc_arm_mov_const_shift(0xff00));
 	ARM_MOV_REG_IMM8_COND(gen->cseg,
@@ -790,12 +793,8 @@ static void emit_unary_log2(cg_codegen_t * gen, cg_inst_unary_t * inst, int upda
 						  8, ARMCOND_NE);
 	ARM_MOV_REG_IMMSHIFT_COND(gen->cseg,
 						 temp_physical_reg0->regno,
-						 inst->operand.source->physical_reg->regno,
-						 ARMSHIFT_ASR, 8, ARMCOND_NE);	    
-	ARM_MOV_REG_REG_COND(gen->cseg,
 						 temp_physical_reg0->regno,
-						 inst->operand.source->physical_reg->regno,
-						 ARMCOND_EQ);	    
+						 ARMSHIFT_ASR, 8, ARMCOND_NE);	    
 	//if (f & 0xf0) { exp += 4; f >>= 4; }
 	ARM_ANDS_REG_IMM8(gen->cseg,
 					  temp_physical_reg1->regno,
