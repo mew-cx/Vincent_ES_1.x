@@ -60,7 +60,7 @@ namespace {
 
 		LDI(offset, constant);
 		ADD(addr, base, offset);
-		cg_create_inst_load(block, cg_op_ldw,	value, addr);
+		LDW(value, addr);
 
 		return value;
 	}
@@ -292,7 +292,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		} else if (branchOnDepthTestFailed == cg_op_bra) {
 			BRA		(continuation);
 		} else {
-			cg_create_inst_branch_cond(block, branchOnDepthTestFailed, regDepthTest, continuation);
+			cg_create_inst_branch_cond(block, branchOnDepthTestFailed, regDepthTest, continuation CG_INST_DEBUG_ARGS);
 		}
 	}
 
@@ -1704,7 +1704,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			if (failedTest == cg_op_bra) {
 				BRA		(continuation);
 			} else {
-				cg_create_inst_branch_cond(block, failedTest, regAlphaTest, continuation);
+				cg_create_inst_branch_cond(block, failedTest, regAlphaTest, continuation CG_INST_DEBUG_ARGS);
 			}
 		}
 	}
@@ -1778,7 +1778,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		cg_block_ref_t * labelStencilPassed = cg_block_ref_create(procedure);
 		cg_block_ref_t * labelStencilBypassed = cg_block_ref_create(procedure);
 
-		cg_create_inst_branch_cond(block, passedTest,	regStencilTest, labelStencilPassed);
+		cg_create_inst_branch_cond(block, passedTest,	regStencilTest, labelStencilPassed CG_INST_DEBUG_ARGS);
 
 		//if (!stencilTest) {
 		{
@@ -1864,7 +1864,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			} else if (branchOnDepthTestPassed == cg_op_bra) {
 				BRA		(labelStencilZTestPassed);
 			} else {
-				cg_create_inst_branch_cond(currentBlock, branchOnDepthTestPassed, regDepthTest, labelStencilZTestPassed);
+				cg_create_inst_branch_cond(currentBlock, branchOnDepthTestPassed, regDepthTest, labelStencilZTestPassed CG_INST_DEBUG_ARGS);
 			}
 
 			{
