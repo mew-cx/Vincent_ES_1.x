@@ -5,11 +5,13 @@ SOURCE Config.cpp
 SOURCE Context.cpp
 SOURCE ContextFloat.cpp
 SOURCE ContextLight.cpp
+SOURCE ContextLines.cpp
 SOURCE ContextMaterial.cpp
 SOURCE ContextMatrix.cpp
 SOURCE ContextMesh.cpp
 SOURCE ContextPoints.cpp
 SOURCE ContextRender.cpp
+SOURCE ContextRaster.cpp
 SOURCE ContextTexture.cpp
 SOURCE ContextTriangles.cpp
 SOURCE ContextViewport.cpp
@@ -18,7 +20,6 @@ SOURCE fixed.cpp
 SOURCE gl.cpp
 SOURCE Light.cpp
 SOURCE linalg.cpp
-SOURCE Lines.cpp
 SOURCE Material.cpp
 SOURCE MatrixStack.cpp
 SOURCE Rasterizer.cpp
