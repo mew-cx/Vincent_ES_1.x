@@ -59,7 +59,7 @@
 
 #define EGL_CONFIG_VENDOR			"Hans-Martin Will"
 #define EGL_CONFIG_VERSION			"OpenGL ES-CL 1.0"
-#define EGL_CONFIG_EXTENSIONS		"OES_fixed_point"
+#define EGL_CONFIG_EXTENSIONS		"OES_fixed_point GL_SGIS_generate_mipmap"
 
 #ifdef EGL_USE_GPP
 #	define EGL_CONFIG_RENDERER		"Software GPP"

@@ -172,6 +172,13 @@ namespace EGL {
 			return Color(r, g, b, a);
 		}
 
+		static inline Color FromLuminanceAlpha(U16 la) {
+			U8 l = (la & 0xff);
+			U8 a = (la & 0xff00) >> 8;
+
+			return Color(l, l, l, a);
+		}
+
 		Color operator+(const Color& other) const {
 			return Color(clamp(r + other.r), clamp(g + other.g), 
 				clamp(b + other.b), clamp(a + other.a));
@@ -198,6 +205,21 @@ namespace EGL {
 		}
 
 		static void InitAlphaFactorTable();
+
+		static inline Color Average(const Color & a, const Color & b) {
+			return Color((a.R() + b.R()) / 2,
+						 (a.G() + b.G()) / 2,
+						 (a.B() + b.B()) / 2,
+						 (a.A() + b.A()) / 2);
+		}
+
+		static inline Color Average(const Color & a, const Color & b,
+									const Color & c, const Color & d) {
+			return Color((a.R() + b.R() + c.R() + d.R()) / 4,
+						 (a.G() + b.G() + c.G() + d.G()) / 4,
+						 (a.B() + b.B() + c.B() + d.B()) / 4,
+						 (a.A() + b.A() + c.A() + d.A()) / 4);
+		}
 
 	private:
 		static U8 clamp(U16 value) {

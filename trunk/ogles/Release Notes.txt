@@ -5,6 +5,18 @@ This document collects changes on a release to release base. For open known issu
 the bug database on sourceforge. 
 
 
+Version 0.7
+-----------
+
+This version is a major upgrade from version 0.2. Most notably, it provides a first version of the
+runtime compiler infrastructure that generates rasterization code on the fly based on the current
+settings.
+
+In addition, the following issues are addressed:
+
+864042 - Automatic Mipmap Generation
+863653 - Specialized rasterization functions (replace by runtime compiler)
+
 
 Version 0.2
 -----------

@@ -92,7 +92,10 @@ Context :: Context(const Config & config)
 	// general context state
 	m_Current(false),
 	m_Disposed(false),
-	m_ViewportInitialized(false)
+	m_ViewportInitialized(false),
+
+	// SGIS_generate_mipmap extension
+	m_GenerateMipmaps(false)
 {
 	DepthRangex(VIEWPORT_NEAR, VIEWPORT_FAR);
 	m_Textures.push_back(new MultiTexture());
@@ -359,7 +362,10 @@ void Context :: Enable(GLenum cap) {
 	Toggle(cap, true);
 }
 
-void Context :: Hint(GLenum target, GLenum mode) { }
+void Context :: Hint(GLenum target, GLenum mode) { 
+	// in principle, we have to fail for any target/mode combination 
+	// that is not defined
+}
 
 void Context :: GetIntegerv(GLenum pname, GLint *params) { 
 	switch (pname) {

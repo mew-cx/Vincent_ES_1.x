@@ -294,6 +294,9 @@ namespace EGL {
 		void UpdateVertexTransformation(void);
 		void RebuildMatrices(void);
 
+		// SGIS_generate_mipmap extension
+		void UpdateMipmaps(void);
+
 		void RecordError(GLenum error);
 		void Toggle(GLenum cap, bool value);
 		void ToggleClientState(GLenum array, bool value);
@@ -438,6 +441,7 @@ private:
 		bool				m_SampleAlphaToCoverageEnabled;
 		bool				m_SampleAlphaToOneEnabled;
 		bool				m_SampleCoverageEnabled;
+		bool				m_GenerateMipmaps;
 
 		I32					m_PixelStorePackAlignment;
 		I32					m_PixelStoreUnpackAlignment;

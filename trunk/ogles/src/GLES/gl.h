@@ -582,6 +582,15 @@ GLAPI void APIENTRY glTranslatex (GLfixed x, GLfixed y, GLfixed z);
 GLAPI void APIENTRY glVertexPointer (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
 GLAPI void APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height);
 
+/****************************************************************************/
+/* Extension: SGIS_generate_mipmap											*/
+/****************************************************************************/
+
+
+#define GL_GENERATE_MIPMAP_SGIS			0x8191
+#define GL_GENERATE_MIPMAP_HINT_SGIS	0x8192
+
+
 #ifdef __cplusplus
 }
 #endif
