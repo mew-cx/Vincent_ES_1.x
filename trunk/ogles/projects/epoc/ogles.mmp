@@ -1,7 +1,6 @@
 TARGET gles_cl.dll
 TARGETTYPE dll
 SOURCEPATH ..\..\src
-SOURCE Color.cpp
 SOURCE Config.cpp
 SOURCE Context.cpp
 SOURCE ContextFloat.cpp
@@ -43,4 +42,6 @@ USERINCLUDE ..\..\src
 SYSTEMINCLUDE ..\..\src
 SYSTEMINCLUDE \epoc32\include\libc
 SYSTEMINCLUDE \epoc32\include
-LIBRARY codegen.lib
+LIBRARY codegen.lib ws32.lib fbscli.lib 
+LIBRARY		estlib.lib euser.lib
+STATICLIBRARY	ecrt0.lib

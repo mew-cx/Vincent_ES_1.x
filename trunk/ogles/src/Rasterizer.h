@@ -117,13 +117,13 @@ namespace EGL {
 
 	struct RasterInfo {
 		// surface info
-		I32		SurfaceWidth;
-		I32		SurfaceHeight;
-		I32 *	DepthBuffer;
-		U16 *	ColorBuffer;
-		U32 *	StencilBuffer;
-		U8 *	AlphaBuffer;
-		I32 *	InversionTablePtr;
+		I32			SurfaceWidth;
+		I32			SurfaceHeight;
+		I32 *		DepthBuffer;
+		U16 *		ColorBuffer;
+		U32 *		StencilBuffer;
+		U8 *		AlphaBuffer;
+		const I32 *	InversionTablePtr;
 
 		// TODO: will need to add a minimum texture level here
 		// TODO: 
@@ -147,7 +147,7 @@ namespace EGL {
 			InversionTablePtr = InversionTable;
 		}
 
-		static I32 InversionTable[];
+		static const I32 InversionTable[];
 	};
 
 	// signature for generated scanline functions

@@ -408,7 +408,7 @@ EGLBoolean Config :: ChooseConfig(const EGLint * attribList, EGLConfig * result,
 // --------------------------------------------------------------------------
 
 
-Config Config :: s_AllConfigurations[1] = {
+const Config Config :: s_AllConfigurations[1] = {
 	// ----------------------------------------------------------------------
 	// Initial default configuration 
 	// RGB 565, as PBuffer or Windows surface
@@ -443,4 +443,4 @@ Config Config :: s_AllConfigurations[1] = {
 };
 
 // total number of supported configurations
-int Config :: s_NumConfigurations = 1;
+const int Config :: s_NumConfigurations = 1;

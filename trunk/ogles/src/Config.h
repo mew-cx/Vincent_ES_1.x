@@ -122,8 +122,8 @@ namespace EGL {
 		EGLint  m_Width;
 		EGLint	m_Height;
 
-		static Config s_AllConfigurations[];
-		static int s_NumConfigurations;
+		static const Config s_AllConfigurations[];
+		static const int s_NumConfigurations;
 	};
 
 }

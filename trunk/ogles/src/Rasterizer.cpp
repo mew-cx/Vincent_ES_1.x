@@ -1061,7 +1061,7 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 }
 
 
-I32 RasterInfo::InversionTable[] = {
+const I32 RasterInfo::InversionTable[] = {
 	0, 
 	EGL_FixedFromFloat(1.0f / 1.0f), 
 	EGL_FixedFromFloat(1.0f / 2.0f), 
