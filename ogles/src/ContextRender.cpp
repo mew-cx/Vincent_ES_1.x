@@ -588,6 +588,7 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 			}
 
 			color.Clamp();
+			rasterPos->m_FrontColor = color;
 		}
 			
 		// populate fog density here...
