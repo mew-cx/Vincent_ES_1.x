@@ -116,14 +116,20 @@ cg_virtual_reg_t ** cg_inst_def(const cg_inst_t * inst,
 			if (inst->binary.dest_flags)
 				dest = add_reg(inst->binary.dest_flags, dest, limit);
 				
-				return dest;
+			return dest;
 			
 		case cg_inst_compare:	
 		case cg_inst_arm_compare_immed:	
 		case cg_inst_arm_compare_shift_reg:	
 		case cg_inst_arm_compare_shift_immed:	
 			return add_reg(inst->compare.dest_flags, dest, limit);
-			
+
+		default:
+			;
+	}
+
+	switch (inst->base.kind) 
+	{		
 		case cg_inst_load:	
 		case cg_inst_arm_load_immed_offset:	
 		case cg_inst_arm_load_reg_offset:	
