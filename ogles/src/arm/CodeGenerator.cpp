@@ -1686,33 +1686,33 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				break;
 
 			case RasterizerState::CompFuncLess:		
-				//stencilTest = stencil < stencilRef;	
-				passedTest = cg_op_blt;
+				//stencilTest = stencilRef < stencil;	
+				passedTest = cg_op_bge;
 				break;
 
 			case RasterizerState::CompFuncEqual:	
-				//stencilTest = stencil == stencilRef;
-				passedTest = cg_op_beq;
-				break;
-
-			case RasterizerState::CompFuncLEqual:	
-				//stencilTest = stencil <= stencilRef;
-				passedTest = cg_op_ble;
-				break;
-
-			case RasterizerState::CompFuncGreater:	
-				//stencilTest = stencil > stencilRef;	
-				passedTest = cg_op_bgt;
-				break;
-
-			case RasterizerState::CompFuncNotEqual:	
-				//stencilTest = stencil != stencilRef;
+				//stencilTest = stencilRef == stencil;
 				passedTest = cg_op_bne;
 				break;
 
+			case RasterizerState::CompFuncLEqual:	
+				//stencilTest = stencilRef <= stencil;
+				passedTest = cg_op_bgt;
+				break;
+
+			case RasterizerState::CompFuncGreater:	
+				//stencilTest = stencilRef > stencil;	
+				passedTest = cg_op_ble;
+				break;
+
+			case RasterizerState::CompFuncNotEqual:	
+				//stencilTest = stencilRef != stencil;
+				passedTest = cg_op_beq;
+				break;
+
 			case RasterizerState::CompFuncGEqual:	
-				//stencilTest = stencil >= stencilRef;
-				passedTest = cg_op_bge;
+				//stencilTest = stencilRef >= stencil;
+				passedTest = cg_op_blt;
 				break;
 
 			case RasterizerState::CompFuncAlways:	
@@ -1811,7 +1811,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			} else if (branchOnDepthTestPassed == cg_op_bra) {
 				BRA		(labelStencilZTestPassed);
 			} else {
-				cg_create_inst_branch_cond(currentBlock, branchOnDepthTestPassed, regDepthTest, labelStencilZTestPassed CG_INST_DEBUG_ARGS);
+				DECL_FLAGS(regDepthTest1);
+
+				FCMP	(regDepthTest1, fragmentInfo.regDepth, regZBufferValue);
+				cg_create_inst_branch_cond(currentBlock, branchOnDepthTestPassed, regDepthTest1, labelStencilZTestPassed CG_INST_DEBUG_ARGS);
 			}
 
 			{
