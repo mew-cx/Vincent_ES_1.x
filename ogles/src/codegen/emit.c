@@ -955,9 +955,9 @@ static void emit_binary_multiply_fixed(cg_codegen_t * gen, cg_inst_binary_t * in
 	
 	/* may need to create a mask based on the registers allocated for		*/
 	/* the other operands													*/
-	mask = ~(inst->dest_value->physical_reg->regno  |
-			 inst->source->physical_reg->regno		|
-			 inst->operand.source->physical_reg->regno);
+	mask = ~((1u << inst->dest_value->physical_reg->regno)  |
+			 (1u << inst->source->physical_reg->regno)		|
+			 (1u << inst->operand.source->physical_reg->regno));
 	
 	temp_physical_reg = allocate_reg(gen, &temp_reg, mask);
 	assign_reg(gen, temp_physical_reg, &temp_reg);
@@ -992,6 +992,47 @@ static void emit_binary_multiply_fixed(cg_codegen_t * gen, cg_inst_binary_t * in
 	
 	// release the temporary register
 	deallocate_reg(gen, temp_physical_reg);
+}
+
+
+static void emit_binary_minmax(cg_codegen_t * gen, cg_inst_binary_t * inst, int update_flags)
+{
+	ARMCond condition;
+	ARMCond neg_condition;
+
+	assert(!update_flags);
+	assert(inst->base.kind == cg_inst_binary);
+
+	ARM_CMP_REG_REG(gen->cseg, 
+					inst->source->physical_reg->regno,
+					inst->operand.source->physical_reg->regno);
+
+	switch (inst->base.opcode) {
+	case cg_op_min:
+		condition = ARMCOND_LE;
+		neg_condition = ARMCOND_GT;
+		break;
+
+	case cg_op_max:
+		condition = ARMCOND_GE;
+		neg_condition = ARMCOND_LT;
+		break;
+
+	default:
+		assert(0);
+		break;
+	}
+
+	ARM_MOV_REG_REG_COND(gen->cseg,
+						 inst->dest_value->physical_reg->regno,
+						 inst->source->physical_reg->regno,
+						 condition);
+					
+	ARM_MOV_REG_REG_COND(gen->cseg,
+						 inst->dest_value->physical_reg->regno,
+						 inst->operand.source->physical_reg->regno,
+						 neg_condition);
+					
 }
 
 
@@ -1043,6 +1084,12 @@ static void emit_binary(cg_codegen_t * gen, cg_inst_binary_t * inst, int update_
 			emit_binary_multiply_fixed(gen, inst, update_flags);
 			break;
 			
+		/* min and max */
+		case cg_op_min:
+		case cg_op_max:
+			emit_binary_minmax(gen, inst, update_flags);
+			break;
+
 		default:
 			assert(0);
 	}
