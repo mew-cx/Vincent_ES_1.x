@@ -25,7 +25,20 @@ using namespace EGL;
 // Local helper functions
 // --------------------------------------------------------------------------
 
+// TODO: Add lookup table for multiplication of 0..0xff * 0..0xff
+
 namespace {
+
+	inline U8 MulU8(U8 a, U8 b) {
+		// TODO: use lookup table and treat ranges correctly
+		return (a * b) >> 8; 
+	}
+
+	inline U8 ClampU8(U16 value) {
+		return (value > 0xff) ? (U8) 0xff : (U8) value;
+	}
+
+
 	I8 Permutation[8][3] = {
 		{ 0, 1, 2 },
 		{ 0, 2, 1 },
@@ -490,23 +503,105 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 
 	for (; x < xEnd; ++x) {
 
-		FractionalColor color;
+		Color color = baseColor;
 
 		if (m_State->m_TextureEnabled) {
-			FractionalColor texColor = m_State->m_Texture->GetTexture(0)->GetPixel(tu, tv);
 
-#if 0
-			switch (m_State->m_TextureMode) {
-				case TextureModeDecal:
-				case TextureModeReplace:
-				case TextureModeBlend:
-				case TextureModeAdd:
-				case TextureModeModulate:
+			EGL_Fixed tu0 = m_State->m_Texture->GetWrappedS(tu);
+			EGL_Fixed tv0 = m_State->m_Texture->GetWrappedS(tv);
+
+			Color texColor = 
+				m_State->m_Texture->GetTexture(0)->GetPixel(tu0, tv0);
+
+			switch (m_State->m_Texture->GetTexture(0)->GetInternalFormat()) {
+				default:
+				case Texture::TextureFormatAlpha:
+					switch (m_State->m_TextureMode) {
+						case RasterizerState::TextureModeReplace:
+							color = Color(color.r, color.g, color.b, texColor.a);
+							break;
+
+						case RasterizerState::TextureModeModulate:
+						case RasterizerState::TextureModeBlend:
+						case RasterizerState::TextureModeAdd:
+							color = Color(color.r, color.g, color.b, MulU8(color.a, texColor.a));
+							break;
+					}
+					break;
+
+				case Texture::TextureFormatLuminance:
+				case Texture::TextureFormatRGB:
+					switch (m_State->m_TextureMode) {
+						case RasterizerState::TextureModeDecal:
+						case RasterizerState::TextureModeReplace:
+							color = Color(texColor.r, texColor.g, texColor.b, color.a);
+							break;
+
+						case RasterizerState::TextureModeModulate:
+							color = Color(MulU8(color.r, texColor.r), 
+								MulU8(color.g, texColor.g), MulU8(color.b, texColor.b), color.a);
+							break;
+
+						case RasterizerState::TextureModeBlend:
+							color = 
+								Color(
+									MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
+									MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
+									MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
+									color.a);
+							break;
+
+						case RasterizerState::TextureModeAdd:
+							color =
+								Color(
+									ClampU8(color.r + texColor.r),
+									ClampU8(color.g + texColor.g),
+									ClampU8(color.b + texColor.b),
+									color.a);
+							break;
+					}
+					break;
+
+				case Texture::TextureFormatLuminanceAlpha:
+				case Texture::TextureFormatRGBA:
+					switch (m_State->m_TextureMode) {
+						case RasterizerState::TextureModeReplace:
+							color = texColor;
+							break;
+
+						case RasterizerState::TextureModeModulate:
+							color = color * texColor;
+							break;
+
+						case RasterizerState::TextureModeDecal:
+							color = 
+								Color(
+									MulU8(color.r, 0xff - texColor.a) + MulU8(texColor.r, texColor.a),
+									MulU8(color.g, 0xff - texColor.a) + MulU8(texColor.g, texColor.a),
+									MulU8(color.b, 0xff - texColor.a) + MulU8(texColor.b, texColor.a),
+									color.a);
+							break;
+
+						case RasterizerState::TextureModeBlend:
+							color = 
+								Color(
+									MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
+									MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
+									MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
+									MulU8(color.a, texColor.a));
+							break;
+
+						case RasterizerState::TextureModeAdd:
+							color =
+								Color(
+									ClampU8(color.r + texColor.r),
+									ClampU8(color.g + texColor.g),
+									ClampU8(color.b + texColor.b),
+									MulU8(color.a, texColor.a));
+							break;
+					}
+					break;
 			}
-#endif
-			color = baseColor * texColor;
-		} else {
-			color = baseColor;
 		}
 
 		Fragment(x, y, w, color);

@@ -108,6 +108,9 @@ namespace EGL {
 		WrappingMode GetWrappingModeS() const		{ return m_WrappingModeS; }
 		WrappingMode GetWrappingModeT() const		{ return m_WrappingModeT; }
 
+		EGL_Fixed GetWrappedS(EGL_Fixed s) const;
+		EGL_Fixed GetWrappedT(EGL_Fixed t) const;
+
 	private:
 		Texture	*		m_TextureLevels[MAX_LEVELS];
 		MinFilterMode	m_MinFilterMode;
@@ -116,6 +119,30 @@ namespace EGL {
 		WrappingMode	m_WrappingModeT;
 		U32				m_Levels;
 	};
+
+	inline EGL_Fixed MultiTexture :: GetWrappedS(EGL_Fixed s) const {
+		switch (m_WrappingModeS) {
+			case WrappingModeClampToEdge:
+				return EGL_CLAMP(s, 0, EGL_ONE);
+
+			default:
+			case WrappingModeRepeat:
+				return s & 0xffff;
+		}
+	}
+
+
+	inline EGL_Fixed MultiTexture :: GetWrappedT(EGL_Fixed t) const {
+		switch (m_WrappingModeT) {
+			case WrappingModeClampToEdge:
+				return EGL_CLAMP(t, 0, EGL_ONE);
+
+			default:
+			case WrappingModeRepeat:
+				return t & 0xffff;
+		}
+	}
+
 
 	inline Color Texture :: GetPixel(EGL_Fixed tu, EGL_Fixed tv) const {
 		I32 x = EGL_IntFromFixed(m_Width * EGL_CLAMP(tu, 0, EGL_ONE));
