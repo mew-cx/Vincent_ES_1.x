@@ -314,16 +314,18 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FMUL	(regV, regStartTextureV, regZ);
 
 	// texture gradients for mipmap selection
-	LDW		(regDuDx, regAddrStartTextureDuDx);
-	LDW		(regStartTextureDuDy, regAddrStartTextureDuDy);
-	LDW		(regDvDx, regAddrStartTextureDvDx);
-	LDW		(regStartTextureDvDy, regAddrStartTextureDvDy);
-
 	DECL_REG	(regAbsDuDx);
 	DECL_REG	(regAbsDvDx);
 
-	ABS			(regAbsDuDx, regDuDx);	
-	ABS			(regAbsDvDx, regDuDx);	
+	LDW		(regDuDx, regAddrStartTextureDuDx);
+	ABS		(regAbsDuDx, regDuDx);	
+	LDW		(regDvDx, regAddrStartTextureDvDx);
+	ABS		(regAbsDvDx, regDvDx);	
+
+	LDW		(regStartTextureDuDy, regAddrStartTextureDuDy);
+	LDW		(regStartTextureDvDy, regAddrStartTextureDvDy);
+
+
 
 	//FractionalColor baseColor = start.m_Color;
 	DECL_REG	(regStartColorR);
@@ -444,20 +446,9 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 		if (m_State->m_MipmapFilterMode == RasterizerState::FilterModeNearest ||
 			/* remove this */ m_State->m_MipmapFilterMode == RasterizerState::FilterModeLinear) {
-			//	EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
-			DECL_REG	(regShiftedZ);
-			DECL_REG	(regConstant4);
-			DECL_REG	(regZ2);
-
-			LDI			(regConstant4, 4);
-			LSL			(regShiftedZ, regLoop0ZEntry, regConstant4);
-			FMUL		(regZ2, regShiftedZ, regShiftedZ);
-
 			//	EGL_Fixed maxDu = EGL_Mul(EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)), m_Texture->GetTexture(0)->GetWidth());
 			//	EGL_Fixed maxDv = EGL_Mul(EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)), m_Texture->GetTexture(0)->GetHeight());
 
-			cg_virtual_reg_t * regLogWidth = LOAD_DATA(block, regAddrTextures, OFFSET_TEXTURE_LOG_WIDTH);
-			cg_virtual_reg_t * regLogHeight = LOAD_DATA(block, regAddrTextures, OFFSET_TEXTURE_LOG_HEIGHT);
 			DECL_REG	(regAbsDuDy);
 			DECL_REG	(regAbsDvDy);
 
@@ -469,10 +460,20 @@ void CodeGenerator :: GenerateRasterScanLine() {
 			DECL_REG	(regMaxDu);
 			DECL_REG	(regMaxDv);
 
+			cg_virtual_reg_t * regLogWidth = LOAD_DATA(block, regAddrTextures, OFFSET_TEXTURE_LOG_WIDTH);
+			DECL_CONST_REG	(regConstant16, 16);
+
+			DECL_REG	(regShiftDu);
+			DECL_REG	(regShiftDv);
+
 			MAX			(regMaxDu0, regAbsDuDx, regAbsDuDy);
-			LSL			(regMaxDu, regMaxDu0, regLogWidth);
+			SUB			(regShiftDu, regConstant16, regLogWidth);
+			ASR			(regMaxDu, regMaxDu0, regShiftDu);
+
+			cg_virtual_reg_t * regLogHeight = LOAD_DATA(block, regAddrTextures, OFFSET_TEXTURE_LOG_HEIGHT);
 			MAX			(regMaxDv0, regAbsDvDx, regAbsDvDy);
-			LSL			(regMaxDv, regMaxDv0, regLogHeight);
+			SUB			(regShiftDv, regConstant16, regLogHeight);
+			ASR			(regMaxDv, regMaxDv0, regShiftDv);
 			
 			//	EGL_Fixed maxD = maxDu + maxDv;
 			//	EGL_Fixed rho = EGL_Mul(z2, maxD);
@@ -481,6 +482,16 @@ void CodeGenerator :: GenerateRasterScanLine() {
 			DECL_REG	(regRho);
 
 			FADD		(regMaxD, regMaxDu, regMaxDv);
+
+			//	EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
+			DECL_REG	(regShiftedZ);
+			DECL_REG	(regConstant4);
+			DECL_REG	(regZ2);
+
+			LDI			(regConstant4, 4);
+			LSL			(regShiftedZ, regLoop0ZEntry, regConstant4);
+			FMUL		(regZ2, regShiftedZ, regShiftedZ);
+
 			FMUL		(regRho, regMaxD, regZ2);
 
 			// we start with nearest/minification only selection; will add LINEAR later
@@ -735,20 +746,9 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 		if (m_State->m_MipmapFilterMode == RasterizerState::FilterModeNearest ||
 			/* remove this */ m_State->m_MipmapFilterMode == RasterizerState::FilterModeLinear) {
-			//	EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
-			DECL_REG	(regShiftedZ);
-			DECL_REG	(regConstant4);
-			DECL_REG	(regZ2);
-
-			LDI			(regConstant4, 4);
-			LSL			(regShiftedZ, regBlock4Z, regConstant4);
-			FMUL		(regZ2, regShiftedZ, regShiftedZ);
-
 			//	EGL_Fixed maxDu = EGL_Mul(EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)), m_Texture->GetTexture(0)->GetWidth());
 			//	EGL_Fixed maxDv = EGL_Mul(EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)), m_Texture->GetTexture(0)->GetHeight());
 
-			cg_virtual_reg_t * regLogWidth = LOAD_DATA(block, regAddrTextures, OFFSET_TEXTURE_LOG_WIDTH);
-			cg_virtual_reg_t * regLogHeight = LOAD_DATA(block, regAddrTextures, OFFSET_TEXTURE_LOG_HEIGHT);
 			DECL_REG	(regAbsDuDy);
 			DECL_REG	(regAbsDvDy);
 
@@ -760,11 +760,21 @@ void CodeGenerator :: GenerateRasterScanLine() {
 			DECL_REG	(regMaxDu);
 			DECL_REG	(regMaxDv);
 
+			cg_virtual_reg_t * regLogWidth = LOAD_DATA(block, regAddrTextures, OFFSET_TEXTURE_LOG_WIDTH);
+			DECL_CONST_REG	(regConstant16, 16);
+
+			DECL_REG	(regShiftDu);
+			DECL_REG	(regShiftDv);
+
 			MAX			(regMaxDu0, regAbsDuDx, regAbsDuDy);
-			LSL			(regMaxDu, regMaxDu0, regLogWidth);
+			SUB			(regShiftDu, regConstant16, regLogWidth);
+			ASR			(regMaxDu, regMaxDu0, regShiftDu);
+
+			cg_virtual_reg_t * regLogHeight = LOAD_DATA(block, regAddrTextures, OFFSET_TEXTURE_LOG_HEIGHT);
 			MAX			(regMaxDv0, regAbsDvDx, regAbsDvDy);
-			LSL			(regMaxDv, regMaxDv0, regLogHeight);
-			
+			SUB			(regShiftDv, regConstant16, regLogHeight);
+			ASR			(regMaxDv, regMaxDv0, regShiftDv);
+
 			//	EGL_Fixed maxD = maxDu + maxDv;
 			//	EGL_Fixed rho = EGL_Mul(z2, maxD);
 
@@ -772,6 +782,16 @@ void CodeGenerator :: GenerateRasterScanLine() {
 			DECL_REG	(regRho);
 
 			FADD		(regMaxD, regMaxDu, regMaxDv);
+
+			//	EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
+			DECL_REG	(regShiftedZ);
+			DECL_REG	(regConstant4);
+			DECL_REG	(regZ2);
+
+			LDI			(regConstant4, 4);
+			LSL			(regShiftedZ, regBlock4Z, regConstant4);
+			FMUL		(regZ2, regShiftedZ, regShiftedZ);
+
 			FMUL		(regRho, regMaxD, regZ2);
 
 			// we start with nearest/minification only selection; will add LINEAR later
