@@ -86,8 +86,14 @@ void Texture :: Initialize(U32 width, U32 height, TextureFormat format) {
 
 
 MultiTexture :: MultiTexture() {
+	for (int index = 0; index < MAX_LEVELS; ++index) {
+		m_TextureLevels[index] = new Texture();
+	}
 }
 
 
 MultiTexture :: ~MultiTexture() {
+	for (int index = 0; index < MAX_LEVELS; ++index) {
+		delete m_TextureLevels[index];
+	}
 }
