@@ -15,6 +15,7 @@ been added.
 In addition, a couple of defects that showed up in those examples have been addressed:
 
 1001348 - By default, smooth shading should be enabled
+1001352 - movelight example is rendered incorrectly
 
 
 Version 0.80

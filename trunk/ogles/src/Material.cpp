@@ -49,6 +49,12 @@ using namespace EGL;
 // ==========================================================================
 
 
+Material :: Material():
+	m_AmbientColor(F(0.2f), F(0.2f), F(0.2f), F(1.0f)),
+	m_DiffuseColor(F(0.8f), F(0.8f), F(0.8f), F(1.0f))
+{
+}
+
 void Material :: SetAmbientColor(const FractionalColor & color) {
 	m_AmbientColor = color;
 }

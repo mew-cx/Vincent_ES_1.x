@@ -48,6 +48,7 @@ namespace EGL {
 	class Material {
 
 	public:
+		Material();
 
 		void SetAmbientColor(const FractionalColor & color);
 		inline const FractionalColor& GetAmbientColor() const;
