@@ -36,6 +36,7 @@
 #include "codegen.h"
 #include "instruction.h"
 #include "heap.h"
+#include "segment.h"
 
 
 #ifdef __cplusplus
@@ -114,6 +115,7 @@ void cg_codegen_define(cg_codegen_t * gen, cg_label_t * label);
 void cg_codegen_reference(cg_codegen_t * gen, cg_label_t * label, 
 						  cg_reference_type_t ref_type);
 
+cg_segment_t * cg_codegen_segment(cg_codegen_t * gen);
 
 #ifdef __cplusplus
 }
