@@ -400,9 +400,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				LDI		(regMask6, 0x3f);
 				LDI		(regConstant2, 2);
 				LDI		(regConstant3, 3);
-				LSL		(regColor5, regTexData, regConstant3);
+				LSR		(regColor5, regTexData, regConstant3);
 				AND		(regTexColorR, regColor5, regMask5);
-				LSL		(regColor6, regTexData, regConstant2);
+				LSR		(regColor6, regTexData, regConstant2);
 				AND		(regTexColorG, regColor6, regMask6);
 
 				Color565FromRGB(block, regTexColor565, regTexColorR,
@@ -457,9 +457,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				LDI		(regMask6, 0x3f);
 				LDI		(regConstant2, 2);
 				LDI		(regConstant3, 3);
-				LSL		(regColor5, regTexData, regConstant3);
+				LSR		(regColor5, regTexData, regConstant3);
 				AND		(regTexColorR, regColor5, regMask5);
-				LSL		(regColor6, regTexData, regConstant2);
+				LSR		(regColor6, regTexData, regConstant2);
 				AND		(regTexColorG, regColor6, regMask6);
 
 				Color565FromRGB(block, regTexColor565, regTexColorR,

@@ -19,6 +19,8 @@ This version addresses the following issues:
 980874 - Texture Edge Clamp test failed.
 970910 - Triangle Tile test failed.
 980879 - Packed Pixels test failed.
+980882 - Copy Texture test failed. For this issue, there still needs to be a clarification 
+	 from the review board concerning the minimum bit depth required for textures.
 
 
 Version 0.78
