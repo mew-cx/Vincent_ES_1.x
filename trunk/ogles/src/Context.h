@@ -22,6 +22,7 @@
 #include "Material.h"
 #include "Light.h"
 #include "RasterizerState.h"
+#include "Rasterizer.h"
 #include "MatrixStack.h"
 
 
@@ -71,11 +72,6 @@ namespace EGL {
 	//
 
 
-	typedef struct {
-		U32		tu, tv;				// u and v coordinates for texture mapping
-	} TEX_COORD;
-
-
 	#ifdef EGL_USE_GPP
 		typedef GPP_TLVERTEX_V2F_C4F_T2F EGL_TLVERTEX_V2F_C4F_T2F;
 		typedef GPP_TEXTURE_PARAMS EGL_TEXTURE_PARAMS;
@@ -116,13 +112,6 @@ namespace EGL {
 	} EglStatus;								// NOTE: Error codes are returned 
 
 	#endif
-
-
-	typedef struct {
-		Vec4D						m_WindowsCoords;	
-		FractionalColor				m_Color;
-		TEX_COORD					m_TextureCoords;
-	} EGL_RASTER_POS;
 
 
 	typedef EglStatus (*ScanLineFunction)(EGL_TLVERTEX_V2F_C4F_T2F* startPt, EGL_TLVERTEX_V2F_C4F_T2F* endPt, EGL_RASTER_PARAMS* pRaster_Params);

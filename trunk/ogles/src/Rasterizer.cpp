@@ -33,7 +33,21 @@ Rasterizer :: ~Rasterizer() {
 // --------------------------------------------------------------------------
 // Prepare rasterizer with according to current state settings
 // --------------------------------------------------------------------------
-void Rasterizer :: Prepare() {
+void Rasterizer :: PreparePoint() {
+	if (!m_IsPrepared) {
+	}
+
+	m_IsPrepared = true;
+}
+
+void Rasterizer :: PrepareLine() {
+	if (!m_IsPrepared) {
+	}
+
+	m_IsPrepared = true;
+}
+
+void Rasterizer :: PrepareTriangle() {
 	if (!m_IsPrepared) {
 	}
 
@@ -41,20 +55,22 @@ void Rasterizer :: Prepare() {
 }
 
 
+
+
 void Rasterizer :: Finish() {
 }
 
 
-void Rasterizer :: RasterPoint(const EGL_RasterPos& point) {
+void Rasterizer :: RasterPoint(const RasterPos& point) {
 }
 
 
-void Rasterizer :: RasterLine(const EGL_RasterPos& from, const EGL_RasterPos& to) {
+void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 }
 
 
-void Rasterizer :: RasterTriangle(const EGL_RasterPos& a, const EGL_RasterPos& b,
-									  const EGL_RasterPos& c) {
+void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
+									  const RasterPos& c) {
 }
 
 
