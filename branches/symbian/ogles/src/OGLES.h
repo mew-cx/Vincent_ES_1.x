@@ -137,10 +137,13 @@ typedef TInt64X	I64;
 
 namespace EGL {
 	class Context;
+    class Config;
 
 	struct TlsInfo {
-        TlsInfo(): m_Context(0), m_LastError(0) {}
+        TlsInfo();
+        ~TlsInfo();
 		Context * m_Context;
+        Config* m_AllConfigurations;
 		I32 m_LastError;
 	};
 }

@@ -1,7 +1,6 @@
 TARGET gles_cl.dll
 TARGETTYPE dll
 SOURCEPATH ..\..\src
-SOURCE Config.cpp
 SOURCE Context.cpp
 SOURCE ContextBuffer.cpp
 SOURCE ContextFloat.cpp
@@ -36,6 +35,7 @@ SOURCE GenLline.cpp
 SOURCE GenTriangle.cpp
 SOURCE GenScanline.cpp
 SOURCEPATH ..\..\src\Epoc
+SOURCE ConfigEpoc.cpp
 SOURCE ContextEpoc.cpp
 SOURCE egl.cpp
 SOURCE OGLES.cpp
