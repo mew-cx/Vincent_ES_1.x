@@ -107,7 +107,6 @@ namespace {
 
 
 Rasterizer :: Rasterizer(RasterizerState * state):
-	m_IsPrepared(false),
 	m_State(state)
 {
 	m_FunctionCache = new FunctionCache();
@@ -848,37 +847,22 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 // --------------------------------------------------------------------------
 
 void Rasterizer :: PreparePoint() {
-	if (!m_IsPrepared) {
-	}
-
 	m_MipMapLevel = 0;
-	m_IsPrepared = true;
 }
 
 
 void Rasterizer :: PrepareLine() {
-	if (!m_IsPrepared) {
-	}
-
 	m_MipMapLevel = 0;
-	m_IsPrepared = true;
 }
 
 
 void Rasterizer :: PrepareTriangle() {
-	if (!m_IsPrepared) {
-		m_ScanlineFunction = m_FunctionCache->GetFunction(*m_State);
-	}
-
+	m_ScanlineFunction = m_FunctionCache->GetFunction(*m_State);
 	m_MipMapLevel = 0;
-	m_IsPrepared = true;
 }
 
 
-
-
 void Rasterizer :: Finish() {
-	m_IsPrepared = false;
 }
 
 

@@ -171,7 +171,6 @@ namespace EGL {
 		// State management
 		// ----------------------------------------------------------------------
 
-		void InvalidateState();
 		void PreparePoint();
 		void PrepareLine();
 		void PrepareTriangle();
@@ -228,7 +227,6 @@ namespace EGL {
 		EGL_Fixed				m_MaxY;
 
 		int						m_MipMapLevel;
-		bool					m_IsPrepared;
 
 	};
 
@@ -237,10 +235,6 @@ namespace EGL {
 	// Inline member definitions
 	// --------------------------------------------------------------------------
 
-
-	inline void Rasterizer :: InvalidateState() {
-		m_IsPrepared = false;
-	}
 
 	inline void Rasterizer :: SetSurface(Surface * surface) {
 		m_Surface = surface;

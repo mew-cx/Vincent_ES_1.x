@@ -565,9 +565,21 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 			color.Clamp();
 			rasterPos->m_Color = color;
 		}
+
+		// populate fog density here...
+		rasterPos->m_FogDensity = FogDensity(eyeDistance);
 	} else {
 		//	copy current colors to raster pos
 		rasterPos->m_Color = m_CurrentRGBA;
+
+		if (m_RasterizerState.IsEnabledFog()) {
+			// populate fog density here...
+			EGL_Fixed eyeDistance = m_ModelViewMatrixStack.CurrentMatrix().GetTransformedZ(m_CurrentVertex);
+			rasterPos->m_FogDensity = FogDensity(eyeDistance);
+		} else {
+			// populate fog density here...
+			rasterPos->m_FogDensity = 0;
+		}
 	}
 
 	// apply texture transform to texture coordinates
@@ -582,8 +594,5 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 		rasterPos->m_TextureCoords.tu = outCoords.x();
 		rasterPos->m_TextureCoords.tv = outCoords.y();
 	}
-
-	// populate fog density here...
-	rasterPos->m_FogDensity = 0;//FogDensity(eyeDistance);
 
 }
