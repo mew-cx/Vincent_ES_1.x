@@ -170,9 +170,7 @@ inline OGLES_API float EGL_FloatFromFixed(EGL_Fixed value) {
 // --------------------------------------------------------------------------
 inline OGLES_API EGL_Fixed EGL_Mul(EGL_Fixed a, EGL_Fixed b) {
 	return 
-		static_cast<EGL_Fixed>(static_cast<I64>(a) * 
-							   static_cast<I64>(b) 
-								>> EGL_PRECISION);
+		EGL_FixedFromFloat(EGL_FloatFromFixed(a) * EGL_FloatFromFixed(b));
 }
 
 

@@ -67,12 +67,10 @@ namespace EGL {
 
 	struct ScreenCoord {
 		EGL_Fixed		x, y, z;	// x, y, z window coords
-		EGL_Fixed		w;			// w clip coordinate
 	};
 
 	struct EdgeCoord {
 		EGL_Fixed		x, z;		// x window coords
-		EGL_Fixed		w;			// w clip coordinate
 	};
 
 	// ----------------------------------------------------------------------
@@ -88,9 +86,9 @@ namespace EGL {
 	};
 
 	struct EdgePos {
-		EdgeCoord			m_WindowCoords;		
+		EdgeCoord			m_WindowCoords;		// z over w
 		FractionalColor		m_Color;			// color in range 0..255
-		TexCoord			m_TextureCoords;	// texture coords 0..1
+		TexCoord			m_TextureCoords;	// texture coords 0..1 over w
 		EGL_Fixed			m_FogDensity;		// fog density at this vertex
 	};
 

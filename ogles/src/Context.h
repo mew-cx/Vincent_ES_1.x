@@ -504,8 +504,6 @@ private:
 		pos.m_WindowCoords.z = 
 			EGL_Mul(pos.m_ClipCoords.z(), EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase;
 
-		pos.m_WindowCoords.w = pos.m_ClipCoords.w();
-
 	}
 
 }
