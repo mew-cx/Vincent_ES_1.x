@@ -41,7 +41,7 @@ extern "C" {
 
 #if defined(__SYMBIAN32__)
 
-#	include <e32def.h>
+#	define EGL_PLATFORM_HEADER_INCLUDE <e32def.h>
 
 #elif (defined(WIN32) || defined(_WIN32_WCE)) /*&& !defined(APIENTRY) && !defined(__CYGWIN__)*/
 
@@ -49,13 +49,16 @@ extern "C" {
 #		define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #	endif
 
-#	include <windows.h>
+#	define EGL_PLATFORM_HEADER_INCLUDE <windows.h>
 
 #else
 
 #	error "Unsupported Operating System"
 
 #endif
+
+#include EGL_PLATFORM_HEADER_INCLUDE
+
 
 #ifndef APIENTRY
 #define APIENTRY
