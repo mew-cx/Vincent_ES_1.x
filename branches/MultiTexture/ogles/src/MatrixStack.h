@@ -51,7 +51,7 @@ namespace EGL {
 
 	public:
 
-		MatrixStack(I32 maxStackElements);
+		MatrixStack(I32 maxStackElements = 2);
 		~MatrixStack();
 
 		bool PopMatrix(void);
