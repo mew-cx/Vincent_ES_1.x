@@ -10,9 +10,11 @@ Version 0.78
 
 This version addresses the following issues:
 
+970910 - Triangle Tile test failed
+970911 - Spotlight tests failed
 970913 - Fog Linear test failed.
-970918 - Fog Exponential test failed.
 970916 - Transformation Normal test failed.
+970918 - Fog Exponential test failed.
 970919 - Rescale Normal test failed.
 
 
