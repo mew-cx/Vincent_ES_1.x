@@ -807,7 +807,7 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 		int count = LINEAR_SPAN; 
 
 		do {
-			Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
+			Fragment(x, y, depth, tu, tv, EGL_ONE - fogDensity, baseColor);
 
 			baseColor += colorIncrement;
 			depth += deltaDepth;
@@ -832,7 +832,7 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 
 		for (; x < xEnd; ++x) {
 
-			Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
+			Fragment(x, y, depth, tu, tv, EGL_ONE - fogDensity, baseColor);
 
 			baseColor += colorIncrement;
 			depth += deltaDepth;
@@ -1112,7 +1112,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	start.m_Color = end.m_Color = pos1.m_Color;
 	start.m_TextureCoords.tu = end.m_TextureCoords.tu = EGL_Mul(pos1.m_TextureCoords.tu, invZ1);
 	start.m_TextureCoords.tv = end.m_TextureCoords.tv = EGL_Mul(pos1.m_TextureCoords.tv, invZ1);
-	start.m_FogDensity = end.m_FogDensity = pos1.m_FogDensity;
+	start.m_FogDensity = end.m_FogDensity = EGL_ONE - pos1.m_FogDensity;
 
 	// set up the triangle
 	// init start, end, deltas
@@ -1139,7 +1139,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		incG2 = EGL_Mul(pos2.m_Color.g - pos1.m_Color.g, invDeltaY2);
 		incB2 = EGL_Mul(pos2.m_Color.b - pos1.m_Color.b, invDeltaY2);
 		incA2 = EGL_Mul(pos2.m_Color.a - pos1.m_Color.a, invDeltaY2);
-		incFog2 = EGL_Mul(pos2.m_FogDensity - pos1.m_FogDensity, invDeltaY2);
+		incFog2 = EGL_Mul(pos1.m_FogDensity - pos2.m_FogDensity, invDeltaY2);
 		incDepth2 = EGL_Mul(pos2.m_WindowCoords.depth - pos1.m_WindowCoords.depth, invDeltaY2);
 
 		// perspective interpolation
@@ -1191,7 +1191,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		incG3 = EGL_Mul(pos3.m_Color.g - pos1.m_Color.g, invDeltaY3);
 		incB3 = EGL_Mul(pos3.m_Color.b - pos1.m_Color.b, invDeltaY3);
 		incA3 = EGL_Mul(pos3.m_Color.a - pos1.m_Color.a, invDeltaY3);
-		incFog3 = EGL_Mul(pos3.m_FogDensity - pos1.m_FogDensity, invDeltaY3);
+		incFog3 = EGL_Mul(pos1.m_FogDensity - pos3.m_FogDensity, invDeltaY3);
 		incDepth3 = EGL_Mul(pos3.m_WindowCoords.depth - pos1.m_WindowCoords.depth, invDeltaY3);
 
 		// perspective interpolation
@@ -1239,7 +1239,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		incG23 = EGL_Mul(pos3.m_Color.g - pos2.m_Color.g, invDeltaY23);
 		incB23 = EGL_Mul(pos3.m_Color.b - pos2.m_Color.b, invDeltaY23);
 		incA23 = EGL_Mul(pos3.m_Color.a - pos2.m_Color.a, invDeltaY23);
-		incFog23 = EGL_Mul(pos3.m_FogDensity - pos2.m_FogDensity, invDeltaY23);
+		incFog23 = EGL_Mul(pos2.m_FogDensity - pos3.m_FogDensity, invDeltaY23);
 		incDepth23 = EGL_Mul(pos3.m_WindowCoords.depth - pos2.m_WindowCoords.depth, invDeltaY23);
 
 		// perspective interpolation
@@ -1312,7 +1312,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		start.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
 		start.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
 		start.m_Color = pos2.m_Color;
-		start.m_FogDensity = pos2.m_FogDensity;
+		start.m_FogDensity = EGL_ONE - pos2.m_FogDensity;
 
 		for (; y < yEnd; ++y) {
 			RasterScanLine(start, end, y);
@@ -1385,7 +1385,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		end.m_WindowCoords.depth = pos2.m_WindowCoords.depth;
 		end.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
 		end.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
-		end.m_FogDensity = pos2.m_FogDensity;
+		end.m_FogDensity = EGL_ONE - pos2.m_FogDensity;
 
 		for (; y < yEnd; ++y) {
 			RasterScanLine(start, end, y);
