@@ -112,6 +112,10 @@ typedef struct cg_inst_base_t
 	cg_inst_kind_t		kind;
 	cg_opcode_t			opcode;
 	int					used : 1;
+#ifndef NDEBUG
+	const char *		file;
+	int					line;
+#endif
 }
 cg_inst_base_t;
 
@@ -396,166 +400,194 @@ cg_virtual_reg_list_t * cg_create_virtual_reg_list(cg_heap_t * heap, ...);
 
 // add an instruction to a block
 
+#ifndef NDEBUG
+#define CG_INST_DEBUG_ARG_DECL	,const char * file, int line
+#define CG_INST_DEBUG_ARGS		,__FILE__, __LINE__
+#define CG_INST_SET_DEBUG(inst) (inst)->base.file = file; (inst)->base.line = line;
+#define CG_INST_DEBUG_PASS		,file, line
+#else
+#define CG_INST_DEBUG_ARG_DECL
+#define CG_INST_DEBUG_ARGS	
+#define CG_INST_SET_DEBUG(inst)	
+#define CG_INST_DEBUG_PASS
+#endif 
+
+
 cg_inst_t * cg_create_inst_unary(cg_block_t * block, 
 								 cg_opcode_t op, 
 								 cg_virtual_reg_t * dest, 
-								 cg_virtual_reg_t * source);
+								 cg_virtual_reg_t * source
+								 CG_INST_DEBUG_ARG_DECL);
 
-#define NEG(dest, source)				cg_create_inst_unary(block, cg_op_neg, dest, source)
-#define FNEG(dest, source)				cg_create_inst_unary(block, cg_op_fneg, dest, source)
-#define NOT(dest, source)				cg_create_inst_unary(block, cg_op_not, dest, source)
-#define FINV(dest, source)				cg_create_inst_unary(block, cg_op_finv, dest, source)
-#define FSQRT(dest, source)				cg_create_inst_unary(block, cg_op_fsqrt, dest, source)
-#define TRUNC(dest, source)				cg_create_inst_unary(block, cg_op_trunc, dest, source)
-#define ROUND(dest, source)				cg_create_inst_unary(block, cg_op_round, dest, source)
-#define FCNV(dest, source)				cg_create_inst_unary(block, cg_op_fcnv, dest, source)
+#define NEG(dest, source)				cg_create_inst_unary(block, cg_op_neg, dest, source CG_INST_DEBUG_ARGS)
+#define FNEG(dest, source)				cg_create_inst_unary(block, cg_op_fneg, dest, source CG_INST_DEBUG_ARGS)
+#define NOT(dest, source)				cg_create_inst_unary(block, cg_op_not, dest, source CG_INST_DEBUG_ARGS)
+#define FINV(dest, source)				cg_create_inst_unary(block, cg_op_finv, dest, source CG_INST_DEBUG_ARGS)
+#define FSQRT(dest, source)				cg_create_inst_unary(block, cg_op_fsqrt, dest, source CG_INST_DEBUG_ARGS)
+#define TRUNC(dest, source)				cg_create_inst_unary(block, cg_op_trunc, dest, source CG_INST_DEBUG_ARGS)
+#define ROUND(dest, source)				cg_create_inst_unary(block, cg_op_round, dest, source CG_INST_DEBUG_ARGS)
+#define FCNV(dest, source)				cg_create_inst_unary(block, cg_op_fcnv, dest, source CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_unary_s(cg_block_t * block, 
 								   cg_opcode_t op, 
 								   cg_virtual_reg_t * dest, 
 								   cg_virtual_reg_t * flags, 
-								   cg_virtual_reg_t * source);
+								   cg_virtual_reg_t * source
+								   CG_INST_DEBUG_ARG_DECL);
 
-#define NEG_S(dest, flags, source)		cg_create_inst_unary_s(block, cg_op_neg, dest, flags, source)
-#define FNEG_S(dest, flags, source)		cg_create_inst_unary_s(block, cg_op_fneg, dest, flags, source)
-#define NOT_S(dest, flags, source)		cg_create_inst_unary_s(block, cg_op_not, dest, flags, source)
-#define FINV_S(dest, flags, source)		cg_create_inst_unary_s(block, cg_op_finv, dest, flags, source)
-#define FSQRT_S(dest, flags, source)	cg_create_inst_unary_s(block, cg_op_fsqrt, dest, flags, source)
-#define TRUNC_S(dest, flags, source)	cg_create_inst_unary_s(block, cg_op_trunc, dest, flags, source)
-#define ROUND_S(dest, flags, source)	cg_create_inst_unary_s(block, cg_op_round, dest, flags, source)
-#define FCNV_S(dest, flags, source)		cg_create_inst_unary_s(block, cg_op_fcnv, dest, flags, source)
+#define NEG_S(dest, flags, source)		cg_create_inst_unary_s(block, cg_op_neg, dest, flags, source CG_INST_DEBUG_ARGS)
+#define FNEG_S(dest, flags, source)		cg_create_inst_unary_s(block, cg_op_fneg, dest, flags, source CG_INST_DEBUG_ARGS)
+#define NOT_S(dest, flags, source)		cg_create_inst_unary_s(block, cg_op_not, dest, flags, source CG_INST_DEBUG_ARGS)
+#define FINV_S(dest, flags, source)		cg_create_inst_unary_s(block, cg_op_finv, dest, flags, source CG_INST_DEBUG_ARGS)
+#define FSQRT_S(dest, flags, source)	cg_create_inst_unary_s(block, cg_op_fsqrt, dest, flags, source CG_INST_DEBUG_ARGS)
+#define TRUNC_S(dest, flags, source)	cg_create_inst_unary_s(block, cg_op_trunc, dest, flags, source CG_INST_DEBUG_ARGS)
+#define ROUND_S(dest, flags, source)	cg_create_inst_unary_s(block, cg_op_round, dest, flags, source CG_INST_DEBUG_ARGS)
+#define FCNV_S(dest, flags, source)		cg_create_inst_unary_s(block, cg_op_fcnv, dest, flags, source CG_INST_DEBUG_ARGS)
 
 
 cg_inst_t * cg_create_inst_binary(cg_block_t * block, 
 								  cg_opcode_t op, 
 								  cg_virtual_reg_t * dest, 
 								  cg_virtual_reg_t * source, 
-								  cg_virtual_reg_t * operand);
+								  cg_virtual_reg_t * operand
+								  CG_INST_DEBUG_ARG_DECL);
 
-#define ADD(dest, source, operand)		cg_create_inst_binary(block, cg_op_add, dest, source, operand)
-#define AND(dest, source, operand)		cg_create_inst_binary(block, cg_op_and, dest, source, operand)
-#define ASR(dest, source, operand)		cg_create_inst_binary(block, cg_op_asr, dest, source, operand)
-#define DIV(dest, source, operand)		cg_create_inst_binary(block, cg_op_div, dest, source, operand)
-#define LSL(dest, source, operand)		cg_create_inst_binary(block, cg_op_lsl, dest, source, operand)
-#define LSR(dest, source, operand)		cg_create_inst_binary(block, cg_op_lsr, dest, source, operand)
-#define MOD(dest, source, operand)		cg_create_inst_binary(block, cg_op_mod, dest, source, operand)
-#define MUL(dest, source, operand)		cg_create_inst_binary(block, cg_op_mul, dest, source, operand)
-#define OR(dest, source, operand)		cg_create_inst_binary(block, cg_op_or, dest, source, operand)
-#define SUB(dest, source, operand)		cg_create_inst_binary(block, cg_op_sub, dest, source, operand)
-#define XOR(dest, source, operand)		cg_create_inst_binary(block, cg_op_xor, dest, source, operand)
-#define FADD(dest, source, operand)		cg_create_inst_binary(block, cg_op_fadd, dest, source, operand)
-#define FDIV(dest, source, operand)		cg_create_inst_binary(block, cg_op_fdiv, dest, source, operand)
-#define FMUL(dest, source, operand)		cg_create_inst_binary(block, cg_op_fmul, dest, source, operand)
-#define FSUB(dest, source, operand)		cg_create_inst_binary(block, cg_op_fsub, dest, source, operand)
+#define ADD(dest, source, operand)		cg_create_inst_binary(block, cg_op_add, dest, source, operand CG_INST_DEBUG_ARGS)
+#define AND(dest, source, operand)		cg_create_inst_binary(block, cg_op_and, dest, source, operand CG_INST_DEBUG_ARGS)
+#define ASR(dest, source, operand)		cg_create_inst_binary(block, cg_op_asr, dest, source, operand CG_INST_DEBUG_ARGS)
+#define DIV(dest, source, operand)		cg_create_inst_binary(block, cg_op_div, dest, source, operand CG_INST_DEBUG_ARGS)
+#define LSL(dest, source, operand)		cg_create_inst_binary(block, cg_op_lsl, dest, source, operand CG_INST_DEBUG_ARGS)
+#define LSR(dest, source, operand)		cg_create_inst_binary(block, cg_op_lsr, dest, source, operand CG_INST_DEBUG_ARGS)
+#define MOD(dest, source, operand)		cg_create_inst_binary(block, cg_op_mod, dest, source, operand CG_INST_DEBUG_ARGS)
+#define MUL(dest, source, operand)		cg_create_inst_binary(block, cg_op_mul, dest, source, operand CG_INST_DEBUG_ARGS)
+#define OR(dest, source, operand)		cg_create_inst_binary(block, cg_op_or, dest, source, operand CG_INST_DEBUG_ARGS)
+#define SUB(dest, source, operand)		cg_create_inst_binary(block, cg_op_sub, dest, source, operand CG_INST_DEBUG_ARGS)
+#define XOR(dest, source, operand)		cg_create_inst_binary(block, cg_op_xor, dest, source, operand CG_INST_DEBUG_ARGS)
+#define FADD(dest, source, operand)		cg_create_inst_binary(block, cg_op_fadd, dest, source, operand CG_INST_DEBUG_ARGS)
+#define FDIV(dest, source, operand)		cg_create_inst_binary(block, cg_op_fdiv, dest, source, operand CG_INST_DEBUG_ARGS)
+#define FMUL(dest, source, operand)		cg_create_inst_binary(block, cg_op_fmul, dest, source, operand CG_INST_DEBUG_ARGS)
+#define FSUB(dest, source, operand)		cg_create_inst_binary(block, cg_op_fsub, dest, source, operand CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_binary_s(cg_block_t * block, 
 									cg_opcode_t op, 
 									cg_virtual_reg_t * dest, 
 									cg_virtual_reg_t * flags, 
 									cg_virtual_reg_t * source, 
-									cg_virtual_reg_t * operand);
+									cg_virtual_reg_t * operand
+									CG_INST_DEBUG_ARG_DECL);
 
 
-#define ADD_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_add, dest, flags, source, operand)
-#define AND_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_and, dest, flags, source, operand)
-#define ASR_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_asr, dest, flags, source, operand)
-#define DIV_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_div, dest, flags, source, operand)
-#define LSL_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_lsl, dest, flags, source, operand)
-#define LSR_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_lsr, dest, flags, source, operand)
-#define MOD_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_mod, dest, flags, source, operand)
-#define MUL_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_mul, dest, flags, source, operand)
-#define OR_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_or, dest, flags, source, operand)
-#define SUB_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_sub, dest, flags, source, operand)
-#define XOR_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_xor, dest, flags, source, operand)
-#define FADD_S(dest, flags, source, operand)	cg_create_inst_binary_s(block, cg_op_fadd, dest, flags, source, operand)
-#define FDIV_S(dest, flags, source, operand)	cg_create_inst_binary_s(block, cg_op_fdiv, dest, flags, source, operand)
-#define FMUL_S(dest, flags, source, operand)	cg_create_inst_binary_s(block, cg_op_fmul, dest, flags, source, operand)
-#define FSUB_S(dest, flags, source, operand)	cg_create_inst_binary_s(block, cg_op_fsub, dest, flags, source, operand)
+#define ADD_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_add, dest, flags, source, operand CG_INST_DEBUG_ARGS)
+#define AND_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_and, dest, flags, source, operand CG_INST_DEBUG_ARGS)
+#define ASR_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_asr, dest, flags, source, operand CG_INST_DEBUG_ARGS)
+#define DIV_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_div, dest, flags, source, operand CG_INST_DEBUG_ARGS)
+#define LSL_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_lsl, dest, flags, source, operand CG_INST_DEBUG_ARGS)
+#define LSR_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_lsr, dest, flags, source, operand CG_INST_DEBUG_ARGS)
+#define MOD_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_mod, dest, flags, source, operand CG_INST_DEBUG_ARGS)
+#define MUL_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_mul, dest, flags, source, operand CG_INST_DEBUG_ARGS)
+#define OR_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_or, dest, flags, source, operand CG_INST_DEBUG_ARGS)
+#define SUB_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_sub, dest, flags, source, operand CG_INST_DEBUG_ARGS)
+#define XOR_S(dest, flags, source, operand)		cg_create_inst_binary_s(block, cg_op_xor, dest, flags, source, operand CG_INST_DEBUG_ARGS)
+#define FADD_S(dest, flags, source, operand)	cg_create_inst_binary_s(block, cg_op_fadd, dest, flags, source, operand CG_INST_DEBUG_ARGS)
+#define FDIV_S(dest, flags, source, operand)	cg_create_inst_binary_s(block, cg_op_fdiv, dest, flags, source, operand CG_INST_DEBUG_ARGS)
+#define FMUL_S(dest, flags, source, operand)	cg_create_inst_binary_s(block, cg_op_fmul, dest, flags, source, operand CG_INST_DEBUG_ARGS)
+#define FSUB_S(dest, flags, source, operand)	cg_create_inst_binary_s(block, cg_op_fsub, dest, flags, source, operand CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_compare(cg_block_t * block, 
 								   cg_opcode_t op, 
 								   cg_virtual_reg_t * dest, 
 								   cg_virtual_reg_t * source, 
-								   cg_virtual_reg_t * operand);
+								   cg_virtual_reg_t * operand
+								   CG_INST_DEBUG_ARG_DECL);
 
-#define CMP(dest, source, operand)				cg_create_inst_compare(block, cg_op_cmp, dest, source, operand)
-#define FCMP(dest, source, operand)				cg_create_inst_compare(block, cg_op_fcmp, dest, source, operand)
+#define CMP(dest, source, operand)				cg_create_inst_compare(block, cg_op_cmp, dest, source, operand CG_INST_DEBUG_ARGS)
+#define FCMP(dest, source, operand)				cg_create_inst_compare(block, cg_op_fcmp, dest, source, operand CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_load(cg_block_t * block, 
 								cg_opcode_t op, 
 								cg_virtual_reg_t * dest, 
-								cg_virtual_reg_t * mem);
+								cg_virtual_reg_t * mem
+								CG_INST_DEBUG_ARG_DECL);
 
-#define LDB(dest, mem)							cg_create_inst_load(block, cg_op_ldb, dest, mem)
-#define LDH(dest, mem)							cg_create_inst_load(block, cg_op_ldh, dest, mem)
-#define LDW(dest, mem)							cg_create_inst_load(block, cg_op_ldw, dest, mem)
+#define LDB(dest, mem)							cg_create_inst_load(block, cg_op_ldb, dest, mem CG_INST_DEBUG_ARGS)
+#define LDH(dest, mem)							cg_create_inst_load(block, cg_op_ldh, dest, mem CG_INST_DEBUG_ARGS)
+#define LDW(dest, mem)							cg_create_inst_load(block, cg_op_ldw, dest, mem CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_store(cg_block_t * block, 
 								 cg_opcode_t op, 
 								 cg_virtual_reg_t * source, 
-								 cg_virtual_reg_t * mem);
+								 cg_virtual_reg_t * mem
+								 CG_INST_DEBUG_ARG_DECL);
 
-#define STB(source, mem)						cg_create_inst_store(block, cg_op_stb, source, mem);
-#define STH(source, mem)						cg_create_inst_store(block, cg_op_sth, source, mem);
-#define STW(source, mem)						cg_create_inst_store(block, cg_op_stw, source, mem);
+#define STB(source, mem)						cg_create_inst_store(block, cg_op_stb, source, mem CG_INST_DEBUG_ARGS)
+#define STH(source, mem)						cg_create_inst_store(block, cg_op_sth, source, mem CG_INST_DEBUG_ARGS)
+#define STW(source, mem)						cg_create_inst_store(block, cg_op_stw, source, mem CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_load_immed(cg_block_t * block, 
 									  cg_opcode_t op, 
 									  cg_virtual_reg_t * dest, 
-									  U32 value);
+									  U32 value
+									  CG_INST_DEBUG_ARG_DECL);
 
-#define LDI(dest, value)						cg_create_inst_load_immed(block, cg_op_ldi, dest, value)
+#define LDI(dest, value)						cg_create_inst_load_immed(block, cg_op_ldi, dest, value CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_branch_label(cg_block_t * block, 
 										cg_opcode_t op, 
-										cg_block_ref_t * target);
+										cg_block_ref_t * target
+										CG_INST_DEBUG_ARG_DECL);
 
-#define BRA(target)								cg_create_inst_branch_label(block, cg_op_bra, target)
+#define BRA(target)								cg_create_inst_branch_label(block, cg_op_bra, target CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_branch_cond(cg_block_t * block, 
 									   cg_opcode_t op, 
 									   cg_virtual_reg_t * flags, 
-									   cg_block_ref_t * target);
+									   cg_block_ref_t * target
+									   CG_INST_DEBUG_ARG_DECL);
 
-#define BEQ(flags, target)						cg_create_inst_branch_cond(block, cg_op_beq, flags, target)
-#define BGE(flags, target)						cg_create_inst_branch_cond(block, cg_op_bge, flags, target)
-#define BLE(flags, target)						cg_create_inst_branch_cond(block, cg_op_ble, flags, target)
-#define BGT(flags, target)						cg_create_inst_branch_cond(block, cg_op_bgt, flags, target)
-#define BLT(flags, target)						cg_create_inst_branch_cond(block, cg_op_blt, flags, target)
-#define BNE(flags, target)						cg_create_inst_branch_cond(block, cg_op_bne, flags, target)
+#define BEQ(flags, target)						cg_create_inst_branch_cond(block, cg_op_beq, flags, target CG_INST_DEBUG_ARGS)
+#define BGE(flags, target)						cg_create_inst_branch_cond(block, cg_op_bge, flags, target CG_INST_DEBUG_ARGS)
+#define BLE(flags, target)						cg_create_inst_branch_cond(block, cg_op_ble, flags, target CG_INST_DEBUG_ARGS)
+#define BGT(flags, target)						cg_create_inst_branch_cond(block, cg_op_bgt, flags, target CG_INST_DEBUG_ARGS)
+#define BLT(flags, target)						cg_create_inst_branch_cond(block, cg_op_blt, flags, target CG_INST_DEBUG_ARGS)
+#define BNE(flags, target)						cg_create_inst_branch_cond(block, cg_op_bne, flags, target CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_phi(cg_block_t * block, 
 							   cg_opcode_t op, 
 							   cg_virtual_reg_t * dest, 
-							   cg_virtual_reg_list_t * regs);
+							   cg_virtual_reg_list_t * regs
+							   CG_INST_DEBUG_ARG_DECL);
 
-#define PHI(dest, regs)							cg_create_inst_phi(block, cg_op_phi, dest, regs)
+#define PHI(dest, regs)							cg_create_inst_phi(block, cg_op_phi, dest, regs CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_call_proc(cg_block_t * block, 
 									 cg_opcode_t op, 
 									 cg_proc_t * proc, 
-									 cg_virtual_reg_list_t * args);
+									 cg_virtual_reg_list_t * args
+									 CG_INST_DEBUG_ARG_DECL);
 
-#define CALL_PROC(proc, args)					cg_create_inst_call_proc(block, cg_op_call, proc, args)
+#define CALL_PROC(proc, args)					cg_create_inst_call_proc(block, cg_op_call, proc, args CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_call_func(cg_block_t * block, 
 									 cg_opcode_t op, 
 									 cg_virtual_reg_t * dest, 
 									 cg_proc_t * proc, 
-									 cg_virtual_reg_list_t * args);
+									 cg_virtual_reg_list_t * args
+									 CG_INST_DEBUG_ARG_DECL);
 
-#define CALL_FUNC(dest, proc, args)				cg_create_inst_call_func(block, cg_op_call, dest, proc, args)
+#define CALL_FUNC(dest, proc, args)				cg_create_inst_call_func(block, cg_op_call, dest, proc, args CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_ret(cg_block_t * block, 
-							   cg_opcode_t op);
+							   cg_opcode_t op
+							   CG_INST_DEBUG_ARG_DECL);
 
-#define RET()									cg_create_inst_ret(block, cg_op_ret)
+#define RET()									cg_create_inst_ret(block, cg_op_ret CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_ret_value(cg_block_t * block, 
 									 cg_opcode_t op, 
-									 cg_virtual_reg_t * value);
+									 cg_virtual_reg_t * value
+									 CG_INST_DEBUG_ARG_DECL);
 
-#define RET_VALUE(value)						cg_create_inst_ret_value(block, cg_op_ret, value)
+#define RET_VALUE(value)						cg_create_inst_ret_value(block, cg_op_ret, value CG_INST_DEBUG_ARGS)
 
 
 
