@@ -194,9 +194,9 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 		EGL_Fixed tv0 = m_Texture->GetWrappedT(tv);
 
 		Color texColor = 
-			m_Texture->GetTexture(0)->GetPixel(tu0, tv0);
+			m_Texture->GetTexture(m_MipMapLevel)->GetPixel(tu0, tv0);
 
-		switch (m_Texture->GetTexture(0)->GetInternalFormat()) {
+		switch (m_Texture->GetInternalFormat()) {
 			default:
 			case Texture::TextureFormatAlpha:
 				switch (m_State->m_TextureMode) {
@@ -646,6 +646,7 @@ void Rasterizer :: PreparePoint() {
 		InitFogTable();
 	}
 
+	m_MipMapLevel = 0;
 	m_IsPrepared = true;
 }
 
@@ -655,6 +656,7 @@ void Rasterizer :: PrepareLine() {
 		InitFogTable();
 	}
 
+	m_MipMapLevel = 0;
 	m_IsPrepared = true;
 }
 
@@ -664,6 +666,7 @@ void Rasterizer :: PrepareTriangle() {
 		InitFogTable();
 	}
 
+	m_MipMapLevel = 0;
 	m_IsPrepared = true;
 }
 
@@ -772,6 +775,33 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 }
 
 
+namespace {
+	inline EGL_Fixed TriangleArea(EGL_Fixed x0, EGL_Fixed y0,
+								  EGL_Fixed x1, EGL_Fixed y1, 
+								  EGL_Fixed x2, EGL_Fixed y2) {
+		return 
+			EGL_Abs(
+				EGL_Mul(x1, y2) + EGL_Mul(x2, y0) + EGL_Mul(x0, y1)
+				- EGL_Mul(x2, y1) - EGL_Mul(x0, y2) - EGL_Mul(x1, y0));
+	}
+
+	inline int Log2(int value) {
+		if (value <= 1) {
+			return 0;
+		}
+
+		int result = 0;
+
+		while (value > 1) {
+			result++;
+			value >>= 1;
+		}
+
+		return result;
+	}
+}
+
+
 // ---------------------------------------------------------------------------
 // Render the triangle specified by the three transformed and lit vertices
 // passed as arguments. Before calling into the actual rasterization, the
@@ -786,7 +816,44 @@ void Rasterizer :: RasterLine(const RasterPos& from, const RasterPos& to) {
 // --------------------------------------------------------------------------
 void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 								  const RasterPos& c) {
+	
+	// determine the appropriate mipmapping level
+	if (m_State->m_TextureEnabled) {
+		if (m_Texture->IsMipMap()) {
+			EGL_Fixed textureArea = 
+				TriangleArea(a.m_TextureCoords.tu, a.m_TextureCoords.tv,
+							 b.m_TextureCoords.tu, b.m_TextureCoords.tv,
+							 c.m_TextureCoords.tu, c.m_TextureCoords.tv);
 
+			int logWidth = Log2(m_Texture->GetTexture(0)->GetWidth());
+			int logHeight = Log2(m_Texture->GetTexture(0)->GetHeight());
+
+			EGL_Fixed screenArea = 
+				TriangleArea(a.m_WindowCoords.x >> logWidth, a.m_WindowCoords.y >> logHeight,
+							 b.m_WindowCoords.x >> logWidth, b.m_WindowCoords.y >> logHeight,
+							 c.m_WindowCoords.x >> logWidth, c.m_WindowCoords.y >> logHeight);
+			EGL_Fixed invScreenArea = EGL_Inverse(screenArea);
+
+			EGL_Fixed ratio = EGL_Mul(textureArea, invScreenArea) >> EGL_PRECISION;
+			
+			int logRatio = Log2(ratio);
+			int maxLevel = (logWidth > logHeight) ? logWidth : logHeight;
+
+			if (logRatio <= 0) {
+				m_MipMapLevel = 0;
+			} else {
+				m_MipMapLevel = logRatio / 2;
+
+				if (m_MipMapLevel > maxLevel) {
+					m_MipMapLevel = maxLevel;
+				}
+			}
+			
+		} else {
+			m_MipMapLevel = 0;
+		}
+	}
+	
 	const RasterPos * pos[3];
 	pos[0] = &a;
 	pos[1] = &b;

@@ -123,3 +123,49 @@ MultiTexture :: ~MultiTexture() {
 		delete m_TextureLevels[index];
 	}
 }
+
+
+// --------------------------------------------------------------------------
+// Verify that this texture is consistently defined across all mipmapping 
+// levels (as specified in section 3.8.9)
+//
+// Returns:
+//	true		-	if this texture is defined consistently across all
+//					levels
+// --------------------------------------------------------------------------
+bool MultiTexture :: IsComplete() const {
+
+	if (m_TextureLevels[0] == 0) {
+		return false;
+	}
+
+	U32 width = m_TextureLevels[0]->GetWidth();
+	U32 height = m_TextureLevels[0]->GetHeight();
+	Texture::TextureFormat format = m_TextureLevels[0]->GetInternalFormat();
+
+	for (int index = 1; index < MAX_LEVELS; ++index) {
+		if (width == 1 && height == 1) {
+			return true;
+		}
+
+		if (width > 1) {
+			width = width / 2;
+		}
+
+		if (height > 1) {
+			height = height / 2;
+		}
+
+		if (m_TextureLevels[index] == 0) {
+			return false;
+		}
+
+		if (m_TextureLevels[index]->GetWidth() != width ||
+			m_TextureLevels[index]->GetHeight() != height ||
+			m_TextureLevels[index]->GetInternalFormat() != format) {
+			return false;
+		}
+	}
+
+	return true;
+}

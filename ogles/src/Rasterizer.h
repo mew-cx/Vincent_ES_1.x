@@ -207,6 +207,8 @@ namespace EGL {
 		EGL_Fixed				m_MinY;
 		EGL_Fixed				m_MaxY;
 
+		int						m_MipMapLevel;
+
 		U16						m_FogTable[FOG_INTERVAL + 1];	// we can optimize later
 
 		bool					m_IsPrepared;

@@ -14,6 +14,7 @@ This version addresses the following issues:
 863630 - Backface culling missing
 863633 - Culling and clipping is missing 
 863632 - Initialization for multiple processes 
+863631 - Mipmapping still needs to be implemented 
 
 
 Version 0.1

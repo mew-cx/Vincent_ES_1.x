@@ -137,6 +137,13 @@ namespace EGL {
 		EGL_Fixed GetWrappedS(EGL_Fixed s) const;
 		EGL_Fixed GetWrappedT(EGL_Fixed t) const;
 
+		Texture::TextureFormat 
+			GetInternalFormat() const				{ return m_TextureLevels[0]->GetInternalFormat(); }
+
+		bool IsComplete() const;
+
+		bool IsMipMap() const;
+
 	private:
 		Texture	*		m_TextureLevels[MAX_LEVELS];
 		MinFilterMode	m_MinFilterMode;
@@ -203,6 +210,15 @@ namespace EGL {
 			default:
 				return Color(0xff, 0xff, 0xff, 0xff);
 		}
+	}
+
+
+	inline bool MultiTexture :: IsMipMap() const {
+		return 
+			m_MinFilterMode == MinFilterModeNearestMipmapNearest ||
+			m_MinFilterMode == MinFilterModeNearestMipmapLinear ||
+			m_MinFilterMode == MinFilterModeLinearMipmapNearest ||
+			m_MinFilterMode == MinFilterModeLinearMipmapLinear;
 	}
 
 }
