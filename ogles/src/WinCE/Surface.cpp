@@ -9,27 +9,27 @@
 // --------------------------------------------------------------------------
 //
 // Copyright (c) 2004, Hans-Martin Will. All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
+// 
+// Redistribution and use in source and binary forms, with or without 
+// modification, are permitted provided that the following conditions are 
 // met:
-//
+// 
 //	 *  Redistributions of source code must retain the above copyright
-// 		notice, this list of conditions and the following disclaimer.
+// 		notice, this list of conditions and the following disclaimer. 
 //   *	Redistributions in binary form must reproduce the above copyright
-// 		notice, this list of conditions and the following disclaimer in the
-// 		documentation and/or other materials provided with the distribution.
-//
+// 		notice, this list of conditions and the following disclaimer in the 
+// 		documentation and/or other materials provided with the distribution. 
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
 // SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
 // ==========================================================================
@@ -50,17 +50,17 @@ namespace {
 		DWORD            bmiColors[3];
 
 		InfoHeader(U32 width, U32 height) {
-			bmiHeader.biSize = sizeof(bmiHeader);
-			bmiHeader.biWidth = width;
-			bmiHeader.biHeight = height;
-			bmiHeader.biPlanes = 1;
-			bmiHeader.biBitCount = 16;
-			bmiHeader.biCompression = BI_BITFIELDS;
-			bmiHeader.biSizeImage = width * height * sizeof(U16);
-			bmiHeader.biXPelsPerMeter = 72 * 25;
-			bmiHeader.biYPelsPerMeter = 72 * 25;
-			bmiHeader.biClrUsed = 0;
-			bmiHeader.biClrImportant = 0;
+			bmiHeader.biSize = sizeof(bmiHeader); 
+			bmiHeader.biWidth = width; 
+			bmiHeader.biHeight = height; 
+			bmiHeader.biPlanes = 1; 
+			bmiHeader.biBitCount = 16; 
+			bmiHeader.biCompression = BI_BITFIELDS; 
+			bmiHeader.biSizeImage = width * height * sizeof(U16); 
+			bmiHeader.biXPelsPerMeter = 72 * 25; 
+			bmiHeader.biYPelsPerMeter = 72 * 25; 
+			bmiHeader.biClrUsed = 0; 
+			bmiHeader.biClrImportant = 0; 
 
 			bmiColors[0] = 0xF800;
 			bmiColors[1] = 0x07E0;
@@ -70,7 +70,7 @@ namespace {
 }
 
 
-Surface :: Surface(const Config & config, HDC hdc)
+Surface :: Surface(const Config & config, HDC hdc) 
 :	m_Config(config),
 	m_Rect (0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
 	m_Bitmap(reinterpret_cast<HBITMAP>(INVALID_HANDLE_VALUE)),
@@ -90,14 +90,14 @@ Surface :: Surface(const Config & config, HDC hdc)
 
 	InfoHeader info(width, height);;
 
-	m_Bitmap = CreateDIBSection(m_HDC, reinterpret_cast<BITMAPINFO *>(&info), DIB_RGB_COLORS,
+	m_Bitmap = CreateDIBSection(m_HDC, reinterpret_cast<BITMAPINFO *>(&info), DIB_RGB_COLORS, 
 		reinterpret_cast<void **>(&m_ColorBuffer), NULL, 0);
 }
 
 
 Surface :: ~Surface() {
 
-
+	
 	if (m_Bitmap != INVALID_HANDLE_VALUE) {
 		DeleteObject(m_Bitmap);
 		m_Bitmap = reinterpret_cast<HBITMAP>(INVALID_HANDLE_VALUE);
@@ -247,30 +247,31 @@ bool Surface :: Save(const TCHAR * filename) {
     header.bfReserved1 = 0;
     header.bfReserved2 = 0;
     header.bfOffBits   = sizeof(BITMAPFILEHEADER) + sizeof(info);
-
+        
     // Create the file
     HANDLE hFile = ::CreateFile(filename, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
 
     if (hFile == INVALID_HANDLE_VALUE) {
         return false;
     }
-
+    
     DWORD temp;
-
+    
     // Write the header + bitmap info
     ::WriteFile(hFile, &header, sizeof(header), &temp, 0);
     ::WriteFile(hFile, &info, sizeof(info), &temp, 0);
-
-    // Write the image
+    
+    // Write the image (must flip image vertically)
     U16 * pixels = m_ColorBuffer;
-
-    for (int h = GetHeight(); h; --h) {
+    
+    for (int h = GetHeight(); h; --h)
+    {
         ::WriteFile(hFile, pixels, GetWidth() * sizeof(U16), &temp, 0 );
         pixels += GetWidth();
     }
-
+    
     ::CloseHandle(hFile);
-
+    
     return true;
 }
 

@@ -151,6 +151,8 @@ namespace EGL {
 
 	// signature for generated scanline functions
 	typedef void (ScanlineFunction)(const RasterInfo * info, const EdgePos * start, const EdgePos * end);
+	typedef void (LineFunction)(const RasterInfo * info, const RasterPos * from, const RasterPos * to);
+	typedef void (PointFunction)(const RasterInfo * info, const RasterPos * pos);
 
 	class Rasterizer {
 
@@ -200,8 +202,6 @@ namespace EGL {
 		// stencil test.
 		// ----------------------------------------------------------------------
 
-		typedef void (Rasterizer::*RasterPointFunction)(const RasterPos& point);
-		typedef void (Rasterizer::*RasterLineFunction)(const RasterPos& from, const RasterPos& to);
 		typedef void (Rasterizer::*RasterTriangleFunction)(const RasterPos& a, const RasterPos& b,
 			const RasterPos& c);
 
@@ -308,9 +308,9 @@ namespace EGL {
 		FunctionCache *			m_FunctionCache;
 
 		ScanlineFunction *		m_ScanlineFunction;
+		LineFunction *			m_LineFunction;		// raster lines function
+		PointFunction *			m_PointFunction;
 
-		RasterPointFunction		m_RasterPointFunction;
-		RasterLineFunction		m_RasterLineFunction;
 		RasterTriangleFunction	m_RasterTriangleFunction;
 
 		RasterTriangleFunction	m_RasterTriangleFunctions[1 << RasterTriangleCount];
@@ -346,6 +346,31 @@ namespace EGL {
 	inline void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b, const RasterPos& c) {
 		(this->*m_RasterTriangleFunction)(a, b, c);
 	}
+
+
+#	if (defined(ARM) || defined(_ARM_))
+
+	inline void Rasterizer :: RasterPoint(const RasterPos& point) {
+		m_PointFunction(&m_RasterInfo, &point);
+	}
+
+#	else 
+
+	inline void Rasterizer :: RasterPoint(const RasterPos& point) {
+
+		I32 x = EGL_IntFromFixed(point.m_WindowCoords.x);
+		I32 y = EGL_IntFromFixed(point.m_WindowCoords.y);
+		EGL_Fixed depth = point.m_WindowCoords.depth;
+		EGL_Fixed tu = point.m_TextureCoords.tu;
+		EGL_Fixed tv = point.m_TextureCoords.tv;
+		FractionalColor baseColor = point.m_Color;
+		EGL_Fixed fogDensity = point.m_FogDensity;
+
+		Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
+	}
+
+#	endif
+
 }
 
 

@@ -1,8 +1,0 @@
-Simple and incomplete windowing library for simple demo programs.
-X11-windowing version mostly complete, WIN32 unstarted.
-
-Shape-library needs fixed-point versions of functions.
-
-redbook_2ed contains ports of relevent example programs.  Programs
-are floating-point only, so they need the Common Profile library
-- libGLES_CM.{a.so}.
