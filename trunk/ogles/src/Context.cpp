@@ -97,6 +97,8 @@ Context :: Context(const Config & config)
 	m_Current(false),
 	m_Disposed(false),
 	m_ViewportInitialized(false),
+	m_DefaultNormal(0, 0, EGL_ONE),
+	m_DefaultRGBA(EGL_ONE, EGL_ONE, EGL_ONE, EGL_ONE),
 
 	// pixel store state
 	m_PixelStorePackAlignment(4),
