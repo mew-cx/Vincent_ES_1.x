@@ -115,26 +115,33 @@ namespace {
 			EGL_Mul(a12 >> DET_SHIFT, a21 >> DET_SHIFT);
 	}
 
+	inline EGL_Fixed Det2x2NoShift(EGL_Fixed a11, EGL_Fixed a12, EGL_Fixed a21, EGL_Fixed a22) {
+		I64 first = static_cast<I64>(a11) * static_cast<I64>(a22);
+		I64 second = static_cast<I64>(a12) * static_cast<I64>(a21);
+
+		return (EGL_Fixed) ((first - second)  >> EGL_PRECISION);
+	}
+
 }
 
 
 #define SOLVE_PARAM_X(dx, dy, p1, p2, p3, scale) \
 	EGL_Fixed dx = EGL_Mul(																\
-			Det2x2(																		\
-				p2 - p1, pos2.m_WindowCoords.y - pos1.m_WindowCoords.y,					\
-				p3 - p1, pos3.m_WindowCoords.y - pos1.m_WindowCoords.y),				\
+			Det2x2NoShift(																		\
+				p2 - p1, (pos2.m_WindowCoords.y - pos1.m_WindowCoords.y) >> DET_SHIFT,					\
+				p3 - p1, (pos3.m_WindowCoords.y - pos1.m_WindowCoords.y) >> DET_SHIFT) >> DET_SHIFT,				\
 			scale);	
 
 #define SOLVE_PARAM_XY(dx, dy, p1, p2, p3, scale) \
 	EGL_Fixed dx = EGL_Mul(																\
-			Det2x2(																		\
-				p2 - p1, pos2.m_WindowCoords.y - pos1.m_WindowCoords.y,					\
-				p3 - p1, pos3.m_WindowCoords.y - pos1.m_WindowCoords.y),				\
-			scale);																		\
+			Det2x2NoShift(																		\
+				p2 - p1, (pos2.m_WindowCoords.y - pos1.m_WindowCoords.y) >> DET_SHIFT,					\
+				p3 - p1, (pos3.m_WindowCoords.y - pos1.m_WindowCoords.y) >> DET_SHIFT) >> DET_SHIFT,				\
+			scale);	\
 	EGL_Fixed dy = EGL_Mul(																\
-			Det2x2(																		\
-				pos2.m_WindowCoords.x - pos1.m_WindowCoords.x, p2 - p1,					\
-				pos3.m_WindowCoords.x - pos1.m_WindowCoords.x, p3 - p1),				\
+			Det2x2NoShift(																		\
+				(pos2.m_WindowCoords.x - pos1.m_WindowCoords.x) >> DET_SHIFT, p2 - p1,					\
+				(pos3.m_WindowCoords.x - pos1.m_WindowCoords.x) >> DET_SHIFT, p3 - p1) >> DET_SHIFT,				\
 			scale)
 
 
@@ -400,6 +407,11 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	delta.m_Color = FractionalColor(dRdX, dGdX, dBdX, dAdX);
 	delta.m_TextureCoords.tu = dTuOverZdX;
 	delta.m_TextureCoords.tv = dTvOverZdX;
+
+	//
+	// TODO: Why again do we change the sign on fog?
+	//
+
 	delta.m_FogDensity = -dFogdX;
 	delta.m_WindowCoords.depth = dDepthdX;
 	delta.m_WindowCoords.invZ = dInvZdX;
@@ -642,10 +654,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 			if (dXdY3 >= 0) {
 				xStepError = dXdY3 - EGL_FixedFromInt(dXdYStep1Int);
+				assert(xStepError >= 0 && xStepError < EGL_ONE);
 				xError = EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
 			} else {
-				xStepError = -dXdY3 - EGL_FixedFromInt(dXdYStep1Int);
-				xError = EGL_ONE - EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
+				xStepError = -dXdY3 + EGL_FixedFromInt(dXdYStep1Int);
+				assert(xStepError >= 0 && xStepError < EGL_ONE);
+				xError = (EGL_ONE-1) - EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
 			}
 
 			// ------------------------------------------------------------------
@@ -798,10 +812,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 			if (dXdY23 >= 0) {
 				xStepError = dXdY23 - EGL_FixedFromInt(dXdYStep2Int);
+				assert(xStepError >= 0 && xStepError < EGL_ONE);
 				xError = EGL_FractionFromFixed(xStepped2L + EGL_ONE/2);
 			} else {
-				xStepError = -dXdY23 - EGL_FixedFromInt(dXdYStep2Int);
-				xError = EGL_ONE - EGL_FractionFromFixed(xStepped2L + EGL_ONE/2);
+				xStepError = -dXdY23 + EGL_FixedFromInt(dXdYStep2Int);
+				assert(xStepError >= 0 && xStepError < EGL_ONE);
+				xError = (EGL_ONE-1) - EGL_FractionFromFixed(xStepped2L + EGL_ONE/2);
 			}
 
 			// ------------------------------------------------------------------
@@ -964,10 +980,14 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		if (dXdY2 >= 0) {
 			xStepError = dXdY2 - EGL_FixedFromInt(dXdYStep1Int);
+			assert(xStepError >= 0 && xStepError < EGL_ONE);
 			xError = EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
+			assert(xError >= 0 && xError < EGL_ONE);
 		} else {
-			xStepError = -dXdY2 - EGL_FixedFromInt(dXdYStep1Int);
-			xError = EGL_ONE - EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
+			xStepError = -dXdY2 + EGL_FixedFromInt(dXdYStep1Int);
+			assert(xStepError >= 0 && xStepError < EGL_ONE);
+			xError = (EGL_ONE-1) - EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
+			assert(xError >= 0 && xError < EGL_ONE);
 		}
 
 		// ------------------------------------------------------------------
@@ -1033,14 +1053,14 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		start.m_WindowCoords.x = 
 			xStepped2L + ((EGL_ONE/2) - 1);	// added offset so round down will be round to nearest
 
-		start.m_WindowCoords.invZ = invZ2 + EGL_Mul(dInvZdX, xPreStep2) + EGL_Mul(dInvZdY, yPreStep2); 
 		start.m_WindowCoords.depth = depth2 + EGL_Mul(dDepthdX, xPreStep2) + EGL_Mul(dDepthdY, yPreStep2); 
 
-		start.m_Color.r = 0;//pos2.m_Color.r + EGL_Mul(dRdX, xPreStep2) + EGL_Mul(dRdY, yPreStep2);
-		start.m_Color.g = 0;//pos2.m_Color.g + EGL_Mul(dGdX, xPreStep2) + EGL_Mul(dGdY, yPreStep2);
-		start.m_Color.b = EGL_ONE;//pos2.m_Color.b + EGL_Mul(dBdX, xPreStep2) + EGL_Mul(dBdY, yPreStep2);
+		start.m_Color.r = EGL_ONE;//pos2.m_Color.r + EGL_Mul(dRdX, xPreStep2) + EGL_Mul(dRdY, yPreStep2);
+		start.m_Color.g = EGL_ONE;//pos2.m_Color.g + EGL_Mul(dGdX, xPreStep2) + EGL_Mul(dGdY, yPreStep2);
+		start.m_Color.b = EGL_ONE/2;//pos2.m_Color.b + EGL_Mul(dBdX, xPreStep2) + EGL_Mul(dBdY, yPreStep2);
 		start.m_Color.a = pos2.m_Color.a + EGL_Mul(dAdX, xPreStep2) + EGL_Mul(dAdY, yPreStep2);
 		
+		start.m_WindowCoords.invZ = invZ2 + EGL_Mul(dInvZdX, xPreStep2) + EGL_Mul(dInvZdY, yPreStep2); 
 		start.m_TextureCoords.tu = tuOverZ2 + EGL_Mul(dTuOverZdX, xPreStep2) + EGL_Mul(dTuOverZdY, yPreStep2);
 		start.m_TextureCoords.tv = tvOverZ2 + EGL_Mul(dTvOverZdX, xPreStep2) + EGL_Mul(dTvOverZdY, yPreStep2);
 
@@ -1113,10 +1133,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		if (dXdY23 >= 0) {
 			xStepError = dXdY23 - EGL_FixedFromInt(dXdYStep2Int);
+			assert(xStepError >= 0 && xStepError < EGL_ONE);
 			xError = EGL_FractionFromFixed(xStepped2L + EGL_ONE/2);
 		} else {
-			xStepError = -dXdY23 - EGL_FixedFromInt(dXdYStep2Int);
-			xError = EGL_ONE - EGL_FractionFromFixed(xStepped2L + EGL_ONE/2);
+			xStepError = -dXdY23 + EGL_FixedFromInt(dXdYStep2Int);
+			assert(xStepError >= 0 && xStepError < EGL_ONE);
+			xError = (EGL_ONE-1) - EGL_FractionFromFixed(xStepped2L + EGL_ONE/2);
 		}
 
 
@@ -1178,7 +1200,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		start.m_WindowCoords.depth	= depth1			+ EGL_Mul(dDepthdX, xPreStep1)	+ EGL_Mul(dDepthdY, yPreStep1); 
 
 		start.m_Color.r				= EGL_ONE;//pos1.m_Color.r + EGL_Mul(dRdX, xPreStep1) + EGL_Mul(dRdY, yPreStep1);
-		start.m_Color.g				= 0;//pos1.m_Color.g + EGL_Mul(dGdX, xPreStep1) + EGL_Mul(dGdY, yPreStep1);
+		start.m_Color.g				= EGL_ONE/2;//pos1.m_Color.g + EGL_Mul(dGdX, xPreStep1) + EGL_Mul(dGdY, yPreStep1);
 		start.m_Color.b				= EGL_ONE;//pos1.m_Color.b + EGL_Mul(dBdX, xPreStep1) + EGL_Mul(dBdY, yPreStep1);
 		start.m_Color.a				= pos1.m_Color.a	+ EGL_Mul(dAdX, xPreStep1)	+ EGL_Mul(dAdY, yPreStep1);
 		
@@ -1265,10 +1287,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		if (dXdY3 >= 0) {
 			xStepError = dXdY3 - EGL_FixedFromInt(dXdYStep1Int);
+			assert(xStepError >= 0 && xStepError < EGL_ONE);
 			xError = EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
 		} else {
-			xStepError = -dXdY3 - EGL_FixedFromInt(dXdYStep1Int);
-			xError = EGL_ONE - EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
+			xStepError = -dXdY3 + EGL_FixedFromInt(dXdYStep1Int);
+			assert(xStepError >= 0 && xStepError < EGL_ONE);
+			xError = (EGL_ONE-1) - EGL_FractionFromFixed(xStepped1L + EGL_ONE/2);
 		}
 
 		// ------------------------------------------------------------------
