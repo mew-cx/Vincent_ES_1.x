@@ -360,6 +360,40 @@ namespace {
 		} while (--copyHeight);
 	}
 
+	template<class DstAccessor> 
+	void CopySurfacePixels(Surface * src, 
+						   U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
+					       void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
+					       const DstAccessor&) {
+
+		typedef typename DstAccessor::BaseType DstBaseType;
+
+		DstAccessor dstAccessor;
+
+		U32 srcWidth = src->GetWidth();
+		U32 srcHeight = src->GetHeight();
+
+		U32 srcGap = srcWidth - copyWidth;	// how many pixels to skip for next line
+		U32 dstGap = dstWidth - copyWidth;	// how many pixels to skip for next line
+
+		const U16 * srcPtr = src->GetColorBuffer() + srcX + srcY * srcWidth;
+		const U8 * alphaPtr = src->GetAlphaBuffer() + srcX + srcY * srcWidth;
+		DstBaseType * dstPtr = reinterpret_cast<DstBaseType *>(dst) + dstX + dstY * dstWidth;
+
+		do {
+			U32 span = copyWidth;
+
+			do {
+				Color color = Color::From565A(*srcPtr++, *alphaPtr++);
+				dstAccessor(dstPtr, color);
+			} while (--span);
+
+			srcPtr += srcGap;
+			alphaPtr += srcGap;
+			dstPtr += dstGap * DstAccessor::baseIncr;
+		} while (--copyHeight);
+	}
+
 	// -------------------------------------------------------------------------
 	// Given two bitmaps src and dst, where src has dimensions 
 	// (srcWidth * srcHeight) and dst has dimensions (dstWidth * dstHeight),
@@ -535,7 +569,7 @@ namespace {
 	bool CopySurfacePixels(Surface * src, 
 					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
 					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
-					RasterizerState::TextureFormat format, GLenum srcType, GLenum dstType) {
+					RasterizerState::TextureFormat format, GLenum dstType) {
 
 		U32 srcWidth = src->GetWidth();
 		U32 srcHeight = src->GetHeight();
@@ -574,39 +608,33 @@ namespace {
 		// at this point we know that the copy rectangle is valid and non-empty
 		// ---------------------------------------------------------------------
 
-		assert(srcType == GL_UNSIGNED_SHORT_5_6_5);
-
 		switch (format) {
 			case RasterizerState::TextureFormatRGBA:
 				switch (dstType) {
 				case GL_UNSIGNED_BYTE:
-					{
-						U32 srcGap = srcWidth - copyWidth;	// how many pixels to skip for next line
-						U32 dstGap = dstWidth - copyWidth;	// how many pixels to skip for next line
-
-						const U16 * srcPtr = src->GetColorBuffer() + srcX + srcY * srcWidth;
-						const U8 * alphaPtr = src->GetAlphaBuffer() + srcX + srcY * srcWidth;
-						U8 * dstPtr = reinterpret_cast<U8 *>(dst) + dstX + dstY * dstWidth;
-						Color2RGBA accessor;
-
-						do {
-							U32 span = copyWidth;
-
-							do {
-								Color color = Color::From565A(*srcPtr++, *alphaPtr++);
-								accessor(dstPtr, color);
-							} while (--span);
-
-							srcPtr += srcGap;
-							alphaPtr += srcGap;
-							dstPtr += dstGap * Color2RGBA::baseIncr;
-						} while (--copyHeight);
-					}
-
+					CopySurfacePixels(src, srcX, srcY,
+						copyWidth, copyHeight,
+						dst, dstWidth, dstHeight, dstX, dstY,
+						Color2RGBA());
 					return true;
+
+				case GL_UNSIGNED_SHORT_5_5_5_1:
+					CopySurfacePixels(src, srcX, srcY,
+						copyWidth, copyHeight,
+						dst, dstWidth, dstHeight, dstX, dstY,
+						Color2RGBA5551());
+					return true;
+
+				case GL_UNSIGNED_SHORT_4_4_4_4:
+					CopySurfacePixels(src, srcX, srcY,
+						copyWidth, copyHeight,
+						dst, dstWidth, dstHeight, dstX, dstY,
+						Color2RGBA4444());
+					return true;
+
 				}
 
-				break;
+				return false;
 
 			case RasterizerState::TextureFormatRGB:
 				switch (dstType) {
@@ -624,8 +652,31 @@ namespace {
 					return true;
 				}
 
-				break;
+				return false;
 
+			case RasterizerState::TextureFormatLuminance:
+				switch (dstType) {
+				case GL_UNSIGNED_BYTE:
+					;
+				}
+
+				return false;
+
+			case RasterizerState::TextureFormatAlpha:
+				switch (dstType) {
+				case GL_UNSIGNED_BYTE:
+					;
+				}
+
+				return false;
+
+			case RasterizerState::TextureFormatLuminanceAlpha:
+				switch (dstType) {
+				case GL_UNSIGNED_BYTE:
+					;
+				}
+
+				return false;
 		}
 
 		return false;
@@ -813,24 +864,18 @@ void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat
 
 	RasterizerState::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
 
-	// These parameters really depend on the actual reading surface, and should
-	// be determined from there
-	RasterizerState::TextureFormat externalFormat = RasterizerState::TextureFormatRGB;
-	GLenum type = GL_UNSIGNED_SHORT_5_6_5;
-
-	if (!ValidateFormats(internalFormat, externalFormat, type)) {
-		RecordError(GL_INVALID_VALUE);
-		return;
-	}
-
 	MultiTexture * multiTexture = GetCurrentTexture();
 	Texture * texture = multiTexture->GetTexture(level);
 	texture->Initialize(width, height, internalFormat);
 
-	CopyPixels(readSurface->GetColorBuffer(), readSurface->GetWidth(), readSurface->GetHeight(), 
-				0, 0, width, height,
-				texture->GetData(), width, height, 0, 0, internalFormat, type,
+	bool result = CopySurfacePixels(readSurface, x, y, width, height,
+				texture->GetData(), width, height, 0, 0, internalFormat, 
 				InternalTypeForInternalFormat(internalFormat));
+
+	if (!result) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
 
 	if (level == 0 && m_GenerateMipmaps) {
 		UpdateMipmaps();
@@ -855,20 +900,14 @@ void Context :: CopyTexSubImage2D(GLenum target, GLint level,
 	Texture * texture = multiTexture->GetTexture(level);
 	RasterizerState::TextureFormat internalFormat = texture->GetInternalFormat();
 
-	// These parameters really depend on the actual reading surface, and should
-	// be determined from there
-	RasterizerState::TextureFormat externalFormat = RasterizerState::TextureFormatRGB;
-	GLenum type = GL_UNSIGNED_SHORT_5_6_5;
+	bool result = CopySurfacePixels(readSurface, x, y, width, height,
+				texture->GetData(), texture->GetWidth(), texture->GetHeight(), xoffset, yoffset, 
+				internalFormat, InternalTypeForInternalFormat(internalFormat));
 
-	if (!ValidateFormats(internalFormat, externalFormat, type)) {
+	if (!result) {
 		RecordError(GL_INVALID_VALUE);
 		return;
 	}
-
-	CopyPixels(readSurface->GetColorBuffer(), readSurface->GetWidth(), readSurface->GetHeight(), 
-				0, 0, width, height,
-				texture->GetData(), texture->GetWidth(), texture->GetHeight(), 0, 0, 
-				internalFormat, type, InternalTypeForInternalFormat(internalFormat));
 
 	if (level == 0 && m_GenerateMipmaps) {
 		UpdateMipmaps();
@@ -1027,16 +1066,14 @@ void Context :: ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 						   GLenum format, GLenum type, GLvoid *pixels) { 
 
    // right now, use a hardcoded image format
-	RasterizerState::TextureFormat internalFormat = RasterizerState::TextureFormatRGB;
 	RasterizerState::TextureFormat externalFormat = TextureFormatFromEnum(format);
-	GLenum internalType = GL_UNSIGNED_SHORT_5_6_5;
 
 	Surface * readSurface = GetReadSurface();
 
 	bool result = CopySurfacePixels(readSurface, 
 				x, y, width, height,
 				pixels, width, height, 0, 0, 
-				externalFormat, internalType, type);
+				externalFormat, type);
 	
 	if (!result) {
 		RecordError(GL_INVALID_VALUE);

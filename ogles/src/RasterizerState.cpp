@@ -104,7 +104,7 @@ RasterizerState :: RasterizerState():
 	m_ShadingModel(ShadeModelFlat),
 	m_ScissorWidth(320),
 	m_ScissorHeight(240),
-	m_ScissorTestEnabled(true)
+	m_ScissorTestEnabled(false)
 
 {
 }
