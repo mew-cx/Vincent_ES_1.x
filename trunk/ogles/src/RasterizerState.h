@@ -192,6 +192,11 @@ namespace EGL {
 		void SetWrappingModeS(WrappingMode mode);
 		void SetWrappingModeT(WrappingMode mode);
 
+		MinFilterMode GetMinFilterMode() const		{ return m_MinFilterMode; }
+		MagFilterMode GetMagFilterMode() const		{ return m_MagFilterMode; }
+		WrappingMode GetWrappingModeS() const		{ return m_WrappingModeS; }
+		WrappingMode GetWrappingModeT() const		{ return m_WrappingModeT; }
+
 		void SetInternalFormat(TextureFormat format);
 
 		void SetDepthRange(EGL_Fixed zNear, EGL_Fixed zFar);

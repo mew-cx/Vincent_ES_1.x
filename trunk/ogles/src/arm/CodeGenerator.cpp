@@ -42,6 +42,7 @@
 #include "stdafx.h"
 #include "CodeGenerator.h"
 #include "Rasterizer.h"
+#include "FunctionCache.h"
 #include "Surface.h"
 #include "Texture.h"
 #include "codegen.h"
@@ -2924,7 +2925,7 @@ namespace {
 	}
 }
 
-void CodeGenerator :: CompileRasterScanLine(void * targetBuffer) {
+void CodeGenerator :: CompileRasterScanLine(FunctionCache * target) {
 
 	cg_heap_t * heap = cg_heap_create(4096);
 	cg_module_t * module = cg_module_create(heap);
@@ -2983,11 +2984,12 @@ void CodeGenerator :: CompileRasterScanLine(void * targetBuffer) {
 
 	armdis_dump(&dis, "dump5.txt", cseg);
 
-#if defined(ARM) || defined(_ARM_)
+	void * targetBuffer = target->AddFunction(*m_State, cg_segment_size(cseg));
 	cg_segment_get_block(cseg, 0, targetBuffer, cg_segment_size(cseg));
+
+#if defined(ARM) || defined(_ARM_)
 	// flush data cache and clear instruction cache to make new code visible to execution unit
 	CacheSync(CACHE_SYNC_INSTRUCTIONS | CACHE_SYNC_WRITEBACK);		
-
 #endif
 
 	cg_codegen_destroy(codegen);
