@@ -13,6 +13,7 @@ Completion:
 - Build script to allow creation of all versions of libraries
 - Make distrubutions available on SF
 - Compressed bitmaps
+- rescale normal vs. normalize
 
 
 Optimization:

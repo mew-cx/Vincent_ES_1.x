@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// Surface.cpp		Drawing Surface Class for Embedded OpenGL Implementation
+// Surface.cpp		Drawing Surface Class for OpenGL (R) ES Implementation
 //
 // --------------------------------------------------------------------------
 //

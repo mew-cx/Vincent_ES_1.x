@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// MatrixStack.cpp	Matrix Stack Class for Embedded OpenGL Implementation
+// MatrixStack.cpp	Matrix Stack Class for OpenGL (R) ES Implementation
 //
 // --------------------------------------------------------------------------
 //

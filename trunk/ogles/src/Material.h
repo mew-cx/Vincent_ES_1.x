@@ -5,7 +5,7 @@
 
 // ==========================================================================
 //
-// Material.h		Material Class for Embedded OpenGL Implementation
+// Material.h		Material Class for OpenGL (R) ES Implementation
 //
 // --------------------------------------------------------------------------
 //

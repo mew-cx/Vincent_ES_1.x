@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// Display.cpp		Display Class for Embedded OpenGL Implementation
+// Display.cpp		Display Class for OpenGL (R) ES Implementation
 //
 // --------------------------------------------------------------------------
 //

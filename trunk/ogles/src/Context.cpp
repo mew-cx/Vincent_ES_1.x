@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// context.cpp	Rendering Context Class for Embedded OpenGL Implementation
+// context.cpp	Rendering Context Class for OpenGL (R) ES Implementation
 //
 // --------------------------------------------------------------------------
 //

@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// ContextMatrix	Rendering Context Class for Embedded OpenGL Implementation
+// ContextMatrix	Rendering Context Class for OpenGL (R) ES Implementation
 //
 //					Matrix and transformaton related settings
 //

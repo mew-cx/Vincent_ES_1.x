@@ -7,7 +7,7 @@
 
 // ==========================================================================
 //
-// RasterizerState	Rasterizer State Class for Embedded OpenGL Implementation
+// RasterizerState	Rasterizer State Class for OpenGL (R) ES Implementation
 //
 //					The rasterizer state maintains all the state information
 //					that is necessary to determine the details of the
@@ -272,7 +272,7 @@ namespace EGL {
 		LogicOp					m_LogicOpcode;
 
 		// -------------------------------------------------------------------------
-		// Stencil buffer not required by OpenGL|ES
+		// Stencil buffer not required by OpenGL (R) ES
 		// -------------------------------------------------------------------------
 		bool					m_StencilTestEnabled;
 

@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// ContextMaterial.cpp	Rendering Context Class for Embedded OpenGL Implementation
+// ContextMaterial.cpp	Rendering Context Class for OpenGL (R) ES Implementation
 //
 //						RasterizerState related settings
 //

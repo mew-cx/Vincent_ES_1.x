@@ -7,7 +7,7 @@
 
 // ==========================================================================
 //
-// Rasterizer.h		Rasterizer Class for Embedded OpenGL Implementation
+// Rasterizer.h		Rasterizer Class for OpenGL (R) ES Implementation
 //
 //					The rasterizer converts transformed and lit 
 //					primitives and creates a raster image in the

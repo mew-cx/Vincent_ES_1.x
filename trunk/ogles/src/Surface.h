@@ -5,7 +5,7 @@
 
 // ==========================================================================
 //
-// Surface.h		Drawing Surface Class for Embedded OpenGL Implementation
+// Surface.h		Drawing Surface Class for OpenGL (R) ES Implementation
 //
 // --------------------------------------------------------------------------
 //

@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// light.cpp	Rendering Context Class for Embedded OpenGL Implementation
+// light.cpp	Rendering Context Class for OpenGL (R) ES Implementation
 //
 //				Lightning Related Operations
 //

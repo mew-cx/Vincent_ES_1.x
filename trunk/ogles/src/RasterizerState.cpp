@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// RasterizerState	Rasterizer State Class for Embedded OpenGL Implementation
+// RasterizerState	Rasterizer State Class for OpenGL (R) ES Implementation
 //
 //					The rasterizer state maintains all the state information
 //					that is necessary to determine the details of the

@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// matrix.cpp	Rendering Context Class for Embedded OpenGL Implementation
+// matrix.cpp	Rendering Context Class for OpenGL (R) ES Implementation
 //
 //				Texturing Functions
 //

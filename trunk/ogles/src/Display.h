@@ -5,7 +5,7 @@
 
 // ==========================================================================
 //
-// Display.h		Display Class for Embedded OpenGL Implementation
+// Display.h		Display Class for OpenGL (R) ES Implementation
 //
 // --------------------------------------------------------------------------
 //

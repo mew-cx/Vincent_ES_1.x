@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// lines.cpp	Rendering Context Class for Embedded OpenGL Implementation
+// lines.cpp	Rendering Context Class for OpenGL (R) ES Implementation
 //
 //				Rendering Operations for Lines
 //

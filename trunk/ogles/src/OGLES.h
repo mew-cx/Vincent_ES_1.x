@@ -6,11 +6,12 @@
 
 // ==========================================================================
 //
-// OGLES.h		Base include file for OpenGL|ES library
+// OGLES.h		Base include file for OpenGL (R) ES library
 //
 // --------------------------------------------------------------------------
 //
 // 10-02-2003	Hans-Martin Will	initial version
+// 12-17-2003	Hans-Martin Will	added configuration information
 //
 // --------------------------------------------------------------------------
 //
@@ -42,9 +43,9 @@
 
 
 #ifdef OGLES_EXPORTS
-#define OGLES_API __declspec(dllexport)
+#	define OGLES_API __declspec(dllexport)
 #else
-#define OGLES_API __declspec(dllimport)
+#	define OGLES_API __declspec(dllimport)
 #endif
 
 
@@ -55,7 +56,7 @@
 
 #define EGL_CONFIG_VENDOR			"Hans-Martin Will"
 #define EGL_CONFIG_VERSION			"OpenGL ES-CL 1.0"
-#define EGL_CONFIG_EXTENSIONS		""
+#define EGL_CONFIG_EXTENSIONS		"OES_fixed_point"
 
 #ifdef EGL_USE_GPP
 #	define EGL_CONFIG_RENDERER		"Software GPP"
@@ -69,17 +70,17 @@
 
 #ifndef EGL_USE_GPP		// define only if not including Intel's GPP library
 
-typedef signed char 	I8;
-typedef unsigned char 	U8;
-typedef short 			I16;
-typedef unsigned short 	U16;
-typedef int 			I32;
-typedef unsigned int 	U32;
+typedef signed char 		I8;
+typedef unsigned char 		U8;
+typedef short 				I16;
+typedef unsigned short 		U16;
+typedef int 				I32;
+typedef unsigned int 		U32;
 
 #endif
 
-typedef unsigned __int64 U64;
-typedef __int64			I64;
+typedef unsigned __int64	U64;
+typedef __int64				I64;
 
 
 #define elementsof(a) (sizeof(a) / sizeof(*(a)))

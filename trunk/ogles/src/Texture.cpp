@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// Texture.cpp		Texture Class for Embedded OpenGL Implementation
+// Texture.cpp		Texture Class for OpenGL (R) ES Implementation
 //
 // --------------------------------------------------------------------------
 //
