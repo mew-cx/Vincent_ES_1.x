@@ -105,12 +105,22 @@ void CodeGenerator :: GenerateRasterPoint() {
 
 	// load argument values
 	cg_virtual_reg_t * regTexture = LOAD_DATA(block, regInfo, OFFSET_TEXTURES);
-	cg_virtual_reg_t * regAddrTextures = regTexture;
 
 	FragmentGenerationInfo info;
+	size_t unit;
 
 	info.regInfo = regInfo;
-	info.regTexture = regTexture;
+
+	info.regTexture[0] = regTexture;
+
+	for (unit = 1; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		DECL_CONST_REG	(regOffset, unit * 4);
+		DECL_REG		(regTextureN);
+
+		ADD				(regTextureN, regTexture, regOffset);
+
+		info.regTexture[unit] = regTextureN;
+	}
 
 	// EGL_Fixed halfSize = size / 2;
 	DECL_REG		(regHalfSize);
@@ -172,8 +182,11 @@ void CodeGenerator :: GenerateRasterPoint() {
 	if (!m_State->m_Point.SpriteEnabled && !m_State->m_Point.CoordReplaceEnabled) {
 		//	EGL_Fixed tu = point.m_TextureCoords.tu;
 		//	EGL_Fixed tv = point.m_TextureCoords.tv;
-		info.regU = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TU);
-		info.regV = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TV); 
+
+		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+			info.regU[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TU + unit * sizeof(TexCoord));
+			info.regV[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TV + unit * sizeof(TexCoord)); 
+		}
 
 		//	for (I32 y = ymin; y <= ymax; y++) {
 		block = cg_block_create(procedure, 3);
@@ -237,56 +250,58 @@ void CodeGenerator :: GenerateRasterPoint() {
 		FINV		(regDelta0, regSize);
 		OR			(regDelta, regDelta0, regDelta0);
 
-		if (m_State->m_Texture[TODO].MipmapFilterMode != RasterizerState::FilterModeNone) {
+		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+			if (m_State->m_Texture[unit].MipmapFilterMode != RasterizerState::FilterModeNone) {
 
-			if (m_State->m_Texture[TODO].MipmapFilterMode == RasterizerState::FilterModeNearest ||
-				/* remove this */ m_State->m_Texture[TODO].MipmapFilterMode == RasterizerState::FilterModeLinear) {
-				//EGL_Fixed maxDu = delta >> (16 - m_Texture->GetTexture(0)->GetLogWidth());
-				//EGL_Fixed maxDv = delta >> (16 - m_Texture->GetTexture(0)->GetLogHeight());
+				if (m_State->m_Texture[unit].MipmapFilterMode == RasterizerState::FilterModeNearest ||
+					/* remove this */ m_State->m_Texture[unit].MipmapFilterMode == RasterizerState::FilterModeLinear) {
+					//EGL_Fixed maxDu = delta >> (16 - m_Texture->GetTexture(0)->GetLogWidth());
+					//EGL_Fixed maxDv = delta >> (16 - m_Texture->GetTexture(0)->GetLogHeight());
 
-				cg_virtual_reg_t * regLogWidth = LOAD_DATA(block, regAddrTextures, OFFSET_TEXTURE_LOG_WIDTH);
-				DECL_CONST_REG	(regConstant16, 16);
+					cg_virtual_reg_t * regLogWidth = LOAD_DATA(block, info.regTexture[unit], OFFSET_TEXTURE_LOG_WIDTH);
+					DECL_CONST_REG	(regConstant16, 16);
 
-				DECL_REG	(regShiftDu);
-				DECL_REG	(regShiftDv);
-				DECL_REG	(regMaxDu);
-				DECL_REG	(regMaxDv);
+					DECL_REG	(regShiftDu);
+					DECL_REG	(regShiftDv);
+					DECL_REG	(regMaxDu);
+					DECL_REG	(regMaxDv);
 
-				SUB			(regShiftDu, regConstant16, regLogWidth);
-				ASR			(regMaxDu, regDelta, regShiftDu);
+					SUB			(regShiftDu, regConstant16, regLogWidth);
+					ASR			(regMaxDu, regDelta, regShiftDu);
 
-				cg_virtual_reg_t * regLogHeight = LOAD_DATA(block, regAddrTextures, OFFSET_TEXTURE_LOG_HEIGHT);
-				SUB			(regShiftDv, regConstant16, regLogHeight);
-				ASR			(regMaxDv, regDelta, regShiftDv);
-				
-				//	EGL_Fixed rho = maxDu + maxDv;
+					cg_virtual_reg_t * regLogHeight = LOAD_DATA(block, info.regTexture[unit], OFFSET_TEXTURE_LOG_HEIGHT);
+					SUB			(regShiftDv, regConstant16, regLogHeight);
+					ASR			(regMaxDv, regDelta, regShiftDv);
+					
+					//	EGL_Fixed rho = maxDu + maxDv;
 
-				DECL_REG	(regRho);
-				FADD		(regRho, regMaxDu, regMaxDv);
+					DECL_REG	(regRho);
+					FADD		(regRho, regMaxDu, regMaxDv);
 
-				// we start with nearest/minification only selection; will add LINEAR later
-				//	m_MipMapLevel = EGL_Min(EGL_Max(0, Log2(rho)), m_MaxMipmapLevel);
+					// we start with nearest/minification only selection; will add LINEAR later
+					//	m_MipMapLevel = EGL_Min(EGL_Max(0, Log2(rho)), m_MaxMipmapLevel);
 
-				DECL_REG	(regLog2);
-				DECL_REG	(regMipmapLevel);
+					DECL_REG	(regLog2);
+					DECL_REG	(regMipmapLevel);
 
-				LOG2		(regLog2, regRho);
-				
-				cg_virtual_reg_t * regMaxMipmapLevel = LOAD_DATA(block, regInfo, OFFSET_MAX_MIPMAP_LEVEL);
-				
-				MIN			(regMipmapLevel, regLog2, regMaxMipmapLevel);
+					LOG2		(regLog2, regRho);
+					
+					cg_virtual_reg_t * regMaxMipmapLevel = LOAD_DATA(block, regInfo, OFFSET_MAX_MIPMAP_LEVEL + unit * sizeof(I32));
+					
+					MIN			(regMipmapLevel, regLog2, regMaxMipmapLevel);
 
-				// now multiply the texture block size by the mipmap level and add this to the texture base
+					// now multiply the texture block size by the mipmap level and add this to the texture base
 
-				assert		((1 << Log(sizeof(Texture))) == sizeof(Texture));
+					assert		((1 << Log(sizeof(Texture))) == sizeof(Texture));
 
-				DECL_CONST_REG	(regLogTextureSize, Log(sizeof(Texture)));
-				DECL_REG	(regScaledLevel);
+					DECL_CONST_REG	(regLogTextureSize, Log(sizeof(Texture)));
+					DECL_REG	(regScaledLevel);
 
-				LSL			(regScaledLevel, regMipmapLevel, regLogTextureSize);
-				ALLOC_REG	(regTexture);
-				ADD			(regTexture, regAddrTextures, regScaledLevel);
-				info.regTexture = regTexture;
+					LSL			(regScaledLevel, regMipmapLevel, regLogTextureSize);
+					ALLOC_REG	(regTexture);
+					ADD			(regTexture, info.regTexture[unit], regScaledLevel);
+					info.regTexture[unit] = regTexture;
+				}
 			}
 		}
 
@@ -308,7 +323,6 @@ void CodeGenerator :: GenerateRasterPoint() {
 		PHI			(regVLoopEnter, cg_create_virtual_reg_list(procedure->module->heap, regVLoopExit, regInitV, NULL));
 
 		info.regY =	regYLoopEnter;
-		info.regV = regVLoopEnter;
 
 		//		for (I32 x = xmin, tu = delta / 2; x <= xmax; x++, tu += delta) {
 		DECL_REG	(regInitX);
@@ -329,7 +343,11 @@ void CodeGenerator :: GenerateRasterPoint() {
 		PHI			(regULoopEnter, cg_create_virtual_reg_list(procedure->module->heap, regULoopExit, regInitU, NULL));
 
 		info.regX =	regXLoopEnter;
-		info.regU =	regULoopEnter;
+
+		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+			info.regU[unit] =	regULoopEnter;
+			info.regV[unit] = regVLoopEnter;
+		}
 
 		//			Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
 

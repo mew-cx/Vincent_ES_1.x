@@ -65,8 +65,8 @@ namespace EGL {
 		cg_virtual_reg_t * regX;
 		cg_virtual_reg_t * regY;
 		cg_virtual_reg_t * regDepth;
-		cg_virtual_reg_t * regU;
-		cg_virtual_reg_t * regV; 
+		cg_virtual_reg_t * regU[EGL_NUM_TEXTURE_UNITS];
+		cg_virtual_reg_t * regV[EGL_NUM_TEXTURE_UNITS]; 
 		cg_virtual_reg_t * regFog;
 		cg_virtual_reg_t * regR;
 		cg_virtual_reg_t * regG;
@@ -74,7 +74,7 @@ namespace EGL {
 		cg_virtual_reg_t * regA;	
 
 		cg_virtual_reg_t * regInfo;
-		cg_virtual_reg_t * regTexture;
+		cg_virtual_reg_t * regTexture[EGL_NUM_TEXTURE_UNITS];
 	};
 
 	class FunctionCache;
@@ -104,6 +104,7 @@ namespace EGL {
 			int weight, bool forceScissor = false);
 
 		void GenerateFetchTexColor(cg_proc_t * proc, cg_block_t * currentBlock,
+								   size_t unit,
 								   FragmentGenerationInfo & fragmentInfo,
 								   cg_virtual_reg_t *& regTexColorR,
 								   cg_virtual_reg_t *& regTexColorG,			
@@ -112,6 +113,7 @@ namespace EGL {
 								   cg_virtual_reg_t *& regTexColor565);
 
 		void FetchTexColor(cg_proc_t * proc, cg_block_t * currentBlock,
+								   const RasterizerState::TextureState * textureState,
 								   cg_virtual_reg_t * regTexData, 
 								   cg_virtual_reg_t * regTexOffset,
 								   cg_virtual_reg_t *& regTexColorR,
@@ -119,6 +121,24 @@ namespace EGL {
 								   cg_virtual_reg_t *& regTexColorB,			
 								   cg_virtual_reg_t *& regTexColorA,
 								   cg_virtual_reg_t *& regTexColor565);
+
+		cg_virtual_reg_t * Mul255(cg_block_t * currentBlock, cg_virtual_reg_t * first, cg_virtual_reg_t * second);
+		cg_virtual_reg_t * Add(cg_block_t * currentBlock, cg_virtual_reg_t * first, cg_virtual_reg_t * second);
+		cg_virtual_reg_t * Sub(cg_block_t * currentBlock, cg_virtual_reg_t * first, cg_virtual_reg_t * second);
+		cg_virtual_reg_t * AddSaturate255(cg_block_t * currentBlock, cg_virtual_reg_t * first, cg_virtual_reg_t * second);
+		cg_virtual_reg_t * ClampTo255(cg_block_t * currentBlock, cg_virtual_reg_t * value);
+		cg_virtual_reg_t * ExtractBitFieldTo255(cg_block_t * currentBlock, cg_virtual_reg_t * value, size_t low, size_t high);
+		cg_virtual_reg_t * BitFieldFrom255(cg_block_t * currentBlock, cg_virtual_reg_t * value, size_t low, size_t high);
+
+		void Color565FromRGB(cg_block_t * block, cg_virtual_reg_t * result,
+							 cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b);
+		cg_virtual_reg_t * Color565FromRGB(cg_block_t * block,
+							 cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b);
+
+		cg_virtual_reg_t * Blend255(cg_block_t * currentBlock, cg_virtual_reg_t * first, cg_virtual_reg_t * second,
+								    cg_virtual_reg_t * alpha);
+		cg_virtual_reg_t * Blend255(cg_block_t * currentBlock, U8 constant, cg_virtual_reg_t * second,
+								    cg_virtual_reg_t * alpha);
 
 	private:
 		const RasterizerState *	m_State;
