@@ -96,10 +96,10 @@ ugluPerspectivef(GLfloat fovy, GLfloat aspect, GLfloat n, GLfloat f)
     GLfloat s, cot, dz = f - n;
     GLfloat rad = fovy/2.f*__PI/180.f;
 
-    s = sinf(rad);
+    s = sin(rad);
     if (dz == 0 || s == 0 || aspect == 0) return;
 
-    cot = cosf(rad)/s;
+    cot = cos(rad)/s;
 
     __identf(&m[0][0]);
     m[0][0] = cot/aspect;

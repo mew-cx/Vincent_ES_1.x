@@ -157,7 +157,7 @@ namespace EGL {
 	public:
 		enum {
 			PolygonOffsetUnitSize = 1,		// how to determine this?
-			DepthRangeMax = 0x7fffffff		// 31 bits 
+			DepthRangeMax = 0xffff			// 31 bits 
 		};
 
 		enum PixelFormat {
