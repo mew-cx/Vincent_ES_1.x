@@ -1427,3 +1427,333 @@ cg_block_ref_t * cg_block_ref_create(cg_proc_t * proc)
 	cg_block_ref_t * result = (cg_block_ref_t *) cg_heap_allocate(proc->module->heap, sizeof(cg_block_ref_t));
 	return result;
 }
+
+static char *opcodes[] = 
+{
+	"nop",					
+	"add",		"and",		"asr",		"cmp",		"div",		
+	"lsl",		"lsr",		"mod",		"mul",		"neg",	
+	"not",		"or",		"sub",		"xor",									
+	"fadd",		"fcmp",		"fdiv",		"fmul",		"fneg",		
+	"fsub",		"finv",		"fsqrt",					
+	"trunc",	"round",	"fcnv",															
+	"beq",		"bge",		"ble",		"bgt",		"blt",		
+	"bne",		"bra",			
+	"ldb",		"ldh",		"ldi",		"ldw",		"stb",		
+	"sth",		"stw",							
+	"call",		"ret",		"phi"
+};
+
+static char * shift_opcodes[] = 
+{
+	"lsl",
+	"lsr",
+	"asr",
+	"ror"
+}
+;
+
+static void inst_dump(cg_inst_t * inst, FILE * out)
+{
+	cg_virtual_reg_list_t * list;
+
+	switch (inst->base.kind)
+	{
+	case cg_inst_unary:		
+		if (inst->unary.dest_flags)
+		{
+			fprintf(out, "\t%s\t(r%d, r%d), r%d\n", opcodes[inst->base.opcode],
+				inst->unary.dest_value->reg_no, inst->unary.dest_flags->reg_no, inst->unary.operand.source);
+		}
+		else
+		{
+			fprintf(out, "\t%s\tr%d, r%d\n", opcodes[inst->base.opcode],
+				inst->unary.dest_value->reg_no, inst->unary.operand.source);
+		}
+
+		break;
+
+	case cg_inst_binary:		
+		if (inst->binary.dest_flags)
+		{
+			fprintf(out, "\t%s\t(r%d, r%d), r%d, r%d\n", opcodes[inst->base.opcode],
+				inst->binary.dest_value->reg_no, inst->binary.dest_flags->reg_no, 
+				inst->binary.source->reg_no,
+				inst->binary.operand.source->reg_no);
+		} 
+		else
+		{
+			fprintf(out, "\t%s\tr%d, r%d, r%d\n", opcodes[inst->base.opcode],
+				inst->binary.dest_value->reg_no, inst->binary.source->reg_no,
+				inst->binary.operand.source->reg_no);
+		}
+
+		break;
+
+	case cg_inst_compare:	
+		fprintf(out, "\t%s\tr%d, r%d, r%d\n", opcodes[inst->base.opcode],
+			inst->compare.dest_flags->reg_no, inst->compare.source->reg_no,
+			inst->compare.operand.source->reg_no);
+		break;
+
+	case cg_inst_load:	
+		fprintf(out, "\t%s\tr%d, r%d\n", opcodes[inst->base.opcode],
+			inst->load.dest->reg_no, inst->load.mem.base->reg_no);
+		break;
+
+	case cg_inst_store:	
+		fprintf(out, "\t%s\tr%d, r%d\n", opcodes[inst->base.opcode],
+			inst->store.source->reg_no, inst->store.mem.base->reg_no);
+		break;
+
+	case cg_inst_load_immed:
+		fprintf(out, "\t%s\tr%d, %x\n", opcodes[inst->base.opcode],
+			inst->immed.dest->reg_no, inst->immed.value);
+		break;
+
+	case cg_inst_branch_label:	
+		fprintf(out, "\t%s\t%p\n", opcodes[inst->base.opcode],
+			inst->branch.target->block);
+		break;
+
+	case cg_inst_branch_cond:	
+		fprintf(out, "\t%s\tr%d, %p\n", opcodes[inst->base.opcode],
+			inst->branch.cond->reg_no, inst->branch.target->block);
+		break;
+
+	case cg_inst_phi:	
+		fprintf(out, "\t%s\tr%d", opcodes[inst->base.opcode],
+			inst->phi.dest->reg_no);
+
+		for (list = inst->phi.regs; list; list = list->next)
+		{
+			fprintf(out, ", r%d", list->reg->reg_no);
+		}
+
+		fprintf(out, "\n");
+		break;
+
+	case cg_inst_call:
+		if (inst->call.dest)
+		{
+			fprintf(out, "\t%s\tr%d, %p", opcodes[inst->base.opcode],
+				inst->call.dest->reg_no, inst->call.proc);
+		}
+		else
+		{
+			fprintf(out, "\t%s\t%p", opcodes[inst->base.opcode],
+				inst->call.proc);
+		}
+
+		for (list = inst->call.args; list; list = list->next)
+		{
+			fprintf(out, ", r%d", list->reg->reg_no);
+		}
+
+		fprintf(out, "\n");
+		break;
+
+	case cg_inst_ret:						
+		if (inst->ret.result)
+		{
+			fprintf(out, "\t%s\tr%d\n", opcodes[inst->base.opcode],
+				inst->ret.result->reg_no);
+		} 
+		else
+		{
+			fprintf(out, "\t%s\n", opcodes[inst->base.opcode]);
+		}
+
+		break;
+
+	case cg_inst_arm_unary_immed:	
+		if (inst->unary.dest_flags)
+		{
+			fprintf(out, "\t%s\t(r%d, r%d), %d\n", opcodes[inst->base.opcode],
+				inst->unary.dest_value->reg_no, inst->unary.dest_flags->reg_no, inst->unary.operand.immed);
+		}
+		else
+		{
+			fprintf(out, "\t%s\tr%d, %d\n", opcodes[inst->base.opcode],
+				inst->unary.dest_value->reg_no, inst->unary.operand.immed);
+		}
+
+		break;
+
+	case cg_inst_arm_unary_shift_reg:	
+		if (inst->unary.dest_flags)
+		{
+			fprintf(out, "\t%s\t(r%d, r%d), r%d %s r%d\n", opcodes[inst->base.opcode],
+				inst->unary.dest_value->reg_no, inst->unary.dest_flags->reg_no, 
+				inst->unary.operand.shift_reg.source->reg_no,
+				shift_opcodes[inst->unary.operand.shift_reg.op],
+				inst->unary.operand.shift_reg.shift->reg_no);
+		}
+		else
+		{
+			fprintf(out, "\t%s\tr%d, r%d %s r%d\n", opcodes[inst->base.opcode],
+				inst->unary.dest_value->reg_no, 
+				inst->unary.operand.shift_reg.source->reg_no,
+				shift_opcodes[inst->unary.operand.shift_reg.op],
+				inst->unary.operand.shift_reg.shift->reg_no);
+		}
+
+		break;
+
+	case cg_inst_arm_unary_shift_immed:	
+		if (inst->unary.dest_flags)
+		{
+			fprintf(out, "\t%s\t(r%d, r%d), r%d %s %d\n", opcodes[inst->base.opcode],
+				inst->unary.dest_value->reg_no, inst->unary.dest_flags->reg_no, 
+				inst->unary.operand.shift_immed.source->reg_no,
+				shift_opcodes[inst->unary.operand.shift_immed.op],
+				inst->unary.operand.shift_immed.shift);
+		}
+		else
+		{
+			fprintf(out, "\t%s\tr%d, r%d %s %d\n", opcodes[inst->base.opcode],
+				inst->unary.dest_value->reg_no, 
+				inst->unary.operand.shift_immed.source->reg_no,
+				shift_opcodes[inst->unary.operand.shift_immed.op],
+				inst->unary.operand.shift_immed.shift);
+		}
+
+		break;
+
+	case cg_inst_arm_binary_immed:	
+		if (inst->binary.dest_flags)
+		{
+			fprintf(out, "\t%s\t(r%d, r%d), r%d, %d\n", opcodes[inst->base.opcode],
+				inst->binary.dest_value->reg_no, inst->binary.dest_flags->reg_no, 
+				inst->binary.source->reg_no,
+				inst->binary.operand.immed);
+		} 
+		else
+		{
+			fprintf(out, "\t%s\tr%d, r%d, %d\n", opcodes[inst->base.opcode],
+				inst->binary.dest_value->reg_no, 
+				inst->binary.source->reg_no,
+				inst->binary.operand.immed);
+		}
+
+		break;
+
+	case cg_inst_arm_binary_shift_reg:	
+		if (inst->binary.dest_flags)
+		{
+			fprintf(out, "\t%s\t(r%d, r%d), r%d, r%d %s r%d\n", opcodes[inst->base.opcode],
+				inst->binary.dest_value->reg_no, inst->binary.dest_flags->reg_no, 
+				inst->binary.source->reg_no,
+				inst->binary.operand.shift_reg.source->reg_no,
+				shift_opcodes[inst->binary.operand.shift_reg.op],
+				inst->binary.operand.shift_reg.shift->reg_no);
+		} 
+		else
+		{
+			fprintf(out, "\t%s\tr%d, r%d, r%d %s r%d\n", opcodes[inst->base.opcode],
+				inst->binary.dest_value->reg_no, 
+				inst->binary.source->reg_no,
+				inst->binary.operand.shift_reg.source->reg_no,
+				shift_opcodes[inst->binary.operand.shift_reg.op],
+				inst->binary.operand.shift_reg.shift->reg_no);
+		}
+
+		break;
+
+	case cg_inst_arm_binary_shift_immed:	
+		if (inst->binary.dest_flags)
+		{
+			fprintf(out, "\t%s\t(r%d, r%d), r%d, r%d %s r%d\n", opcodes[inst->base.opcode],
+				inst->binary.dest_value->reg_no, inst->binary.dest_flags->reg_no, 
+				inst->binary.source->reg_no,
+				inst->binary.operand.shift_immed.source->reg_no,
+				shift_opcodes[inst->binary.operand.shift_immed.op],
+				inst->binary.operand.shift_immed.shift);
+		} 
+		else
+		{
+			fprintf(out, "\t%s\tr%d, r%d, r%d %s r%d\n", opcodes[inst->base.opcode],
+				inst->binary.dest_value->reg_no, 
+				inst->binary.source->reg_no,
+				inst->binary.operand.shift_immed.source->reg_no,
+				shift_opcodes[inst->binary.operand.shift_immed.op],
+				inst->binary.operand.shift_immed.shift);
+		}
+
+		break;
+
+	case cg_inst_arm_compare_immed:	
+		fprintf(out, "\t%s\tr%d, r%d, %d\n", opcodes[inst->base.opcode],
+			inst->compare.dest_flags->reg_no, inst->compare.source->reg_no,
+			inst->compare.operand.immed);
+		break;
+
+	case cg_inst_arm_compare_shift_reg:	
+		fprintf(out, "\t%s\tr%d, r%d, r%d %s r%d\n", opcodes[inst->base.opcode],
+			inst->compare.dest_flags->reg_no, inst->compare.source->reg_no,
+			inst->compare.operand.shift_reg.source->reg_no,
+			shift_opcodes[inst->compare.operand.shift_reg.op],
+			inst->compare.operand.shift_reg.shift->reg_no);
+		break;
+
+	case cg_inst_arm_compare_shift_immed:	
+		fprintf(out, "\t%s\tr%d, r%d, r%d %s %d\n", opcodes[inst->base.opcode],
+			inst->compare.dest_flags->reg_no, inst->compare.source->reg_no,
+			inst->compare.operand.shift_immed.source->reg_no,
+			shift_opcodes[inst->compare.operand.shift_immed.op],
+			inst->compare.operand.shift_immed.shift);
+		break;
+
+	case cg_inst_arm_load_immed_offset:	
+		fprintf(out, "\t%s\tr%d, (r%d, %d)\n", opcodes[inst->base.opcode],
+			inst->load.dest->reg_no, inst->load.mem.immed_offset.base->reg_no,
+			inst->load.mem.immed_offset.offset);
+		break;
+
+	case cg_inst_arm_load_reg_offset:	
+		fprintf(out, "\t%s\tr%d, (r%d, r%d)\n", opcodes[inst->base.opcode],
+			inst->load.dest->reg_no, inst->load.mem.reg_offset.base->reg_no,
+			inst->load.mem.reg_offset.offset->reg_no);
+		break;
+
+	case cg_inst_arm_store_immed_offset:	
+		fprintf(out, "\t%s\tr%d, (r%d, %d)\n", opcodes[inst->base.opcode],
+			inst->store.source->reg_no, inst->store.mem.immed_offset.base->reg_no,
+			inst->store.mem.immed_offset.offset);
+		break;
+
+	case cg_inst_arm_store_reg_offset:	
+		fprintf(out, "\t%s\tr%d, (r%d, r%d)\n", opcodes[inst->base.opcode],
+			inst->store.source->reg_no, inst->store.mem.reg_offset.base->reg_no,
+			inst->store.mem.reg_offset.offset);
+		break;
+
+	case cg_inst_none:
+	default:
+		fprintf(out, "\t<ILLEGAL INSTRUCTION>\n");
+		;
+	}
+}
+
+
+void cg_module_dump(cg_module_t * module, FILE * out)
+{
+	cg_proc_t * proc;
+	cg_block_t * block;
+	cg_inst_t * inst;
+
+	for (proc = module->procs; proc; proc = proc->next)
+	{
+		for (block = proc->blocks; block; block = block->next) 
+		{
+			fprintf(out, "%p:\n", block);
+
+			for (inst = block->insts; inst; inst = inst->base.next)
+			{
+				inst_dump(inst, out);
+			}
+
+			fprintf(out, "\n");
+		}
+	}
+}

@@ -2316,6 +2316,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regStart);		// virtual register containing start edge buffer pointer
 	DECL_REG	(regEnd);		// virtual register containing end edge buffer pointer
 
+	procedure->num_args = 3;	// the previous three declarations make up the arguments
+
 	cg_block_t * block = cg_block_create(procedure);
 
 	// Create instructions to calculate addresses of individual fields of
