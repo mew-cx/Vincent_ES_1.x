@@ -698,6 +698,10 @@ namespace triVM {
 
 	extern void RemoveUnusedCode(Module * module);
 
+	typedef std::map<int, Instruction *> RegisterDefinitionMap;
+
+	extern RegisterDefinitionMap * FindDefinitions(Module * module);
+
 } // namespace triVM
 } // namespace EGL
 
