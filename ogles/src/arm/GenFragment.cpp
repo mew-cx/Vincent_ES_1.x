@@ -646,7 +646,6 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				DECL_REG	(regConstant2);
 				DECL_REG	(regConstant3);
 				DECL_REG	(regConstant7);
-				DECL_REG	(regShiftedOffset);
 				DECL_REG	(regScaledOffset);
 				DECL_REG	(regTexAddr0);
 				DECL_REG	(regTexAddr1);
@@ -663,8 +662,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				LDI		(regConstant3, 3);
 				LDI		(regConstant7, 7);
 
-				LSL		(regShiftedOffset, regTexOffset, regConstant1);
-				ADD		(regScaledOffset, regTexOffset, regShiftedOffset);
+				LSL		(regScaledOffset, regTexOffset, regConstant2);
 				ADD		(regTexAddr0, regTextureData, regScaledOffset);
 				LDB		(regByteR, regTexAddr0);
 				ADD		(regTexAddr1, regTexAddr0, regConstant1);

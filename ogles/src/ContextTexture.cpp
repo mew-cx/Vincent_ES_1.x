@@ -112,7 +112,9 @@ namespace {
 
 			case 4:
 			case GL_RGBA:
-				return RasterizerState::TextureFormatRGBA5551;
+				//return RasterizerState::TextureFormatRGBA5551;
+				//return RasterizerState::TextureFormatRGBA4444;
+				return RasterizerState::TextureFormatRGBA8;
 
 			default:
 				return RasterizerState::TextureFormatInvalid;
@@ -124,6 +126,8 @@ namespace {
 			case RasterizerState::TextureFormatAlpha:
 			case RasterizerState::TextureFormatLuminance:
 			case RasterizerState::TextureFormatLuminanceAlpha:
+			case RasterizerState::TextureFormatRGB8:
+			case RasterizerState::TextureFormatRGBA8:
 			default:
 				return GL_UNSIGNED_BYTE;
 
@@ -132,6 +136,9 @@ namespace {
 
 			case RasterizerState::TextureFormatRGBA5551:
 				return GL_UNSIGNED_SHORT_5_5_5_1;
+
+			case RasterizerState::TextureFormatRGBA4444:
+				return GL_UNSIGNED_SHORT_4_4_4_4;
 		}
 	}
 
@@ -518,6 +525,7 @@ namespace {
 				break;
 
 			case RasterizerState::TextureFormatRGB565:
+			case RasterizerState::TextureFormatRGB8:
 				switch (srcType) {
 					case GL_UNSIGNED_BYTE:
 						switch (dstType) {
@@ -554,6 +562,8 @@ namespace {
 				break;
 
 			case RasterizerState::TextureFormatRGBA5551:
+			case RasterizerState::TextureFormatRGBA4444:
+			case RasterizerState::TextureFormatRGBA8:
 				switch (srcType) {
 					case GL_UNSIGNED_BYTE:
 						switch (dstType) {
@@ -673,6 +683,8 @@ namespace {
 
 		switch (format) {
 			case RasterizerState::TextureFormatRGBA5551:
+			case RasterizerState::TextureFormatRGBA4444:
+			case RasterizerState::TextureFormatRGBA8:
 				switch (dstType) {
 				case GL_UNSIGNED_BYTE:
 					CopySurfacePixels(src, srcX, srcY,
@@ -700,6 +712,7 @@ namespace {
 				return false;
 
 			case RasterizerState::TextureFormatRGB565:
+			case RasterizerState::TextureFormatRGB8:
 				switch (dstType) {
 				case GL_UNSIGNED_BYTE:
 					CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
@@ -785,6 +798,7 @@ namespace {
 				break;
 
 			case RasterizerState::TextureFormatRGB565:
+			case RasterizerState::TextureFormatRGB8:
 				if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT_5_6_5) {
 					return false;
 				}
@@ -792,6 +806,8 @@ namespace {
 				break;
 
 			case RasterizerState::TextureFormatRGBA5551:
+			case RasterizerState::TextureFormatRGBA4444:
+			case RasterizerState::TextureFormatRGBA8:
 				if (type != GL_UNSIGNED_BYTE &&
 					type != GL_UNSIGNED_SHORT_4_4_4_4 &&
 					type != GL_UNSIGNED_SHORT_5_5_5_1) {
@@ -811,6 +827,8 @@ namespace {
 			case RasterizerState::TextureFormatAlpha:
 			case RasterizerState::TextureFormatLuminance:
 			case RasterizerState::TextureFormatLuminanceAlpha:
+			case RasterizerState::TextureFormatRGB8:
+			case RasterizerState::TextureFormatRGBA8:
 				return GL_UNSIGNED_BYTE;
 
 			case RasterizerState::TextureFormatRGB565:
@@ -818,6 +836,10 @@ namespace {
 
 			case RasterizerState::TextureFormatRGBA5551:
 				return GL_UNSIGNED_SHORT_5_5_5_1;
+
+			case RasterizerState::TextureFormatRGBA4444:
+				return GL_UNSIGNED_SHORT_4_4_4_4;
+
 		}
 	}
 }
@@ -1007,12 +1029,12 @@ void Context :: CompressedTexImage2D(GLenum target, GLint level, GLenum internal
 				U16 * expandedPixels = pixels;
 
 				while (pixelCount--) {
-					*expandedPixels++ = colors[*nibblePtr].ConvertTo5551();
+					*expandedPixels++ = colors[*nibblePtr].ConvertTo4444();
 					++nibblePtr;
 				}
 
 				TexImage2D(target, level, GL_RGBA, width, height, 0, 
-						   GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, pixels);
+						   GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, pixels);
 			} else {
 				U16 * expandedPixels = pixels;
 
@@ -1040,11 +1062,11 @@ void Context :: CompressedTexImage2D(GLenum target, GLint level, GLenum internal
 				U16 * expandedPixels = pixels;
 
 				while (pixelCount--) {
-					*expandedPixels++ = colors[*dataPtr++].ConvertTo5551();
+					*expandedPixels++ = colors[*dataPtr++].ConvertTo4444();
 				}
 
 				TexImage2D(target, level, GL_RGBA, width, height, 0, 
-						   GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, pixels);
+						   GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, pixels);
 			} else {
 				U16 * expandedPixels = pixels;
 
@@ -1584,6 +1606,25 @@ void Context :: UpdateMipmaps(void) {
 			}
 			break;
 
+		case RasterizerState::TextureFormatRGBA4444:
+			{
+				U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
+				U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
+
+				for (y = 0; y < height; ++y) {
+					for (x = 0; x < width; ++x) {
+						Color a = Color::From4444(outerBase[2 * x + (2 * width) * 2 * y]);
+						Color b = Color::From4444(outerBase[2 * x + 1 + (2 * width) * 2 * y]);
+						Color c = Color::From4444(outerBase[2 * x + (2 * width) * (2 * y + 1)]);
+						Color d = Color::From4444(outerBase[2 * x + 1+ (2 * width) * (2 * y + 1)]);
+
+						Color target = Color::Average(a, b, c, d);
+						innerBase[x + width * y] = target.ConvertTo4444();
+					}
+				}
+			}
+			break;
+
 		default:
 			assert(0);
 		}
@@ -1689,6 +1730,23 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
+			case RasterizerState::TextureFormatRGBA4444:
+				{
+					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
+					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
+
+					for (y = 0; y < height; ++y) {
+						for (x = 0; x < width; ++x) {
+							Color a = Color::From4444(outerBase[x + width * 2 * y]);
+							Color b = Color::From4444(outerBase[x + width * (2 * y + 1)]);
+
+							Color target = Color::Average(a, b);
+							innerBase[x + width * y] = target.ConvertTo4444();
+						}
+					}
+				}
+				break;
+
 			default:
 				assert(0);
 			}
@@ -1788,6 +1846,23 @@ void Context :: UpdateMipmaps(void) {
 
 							Color target = Color::Average(a, b);
 							innerBase[x + width * y] = target.ConvertTo5551();
+						}
+					}
+				}
+				break;
+
+			case RasterizerState::TextureFormatRGBA4444:
+				{
+					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
+					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
+
+					for (y = 0; y < height; ++y) {
+						for (x = 0; x < width; ++x) {
+							Color a = Color::From4444(outerBase[2 * x + (2 * width) * y]);
+							Color b = Color::From4444(outerBase[2 * x + 1 + (2 * width) * y]);
+
+							Color target = Color::Average(a, b);
+							innerBase[x + width * y] = target.ConvertTo4444();
 						}
 					}
 				}
