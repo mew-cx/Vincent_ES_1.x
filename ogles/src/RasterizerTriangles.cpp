@@ -462,29 +462,14 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			int logWidth = Log2(m_Texture->GetTexture(0)->GetWidth());
 			int logHeight = Log2(m_Texture->GetTexture(0)->GetHeight());
 
-			int logWidthA = logWidth >> 1;
-			int logHeightA = logHeight >> 1;
-			int logWidthB = logWidth - logWidthA;
-			int logHeightB = logHeight - logHeightA;
-
 			EGL_Fixed textureArea = 
-				TriangleArea(a.m_TextureCoords.tu << logWidthA, a.m_TextureCoords.tv << logHeightA,
-							 b.m_TextureCoords.tu << logWidthA, b.m_TextureCoords.tv << logHeightA,
-							 c.m_TextureCoords.tu << logWidthA, c.m_TextureCoords.tv << logHeightA);
-
-
-			EGL_Fixed screenArea = 
-				TriangleArea(a.m_WindowCoords.x >> logWidthB, a.m_WindowCoords.y >> logHeightB,
-							 b.m_WindowCoords.x >> logWidthB, b.m_WindowCoords.y >> logHeightB,
-							 c.m_WindowCoords.x >> logWidthB, c.m_WindowCoords.y >> logHeightB);
-			EGL_Fixed invScreenArea;
+				Det2x2(
+					(pos2.m_TextureCoords.tu - pos1.m_TextureCoords.tu) << logWidth, 
+					(pos2.m_TextureCoords.tv - pos1.m_TextureCoords.tv) << logHeight,
+					(pos3.m_TextureCoords.tu - pos1.m_TextureCoords.tu) << logWidth,
+					(pos3.m_TextureCoords.tv - pos1.m_TextureCoords.tv) << logHeight);
 			
-			if (screenArea != 0)
-				invScreenArea = EGL_Inverse(screenArea);
-			else 
-				invScreenArea = EGL_FixedFromInt(256);
-
-			EGL_Fixed ratio = EGL_Mul(textureArea, invScreenArea) >> EGL_PRECISION;
+			EGL_Fixed ratio = EGL_Mul(textureArea, invDenominator) >> EGL_PRECISION;
 			
 			int logRatio = Log2(ratio);
 			int maxLevel = (logWidth > logHeight) ? logWidth : logHeight;
