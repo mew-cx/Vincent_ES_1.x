@@ -14,14 +14,15 @@ been added.
 
 In addition, a couple of defects that showed up in those examples have been addressed:
 
+ 863654  - Create specialized pipeline functions for geometry stage 
+ 960543 - BindTexture should record an error for invalid targets
 1001348 - By default, smooth shading should be enabled
 1001352 - movelight example is rendered incorrectly
 1001351 - alpha3d example does not render correctly
 1001354 - Stray red pixels in examples
 1001356 - Polyoff example shows stippling
- 960543 - BindTexture should record an error for invalid targets
 1008798 - Clipping issue invovling points at infinity
-863654  - Create specialized pipeline functions for geometry stage 
+1001825 - Mesh created by ugWireSphere/ugSolidSphere is iffy
 
 
 Version 0.80
