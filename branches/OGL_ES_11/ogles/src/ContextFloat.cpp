@@ -337,7 +337,7 @@ void Context :: TexParameterf (GLenum target, GLenum pname, GLfloat param) {
 		case GL_TEXTURE_MAG_FILTER:
 		case GL_TEXTURE_WRAP_S:
 		case GL_TEXTURE_WRAP_T:
-		case GL_GENERATE_MIPMAP_SGIS:
+		case GL_GENERATE_MIPMAP:
 			TexParameterx(target, pname, (GLfixed) param);
 			break;
 
@@ -348,4 +348,48 @@ void Context :: TexParameterf (GLenum target, GLenum pname, GLfloat param) {
 
 void Context :: Translatef (GLfloat x, GLfloat y, GLfloat z) {
 	Translatex(EGL_FixedFromFloat(x), EGL_FixedFromFloat(y), EGL_FixedFromFloat(z));
+}
+
+void Context :: ClipPlanef(GLenum plane, const GLfloat *equation) {
+	assert(0);
+}
+
+void Context :: DrawTexf(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height) {
+	assert(0);
+}
+
+void Context :: DrawTexfv(GLfloat *coords) {
+	assert(0);
+}
+
+void Context :: GetClipPlanef(GLenum pname, GLfloat eqn[4]) {
+	assert(0);
+}
+
+void Context :: GetFloatv(GLenum pname, GLfloat *params) {
+	assert(0);
+}
+
+void Context :: GetLightfv(GLenum light, GLenum pname, GLfloat *params) {
+	assert(0);
+}
+
+void Context :: GetMaterialfv(GLenum face, GLenum pname, GLfloat *params) {
+	assert(0);
+}
+
+void Context :: GetTexEnvfv(GLenum env, GLenum pname, GLfloat *params) {
+	assert(0);
+}
+
+void Context :: GetTexParameterfv(GLenum target, GLenum pname, GLfloat *params) {
+	assert(0);
+}
+
+void Context :: PointParameterf(GLenum pname, GLfloat param) {
+	assert(0);
+}
+
+void Context :: PointParameterfv(GLenum pname, const GLfloat *params) {
+	assert(0);
 }

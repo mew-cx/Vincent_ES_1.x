@@ -69,12 +69,24 @@ GLAPI void APIENTRY glAlphaFuncx (GLenum func, GLclampx ref) {
 	CONTEXT_EXEC(AlphaFuncx(func, ref));
 }
 
+GLAPI void APIENTRY glBindBuffer(GLenum target, GLuint buffer) {
+	CONTEXT_EXEC(BindBuffer(target, buffer));
+}
+
 GLAPI void APIENTRY glBindTexture (GLenum target, GLuint texture) { 
 	CONTEXT_EXEC(BindTexture(target, texture));
 }
 
 GLAPI void APIENTRY glBlendFunc (GLenum sfactor, GLenum dfactor) { 
 	CONTEXT_EXEC(BlendFunc(sfactor, dfactor));
+}
+
+GLAPI void APIENTRY glBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage) {
+	CONTEXT_EXEC(BufferData(target, size, data, usage));
+}
+
+GLAPI void APIENTRY glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid *data) {
+	CONTEXT_EXEC(BufferSubData(target, offset, size, data));
 }
 
 GLAPI void APIENTRY glClear (GLbitfield mask) { 
@@ -99,6 +111,14 @@ GLAPI void APIENTRY glClearDepthx (GLclampx depth) {
 
 GLAPI void APIENTRY glClearStencil (GLint s) { 
 	CONTEXT_EXEC(ClearStencil(s));
+}
+
+GLAPI void APIENTRY glClipPlanex(GLenum plane, const GLfixed *equation) {
+	CONTEXT_EXEC(ClipPlanex(plane, equation));
+}
+
+GLAPI void APIENTRY glClipPlanef(GLenum plane, const GLfloat *equation) {
+	CONTEXT_EXEC(ClipPlanef(plane, equation));
 }
 
 GLAPI void APIENTRY glClientActiveTexture (GLenum texture) { 
@@ -139,6 +159,10 @@ GLAPI void APIENTRY glCopyTexSubImage2D (GLenum target, GLint level, GLint xoffs
 
 GLAPI void APIENTRY glCullFace (GLenum mode) { 
 	CONTEXT_EXEC(CullFace(mode));
+}
+
+GLAPI void APIENTRY glDeleteBuffers(GLsizei n, const GLuint *buffers) {
+	CONTEXT_EXEC(DeleteBuffers(n, buffers));
 }
 
 GLAPI void APIENTRY glDeleteTextures (GLsizei n, const GLuint *textures) { 
@@ -221,6 +245,26 @@ GLAPI void APIENTRY glFrustumx (GLfixed left, GLfixed right, GLfixed bottom, GLf
 	CONTEXT_EXEC(Frustumx(left, right, bottom, top, zNear, zFar));
 }
 
+GLAPI void APIENTRY glGetBooleanv(GLenum pname, GLboolean *params) {
+	CONTEXT_EXEC(GetBooleanv(pname, params));
+}
+
+GLAPI void APIENTRY glGetBufferParameteriv(GLenum target, GLenum pname, GLint *params) {
+	CONTEXT_EXEC(GetBufferParameteriv(target, pname, params));
+}
+
+GLAPI void APIENTRY glGetClipPlanef(GLenum pname, GLfloat eqn[4]) {
+	CONTEXT_EXEC(GetClipPlanef(pname, eqn));
+}
+
+GLAPI void APIENTRY glGetClipPlanex(GLenum pname, GLfixed eqn[4]) {
+	CONTEXT_EXEC(GetClipPlanex(pname, eqn));
+}
+
+GLAPI void APIENTRY glGenBuffers(GLsizei n, GLuint *buffers) {
+	CONTEXT_EXEC(GenBuffers(n, buffers));
+}
+
 GLAPI void APIENTRY glGenTextures (GLsizei n, GLuint *textures) { 
 	CONTEXT_EXEC(GenTextures(n, textures));
 }
@@ -229,16 +273,80 @@ GLAPI GLenum APIENTRY glGetError (void) {
 	CONTEXT_EXEC_RETURN(GetError());
 }
 
-GLAPI void APIENTRY glGetIntegerv (GLenum pname, GLint *params) { 
+GLAPI void APIENTRY glGetFixedv(GLenum pname, GLfixed *params) {
+	CONTEXT_EXEC(GetFixedv(pname, params));
+}
+
+GLAPI void APIENTRY glGetFloatv(GLenum pname, GLfloat *params) {
+	CONTEXT_EXEC(GetFloatv(pname, params));
+}
+
+GLAPI void APIENTRY glGetIntegerv (GLenum pname, GLint *params) {
 	CONTEXT_EXEC(GetIntegerv(pname, params));
+}
+
+GLAPI void APIENTRY glGetLightfv(GLenum light, GLenum pname, GLfloat *params) {
+	CONTEXT_EXEC(GetLightfv(light, pname, params));
+}
+
+GLAPI void APIENTRY glGetLightxv(GLenum light, GLenum pname, GLfixed *params) {
+	CONTEXT_EXEC(GetLightxv(light, pname, params));
+}
+
+GLAPI void APIENTRY glGetMaterialfv(GLenum face, GLenum pname, GLfloat *params) {
+	CONTEXT_EXEC(GetMaterialfv(face, pname, params));
+}
+
+GLAPI void APIENTRY glGetMaterialxv(GLenum face, GLenum pname, GLfixed *params) {
+	CONTEXT_EXEC(GetMaterialxv(face, pname, params));
+}
+
+GLAPI void APIENTRY glGetPointerv(GLenum pname, void **params) {
+	CONTEXT_EXEC(GetPointerv(pname, params));
 }
 
 GLAPI const GLubyte * APIENTRY glGetString (GLenum name) { 
 	CONTEXT_EXEC_RETURN(GetString(name));
 }
 
+GLAPI void APIENTRY glGetTexEnviv(GLenum env, GLenum pname, GLint *params) {
+	CONTEXT_EXEC(GetTexEnviv(env, pname, params));
+}
+
+GLAPI void APIENTRY glGetTexEnvfv(GLenum env, GLenum pname, GLfloat *params) {
+	CONTEXT_EXEC(GetTexEnvfv(env, pname, params));
+}
+
+GLAPI void APIENTRY glGetTexEnvxv(GLenum env, GLenum pname, GLfixed *params) {
+	CONTEXT_EXEC(GetTexEnvxv(env, pname, params));
+}
+
+GLAPI void APIENTRY glGetTexParameteriv(GLenum target, GLenum pname, GLint *params) {
+	CONTEXT_EXEC(GetTexParameteriv(target, pname, params));
+}
+
+GLAPI void APIENTRY glGetTexParameterfv(GLenum target, GLenum pname, GLfloat *params) {
+	CONTEXT_EXEC(GetTexParameterfv(target, pname, params));
+}
+
+GLAPI void APIENTRY glGetTexParameterxv(GLenum target, GLenum pname, GLfixed *params) {
+	CONTEXT_EXEC(GetTexParameterxv(target, pname, params));
+}
+
 GLAPI void APIENTRY glHint (GLenum target, GLenum mode) { 
 	CONTEXT_EXEC(Hint(target, mode));
+}
+
+GLAPI GLboolean APIENTRY glIsBuffer(GLuint buffer) {
+	CONTEXT_EXEC_RETURN(IsBuffer(buffer));
+}
+
+GLAPI GLboolean APIENTRY glIsEnabled(GLenum cap) {
+	CONTEXT_EXEC_RETURN(IsEnabled(cap));
+}
+
+GLAPI GLboolean APIENTRY glIsTexture(GLuint texture) {
+	CONTEXT_EXEC_RETURN(IsTexture(texture));
 }
 
 GLAPI void APIENTRY glLightModelf (GLenum pname, GLfloat param) { 
@@ -355,6 +463,22 @@ GLAPI void APIENTRY glOrthox (GLfixed left, GLfixed right, GLfixed bottom, GLfix
 
 GLAPI void APIENTRY glPixelStorei (GLenum pname, GLint param) { 
 	CONTEXT_EXEC(PixelStorei(pname, param));
+}
+
+GLAPI void APIENTRY glPointParameterf(GLenum pname, GLfloat param) {
+	CONTEXT_EXEC(PointParameterf(pname, param));
+}
+
+GLAPI void APIENTRY glPointParameterfv(GLenum pname, const GLfloat *params) {
+	CONTEXT_EXEC(PointParameterfv(pname, params));
+}
+
+GLAPI void APIENTRY glPointParameterx(GLenum pname, GLfixed param) {
+	CONTEXT_EXEC(PointParameterx(pname, param));
+}
+
+GLAPI void APIENTRY glPointParameterxv(GLenum pname, const GLfixed *params) {
+	CONTEXT_EXEC(PointParameterxv(pname, params));
 }
 
 GLAPI void APIENTRY glPointSize (GLfloat size) { 
@@ -485,15 +609,60 @@ GLAPI void APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height)
 	CONTEXT_EXEC(Viewport(x, y, width, height));
 }
 
-GLAPI void APIENTRY glDrawMeshHM(GLsizei count, GLenum type, GLsizei stride,
-								 GLsizei offsetVertex, GLsizei strideVertex,
-								 GLsizei offsetNormal, GLsizei strideNormal,
-								 GLsizei offsetTexture, GLsizei strideTexture,
-								 GLsizei offsetColor, GLsizei strideColor, 
-								 const GLvoid *pointer) {
-	CONTEXT_EXEC(DrawMesh(count, type, stride,
-						  offsetVertex, strideVertex,
-						  offsetNormal, strideNormal,
-						  offsetTexture, strideTexture,
-						  offsetColor, strideColor, pointer));
+/*****************************************************************************************/
+/*                                 OES extension functions                               */
+/*****************************************************************************************/
+/* OES_matrix_palette */
+GLAPI void APIENTRY glCurrentPaletteMatrixOES(GLint index) {
+	CONTEXT_EXEC(CurrentPaletteMatrix(index));
+}
+
+GLAPI void APIENTRY glLoadPaletteFromModelViewMatrixOES(void) {
+	CONTEXT_EXEC(LoadPaletteFromModelViewMatrix());
+}
+
+GLAPI void APIENTRY glMatrixIndexPointerOES(GLint size, GLenum type, GLsizei stride, GLvoid *pointer) {
+	CONTEXT_EXEC(MatrixIndexPointer(size, type, stride, pointer));
+}
+
+GLAPI void APIENTRY glWeightPointerOES(GLint size, GLenum type, GLsizei stride, GLvoid *pointer) {
+	CONTEXT_EXEC(WeightPointer(size, type, stride, pointer));
+}
+
+/* OES_point_size_array */
+GLAPI void APIENTRY glPointSizePointerOES(GLenum type, GLsizei stride, const GLvoid *pointer) {
+	CONTEXT_EXEC(PointSizePointer(type, stride, pointer));
+}
+
+/* OES_draw_texture */
+GLAPI void APIENTRY glDrawTexsOES(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height) {
+	CONTEXT_EXEC(DrawTexs(x, y, z, width, height));
+}
+
+GLAPI void APIENTRY glDrawTexiOES(GLint x, GLint y, GLint z, GLint width, GLint height) {
+	CONTEXT_EXEC(DrawTexi(x, y, z, width, height));
+}
+
+GLAPI void APIENTRY glDrawTexfOES(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height) {
+	CONTEXT_EXEC(DrawTexf(x, y, z, width, height));
+}
+
+GLAPI void APIENTRY glDrawTexxOES(GLfixed x, GLfixed y, GLfixed z, GLfixed width, GLfixed height) {
+	CONTEXT_EXEC(DrawTexx(x, y, z, width, height));
+}
+
+GLAPI void APIENTRY glDrawTexsvOES(GLshort *coords) {
+	CONTEXT_EXEC(DrawTexsv(coords));
+}
+
+GLAPI void APIENTRY glDrawTexivOES(GLint *coords) {
+	CONTEXT_EXEC(DrawTexiv(coords));
+}
+
+GLAPI void APIENTRY glDrawTexfvOES(GLfloat *coords) {
+	CONTEXT_EXEC(DrawTexfv(coords));
+}
+
+GLAPI void APIENTRY glDrawTexxvOES(GLfixed *coords) {
+	CONTEXT_EXEC(DrawTexxv(coords));
 }

@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// matrix.cpp	Rendering Context Class for 3D Rendering Library
+// ContextTexture.cpp	Rendering Context Class for 3D Rendering Library
 //
 //				Texturing Functions
 //
@@ -1464,7 +1464,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 			}
 			break;
 
-		case GL_GENERATE_MIPMAP_SGIS:
+		case GL_GENERATE_MIPMAP:
 			{
 				m_GenerateMipmaps = (param != 0);
 			}
@@ -2042,3 +2042,50 @@ void Context :: UpdateMipmaps(void) {
 		}
 	}
 }
+
+
+GLboolean Context :: IsTexture(GLuint texture) {
+	assert(0);
+	return false;
+}
+
+void Context :: DrawTexs(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height) {
+	assert(0);
+}
+
+void Context :: DrawTexi(GLint x, GLint y, GLint z, GLint width, GLint height) {
+	assert(0);
+}
+
+void Context :: DrawTexx(GLfixed x, GLfixed y, GLfixed z, GLfixed width, GLfixed height) {
+	assert(0);
+}
+
+void Context :: DrawTexsv(GLshort *coords) {
+	assert(0);
+}
+
+void Context :: DrawTexiv(GLint *coords) {
+	assert(0);
+}
+
+void Context :: DrawTexxv(GLfixed *coords) {
+	assert(0);
+}
+
+void Context :: GetTexEnviv(GLenum env, GLenum pname, GLint *params) {
+	assert(0);
+}
+
+void Context :: GetTexEnvxv(GLenum env, GLenum pname, GLfixed *params) {
+	assert(0);
+}
+
+void Context :: GetTexParameteriv(GLenum target, GLenum pname, GLint *params) {
+	assert(0);
+}
+
+void Context :: GetTexParameterxv(GLenum target, GLenum pname, GLfixed *params) {
+	assert(0);
+}
+

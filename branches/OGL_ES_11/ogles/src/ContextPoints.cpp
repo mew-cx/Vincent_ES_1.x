@@ -118,3 +118,15 @@ void Context :: RenderPoint(RasterPos& point) {
 }
 
 
+void Context :: PointSizePointer(GLenum type, GLsizei stride, const GLvoid *pointer) {
+	assert(0);
+}
+
+void Context :: PointParameterx(GLenum pname, GLfixed param) {
+	assert(0);
+}
+
+void Context :: PointParameterxv(GLenum pname, const GLfixed *params) {
+	assert(0);
+}
+

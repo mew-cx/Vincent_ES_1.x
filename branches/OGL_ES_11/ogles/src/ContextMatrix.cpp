@@ -157,6 +157,26 @@ void Context :: Orthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top,
 }
 
 // --------------------------------------------------------------------------
+// Matrix palette extension
+// --------------------------------------------------------------------------
+
+void Context :: CurrentPaletteMatrix(GLint index) {
+	assert(0);
+}
+
+void Context :: LoadPaletteFromModelViewMatrix() {
+	assert(0);
+}
+
+void Context :: MatrixIndexPointer(GLint size, GLenum type, GLsizei stride, GLvoid *pointer) {
+	assert(0);
+}
+
+void Context :: WeightPointer(GLint size, GLenum type, GLsizei stride, GLvoid *pointer) {
+	assert(0);
+}
+
+// --------------------------------------------------------------------------
 // Matrix querying extension
 // --------------------------------------------------------------------------
 
