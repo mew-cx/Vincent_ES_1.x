@@ -1,8 +1,6 @@
 #ifndef EGL_TEXTURE_H
 #define EGL_TEXTURE_H 1
 
-#pragma once
-
 // ==========================================================================
 //
 // Texture.h		Texture Class for 3D Rendering Library
@@ -48,7 +46,7 @@
 
 
 namespace EGL {
-	class OGLES_API Texture { 
+	class Texture { 
 	public:
 
 		Texture();
@@ -81,7 +79,7 @@ namespace EGL {
 	};
 
 
-	class OGLES_API MultiTexture {
+	class MultiTexture {
 	public:
 		enum {
 			MAX_LEVELS = 20

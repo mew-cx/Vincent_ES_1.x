@@ -1,8 +1,6 @@
 #ifndef EGL_LIGHT_H
 #define EGL_LIGHT_H 1
 
-#pragma once
-
 // ==========================================================================
 //
 // Light.h			Light Class for 3D Rendering Library
@@ -51,7 +49,7 @@ namespace EGL {
 class Material;
 
 
-class OGLES_API Light {
+class Light {
 
 public:
 	Light();

@@ -1,8 +1,6 @@
 #ifndef EGL_COLOR_H
 #define EGL_COLOR_H 1
 
-#pragma once
-
 // ==========================================================================
 //
 // Color			Integer 8-8-8-8 representation of an RGBA color
@@ -46,7 +44,7 @@
 
 namespace EGL {
 
-	class OGLES_API Color {
+	class Color {
 
 	public:
 		enum {

@@ -1,10 +1,6 @@
 #ifndef EGL_RASTERIZER_H
 #define EGL_RASTERIZER_H 1
 
-
-#pragma once
-
-
 // ==========================================================================
 //
 // Rasterizer.h		Rasterizer Class for 3D Rendering Library
@@ -152,7 +148,7 @@ namespace EGL {
 	// signature for generated scanline functions
 	typedef void (ScanlineFunction)(const RasterInfo * info, const EdgePos * start, const EdgePos * end);
 
-	class OGLES_API Rasterizer {
+	class Rasterizer {
 
 	public:
 		enum {

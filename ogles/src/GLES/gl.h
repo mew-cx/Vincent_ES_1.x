@@ -39,9 +39,22 @@ extern "C" {
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 */
 
-#if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__)
-#define WIN32_LEAN_AND_MEAN 1
-#include <windows.h>
+#if defined(__SYMBIAN32__)
+
+#	include <e32def.h>
+
+#elif (defined(WIN32) || defined(_WIN32_WCE)) /*&& !defined(APIENTRY) && !defined(__CYGWIN__)*/
+
+#	ifndef WIN32_LEAN_AND_MEAN
+#		define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+#	endif
+
+#	include <windows.h>
+
+#else
+
+#	error "Unsupported Operating System"
+
 #endif
 
 #ifndef APIENTRY

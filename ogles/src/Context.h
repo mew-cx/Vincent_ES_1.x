@@ -1,8 +1,6 @@
 #ifndef EGL_CONTEXT_H
 #define EGL_CONTEXT_H 1
 
-#pragma once
-
 // ==========================================================================
 //
 // context.h	Rendering Context Class for 3D Rendering Library
@@ -54,7 +52,6 @@
 #include "Rasterizer.h"
 #include "MatrixStack.h"
 #include "Texture.h"
-#include <vector>
 
 
 namespace EGL {

@@ -1,8 +1,6 @@
 #ifndef EGL_FUNCTION_CACHE_H
 #define EGL_FUNCTION_CACHE_H 1
 
-#pragma once
-
 // ==========================================================================
 //
 // FunctionCache.h		Cache of compiled functions for 3D Rendering Library

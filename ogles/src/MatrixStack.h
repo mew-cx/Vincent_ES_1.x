@@ -1,8 +1,6 @@
 #ifndef EGL_MATRIX_STACK_H
 #define EGL_MATRIX_STACK_H 1
 
-#pragma once
-
 // ==========================================================================
 //
 // MatrixStack.h	Matrix Stack Class for 3D Rendering Library
@@ -49,7 +47,7 @@
 
 namespace EGL {
 
-	class OGLES_API MatrixStack {
+	class MatrixStack {
 
 	public:
 

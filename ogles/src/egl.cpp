@@ -58,6 +58,8 @@ static void eglRecordError(EGLint error)
 	//
 	// error		-		The error code to be recorded in thread local storage
 {
+	extern DWORD s_TlsIndexError;
+
 	TlsSetValue(s_TlsIndexError, reinterpret_cast<void *>(error));
 }
 
@@ -67,6 +69,8 @@ static NativeDisplayType GetNativeDisplay (EGLDisplay display) {
 }
 
 GLAPI EGLint APIENTRY eglGetError (void) {
+	extern DWORD s_TlsIndexError;
+
 	return reinterpret_cast<EGLint> (TlsGetValue(s_TlsIndexError));
 }
 

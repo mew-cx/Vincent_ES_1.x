@@ -1,10 +1,6 @@
 #ifndef EGL_INIT_H
 #define EGL_INIT_H 1
 
-
-#pragma once
-
-
 // ==========================================================================
 //
 // Init.h	Static constructor for C++
@@ -47,7 +43,7 @@
 
 namespace EGL {
 
-	class OGLES_API Init {
+	class Init {
 	public:
 		typedef void (*InitFunction)();
 

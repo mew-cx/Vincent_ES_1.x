@@ -1,8 +1,6 @@
 #ifndef EGL_MATERIAL_H
 #define EGL_MATERIAL_H 1
 
-#pragma once
-
 // ==========================================================================
 //
 // Material.h		Material Class for 3D Rendering Library
@@ -47,7 +45,7 @@
 
 namespace EGL {
 
-	class OGLES_API Material {
+	class Material {
 
 	public:
 

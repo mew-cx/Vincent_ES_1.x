@@ -1,8 +1,6 @@
 #ifndef EGL_DISPLAY_H
 #define EGL_DISPLAY_H 1
 
-#pragma once
-
 // ==========================================================================
 //
 // Display.h		Display Class for 3D Rendering Library
@@ -45,7 +43,7 @@
 
 
 namespace EGL {
-	class OGLES_API Display {
+	class Display {
 	public:
 
 

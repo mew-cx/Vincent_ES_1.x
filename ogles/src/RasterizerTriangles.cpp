@@ -355,44 +355,31 @@ namespace {
 		}
 	}
 
-	inline void ScanlineDelta(RasterInfo & rasterInfo, EdgePos & start, EdgePos & delta,
-							  const EdgePos & deltaSmall, const EdgePos & deltaBig,
-							  EGL_Fixed & xError, const EGL_Fixed & xStepError,
-							  EGL_Fixed dxdy) {
-
-		xError += xStepError;
-
-		if (xError >= EGL_ONE) {
-			// do a big step
-
-			xError -= EGL_ONE;
-
-			start.m_WindowCoords.x		+= deltaBig.m_WindowCoords.x;
-			start.m_Color				+= deltaBig.m_Color;
-			start.m_WindowCoords.invZ	+= deltaBig.m_WindowCoords.invZ;	
-			start.m_TextureCoords.tu	+= deltaBig.m_TextureCoords.tu;	
-			start.m_TextureCoords.tv	+= deltaBig.m_TextureCoords.tv;	
-			start.m_FogDensity			+= deltaBig.m_FogDensity;		
-			start.m_WindowCoords.depth	+= deltaBig.m_WindowCoords.depth;	
-		} else {
-			// do a small step
-
-			start.m_WindowCoords.x		+= deltaSmall.m_WindowCoords.x;
-			start.m_Color				+= deltaSmall.m_Color;
-			start.m_WindowCoords.invZ	+= deltaSmall.m_WindowCoords.invZ;
-			start.m_TextureCoords.tu	+= deltaSmall.m_TextureCoords.tu;
-			start.m_TextureCoords.tv	+= deltaSmall.m_TextureCoords.tv;
-			start.m_FogDensity			+= deltaSmall.m_FogDensity;	
-			start.m_WindowCoords.depth	+= deltaSmall.m_WindowCoords.depth;	
-		}
-
-		delta.m_WindowCoords.x			+= dxdy;														
-																									
-		rasterInfo.DepthBuffer			+= rasterInfo.SurfaceWidth;											
-		rasterInfo.ColorBuffer			+= rasterInfo.SurfaceWidth;											
-		rasterInfo.StencilBuffer		+= rasterInfo.SurfaceWidth;										
+#define ScanlineDelta(rasterInfo, start, delta, deltaSmall, deltaBig, xError, xStepError, dxdy) \
+		xError += xStepError;													\
+		if (xError >= EGL_ONE) {												\
+			xError -= EGL_ONE;													\
+			start.m_WindowCoords.x		+= deltaBig.m_WindowCoords.x;			\
+			start.m_Color				+= deltaBig.m_Color;					\
+			start.m_WindowCoords.invZ	+= deltaBig.m_WindowCoords.invZ;		\
+			start.m_TextureCoords.tu	+= deltaBig.m_TextureCoords.tu;			\
+			start.m_TextureCoords.tv	+= deltaBig.m_TextureCoords.tv;			\
+			start.m_FogDensity			+= deltaBig.m_FogDensity;				\
+			start.m_WindowCoords.depth	+= deltaBig.m_WindowCoords.depth;		\
+		} else {																\
+			start.m_WindowCoords.x		+= deltaSmall.m_WindowCoords.x;			\
+			start.m_Color				+= deltaSmall.m_Color;					\
+			start.m_WindowCoords.invZ	+= deltaSmall.m_WindowCoords.invZ;		\
+			start.m_TextureCoords.tu	+= deltaSmall.m_TextureCoords.tu;		\
+			start.m_TextureCoords.tv	+= deltaSmall.m_TextureCoords.tv;		\
+			start.m_FogDensity			+= deltaSmall.m_FogDensity;				\
+			start.m_WindowCoords.depth	+= deltaSmall.m_WindowCoords.depth;		\
+		}																		\
+		delta.m_WindowCoords.x			+= dxdy;								\
+		rasterInfo.DepthBuffer			+= rasterInfo.SurfaceWidth;				\
+		rasterInfo.ColorBuffer			+= rasterInfo.SurfaceWidth;				\
+		rasterInfo.StencilBuffer		+= rasterInfo.SurfaceWidth;				\
 		rasterInfo.AlphaBuffer			+= rasterInfo.SurfaceWidth;
-	}
 }
 
 

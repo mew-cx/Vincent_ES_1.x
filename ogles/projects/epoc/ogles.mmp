@@ -37,6 +37,7 @@ SOURCE GenScanline.cpp
 USERINCLUDE ..\..\src\codegen
 USERINCLUDE ..\..\src\ARM
 USERINCLUDE ..\..\src
+SYSTEMINCLUDE ..\..\src
 SYSTEMINCLUDE \epoc32\include\libc
 SYSTEMINCLUDE \epoc32\include
 LIBRARY codegen.lib libc.lib

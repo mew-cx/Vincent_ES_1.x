@@ -1,12 +1,9 @@
 #ifndef EGL_OGLES_H
 #define EGL_OGLES_H 1
 
-#pragma once
-
-
 // ==========================================================================
 //
-// OGLES.h		Base include file for OpenGL (R) ES library
+// OGLES.h		Base include file for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //
@@ -42,18 +39,20 @@
 // ==========================================================================
 
 
-#ifdef OGLES_EXPORTS
-#	define OGLES_API __declspec(dllexport)
-#else
-#	define OGLES_API __declspec(dllimport)
+#ifdef EGL_ON_WINCE
+#	ifdef OGLES_EXPORTS
+#		define OGLES_API __declspec(dllexport)
+#	else
+#		define OGLES_API __declspec(dllimport)
+#	endif
 #endif
 
-
-#pragma warning (disable:4786)
-
-
-#ifdef EGL_USE_GPP
-#	include <gpp.h>
+#ifdef EGL_ON_SYMBIAN
+#	ifdef OGLES_EXPORTS
+#		define OGLES_API EXPORT_C
+#	else
+#		define OGLES_API IMPORT_C
+#	endif
 #endif
 
 
@@ -72,7 +71,7 @@
 #	define EGL_CONFIG_RENDERER		"Software"
 #endif
 
-#define EGL_VERSION_NUMBER			"0.77 " EGL_CONFIG_RENDERER
+#define EGL_VERSION_NUMBER			"0.79 " EGL_CONFIG_RENDERER
 
 
 // --------------------------------------------------------------------------
@@ -90,9 +89,15 @@ typedef unsigned int 		U32;
 
 #endif
 
+#ifdef EGL_ON_WINCE
 typedef unsigned __int64	U64;
 typedef __int64				I64;
+#endif
 
+#ifdef EGL_ON_SYMBIAN
+typedef unsigned long long	U64;
+typedef long long			I64;
+#endif
 
 // --------------------------------------------------------------------------
 // Memory helper macros
@@ -105,13 +110,6 @@ typedef __int64				I64;
 #ifndef offsetof
 #define offsetof(s,m)   (size_t)&(((s *)0)->m)
 #endif
-
-// --------------------------------------------------------------------------
-// Common variables
-// --------------------------------------------------------------------------
-
-extern DWORD s_TlsIndexContext;	// thread local storage slot for current context
-extern DWORD s_TlsIndexError;	// thread local storage slot for EGL error
 
 
 #endif // ndef EGL_OGLES_H

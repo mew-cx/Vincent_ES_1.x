@@ -48,7 +48,7 @@
 // Parameters:
 //	a		-	the number whose inverse should be calculated
 // --------------------------------------------------------------------------
-OGLES_API EGL_Fixed EGL_Inverse(EGL_Fixed a) {
+EGL_Fixed EGL_Inverse(EGL_Fixed a) {
     I32 exp, i;
     EGL_Fixed x;
     /* 1/(4x) */
@@ -102,7 +102,7 @@ OGLES_API EGL_Fixed EGL_Inverse(EGL_Fixed a) {
 //	a		-	the numbers whose inverse of square root should be 
 //				calculated
 // --------------------------------------------------------------------------
-OGLES_API EGL_Fixed EGL_InvSqrt(EGL_Fixed a) {
+EGL_Fixed EGL_InvSqrt(EGL_Fixed a) {
     EGL_Fixed x /*= (a+EGL_ONE)>>1*//*a>>1*/;
     /* 1/(2sqrt(x)) - extra divide by 2 to scale to 16 bits */
     static const U16 __gl_rsq_tab[] = { /* domain 0.5 .. 1.0-1/16 */
@@ -154,7 +154,7 @@ static const U16 __gl_sin_tab[] = {
 // Parameters:
 //	a		-	the numbers whose cosine should be calculated
 // --------------------------------------------------------------------------
-OGLES_API EGL_Fixed EGL_Cos(EGL_Fixed a) {
+EGL_Fixed EGL_Cos(EGL_Fixed a) {
     EGL_Fixed v;
     /* reduce to [0,1) */
     while (a < EGL_ZERO) a += EGL_2PI;
@@ -176,7 +176,7 @@ OGLES_API EGL_Fixed EGL_Cos(EGL_Fixed a) {
 // Parameters:
 //	value		-	the numbers whose sine should be calculated
 // --------------------------------------------------------------------------
-OGLES_API EGL_Fixed EGL_Sin(EGL_Fixed a) {
+EGL_Fixed EGL_Sin(EGL_Fixed a) {
     EGL_Fixed v;
 
     /* reduce to [0,1) */
@@ -198,7 +198,7 @@ OGLES_API EGL_Fixed EGL_Sin(EGL_Fixed a) {
 // Parameters:
 //	value		-	the number whose square root should be calculated
 // --------------------------------------------------------------------------
-OGLES_API EGL_Fixed EGL_Sqrt(EGL_Fixed a) {
+EGL_Fixed EGL_Sqrt(EGL_Fixed a) {
     EGL_Fixed s;
     I32 i;
     s = (a + EGL_ONE) >> 1;

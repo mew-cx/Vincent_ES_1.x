@@ -35,18 +35,42 @@
 // ==========================================================================
 
 
-#pragma once
+#if defined(__SYMBIAN32__)
+#	define EGL_ON_SYMBIAN
+#elif defined(WIN32) || defined(_WIN32_WCE)
+#	define EGL_ON_WINCE
+#else
+#	error "Unsupported Operating System"
+#endif
 
 
 // --------------------------------------------------------------------------
 // Windows Header Files:
 // --------------------------------------------------------------------------
 
-
+#ifdef EGL_ON_WINCE
 //#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 
-#include <windows.h>
-#include <Cmnintrin.h>
+#	pragma warning (disable:4786)
+
+#	include <windows.h>
+#	include <Cmnintrin.h>
+#	include <vector>
+#	include <map>
+
+#endif //ndef EGL_ON_WINCE
+
+// --------------------------------------------------------------------------
+// Symbian Header Files:
+// --------------------------------------------------------------------------
+
+#ifdef EGL_ON_SYMBIAN
+
+#	include <e32def.h>
+#	include <vector.h>
+#	include <map.h>
+
+#endif // ndef EGL_ON_SYMBIAN
 
 // --------------------------------------------------------------------------
 // Standard Library Files
@@ -62,6 +86,8 @@
 // Intel Header Files
 // --------------------------------------------------------------------------
 
-#if defined(EGL_USE_GPP)
-#include <gpp.h>
+#ifdef EGL_USE_GPP
+#	include <gpp.h>
 #endif
+
+
