@@ -75,139 +75,193 @@ ugSolidTorusf(GLfloat ir, GLfloat or, GLint sides, GLint rings) {
     }
     glVertexPointer(3, GL_FLOAT, 0, v);
     glNormalPointer(GL_FLOAT, 0, n);
+
     glEnableClientState (GL_VERTEX_ARRAY);
     glEnableClientState (GL_NORMAL_ARRAY);
+
     for(i = 0; i < sides; i++)
-	glDrawArrays(GL_TRIANGLE_STRIP, (rings+1)*2*i, (rings+1)*2);
+		glDrawArrays(GL_TRIANGLE_STRIP, (rings+1)*2*i, (rings+1)*2);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+
 }
+
+
+
+void PlotSpherePoints(GLfloat radius, GLint stacks, GLint slices, GLfloat* v, GLfloat* n)
+{
+
+    int i, j; 
+	GLfloat slicestep, stackstep;
+
+	stackstep = (PI_ / stacks);
+	slicestep = (2.0 * PI_ / slices);
+
+	for (i = 0; i < stacks; ++i)		
+	{
+		GLfloat a = i * stackstep;
+		GLfloat b = a + stackstep;
+
+		GLfloat s0 =  sin(a);
+		GLfloat s1 =  sin(b);
+
+		GLfloat c0 =  cos(a);
+		GLfloat c1 =  cos(b);
+
+		for (j = 0; j <= slices; ++j)		
+		{
+			GLfloat c = j * slicestep;
+			GLfloat x = cos(c);
+			GLfloat y = sin(c);
+
+			*n = x * s0;
+			*v = *n * radius;
+
+			n++;
+			v++;
+
+			*n = y * s0;
+			*v = *n * radius;
+
+			n++;
+			v++;
+
+			*n = c0;
+			*v = *n * radius;
+
+			n++;
+			v++;
+
+			*n = x * s1;
+			*v = *n * radius;
+
+			n++;
+			v++;
+
+			*n = y * s1;
+			*v = *n * radius;
+
+			n++;
+			v++;
+
+			*n = c1;
+			*v = *n * radius;
+
+			n++;
+			v++;
+
+		}
+	}
+}
+
 
 void APIENTRY
-ugSolidSpheref(GLfloat radius, GLint slices, GLint stacks) {
-    int i, j; 
-    GLfloat twopi, nx, ny, nz;
+ugSolidSpheref(GLfloat radius, GLint slices, GLint stacks) 
+{
+    int i; 
     static GLfloat* v, *n;
     static GLfloat parms[3];
-    GLfloat* p, *q;
 
-    if (v) {
-	if (parms[0] != radius || parms[1] != slices || parms[2] != stacks) {
-	    free(v); free(n);
-	    n = v = 0;
-	    glVertexPointer(3, GL_FLOAT, 0, 0);
-	    glNormalPointer(GL_FLOAT, 0, 0);
-	}
+
+
+    if (v) 
+	{
+		if (parms[0] != radius || parms[1] != slices || parms[2] != stacks) 
+		{
+			free(v); 
+			free(n);
+
+			n = v = 0;
+
+			glVertexPointer(3, GL_FLOAT, 0, 0);
+			glNormalPointer(GL_FLOAT, 0, 0);
+		}
     }
-    if (!v) {
-	parms[0] = radius; parms[1] = slices; parms[2] = stacks;
-	p = v = malloc(stacks*(slices+1)*2*3*sizeof *v);
-	q = n = malloc(stacks*(slices+1)*2*3*sizeof *n);
-        twopi = 2 * PI_;
-        for (i = 0; i < stacks; i++) {
-	    GLfloat phi = (GLfloat)i/stacks*twopi;
-	    GLfloat phi1 = i == stacks-1 ? 0 : (i+1.0f)*twopi/stacks;
-	    GLfloat cphi = cos(phi);
-	    GLfloat sphi = sin(phi);
-	    GLfloat cphi1 = cos(phi1);
-	    GLfloat sphi1 = sin(phi1);
-	    for (j = 0; j <= slices; j++) {
-		GLfloat theta = j == slices ? 0.f : (GLfloat)j/slices*twopi;
-		GLfloat ctheta = cos(theta);
-		GLfloat stheta = sin(theta);
-		nx = cphi*ctheta;
-		ny = sphi*ctheta;
-		nz = stheta;
 
-		*p++ = radius*nx;
-		*p++ = radius*ny;
-		*p++ = radius*nz;
-		*q++ = nx;
-		*q++ = ny;
-		*q++ = nz;
+    if (!v) 
+	{
+		parms[0] = radius; 
+		parms[1] = slices; 
+		parms[2] = stacks;
 
-		nx = cphi1*ctheta;
-		ny = sphi1*ctheta;
-		nz = stheta;
+		v = malloc(stacks*(slices+1)*2*3*sizeof *v);
+		n = malloc(stacks*(slices+1)*2*3*sizeof *n);
 
-		*p++ = radius*nx;
-		*p++ = radius*ny;
-		*p++ = radius*nz;
-		*q++ = nx;
-		*q++ = ny;
-		*q++ = nz;
-	    }
+		PlotSpherePoints(radius, stacks, slices, v, n);
+
 	}
-    }
+
     glVertexPointer(3, GL_FLOAT, 0, v);
     glNormalPointer(GL_FLOAT, 0, n);
+
     glEnableClientState (GL_VERTEX_ARRAY);
     glEnableClientState (GL_NORMAL_ARRAY);
+
     for(i = 0; i < stacks; i++)
-	glDrawArrays(GL_TRIANGLE_STRIP, i*(slices+1)*2, (slices+1)*2);
+		glDrawArrays(GL_TRIANGLE_STRIP, i*(slices+1)*2, (slices+1)*2);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+
 }
+
 
 void APIENTRY
-ugWireSpheref(GLfloat radius, GLint slices, GLint stacks) {
-    int i, j; 
-    GLfloat twopi, nx, ny, nz;
+ugWireSpheref(GLfloat radius, GLint slices, GLint stacks) 
+{
+    int i, j, f; 
     static GLfloat* v, *n;
     static GLfloat parms[3];
-    GLfloat* p, *q;
 
-    if (v) {
-	if (parms[0] != radius || parms[1] != slices || parms[2] != stacks) {
-	    free(v); free(n);
-	    n = v = 0;
-	    glVertexPointer(3, GL_FLOAT, 0, 0);
-	    glNormalPointer(GL_FLOAT, 0, 0);
-	}
+	GLfloat slicestep, stackstep;
+
+    if (v) 
+	{
+		if (parms[0] != radius || parms[1] != slices || parms[2] != stacks) 
+		{
+			free(v); 
+			free(n);
+
+			n = v = 0;
+
+			glVertexPointer(3, GL_FLOAT, 0, 0);
+			glNormalPointer(GL_FLOAT, 0, 0);
+		}
     }
-    if (!v) {
-	parms[0] = radius; parms[1] = slices; parms[2] = stacks;
-	p = v = malloc(stacks*(slices+1)*2*3*sizeof *v);
-	q = n = malloc(stacks*(slices+1)*2*3*sizeof *n);
-        twopi = 2 * PI_;
-        for (i = 0; i < stacks; i++) {
-	    GLfloat phi = (GLfloat)i/stacks*twopi;
-	    GLfloat phi1 = i == stacks-1 ? 0 : (i+1.0f)*twopi/stacks;
-	    GLfloat cphi = cos(phi);
-	    GLfloat sphi = sin(phi);
-	    GLfloat cphi1 = cos(phi1);
-	    GLfloat sphi1 = sin(phi1);
-	    for (j = 0; j <= slices; j++) {
-		GLfloat theta = j == slices ? 0.f : (GLfloat)j/slices*twopi;
-		GLfloat ctheta = cos(theta);
-		GLfloat stheta = sin(theta);
-		nx = cphi*ctheta;
-		ny = sphi*ctheta;
-		nz = stheta;
 
-		*p++ = radius*nx;
-		*p++ = radius*ny;
-		*p++ = radius*nz;
-		*q++ = nx;
-		*q++ = ny;
-		*q++ = nz;
+    if (!v) 
+	{
+		parms[0] = radius; 
+		parms[1] = slices; 
+		parms[2] = stacks;
 
-		nx = cphi1*ctheta;
-		ny = sphi1*ctheta;
-		nz = stheta;
+		v = malloc(stacks*(slices+1)*2*3*sizeof *v);
+		n = malloc(stacks*(slices+1)*2*3*sizeof *n);
 
-		*p++ = radius*nx;
-		*p++ = radius*ny;
-		*p++ = radius*nz;
-		*q++ = nx;
-		*q++ = ny;
-		*q++ = nz;
-	    }
+		PlotSpherePoints(radius, stacks, slices, v, n);
+
 	}
-    }
+
     glVertexPointer(3, GL_FLOAT, 0, v);
     glNormalPointer(GL_FLOAT, 0, n);
+
     glEnableClientState (GL_VERTEX_ARRAY);
     glEnableClientState (GL_NORMAL_ARRAY);
-    for(i = 0; i < stacks; i++)
-	glDrawArrays(GL_LINE_STRIP, i*(slices+1)*2, (slices+1)*2);
+
+    for(i = 0; i < stacks; ++i)
+	{
+		f = i * (slices + 1);
+		for (j = 0; j <= slices; ++j)
+			glDrawArrays(GL_LINE_LOOP, (f + j)*2, 3);
+	}
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+
 }
+
+
 
 void APIENTRY
 ugSolidConef(GLfloat base, GLfloat height, GLint slices, GLint stacks) {
@@ -264,8 +318,13 @@ ugSolidConef(GLfloat base, GLfloat height, GLint slices, GLint stacks) {
     glNormalPointer(GL_FLOAT, 0, n);
     glEnableClientState (GL_VERTEX_ARRAY);
     glEnableClientState (GL_NORMAL_ARRAY);
+
     for(i = 0; i < stacks; i++)
-	glDrawArrays(GL_TRIANGLE_STRIP, i*(slices+1)*2, (slices+1)*2);
+		glDrawArrays(GL_TRIANGLE_STRIP, i*(slices+1)*2, (slices+1)*2);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+
 }
 
 void APIENTRY
@@ -273,52 +332,52 @@ ugSolidCubef(GLfloat size) {
     static GLfloat* v, *n;
     static const GLfloat cubev[3*12*3] = {
 	-1., -1., 1.,	/* front */
-	-1.,  1., 1.,
 	 1., -1., 1.,
+	-1.,  1., 1.,
 
 	 1., -1., 1.,
-	-1.,  1., 1.,
 	 1.,  1., 1.,
+	-1.,  1., 1.,
 
 	-1.,  1., -1.,	/* back */
-	-1., -1., -1.,
 	 1., -1., -1.,
+	-1., -1., -1.,
 
 	-1.,  1., -1.,
-	 1., -1., -1.,
 	 1.,  1., -1.,
+	 1., -1., -1.,
 
 	-1., -1., -1.,	/* left */
-	-1.,  1., -1.,
 	-1., -1.,  1.,
+	-1.,  1., -1.,
 
 	-1., -1.,  1.,
-	-1.,  1., -1.,
 	-1.,  1.,  1.,
+	-1.,  1., -1.,
 
 	 1., -1.,  1.,	/* right */
-	 1.,  1.,  1.,
 	 1., -1., -1.,
+	 1.,  1.,  1.,
 
 	 1., -1., -1.,
-	 1.,  1.,  1.,
 	 1.,  1., -1.,
+	 1.,  1.,  1.,
 
 	-1.,  1.,  1.,	/* top */
-	-1.,  1., -1.,
 	 1.,  1.,  1.,
+	-1.,  1., -1.,
 
 	 1.,  1.,  1.,
-	-1.,  1., -1.,
 	 1.,  1., -1.,
+	-1.,  1., -1.,
 
 	-1., -1., -1.,	/* bottom */
-	-1., -1.,  1.,
 	 1., -1., -1.,
+	-1., -1.,  1.,
 
 	 1., -1., -1.,
-	-1., -1.,  1.,
 	 1., -1.,  1.,
+	-1., -1.,  1.,
     };
 
     static const GLfloat cuben[3*12*3] = {
@@ -379,9 +438,15 @@ ugSolidCubef(GLfloat size) {
     }
     glVertexPointer(3, GL_FLOAT, 0, v);
     glNormalPointer(GL_FLOAT, 0, n);
+
     glEnableClientState (GL_VERTEX_ARRAY);
     glEnableClientState (GL_NORMAL_ARRAY);
+
     glDrawArrays(GL_TRIANGLES, 0, 12*3);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+
 }
 
 void APIENTRY
@@ -389,34 +454,34 @@ ugWireCubef(GLfloat size) {
     static GLfloat* v, *n;
     static const GLfloat cubev[3*6*4] = {
 	-1., -1., 1.,	/* front */
-	-1.,  1., 1.,
-	 1.,  1., 1.,
 	 1., -1., 1.,
+	 1.,  1., 1.,
+	-1.,  1., 1.,
 
 	-1.,  1., -1.,	/* back */
-	-1., -1., -1.,
-	 1., -1., -1.,
 	 1.,  1., -1.,
+	 1., -1., -1.,
+	-1., -1., -1.,
 
 	-1., -1., -1.,	/* left */
-	-1.,  1., -1.,
-	-1.,  1.,  1.,
 	-1., -1.,  1.,
+	-1.,  1.,  1.,
+	-1.,  1., -1.,
 
 	 1., -1.,  1.,	/* right */
-	 1.,  1.,  1.,
-	 1.,  1., -1.,
 	 1., -1., -1.,
+	 1.,  1., -1.,
+	 1.,  1.,  1.,
 
 	-1.,  1.,  1.,	/* top */
-	-1.,  1., -1.,
-	 1.,  1., -1.,
 	 1.,  1.,  1.,
+	 1.,  1., -1.,
+	-1.,  1., -1.,
 
 	-1., -1., -1.,	/* bottom */
-	-1., -1.,  1.,
-	 1., -1.,  1.,
 	 1., -1., -1.,
+	 1., -1.,  1.,
+	-1., -1.,  1.,
     };
 
     static const GLfloat cuben[3*6*4] = {
@@ -459,8 +524,14 @@ ugWireCubef(GLfloat size) {
     }
     glVertexPointer(3, GL_FLOAT, 0, v);
     glNormalPointer(GL_FLOAT, 0, n);
+
     glEnableClientState (GL_VERTEX_ARRAY);
     glEnableClientState (GL_NORMAL_ARRAY);
+
     for(i = 0; i < 6; i++)
-	glDrawArrays(GL_LINE_LOOP, 4*i, 4);
+		glDrawArrays(GL_LINE_LOOP, 4*i, 4);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+
 }
