@@ -1,6 +1,6 @@
 /*
  * GLESonGL implementation
- * Version:  1.1
+ * Version:  1.2
  *
  * Copyright (C) 2003  David Blythe   All Rights Reserved.
  *
@@ -29,6 +29,7 @@
 #include <Windows.h>
 #include <aygshell.h>
 //#include <shellsdk.h>
+#include <commdlg.h>
 
 
 #include "ug.h"
@@ -67,6 +68,9 @@ static UGCtx_t * context;
 
 static const int TITLEBARHEIGHT = 26;
 
+typedef EGLBoolean (__cdecl *PFNSAVESURFACE)(EGLSurface surface, const TCHAR * filename);
+static PFNSAVESURFACE pfnSaveSurface;	 // function pointer used to save images 
+
 
 
 UGCtx APIENTRY
@@ -84,6 +88,8 @@ abort:
 		if (!eglInitialize(ug->egldpy, NULL, NULL)) 
 			goto abort;
     }
+						  // intialize function pointer used to save images
+	pfnSaveSurface = (int (__cdecl *)(void *,const unsigned short *))eglGetProcAddress("eglSaveSurfaceHM");
 
 	context = ug;
     return (UGCtx)ug;
@@ -425,9 +431,39 @@ found:
      		break;
 
 		case WM_CHAR:
-			if (w->kbd) {
-				GetCursorPos(&point);
-				(w->kbd)((UGWindow)w, wParam, point.x, point.y);
+
+			if (((TCHAR)wParam == 'c')||((TCHAR)wParam == 'C'))					
+			{
+																								//show save file dialog
+				OPENFILENAME ofn ;		 // common dialog structure
+				TCHAR	szFile[MAX_PATH] = TEXT("Screenshot.bmp\0");
+
+				memset( &(ofn), 0, sizeof(ofn));
+				ofn.lStructSize	= sizeof(ofn);
+
+				ofn.hwndOwner = w->win;
+				ofn.lpstrFile = szFile;
+				ofn.nMaxFile = MAX_PATH;	
+
+				ofn.lpstrFilter = TEXT ("Bitmap Files (*.bmp)\0*.bmp\0");
+				ofn.Flags = OFN_OVERWRITEPROMPT; 
+				ofn.lpstrDefExt = TEXT("bmp");
+
+				if (GetSaveFileName(&ofn))				  //save image
+				{
+																						// need to re-paint the image		
+					InvalidateRect(w->win, NULL, TRUE);		  // after closing the file save dialog,
+					UpdateWindow(w->win);							// before attempting to copy the surface contents
+
+					pfnSaveSurface( w->surface, ofn.lpstrFile);
+				}
+			}
+			else
+			{
+				if (w->kbd) {
+					GetCursorPos(&point);
+					(w->kbd)((UGWindow)w, wParam, point.x, point.y);
+				}
 			}
 
 			break;

@@ -274,7 +274,3 @@ bool Surface :: Save(const TCHAR * filename) {
     return true;
 }
 
-
-GLAPI EGLBoolean APIENTRY eglSaveSurfaceHM(EGLSurface surface, const TCHAR * filename) {
-	return surface->Save(filename);
-}
