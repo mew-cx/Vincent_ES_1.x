@@ -63,12 +63,12 @@ static void init(void)
    glEnable(GL_LIGHT0);
    {
       GLfloat mat[3] = {0.1745, 0.01175, 0.01175};	
-      glMaterialfv (GL_FRONT, GL_AMBIENT, mat);
+      glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT, mat);
       mat[0] = 0.61424; mat[1] = 0.04136; mat[2] = 0.04136;	
-      glMaterialfv (GL_FRONT, GL_DIFFUSE, mat);
+      glMaterialfv (GL_FRONT_AND_BACK, GL_DIFFUSE, mat);
       mat[0] = 0.727811; mat[1] = 0.626959; mat[2] = 0.626959;
-      glMaterialfv (GL_FRONT, GL_SPECULAR, mat);
-      glMaterialf (GL_FRONT, GL_SHININESS, 0.6*128.0);
+      glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR, mat);
+      glMaterialf (GL_FRONT_AND_BACK, GL_SHININESS, 0.6*128.0);
    }
 
    glEnable(GL_FOG);
@@ -90,7 +90,7 @@ static void renderSphere (GLfloat x, GLfloat y, GLfloat z)
 {
    glPushMatrix();
    glTranslatef (x, y, z);
-   ugSolidSpheref(0.4, 16, 16);
+   ugSolidSpheref(0.4, 32, 32);
    glPopMatrix();
 }
 
