@@ -21,7 +21,10 @@ using namespace EGL;
 
 
 RasterizerState :: RasterizerState():
-	m_Version(0)
+	m_Version(0),
+	m_DepthFunc(CompFuncLess),
+	m_DepthTestEnabled(false)
+
 {
 }
 

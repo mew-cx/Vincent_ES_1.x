@@ -194,7 +194,7 @@ namespace EGL {
 
 		FogMode					m_FogMode;
 		EGL_Fixed				m_FogStart, m_FogDensity, m_FogEnd;
-		Color			m_FogColor;
+		Color					m_FogColor;
 
 		bool					m_FogEnabled;
 
@@ -209,7 +209,7 @@ namespace EGL {
 		// Texture environment rendering state
 		// ----------------------------------------------------------------------
 
-		Color			m_TexEnvColor;
+		Color					m_TexEnvColor;
 		bool					m_TextureEnabled;
 		TextureMode				m_TextureMode;
 

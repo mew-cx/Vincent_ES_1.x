@@ -42,10 +42,10 @@ void Context :: InterpolateRasterPos(RasterPos * p0, RasterPos * p1,
 
 	I32 w1x1, w0x0, w0_w1x, denominator;
 
-	gppMul_16_32s(p1->m_WindowsCoords.w, p1->m_WindowsCoords.x, &w1x1);
-	gppMul_16_32s(p0->m_WindowsCoords.w, p0->m_WindowsCoords.x, &w0x0);
+	gppMul_16_32s(p1->m_WindowCoords.w, p1->m_WindowCoords.x, &w1x1);
+	gppMul_16_32s(p0->m_WindowCoords.w, p0->m_WindowCoords.x, &w0x0);
 
-	gppMul_16_32s(p0->m_WindowsCoords.w - p1->m_WindowsCoords.w, x, &w0_w1x);
+	gppMul_16_32s(p0->m_WindowCoords.w - p1->m_WindowCoords.w, x, &w0_w1x);
 
 	denominator = w1x1 - w0x0 + w0_w1x;
 
@@ -58,26 +58,26 @@ void Context :: InterpolateRasterPos(RasterPos * p0, RasterPos * p1,
 	gppInv_16_32s(denominator, &invDenominator);
 
 	// store x
-	result->m_WindowsCoords.x = x;
+	result->m_WindowCoords.x = x;
 
 	I32 invDeltaX;
-	gppInv_16_32s(p1->m_WindowsCoords.x - p0->m_WindowsCoords.x, &invDeltaX);
+	gppInv_16_32s(p1->m_WindowCoords.x - p0->m_WindowCoords.x, &invDeltaX);
 
 	// compute w
 	I32 w0w1;
-	gppMul_16_32s(p0->m_WindowsCoords.w, p1->m_WindowsCoords.w, &w0w1);
+	gppMul_16_32s(p0->m_WindowCoords.w, p1->m_WindowCoords.w, &w0w1);
 
 	I32 w0w1x1_x0;
-	gppMul_16_32s(w0w1, p1->m_WindowsCoords.x - p0->m_WindowsCoords.x, &w0w1x1_x0);
+	gppMul_16_32s(w0w1, p1->m_WindowCoords.x - p0->m_WindowCoords.x, &w0w1x1_x0);
 
-	gppMul_16_32s(invDenominator, w0w1x1_x0, &result->m_WindowsCoords.w);
+	gppMul_16_32s(invDenominator, w0w1x1_x0, &result->m_WindowCoords.w);
 
 	// Linear Interpolation
 	I32 a0x1, a1x0, a1_a0x;
 
 #define LINEAR_INTERP(FIELD) \
-	gppMul_16_32s(p0->FIELD, (p1->m_WindowsCoords.x) >> 16, &a0x1); \
-	gppMul_16_32s(p1->FIELD, (p0->m_WindowsCoords.x) >> 16, &a1x0); \
+	gppMul_16_32s(p0->FIELD, (p1->m_WindowCoords.x) >> 16, &a0x1); \
+	gppMul_16_32s(p1->FIELD, (p0->m_WindowCoords.x) >> 16, &a1x0); \
 	gppMul_16_32s(p1->FIELD - p0->FIELD, x >> 16, &a1_a0x); \
 	result->FIELD = invDeltaX * (a0x1 - a1x0 + a1_a0x);
 
@@ -88,14 +88,14 @@ void Context :: InterpolateRasterPos(RasterPos * p0, RasterPos * p1,
 #define PERPECTIVE_INTERP(FIELD) \
 	gppMul_16_32s(p0->FIELD, w1x1, &a0w1x1); \
 	gppMul_16_32s(p1->FIELD, w0x0, &a1w0x0); \
-	gppMul_16_32s(p0->m_WindowsCoords.w, p1->FIELD, &a1w0); \
-	gppMul_16_32s(p1->m_WindowsCoords.w, p0->FIELD, &a0w1); \
+	gppMul_16_32s(p0->m_WindowCoords.w, p1->FIELD, &a1w0); \
+	gppMul_16_32s(p1->m_WindowCoords.w, p0->FIELD, &a0w1); \
 	gppMul_16_32s(a1w0 - a0w1, x, &a1w1_a0w1y); \
 	gppMul_16_32s(invDenominator, a0w1x1 - a1w0x0 + a1w1_a0w1y, reinterpret_cast<I32*>(&result->FIELD));
 
 	// Compute interpolated values
-	LINEAR_INTERP(m_WindowsCoords.y);
-	PERPECTIVE_INTERP(m_WindowsCoords.z);
+	LINEAR_INTERP(m_WindowCoords.y);
+	PERPECTIVE_INTERP(m_WindowCoords.z);
 	PERPECTIVE_INTERP(m_TextureCoords.tu);
 	PERPECTIVE_INTERP(m_TextureCoords.tv);
 
@@ -189,11 +189,11 @@ struct EdgeInterpolator {
 
 public:
 	inline EdgeInterpolator(RasterPos * p1, RasterPos * p2, I32 invDelta):
-		x (p1->m_WindowsCoords.x, p2->m_WindowsCoords.x, invDelta),
-		z (p1->m_WindowsCoords.z, p2->m_WindowsCoords.z, 
-		   p1->m_WindowsCoords.w, p2->m_WindowsCoords.w,
-		   gppRound_Fixed_16_To_Int(p1->m_WindowsCoords.y),
-		   gppRound_Fixed_16_To_Int(p2->m_WindowsCoords.y)),
+		x (p1->m_WindowCoords.x, p2->m_WindowCoords.x, invDelta),
+		z (p1->m_WindowCoords.z, p2->m_WindowCoords.z, 
+		   p1->m_WindowCoords.w, p2->m_WindowCoords.w,
+		   gppRound_Fixed_16_To_Int(p1->m_WindowCoords.y),
+		   gppRound_Fixed_16_To_Int(p2->m_WindowCoords.y)),
 		r (p1->m_Color.r, p2->m_Color.r, invDelta),
 		g (p1->m_Color.g, p2->m_Color.g, invDelta),
 		b (p1->m_Color.b, p2->m_Color.b, invDelta),
@@ -201,13 +201,13 @@ public:
 		tu (p1->m_TextureCoords.tu, p2->m_TextureCoords.tu, invDelta),
 		tv (p1->m_TextureCoords.tv, p2->m_TextureCoords.tv, invDelta)
 //		tu (p1->m_TextureCoords.tu, p2->m_TextureCoords.tu, 
-//			p1->m_WindowsCoords.w, p2->m_WindowsCoords.w,
-//		    gppRound_Fixed_16_To_Int(p1->m_WindowsCoords.y),
-//		    gppRound_Fixed_16_To_Int(p2->m_WindowsCoords.y)),
+//			p1->m_WindowCoords.w, p2->m_WindowCoords.w,
+//		    gppRound_Fixed_16_To_Int(p1->m_WindowCoords.y),
+//		    gppRound_Fixed_16_To_Int(p2->m_WindowCoords.y)),
 //		tv (p1->m_TextureCoords.tv, p2->m_TextureCoords.tv, 
-//		    p1->m_WindowsCoords.w, p2->m_WindowsCoords.w,
-//		    gppRound_Fixed_16_To_Int(p1->m_WindowsCoords.y),
-//		    gppRound_Fixed_16_To_Int(p2->m_WindowsCoords.y))
+//		    p1->m_WindowCoords.w, p2->m_WindowCoords.w,
+//		    gppRound_Fixed_16_To_Int(p1->m_WindowCoords.y),
+//		    gppRound_Fixed_16_To_Int(p2->m_WindowCoords.y))
 	{
 	}
 
@@ -232,8 +232,8 @@ struct EdgeBuffer {
 public:
 
 	inline void SetToVertex(RasterPos * p) {
-		m_Buffer.x = p->m_WindowsCoords.x;
-		m_Buffer.w = p->m_WindowsCoords.z;
+		m_Buffer.x = p->m_WindowCoords.x;
+		m_Buffer.w = p->m_WindowCoords.z;
 		m_Buffer.r = p->m_Color.r;
 		m_Buffer.g = p->m_Color.g;
 		m_Buffer.b = p->m_Color.b;
@@ -273,7 +273,7 @@ public:
 
 private:
 	GPP_TLVERTEX_V2F_C4F_T2F	m_Buffer;
-};
+}; 
 
 namespace {
 	inline I32 Inverse(I32 value) {
@@ -387,14 +387,14 @@ void Context :: RenderTriangle(RasterPos * pos0, RasterPos * pos1,
 	// ----------------------------------------------------------------------
 
 	int alpha = 
-		Greater(m_MinY, pos0->m_WindowsCoords.y) +
-		Greater(m_MinY, pos1->m_WindowsCoords.y) +
-		Greater(m_MinY, pos2->m_WindowsCoords.y);
+		Greater(m_MinY, pos0->m_WindowCoords.y) +
+		Greater(m_MinY, pos1->m_WindowCoords.y) +
+		Greater(m_MinY, pos2->m_WindowCoords.y);
 
 	int beta = 
-		Greater(pos0->m_WindowsCoords.y, m_MaxY) +
-		Greater(pos1->m_WindowsCoords.y, m_MaxY) +
-		Greater(pos2->m_WindowsCoords.y, m_MaxY);
+		Greater(pos0->m_WindowCoords.y, m_MaxY) +
+		Greater(pos1->m_WindowCoords.y, m_MaxY) +
+		Greater(pos2->m_WindowCoords.y, m_MaxY);
 
 	if (alpha == 3 || beta == 3) {
 		return;
@@ -422,8 +422,8 @@ void Context :: RenderTriangle(RasterPos * pos0, RasterPos * pos1,
 	pos[1] = pos1;
 	pos[2] = pos2;
 
-	I8 * permutation = SortPermutation(pos0->m_WindowsCoords.x, 
-		pos1->m_WindowsCoords.x, pos2->m_WindowsCoords.x);
+	I8 * permutation = SortPermutation(pos0->m_WindowCoords.x, 
+		pos1->m_WindowCoords.x, pos2->m_WindowCoords.x);
 
 	pos0 = pos[permutation[0]];
 	pos1 = pos[permutation[1]];
@@ -434,14 +434,14 @@ void Context :: RenderTriangle(RasterPos * pos0, RasterPos * pos1,
 	// ----------------------------------------------------------------------
 
 	alpha = 
-		Greater(m_MinX, pos0->m_WindowsCoords.x) +
-		Greater(m_MinX, pos1->m_WindowsCoords.x) +
-		Greater(m_MinX, pos2->m_WindowsCoords.x);
+		Greater(m_MinX, pos0->m_WindowCoords.x) +
+		Greater(m_MinX, pos1->m_WindowCoords.x) +
+		Greater(m_MinX, pos2->m_WindowCoords.x);
 
 	beta = 
-		Greater(m_MaxX, pos0->m_WindowsCoords.x) +
-		Greater(m_MaxX, pos1->m_WindowsCoords.x) +
-		Greater(m_MaxX, pos2->m_WindowsCoords.x);
+		Greater(m_MaxX, pos0->m_WindowCoords.x) +
+		Greater(m_MaxX, pos1->m_WindowCoords.x) +
+		Greater(m_MaxX, pos2->m_WindowCoords.x);
 
 	switch (alpha * 4 + beta) {
 	case 0: // configuration A
@@ -553,7 +553,7 @@ void Context :: RenderClippedXTriangle(RasterPos * pos1, RasterPos * pos2, Raste
 	pos[2] = pos3;
 
 	// sort by y
-	I8 * permutation = SortPermutation(pos1->m_WindowsCoords.y, pos2->m_WindowsCoords.y, pos3->m_WindowsCoords.y);
+	I8 * permutation = SortPermutation(pos1->m_WindowCoords.y, pos2->m_WindowCoords.y, pos3->m_WindowCoords.y);
 	pos1 = pos[permutation[0]];
 	pos2 = pos[permutation[1]];
 	pos3 = pos[permutation[2]];
@@ -563,13 +563,13 @@ void Context :: RenderClippedXTriangle(RasterPos * pos1, RasterPos * pos2, Raste
 
 	// here we go
 
-	EdgeInterpolator p1p3(pos1, pos3, Inverse(pos3->m_WindowsCoords.y - pos1->m_WindowsCoords.y));
-	EdgeInterpolator p1p2(pos1, pos2, Inverse(pos2->m_WindowsCoords.y - pos1->m_WindowsCoords.y));
-	EdgeInterpolator p2p3(pos2, pos3, Inverse(pos3->m_WindowsCoords.y - pos2->m_WindowsCoords.y));
+	EdgeInterpolator p1p3(pos1, pos3, Inverse(pos3->m_WindowCoords.y - pos1->m_WindowCoords.y));
+	EdgeInterpolator p1p2(pos1, pos2, Inverse(pos2->m_WindowCoords.y - pos1->m_WindowCoords.y));
+	EdgeInterpolator p2p3(pos2, pos3, Inverse(pos3->m_WindowCoords.y - pos2->m_WindowCoords.y));
 
-	I32 y3 = gppFixed_16_To_Int(pos3->m_WindowsCoords.y);
-	I32 y2 = gppFixed_16_To_Int(pos2->m_WindowsCoords.y);
-	I32 y1 = gppFixed_16_To_Int(pos1->m_WindowsCoords.y);
+	I32 y3 = gppFixed_16_To_Int(pos3->m_WindowCoords.y);
+	I32 y2 = gppFixed_16_To_Int(pos2->m_WindowCoords.y);
+	I32 y1 = gppFixed_16_To_Int(pos1->m_WindowCoords.y);
 	I32 yMin = gppFixed_16_To_Int(m_MinY);
 	I32 yMax = gppFixed_16_To_Int((m_MaxY + 1));
 

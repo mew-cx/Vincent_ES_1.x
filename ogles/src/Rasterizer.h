@@ -40,15 +40,33 @@ namespace EGL {
 		EGL_Fixed		tu, tv;		// texture coordinates between 0 and 1
 	};
 
+	struct ScreenCoord {
+		EGL_Fixed		x, y;		// x, y window coords
+		EGL_Fixed		w;			// z before division (0..1)
+	};
+
+	struct EdgeCoord {
+		EGL_Fixed		x;			// x window coords
+		EGL_Fixed		w;			// z before division
+	};
 
 	// ----------------------------------------------------------------------
 	// Vertex information as input for rasterizer
 	// ----------------------------------------------------------------------
 	struct RasterPos {
-		Vec4D				m_WindowsCoords;	// x, y window coords
+		ScreenCoord			m_WindowCoords;		// x, y window coords
 												// z
-												// w
-		Color				m_Color;			// color in range 0..255
+												// w, i.e. z before division
+		FractionalColor		m_Color;			// color in range 0..255
+		TexCoord			m_TextureCoords;	// texture coords 0..1
+
+	};
+
+	struct EdgePos {
+		EdgeCoord			m_WindowCoords;		// x, window coords
+												// z
+												// w, i.e. z before division
+		FractionalColor		m_Color;			// color in range 0..255
 		TexCoord			m_TextureCoords;	// texture coords 0..1
 
 	};
@@ -75,7 +93,7 @@ namespace EGL {
 
 
 	public:
-		Rasterizer();
+		Rasterizer(RasterizerState * state);
 		~Rasterizer();
 
 		// ----------------------------------------------------------------------
@@ -83,6 +101,9 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		void SetState(RasterizerState * state);
 		RasterizerState * GetState() const;
+
+		void SetSurface(Surface * surface);
+		Surface * GetSurface() const;
 
 		// ----------------------------------------------------------------------
 		// Actual rasterization of primitives
@@ -102,11 +123,17 @@ namespace EGL {
 			const RasterPos& c);
 
 		// ----------------------------------------------------------------------
+		// Rasterization of triangle scan line
+		// ----------------------------------------------------------------------
+		void RasterScanLine(const EdgePos& start, const EdgePos& end, U32 y);
+
+		// ----------------------------------------------------------------------
 		// Rasterization of fragment
 		// ----------------------------------------------------------------------
 
-		void Fragment(const Vec3D & coords, const Color & color);
+		void Fragment(I32 x, I32 y, EGL_Fixed depth, const Color & color);
 			// will have special cases based on settings
+			// the coordinates are integer coordinates
 
 		// ----------------------------------------------------------------------
 		// State management
@@ -125,10 +152,14 @@ namespace EGL {
 		//#include "generated_rasterization_function_declarations.h"
 
 	private:
+		void RasterClippedXTriangle(RasterPos * pos1, RasterPos * pos2, RasterPos * pos3);
+
+	private:
 		// ----------------------------------------------------------------------
 		// other settings
 		// ----------------------------------------------------------------------
 
+		Surface *				m_Surface;			// rendering surface
 		RasterizerState *		m_State;			// current rasterization settings
 
 		RasterPointFunction		m_RasterPointFunction;
@@ -157,7 +188,19 @@ namespace EGL {
 	inline void Rasterizer :: InvalidateState() {
 		m_IsPrepared = false;
 	}
+
+	inline void Rasterizer :: SetSurface(Surface * surface) {
+		m_Surface = surface;
+	}
+
+
+	inline Surface * Rasterizer :: GetSurface() const {
+		return m_Surface;
+	}
+
 }
+
+
 
 #endif //ndef EGL_RASTERIZER_H
 

@@ -160,7 +160,11 @@ inline OGLES_API EGL_Fixed EGL_Div(EGL_Fixed a, EGL_Fixed b) {
 //	value		-	the number whose inverse should be calculated
 // --------------------------------------------------------------------------
 inline OGLES_API EGL_Fixed EGL_Inverse(EGL_Fixed value) {
-	return EGL_Div(EGL_ONE, value);
+	if (value == 0) {
+		return EGL_ONE;
+	} else {
+		return EGL_Div(EGL_ONE, value);
+	}
 }
 
 
