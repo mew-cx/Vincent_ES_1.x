@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// OGLES.cpp		DLL Entry Point for OpenGL (R) ES Implementation
+// OGLES.cpp		DLL Entry Point for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //

@@ -5,7 +5,7 @@
 
 // ==========================================================================
 //
-// Material.h		Material Class for OpenGL (R) ES Implementation
+// Material.h		Material Class for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //

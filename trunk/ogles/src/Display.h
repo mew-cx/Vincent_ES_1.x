@@ -5,7 +5,7 @@
 
 // ==========================================================================
 //
-// Display.h		Display Class for OpenGL (R) ES Implementation
+// Display.h		Display Class for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //

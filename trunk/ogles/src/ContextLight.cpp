@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// ContextLight.cpp	Rendering Context Class for OpenGL (R) ES Implementation
+// ContextLight.cpp	Rendering Context Class for 3D Rendering Library
 //
 //					Lighting and Shading related settings
 //

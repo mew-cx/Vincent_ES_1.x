@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// TriangleClipper.inc	Rendering Context Class for OpenGL (R) ES Implementation
+// TriangleClipper.inc	Rendering Context Class for 3D Rendering Library
 //
 //				Clipping Code for Clipping of Triangles
 //				This code is included by "ContextTriangles.cpp" with different

@@ -5,7 +5,7 @@
 
 // ==========================================================================
 //
-// MatrixStack.h	Matrix Stack Class for OpenGL (R) ES Implementation
+// MatrixStack.h	Matrix Stack Class for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //

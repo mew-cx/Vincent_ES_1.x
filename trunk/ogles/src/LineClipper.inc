@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// LineClipper.inc	Rendering Context Class for OpenGL (R) ES Implementation
+// LineClipper.inc	Rendering Context Class for 3D Rendering Library
 //
 //					Clipping Code for Clipping of Lines
 //					This code is included by "Lines.cpp" with different

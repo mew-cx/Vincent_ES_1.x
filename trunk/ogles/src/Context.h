@@ -5,7 +5,7 @@
 
 // ==========================================================================
 //
-// context.h	Rendering Context Class for OpenGL (R) ES Implementation
+// context.h	Rendering Context Class for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //

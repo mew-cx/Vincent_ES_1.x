@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// stdafx.h			Precompiled headers for OpenGL (R) ES Implementation
+// stdafx.h			Precompiled headers for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //

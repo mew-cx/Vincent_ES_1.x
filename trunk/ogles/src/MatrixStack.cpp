@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// MatrixStack.cpp	Matrix Stack Class for OpenGL (R) ES Implementation
+// MatrixStack.cpp	Matrix Stack Class for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //
