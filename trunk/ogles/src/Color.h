@@ -82,6 +82,10 @@ namespace EGL {
 			return r >> 3 | (g & 0xFC) << 3 | (b & 0xF8) << 8;
 		}
 
+		inline U32 ConvertToRGBA() const {
+			return r << 24 | b << 16 | g << 8 | a;
+		}
+
 		inline U16 ConvertTo5551() const {
 			return r >> 3 | (g & 0xF8) << 2 | (b & 0xF8) << 7 | (a & 0x80) << 8;
 		}
@@ -91,6 +95,15 @@ namespace EGL {
 				(g & 0xf0) << 4 |
 				(b & 0xf0) |
 				a >> 4;
+		}
+
+		static inline Color FromRGBA(U32 rgba) {
+			U8 r = (rgba & 0xFF000000) >> 24;
+			U8 g = (rgba & 0x00FF0000) >> 16;
+			U8 b = (rgba & 0x0000FF00) >>  8;
+			U8 a = (rgba & 0x000000FF);
+
+			return Color(r, g, b, a);
 		}
 
 		static inline Color From4444(U16 u4444) {

@@ -264,11 +264,12 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, Color color) {
 		return;
 	}
 
+	U16 dstValue = m_Surface->GetColorBuffer()[offset];
+	U8 dstAlpha = m_Surface->GetAlphaBuffer()[offset];
+
 	// Blending
 	if (m_State->m_BlendingEnabled) {
 
-		U16 dstValue = m_Surface->GetColorBuffer()[offset];
-		U8 dstAlpha = m_Surface->GetAlphaBuffer()[offset];
 		Color dstColor = Color::From565A(dstValue, dstAlpha);
 
 		Color srcCoeff, dstCoeff;
@@ -364,32 +365,33 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, Color color) {
 
 	if (m_State->m_LogicOpEnabled) {
 
-		U16 newValue = maskedColor.ConvertTo565();
-		U16 oldValue = m_Surface->GetColorBuffer()[offset];
-		U16 value;
+		U32 newValue = maskedColor.ConvertToRGBA();
+		U32 oldValue = Color::From565A(dstValue, dstAlpha).ConvertToRGBA();
+		U32 value;
 
-		// TODO: Also apply logic OP to alpha value
 		switch (m_State->m_LogicOpcode) {
 			default:
 			case RasterizerState:: LogicOpClear:		value = 0;						break;
-			case RasterizerState:: LogicOpAnd:			value = newValue & oldValue;	break;
-			case RasterizerState:: LogicOpAndReverse:	value = newValue & ~oldValue;	break;
+			case RasterizerState:: LogicOpAnd:			value = newValue & dstValue;	break;
+			case RasterizerState:: LogicOpAndReverse:	value = newValue & ~dstValue;	break;
 			case RasterizerState:: LogicOpCopy:			value = newValue;				break;
-			case RasterizerState:: LogicOpAndInverted:	value = ~newValue & oldValue;	break;
-			case RasterizerState:: LogicOpNoop:			value = oldValue;				break;
-			case RasterizerState:: LogicOpXor:			value = newValue ^ oldValue;	break;
-			case RasterizerState:: LogicOpOr:			value = newValue | oldValue;	break;
-			case RasterizerState:: LogicOpNor:			value = ~(newValue | oldValue); break;
-			case RasterizerState:: LogicOpEquiv:		value = ~(newValue ^ oldValue); break;
-			case RasterizerState:: LogicOpInvert:		value = ~oldValue;				break;
-			case RasterizerState:: LogicOpOrReverse:	value = newValue | ~oldValue;	break;
+			case RasterizerState:: LogicOpAndInverted:	value = ~newValue & dstValue;	break;
+			case RasterizerState:: LogicOpNoop:			value = dstValue;				break;
+			case RasterizerState:: LogicOpXor:			value = newValue ^ dstValue;	break;
+			case RasterizerState:: LogicOpOr:			value = newValue | dstValue;	break;
+			case RasterizerState:: LogicOpNor:			value = ~(newValue | dstValue); break;
+			case RasterizerState:: LogicOpEquiv:		value = ~(newValue ^ dstValue); break;
+			case RasterizerState:: LogicOpInvert:		value = ~dstValue;				break;
+			case RasterizerState:: LogicOpOrReverse:	value = newValue | ~dstValue;	break;
 			case RasterizerState:: LogicOpCopyInverted:	value = ~newValue;				break;
-			case RasterizerState:: LogicOpOrInverted:	value = ~newValue | oldValue;	break;
-			case RasterizerState:: LogicOpNand:			value = ~(newValue & oldValue); break;
+			case RasterizerState:: LogicOpOrInverted:	value = ~newValue | dstValue;	break;
+			case RasterizerState:: LogicOpNand:			value = ~(newValue & dstValue); break;
 			case RasterizerState:: LogicOpSet:			value = 0xFFFF;					break;
 		}
 
-		m_Surface->GetColorBuffer()[offset] = value;
+		maskedColor = Color::FromRGBA(value);
+		m_Surface->GetColorBuffer()[offset] = maskedColor.ConvertTo565();
+		m_Surface->GetAlphaBuffer()[offset] = maskedColor.A();
 
 	} else {
 		m_Surface->GetColorBuffer()[offset] = maskedColor.ConvertTo565();
