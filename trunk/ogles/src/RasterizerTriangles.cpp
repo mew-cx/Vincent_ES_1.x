@@ -310,20 +310,7 @@ inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const Ed
 			if (y >= yScissorStart && y < yScissorEnd)													\
 				RasterScanLine(rasterInfo, start, delta);												\
 																										\
-			start.m_WindowCoords.x += deltaStart.m_WindowCoords.x;										\
-			start.m_Color += deltaStart.m_Color;														\
-			start.m_WindowCoords.invZ += deltaStart.m_WindowCoords.invZ;								\
-			start.m_TextureCoords.tu += deltaStart.m_TextureCoords.tu;									\
-			start.m_TextureCoords.tv += deltaStart.m_TextureCoords.tv;									\
-			start.m_FogDensity += deltaStart.m_FogDensity;												\
-			start.m_WindowCoords.depth += deltaStart.m_WindowCoords.depth;								\
-																										\
-			delta.m_WindowCoords.x += deltaDeltaX;														\
-																										\
-			rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;											\
-			rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;											\
-			rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;										\
-			rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;											\
+			AdvanceScanline(rasterInfo, start, delta, deltaStart, deltaDeltaX);							\
 		}																								\
 	}
 
@@ -332,23 +319,26 @@ inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const Ed
 	{																									\
 		for (; y < yEnd; ++y) {																			\
 			RasterScanLine(rasterInfo, start, delta);													\
-																										\
-			start.m_WindowCoords.x += deltaStart.m_WindowCoords.x;										\
-			start.m_Color += deltaStart.m_Color;														\
-			start.m_WindowCoords.invZ += deltaStart.m_WindowCoords.invZ;								\
-			start.m_TextureCoords.tu += deltaStart.m_TextureCoords.tu;									\
-			start.m_TextureCoords.tv += deltaStart.m_TextureCoords.tv;									\
-			start.m_FogDensity += deltaStart.m_FogDensity;												\
-			start.m_WindowCoords.depth += deltaStart.m_WindowCoords.depth;								\
-																										\
-			delta.m_WindowCoords.x += deltaDeltaX;														\
-																										\
-			rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;											\
-			rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;											\
-			rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;										\
-			rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;											\
+			AdvanceScanline(rasterInfo, start, delta, deltaStart, deltaDeltaX);							\
 		}																								\
 	}
+
+#define AdvanceScanline(rasterInfo, start, delta, deltaStart, deltaDeltaX)						\
+	start.m_WindowCoords.x += deltaStart.m_WindowCoords.x;										\
+	start.m_Color += deltaStart.m_Color;														\
+	start.m_WindowCoords.invZ += deltaStart.m_WindowCoords.invZ;								\
+	start.m_TextureCoords.tu += deltaStart.m_TextureCoords.tu;									\
+	start.m_TextureCoords.tv += deltaStart.m_TextureCoords.tv;									\
+	start.m_FogDensity += deltaStart.m_FogDensity;												\
+	start.m_WindowCoords.depth += deltaStart.m_WindowCoords.depth;								\
+																								\
+	delta.m_WindowCoords.x += deltaDeltaX;														\
+																								\
+	rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;											\
+	rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;											\
+	rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;										\
+	rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth
+
 
 // ---------------------------------------------------------------------------
 // Render the triangle specified by the three transformed and lit vertices
@@ -566,8 +556,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		if (delta2.m_WindowCoords.x < delta3.m_WindowCoords.x) {
 
-			TrianglePartScissor(rasterInfo, start, delta, delta2, delta3.m_WindowCoords.x,
-				y, yEnd, yScissorStart, yScissorEnd);
+			if (y < yEnd) {
+				AdvanceScanline(rasterInfo, start, delta, delta2, delta3.m_WindowCoords.x);
+				++y;
+				TrianglePartScissor(rasterInfo, start, delta, delta2, delta3.m_WindowCoords.x,
+					y, yEnd, yScissorStart, yScissorEnd);
+			}
 
 			yEnd = EGL_Round(pos3.m_WindowCoords.y);
 
@@ -583,8 +577,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 				y, yEnd, yScissorStart, yScissorEnd);
 
 		} else {
-			TrianglePartScissor(rasterInfo, start, delta, delta3, delta2.m_WindowCoords.x, 
-				y, yEnd, yScissorStart, yScissorEnd);
+			if (y < yEnd) {
+				AdvanceScanline(rasterInfo, start, delta, delta3, delta2.m_WindowCoords.x);
+				++y;
+				TrianglePartScissor(rasterInfo, start, delta, delta3, delta2.m_WindowCoords.x, 
+					y, yEnd, yScissorStart, yScissorEnd);
+			}
 
 			yEnd = EGL_Round(pos3.m_WindowCoords.y);
 			delta.m_WindowCoords.x = pos2.m_WindowCoords.x + (EGL_ONE/2);
@@ -596,7 +594,11 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	} else {
 		if (delta2.m_WindowCoords.x < delta3.m_WindowCoords.x) {
 
-			TrianglePart(rasterInfo, start, delta, delta2, delta3.m_WindowCoords.x, y, yEnd);
+			if (y < yEnd) {
+				AdvanceScanline(rasterInfo, start, delta, delta2, delta3.m_WindowCoords.x);
+				++y;
+				TrianglePart(rasterInfo, start, delta, delta2, delta3.m_WindowCoords.x, y, yEnd);
+			}
 
 			yEnd = EGL_Round(pos3.m_WindowCoords.y);
 
@@ -610,7 +612,12 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 			TrianglePart(rasterInfo, start, delta, delta23, delta3.m_WindowCoords.x, y, yEnd);
 		} else {
-			TrianglePart(rasterInfo, start, delta, delta3, delta2.m_WindowCoords.x, y, yEnd);
+
+			if (y < yEnd) {
+				AdvanceScanline(rasterInfo, start, delta, delta3, delta2.m_WindowCoords.x);
+				++y;
+				TrianglePart(rasterInfo, start, delta, delta3, delta2.m_WindowCoords.x, y, yEnd);
+			}
 
 			yEnd = EGL_Round(pos3.m_WindowCoords.y);
 			delta.m_WindowCoords.x = pos2.m_WindowCoords.x + (EGL_ONE/2);
