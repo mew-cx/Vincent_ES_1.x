@@ -28,11 +28,25 @@
 
 
 class Surface;
-class EGL_RasterPos;
 class Texture;
 
 
 namespace EGL {
+
+	typedef struct {
+		U32		tu, tv;				// u and v coordinates for texture mapping
+	} TEX_COORD;
+
+
+	typedef struct RasterPos {
+		Vec4D						m_WindowsCoords;	
+		FractionalColor				m_Color;
+		TEX_COORD					m_TextureCoords;
+
+	} EGL_RASTER_POS;
+
+
+
 	class OGLES_API Rasterizer {
 
 	public:
@@ -77,15 +91,15 @@ namespace EGL {
 		// stencil test.
 		// ----------------------------------------------------------------------
 
-		typedef void (Rasterizer::*RasterPointFunction)(const EGL_RasterPos& point);
-		typedef void (Rasterizer::*RasterLineFunction)(const EGL_RasterPos& from, const EGL_RasterPos& to);
-		typedef void (Rasterizer::*RasterTriangleFunction)(const EGL_RasterPos& a, const EGL_RasterPos& b,
-			const EGL_RasterPos& c);
+		typedef void (Rasterizer::*RasterPointFunction)(const RasterPos& point);
+		typedef void (Rasterizer::*RasterLineFunction)(const RasterPos& from, const RasterPos& to);
+		typedef void (Rasterizer::*RasterTriangleFunction)(const RasterPos& a, const RasterPos& b,
+			const RasterPos& c);
 
-		void RasterPoint(const EGL_RasterPos& point);
-		void RasterLine(const EGL_RasterPos& from, const EGL_RasterPos& to);
-		void RasterTriangle(const EGL_RasterPos& a, const EGL_RasterPos& b,
-			const EGL_RasterPos& c);
+		void RasterPoint(const RasterPos& point);
+		void RasterLine(const RasterPos& from, const RasterPos& to);
+		void RasterTriangle(const RasterPos& a, const RasterPos& b,
+			const RasterPos& c);
 
 		// ----------------------------------------------------------------------
 		// Rasterization of fragment
@@ -99,7 +113,9 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 
 		void InvalidateState();
-		void Prepare();
+		void PreparePoint();
+		void PrepareLine();
+		void PrepareTriangle();
 		void Finish();
 		//void UpdateWindowClipping(void);
 

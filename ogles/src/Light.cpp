@@ -97,7 +97,7 @@ void Light :: SetSpotExponent(EGL_Fixed exponent) {
 
 void Light :: SetSpotCutoff(EGL_Fixed cutoff) {
 	m_SpotCutoff = cutoff;
-	EGL_Fixed angle = EGL_Mul(angle, EGL_FixedFromFloat(static_cast<float>(M_PI) / 180.0f));
+	EGL_Fixed angle = EGL_Mul(cutoff, EGL_FixedFromFloat(static_cast<float>(M_PI) / 180.0f));
 	m_CosineSpotCutoff = EGL_Cos(angle);
 }
 

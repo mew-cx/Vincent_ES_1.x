@@ -398,54 +398,48 @@ General rendering sequence:
 
  */
 
-#if 0
-
 void Context :: SelectArrayElement(int index) {
 
 	// TO DO: this whole method should be redesigned for efficient pipelining
 	if (!m_VertexArrayEnabled) {
-		m_CurrentVertex.x = 0;
-		m_CurrentVertex.y = 0;
-		m_CurrentVertex.z = 0;
+		m_CurrentVertex = Vec3D(0, 0, 0);
 	} else {
 		if (m_VertexArray.size == 3) {
-			m_CurrentVertex.x = m_VertexArray.GetValue(index, 0);
-			m_CurrentVertex.y = m_VertexArray.GetValue(index, 1);
-			m_CurrentVertex.z = m_VertexArray.GetValue(index, 2);
+			m_CurrentVertex = 
+				Vec3D(m_VertexArray.GetValue(index, 0),
+					  m_VertexArray.GetValue(index, 1),
+					  m_VertexArray.GetValue(index, 2));
 		} else if (m_VertexArray.size == 2) {
-			m_CurrentVertex.x = m_VertexArray.GetValue(index, 0);
-			m_CurrentVertex.y = m_VertexArray.GetValue(index, 1);
-			m_CurrentVertex.z = 0;
+			m_CurrentVertex = 
+				Vec3D(m_VertexArray.GetValue(index, 0),
+					  m_VertexArray.GetValue(index, 1),
+					  0);
 		} else {
-			I32 result;
-			gppInv_16_32s(m_VertexArray.GetValue(index, 3), &result);
-
-			gppMul_16_32s(m_VertexArray.GetValue(index, 0), result, &m_CurrentVertex.x);
-			gppMul_16_32s(m_VertexArray.GetValue(index, 1), result, &m_CurrentVertex.y);
-			gppMul_16_32s(m_VertexArray.GetValue(index, 2), result, &m_CurrentVertex.z);
+			m_CurrentVertex = 
+				Vec4D(m_VertexArray.GetValue(index, 0),
+					  m_VertexArray.GetValue(index, 1),
+					  m_VertexArray.GetValue(index, 2),
+					  m_VertexArray.GetValue(index, 3));
 		}
 	}
 
 	if (!m_NormalArrayEnabled) {
-		m_CurrentNormal.x = m_DefaultNormal.x;
-		m_CurrentNormal.y = m_DefaultNormal.y;
-		m_CurrentNormal.z = m_DefaultNormal.z;
+		m_CurrentNormal = m_DefaultNormal;
 	} else {
-		m_CurrentNormal.x = m_NormalArray.GetValue(index, 0);
-		m_CurrentNormal.y = m_NormalArray.GetValue(index, 1);
-		m_CurrentNormal.z = m_NormalArray.GetValue(index, 2);
+		m_CurrentNormal = 
+			Vec3D(m_NormalArray.GetValue(index, 0),
+				  m_NormalArray.GetValue(index, 1),
+				  m_NormalArray.GetValue(index, 2));
 	}
 
 	if (!m_ColorArrayEnabled) {
-		m_CurrentRGBA.r = m_DefaultRGBA.r;
-		m_CurrentRGBA.g = m_DefaultRGBA.g;
-		m_CurrentRGBA.b = m_DefaultRGBA.b;
-		m_CurrentRGBA.a = m_DefaultRGBA.a;
+		m_CurrentRGBA = m_DefaultRGBA;
 	} else {
-		m_CurrentRGBA.r = m_ColorArray.GetValue(index, 0);
-		m_CurrentRGBA.g = m_ColorArray.GetValue(index, 1);
-		m_CurrentRGBA.b = m_ColorArray.GetValue(index, 2);
-		m_CurrentRGBA.a = m_ColorArray.GetValue(index, 3);
+		m_CurrentRGBA =
+			FractionalColor(m_ColorArray.GetValue(index, 0),
+							m_ColorArray.GetValue(index, 1),
+							m_ColorArray.GetValue(index, 2),
+							m_ColorArray.GetValue(index, 3));
 	}
 
 	if (!m_TexCoordArrayEnabled) {
@@ -456,11 +450,9 @@ void Context :: SelectArrayElement(int index) {
 			m_CurrentTextureCoords.tu = m_TexCoordArray.GetValue(index, 0);
 			m_CurrentTextureCoords.tv = m_TexCoordArray.GetValue(index, 1);
 		} else {
-			I32 result;
-			gppInv_16_32s(m_TexCoordArray.GetValue(index, 3), &result);
-
-			gppMul_16_32s(m_TexCoordArray.GetValue(index, 0), result, reinterpret_cast<I32 *>(&m_CurrentTextureCoords.tu));
-			gppMul_16_32s(m_TexCoordArray.GetValue(index, 1), result, reinterpret_cast<I32 *>(&m_CurrentTextureCoords.tv));
+			I32 factor = EGL_Inverse(m_TexCoordArray.GetValue(index, 3));
+			m_CurrentTextureCoords.tu = EGL_Mul(m_TexCoordArray.GetValue(index, 0), factor);
+			m_CurrentTextureCoords.tv = EGL_Mul(m_TexCoordArray.GetValue(index, 1), factor);
 		}
 	}
 }
@@ -468,27 +460,23 @@ void Context :: SelectArrayElement(int index) {
 
 void Context :: CurrentValuesToRasterPos(EGL_RASTER_POS * rasterPos) {
 
-	GPP_VEC4D	eyeCoords;
-	GPP_VEC4D	eyeNormal;
-	GPP_VEC4D	clipCoords;
-
 	// apply model view matrix to vertex coordinate -> eye coordinates vertex
-	gppVec3DTransform_16_32s(&m_CurrentVertex, &eyeCoords, m_ModelViewMatrixStack.CurrentMatrix());
+	Vec4D eyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
-	gppVec3DTransform_16_32s(&m_CurrentNormal, &eyeNormal, m_InverseModelViewMatrix);
+	Vec3D eyeNormal = (m_InverseModelViewMatrix * m_CurrentNormal).Project();
 
 	// TO DO: apply proper re-normalization/re-scaling of normal vector
 	if (m_RescaleNormalEnabled || m_NormalizeEnabled) {
-		EGL_NORMALIZE(*reinterpret_cast<GPP_VEC3D *>(&eyeNormal));
+		eyeNormal.Normalize();
 	}
 
 	// apply projection matrix to eye coordinates 
-	gppVec3DTransform_16_32s(reinterpret_cast<GPP_VEC3D *>(&eyeCoords), &clipCoords, m_ProjectionMatrixStack.CurrentMatrix());
+	Vec4D clipCoords = m_ProjectionMatrixStack.CurrentMatrix() * eyeCoords;
 
+#if 0
 	// perform depth division
-	I32 invDenominator;
-	gppInv_16_32s(clipCoords.w, &invDenominator);
+	I32 invDenominator = EGL_Inverse(clipCoords.w());
 	gppVec3DScale_16_32s(reinterpret_cast<GPP_VEC3D *>(&clipCoords), invDenominator);
 
 	// apply viewport transform to clip coordinates -> window coordinates
@@ -499,65 +487,47 @@ void Context :: CurrentValuesToRasterPos(EGL_RASTER_POS * rasterPos) {
 		reinterpret_cast<GPP_VEC3D *>(&rasterPos->m_WindowsCoords));
 	rasterPos->m_WindowsCoords.w = clipCoords.w;
 
+	// adjust depth to rendering surface representation
+	rasterPos->m_WindowsCoords.z = m_DrawSurface->DepthBitsFromDepth(rasterPos->m_WindowsCoords.z);
+
+#endif
+
 	if (m_LightingEnabled) {
 		// for each light that is turned on, call into calculation
 		int mask = 1;
 
 		if (m_ColorMaterialEnabled) {
-			EGL_COLOR_PRODUCT(m_CurrentRGBA, m_LightModelAmbient,
-				rasterPos->m_Color);
-			EGL_COLOR_ACCUMULATE(m_FrontMaterial.GetEmisiveColor(), rasterPos->m_Color);
+			rasterPos->m_Color = m_CurrentRGBA * m_LightModelAmbient;
+			rasterPos->m_Color += m_FrontMaterial.GetEmisiveColor();
 
 			for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 				if (m_LightEnabled & mask) {
-					m_Lights[index].AccumulateLight(eyeCoords, *reinterpret_cast<GPP_VEC3D*>(&eyeNormal),
+					m_Lights[index].AccumulateLight(eyeCoords, eyeNormal,
 						m_CurrentRGBA, rasterPos->m_Color);
 				}
 			}
-
-			rasterPos->m_Color.a = m_CurrentRGBA.a;
 		} else {
-			EGL_COLOR_PRODUCT(m_FrontMaterial.GetAmbientColor(), m_LightModelAmbient,
-				rasterPos->m_Color);
-			EGL_COLOR_ACCUMULATE(m_FrontMaterial.GetEmisiveColor(), rasterPos->m_Color);
+			rasterPos->m_Color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
+			rasterPos->m_Color += m_FrontMaterial.GetEmisiveColor();
 
 			for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 				if (m_LightEnabled & mask) {
-					m_Lights[index].AccumulateLight(eyeCoords, *reinterpret_cast<GPP_VEC3D*>(&eyeNormal),
+					m_Lights[index].AccumulateLight(eyeCoords, eyeNormal,
 						rasterPos->m_Color);
 				}
 			}
-
-			rasterPos->m_Color.a = m_FrontMaterial.GetDiffuseColor().a;
 		}
 
-		EGL_COLOR_CLAMP(rasterPos->m_Color);
+		rasterPos->m_Color.Clamp();
 	} else {
 		//	copy current colors to raster pos
 		rasterPos->m_Color = m_CurrentRGBA;
 	}
 
-	// adjust depth to rendering surface representation
-	rasterPos->m_WindowsCoords.z = m_DrawSurface->DepthBitsFromDepth(rasterPos->m_WindowsCoords.z);
-
-	// adjust color to range [0.. 256) in fixed point representation
-	rasterPos->m_Color.r = ((rasterPos->m_Color.r >> 8) * 0xFFFF);
-	rasterPos->m_Color.g = ((rasterPos->m_Color.g >> 8) * 0xFFFF);
-	rasterPos->m_Color.b = ((rasterPos->m_Color.b >> 8) * 0xFFFF);
-	rasterPos->m_Color.a = ((rasterPos->m_Color.a >> 8) * 0xFFFF);
-
 	// apply texture transform to texture coordinates
 	// really should have a transformation primitive of the correct dimensionality
-	GPP_VEC3D inCoords;
-	GPP_VEC4D outCoords;
-
-	inCoords.x = m_CurrentTextureCoords.tu;
-	inCoords.y = m_CurrentTextureCoords.tv;
-	inCoords.z = 0;
-
-	gppVec3DTransform_16_32s(&inCoords, &outCoords, m_TextureMatrixStack.CurrentMatrix());
-	rasterPos->m_TextureCoords.tu = outCoords.x;
-	rasterPos->m_TextureCoords.tv = outCoords.y;
+	Vec3D inCoords(m_CurrentTextureCoords.tu, m_CurrentTextureCoords.tv, 0);
+	Vec4D outCoords = m_TextureMatrixStack.CurrentMatrix() * inCoords;
+	rasterPos->m_TextureCoords.tu = outCoords.x();
+	rasterPos->m_TextureCoords.tv = outCoords.y();
 }
-
-#endif

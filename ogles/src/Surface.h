@@ -46,11 +46,11 @@ namespace EGL {
 		void SetCurrentContext(Context * context);
 		Context * GetCurrentContext();
 
-		Config * GetConfig();
-
 		U16 * GetColorBuffer();
 		I32 * GetDepthBuffer();
 		U32 * GetStencilBuffer();
+
+		Config * GetConfig();
 
 		void Dispose();
 
