@@ -107,6 +107,7 @@ void Rasterizer :: SetTexture(MultiTexture * texture) {
 		m_State->SetWrappingModeT(m_Texture->GetWrappingModeT());
 		m_State->SetMinFilterMode(m_Texture->GetMinFilterMode());
 		m_State->SetMagFilterMode(m_Texture->GetMagFilterMode());
+		m_State->SetMipmapFilterMode(m_Texture->GetMipmapFilterMode());
 		m_State->SetInternalFormat(m_Texture->GetInternalFormat());
 
 		m_RasterInfo.Textures = m_Texture->m_TextureLevels;

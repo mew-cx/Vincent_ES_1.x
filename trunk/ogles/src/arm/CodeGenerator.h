@@ -135,8 +135,8 @@ namespace EGL {
 #	define OFFSET_TEXTURES						offsetof(RasterInfo, Textures)
 #	define OFFSET_MAX_MIPMAP_LEVEL				offsetof(RasterInfo, MaxMipmapLevel)
 
-#	define OFFSET_TEXTURE_LOG_WIDTH				offsetof(Texture, m_LogHeight)
-#	define OFFSET_TEXTURE_LOG_HEIGHT			offsetof(Texture, m_LogWidth)
+#	define OFFSET_TEXTURE_LOG_WIDTH				offsetof(Texture, m_LogWidth)
+#	define OFFSET_TEXTURE_LOG_HEIGHT			offsetof(Texture, m_LogHeight)
 #	define OFFSET_TEXTURE_DATA					offsetof(Texture, m_Data)
 #	define SIZE_TEXTURE							sizeof(Texture)
 
