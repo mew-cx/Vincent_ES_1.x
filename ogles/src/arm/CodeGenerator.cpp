@@ -1697,7 +1697,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 			case RasterizerState::CompFuncEqual:	
 				//stencilTest = stencilRef == stencil;
-				passedTest = cg_op_bne;
+				passedTest = cg_op_beq;
 				break;
 
 			case RasterizerState::CompFuncLEqual:	
@@ -1712,7 +1712,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 			case RasterizerState::CompFuncNotEqual:	
 				//stencilTest = stencilRef != stencil;
-				passedTest = cg_op_beq;
+				passedTest = cg_op_bne;
 				break;
 
 			case RasterizerState::CompFuncGEqual:	
@@ -1801,7 +1801,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					break;
 			}
 
-			//STW		(regNewStencilValue, regStencilAddr);
+			STW		(regNewStencilValue, regStencilAddr);
 			BRA		(continuation);
 		//}
 		}
