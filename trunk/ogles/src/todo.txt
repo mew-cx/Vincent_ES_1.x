@@ -6,7 +6,6 @@ Completion:
 
 - Test calling through real API functions
 - Load full model and render it
-- Implement query API
 - Complete lightning model
 - Culling and object space clipping
 - Mipmapping for textures

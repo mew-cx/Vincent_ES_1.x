@@ -53,6 +53,16 @@
 #endif
 
 
+#define EGL_CONFIG_VENDOR			"Hans-Martin Will"
+#define EGL_CONFIG_VERSION			"OpenGL ES-CL 1.0"
+#define EGL_CONFIG_EXTENSIONS		""
+
+#ifdef EGL_USE_GPP
+#	define EGL_CONFIG_RENDERER		"Software GPP"
+#else
+#	define EGL_CONFIG_RENDERER		"Software"
+#endif
+
 // --------------------------------------------------------------------------
 // type definitions
 // --------------------------------------------------------------------------

@@ -355,11 +355,105 @@ void Context :: Enable(GLenum cap) {
 
 void Context :: Hint(GLenum target, GLenum mode) { }
 
-void Context :: GetIntegerv(GLenum pname, GLint *params) { }
+void Context :: GetIntegerv(GLenum pname, GLint *params) { 
+	switch (pname) {
+	case GL_ALPHA_BITS:
+		params[0] = m_Config.GetConfigAttrib(EGL_ALPHA_SIZE);
+		break;
+
+	case GL_BLUE_BITS:
+		params[0] = m_Config.GetConfigAttrib(EGL_BLUE_SIZE);
+		break;
+
+	case GL_DEPTH_BITS:
+		params[0] = m_Config.GetConfigAttrib(EGL_DEPTH_SIZE);
+		break;
+
+	case GL_GREEN_BITS:
+		params[0] = m_Config.GetConfigAttrib(EGL_GREEN_SIZE);
+		break;
+
+	case GL_RED_BITS:
+		params[0] = m_Config.GetConfigAttrib(EGL_RED_SIZE);
+		break;
+
+	case GL_STENCIL_BITS:
+		params[0] = m_Config.GetConfigAttrib(EGL_STENCIL_SIZE);
+		break;
+
+	case GL_SUBPIXEL_BITS:
+		params[0] = m_Config.GetConfigAttrib(EGL_SAMPLES);
+		break;
+
+	case GL_ALIASED_LINE_WIDTH_RANGE:
+	case GL_ALIASED_POINT_SIZE_RANGE:
+	case GL_SMOOTH_LINE_WIDTH_RANGE:
+	case GL_SMOOTH_POINT_SIZE_RANGE:
+		params[0] = 1;
+		break;
+
+
+	case GL_COMPRESSED_TEXTURE_FORMATS:
+		break;
+
+	case GL_NUM_COMPRESSED_TEXTURE_FORMATS:
+		params[0] = 0;
+		break;
+
+	case GL_MAX_ELEMENTS_INDICES:
+	case GL_MAX_ELEMENTS_VERTICES:
+		params[0] = INT_MAX;
+		break;
+
+	case GL_MAX_LIGHTS:
+		params[0] = EGL_NUMBER_LIGHTS;
+		break;
+
+	case GL_MAX_MODELVIEW_STACK_DEPTH:
+		params[0] = m_ModelViewMatrixStack.GetStackSize();
+		break;
+
+	case GL_MAX_PROJECTION_STACK_DEPTH:
+		params[0] = m_ProjectionMatrixStack.GetStackSize();
+		break;
+
+	case GL_MAX_TEXTURE_STACK_DEPTH:
+		params[0] = m_TextureMatrixStack.GetStackSize();
+		break;
+
+	case GL_MAX_TEXTURE_SIZE:
+		params[0] = 4096;
+		break;
+
+	case GL_MAX_TEXTURE_UNITS:
+		params[0] = 1;
+		break;
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+	}
+}
 
 
 const GLubyte * Context :: GetString(GLenum name) { 
-	return 0;
+
+	switch (name) {
+	case GL_VENDOR:
+		return (GLubyte *) EGL_CONFIG_VENDOR;
+
+	case GL_VERSION:
+		return (GLubyte *) EGL_CONFIG_VERSION;
+
+	case GL_RENDERER:
+		return (GLubyte *) EGL_CONFIG_RENDERER;
+
+	case GL_EXTENSIONS:
+		return (GLubyte *) EGL_CONFIG_EXTENSIONS;
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		return 0;
+	}
 }
 
 void Context :: Finish(void) { }
