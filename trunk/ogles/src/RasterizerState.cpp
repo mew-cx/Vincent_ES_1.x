@@ -108,7 +108,7 @@ RasterizerState :: RasterizerState():
 	m_WrappingModeT(WrappingModeRepeat),
 	m_InternalFormat(TextureFormatLuminance),
 
-	m_ShadingModel(ShadeModelFlat),
+	m_ShadingModel(ShadeModelSmooth),
 	m_ScissorWidth(1024),			// should be determined by entry in config
 	m_ScissorHeight(1024),
 	m_ScissorTestEnabled(false)

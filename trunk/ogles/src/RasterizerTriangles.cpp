@@ -625,13 +625,13 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		I32 offset = EGL_IntFromFixed(EGL_Mul(factor, depthSlope) + units * PolygonOffsetUnitSize);
 
 		if (offset > 0) {
-			depth1 = depth1 < DepthRangeMax - offset ? depth1 + offset : depth1;
-			depth2 = depth2 < DepthRangeMax - offset ? depth2 + offset : depth2;
-			depth3 = depth3 < DepthRangeMax - offset ? depth3 + offset : depth3;
+			depth1 = depth1 < DepthRangeMax - offset ? depth1 + offset : DepthRangeMax;
+			depth2 = depth2 < DepthRangeMax - offset ? depth2 + offset : DepthRangeMax;
+			depth3 = depth3 < DepthRangeMax - offset ? depth3 + offset : DepthRangeMax;
 		} else {
-			depth1 = depth1 > -offset ? depth1 + offset : depth1;
-			depth2 = depth2 > -offset ? depth2 + offset : depth2;
-			depth3 = depth3 > -offset ? depth3 + offset : depth3;
+			depth1 = depth1 > -offset ? depth1 + offset : 0;
+			depth2 = depth2 > -offset ? depth2 + offset : 0;
+			depth3 = depth3 > -offset ? depth3 + offset : 0;
 		}
 	}
 

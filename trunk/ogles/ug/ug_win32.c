@@ -138,7 +138,9 @@ ugCreateWindow(UGCtx ug,  const char* config,
 			str, size);
 
 		w->win = CreateWindow(WINDOW_CLASS_NAME, str, WS_VISIBLE,
-			x, y, width, height, NULL, NULL, instance, NULL);
+			//x, y, width, height, 
+			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 
+			NULL, NULL, instance, NULL);
 
 		free(str);
 
@@ -271,10 +273,22 @@ found:
             s_sai.cbSize = sizeof (s_sai);
 			break;
 
+		case WM_CLEAR:
+			// eat it
+			break;
+
 		case WM_PAINT:
 			if (w->draw) {
 				PAINTSTRUCT ps;
+				RECT rt;
+
 				HDC hdc = BeginPaint(hWnd, &ps);
+
+				if (w->reshape) {
+					GetClientRect(hWnd, &rt);
+					(w->reshape)((UGWindow)w, rt.right - rt.left, rt.bottom - rt.top);
+				}
+
 				(w->draw)((UGWindow) w);
 				EndPaint(hWnd, &ps);
 			}
@@ -288,15 +302,17 @@ found:
 
 			break;
 
+		case WM_LBUTTONDOWN:
 		case WM_MBUTTONDOWN:
+		case WM_RBUTTONDOWN:
 			if (w->pointer) {
 				int but, state = UG_BUT_DOWN;
 
-				if (wParam & MK_LBUTTON)
+				if (message == WM_LBUTTONDOWN)
 					but = UG_BUT_LEFT;
-				else if (wParam & MK_MBUTTON)
+				else if (message == WM_MBUTTONDOWN)
 					but = UG_BUT_MIDDLE;
-				else if (wParam & MK_RBUTTON)
+				else if (message == WM_RBUTTONDOWN)
 					but = UG_BUT_RIGHT;
 				else
 					break;
@@ -334,7 +350,7 @@ found:
 			break;
 
 		case WM_KEYDOWN:
-			key = GetKey((int) lParam);
+			key = GetKey((int) wParam);
 
 			if (key) {
 				if (w->kbd) {
@@ -394,7 +410,7 @@ static ATOM UgRegisterClass(HINSTANCE hInstance, LPTSTR szWindowClass)
     wc.hInstance		= hInstance;
     wc.hIcon			= 0;
     wc.hCursor			= 0;
-    wc.hbrBackground	= (HBRUSH) GetStockObject(WHITE_BRUSH);
+    wc.hbrBackground	= 0;//(HBRUSH) GetStockObject(WHITE_BRUSH);
     wc.lpszMenuName		= 0;
     wc.lpszClassName	= szWindowClass;
 
