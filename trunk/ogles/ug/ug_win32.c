@@ -1,6 +1,6 @@
 /*
  * GLESonGL implementation
- * Version:  1.0
+ * Version:  1.1
  *
  * Copyright (C) 2003  David Blythe   All Rights Reserved.
  *
@@ -28,6 +28,8 @@
 #include <GLES/egl.h>
 #include <Windows.h>
 #include <aygshell.h>
+//#include <shellsdk.h>
+
 
 #include "ug.h"
 
@@ -62,6 +64,9 @@ static wchar_t WINDOW_CLASS_NAME[] = L"ug window";
 static SHACTIVATEINFO s_sai;
 static HINSTANCE instance;
 static UGCtx_t * context;
+
+static const int TITLEBARHEIGHT = 26;
+
 
 
 UGCtx APIENTRY
@@ -105,11 +110,38 @@ bind_context(UGCtx_t* ug, UGWindow_t* w) {
     ug->win = w;
 }
 
+
+void UpdateWindowPosition(HWND hWnd)
+{
+    SIPINFO si;
+    int cx, cy;
+	
+   // Query the sip state and size our window appropriately.
+    memset (&si, 0, sizeof (si));
+    si.cbSize = sizeof (si);
+    SHSipInfo(SPI_GETSIPINFO, 0, (PVOID)&si, FALSE); 
+    cx = si.rcVisibleDesktop.right - si.rcVisibleDesktop.left;
+    cy = si.rcVisibleDesktop.bottom - si.rcVisibleDesktop.top;
+
+    // If the sip is not shown, or showing but not docked, the
+    // desktop rect doesn’t include the height of the menu bar.
+    if (!(si.fdwFlags & SIPF_ON) ||
+        ((si.fdwFlags & SIPF_ON) && !(si.fdwFlags & SIPF_DOCKED))) 
+        cy -= TITLEBARHEIGHT;  
+    
+    SetWindowPos (hWnd, NULL, 0, TITLEBARHEIGHT, cx, cy, 
+																				SWP_NOMOVE | SWP_NOZORDER);
+
+}
+
 UGWindow APIENTRY
 ugCreateWindow(UGCtx ug,  const char* config,
 		const char* title, int width, int height, int x, int y) {
     UGWindow_t *w = malloc(sizeof *w);
     UGCtx_t* _ug = (UGCtx_t*)ug;
+
+
+    SHMENUBARINFO mbi;		  
 
     if (w) {
 		EGLint n, vid;
@@ -143,6 +175,7 @@ ugCreateWindow(UGCtx ug,  const char* config,
 			NULL, NULL, instance, NULL);
 		SetTimer(w->win, 1, 40, NULL);
 
+
 		free(str);
 
 		if (!w->win)
@@ -150,6 +183,25 @@ ugCreateWindow(UGCtx ug,  const char* config,
 			free(w);
 			return 0;
 		}
+
+
+        //Create the menubar.
+        memset (&mbi, 0, sizeof (SHMENUBARINFO));
+        mbi.cbSize     = sizeof (SHMENUBARINFO);
+        mbi.hwndParent = w->win;
+        mbi.hInstRes   = instance;
+        mbi.dwFlags =  SHCMBF_EMPTYBAR;  // no menu, just the sip button
+        mbi.nBmpId     = 0;
+        mbi.cBmpImages = 0;    
+
+        if (!SHCreateMenuBar(&mbi))
+        {
+            MessageBox(w->win, L"SHCreateMenuBar Failed", L"Error", MB_OK);
+            SendMessage(w->win, WM_QUIT, 0, 0);
+			return 0;
+        }
+
+		UpdateWindowPosition(w->win);			 // reset position after creating menubar
 
 		w->next = _ug->winlist;
 		_ug->winlist = w;
@@ -253,6 +305,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	UGWindow_t* w;
 	int key;
 	POINT point;
+	WORD fActive;
 
 	for(w = context->winlist; w; w = w->next) {
 		if (w->win == hWnd) goto found;
@@ -336,10 +389,20 @@ found:
 		case WM_ACTIVATE:
             // Notify shell of our activate message
 			SHHandleWMActivate(hWnd, wParam, lParam, &s_sai, FALSE);
+
+			fActive = LOWORD(wParam);
+			if (fActive != WA_INACTIVE)// it isn't inactive
+			{
+				if ( ((BOOL)HIWORD(wParam)) == FALSE) //it isn't minimized
+					UpdateWindowPosition(w->win);
+			}
+
      		break;
 
 		case WM_SETTINGCHANGE:
 			SHHandleWMSettingChange(hWnd, wParam, lParam, &s_sai);
+
+			UpdateWindowPosition(w->win);
      		break;
 
 		case WM_CHAR:
