@@ -107,10 +107,15 @@ Rasterizer :: Rasterizer(RasterizerState * state):
 	m_IsPrepared(false),
 	m_State(state)
 {
+	m_CodeSegment = VirtualAlloc(0, 16384, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 }
 
 
 Rasterizer :: ~Rasterizer() {
+	if (m_CodeSegment)
+	{
+		VirtualFree(m_CodeSegment, 16384, MEM_DECOMMIT);
+	}
 }
 
 
@@ -706,6 +711,37 @@ inline void Rasterizer :: Fragment(I32 offset, EGL_Fixed depth, I32 texOffset,
 #define LINEAR_SPAN (1 << LOG_LINEAR_SPAN)	// must be power of 2
 
 
+#if defined(ARM) || defined(_ARM_)
+
+inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& end, U32 y) {
+	RasterInfo rasterInfo;
+
+	rasterInfo.SurfaceWidth = m_Surface->GetWidth();
+	rasterInfo.SurfaceHeight = m_Surface->GetHeight();
+	size_t offset = y * m_Surface->GetWidth();
+	rasterInfo.DepthBuffer = m_Surface->GetDepthBuffer() + offset;
+	rasterInfo.ColorBuffer = m_Surface->GetColorBuffer() + offset;
+	rasterInfo.StencilBuffer = m_Surface->GetStencilBuffer() + offset;
+	rasterInfo.AlphaBuffer = m_Surface->GetAlphaBuffer() + offset;
+
+// texture info
+	Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
+
+	if (texture)
+	{
+		rasterInfo.TextureWidth = texture->GetWidth();
+		rasterInfo.TextureHeight = texture->GetHeight();
+		rasterInfo.TextureExponent = texture->GetExponent();
+		rasterInfo.TextureData = texture->GetData();
+	}
+
+	ScanlineFunction * func = (ScanlineFunction *) m_CodeSegment;
+
+	func(&rasterInfo, &start, &end);
+}
+
+#else 
+
 inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& end, U32 y) {
 
 	// In the edge buffer, z, tu and tv are actually divided by w
@@ -785,6 +821,7 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 		}
 	}
 }
+#endif
 
 
 // --------------------------------------------------------------------------
@@ -815,7 +852,7 @@ void Rasterizer :: PrepareTriangle() {
 		generator.SetState(m_State);
 		generator.SetTexture(m_Texture);
 
-		generator.CompileRasterScanLine();
+		generator.CompileRasterScanLine(m_CodeSegment);
 	}
 
 	m_MipMapLevel = 0;

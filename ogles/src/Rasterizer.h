@@ -205,9 +205,9 @@ namespace EGL {
 		EGL_Fixed				m_MaxY;
 
 		int						m_MipMapLevel;
-
 		bool					m_IsPrepared;
 
+		void *					m_CodeSegment;		// for generated functions
 
 	};
 

@@ -47,6 +47,7 @@
 #include "OGLES.h"
 #include "fixed.h"
 #include "linalg.h"
+#include "Rasterizer.h"
 #include "RasterizerState.h"
 #include "FractionalColor.h"
 #include <map>
@@ -62,6 +63,25 @@ extern "C" {
 
 namespace EGL {
 
+	struct RasterInfo {
+		// surface info
+		I32		SurfaceWidth;
+		I32		SurfaceHeight;
+		I32 *	DepthBuffer;
+		U16 *	ColorBuffer;
+		U32 *	StencilBuffer;
+		U8 *	AlphaBuffer;
+
+		// texture info
+		I32		TextureWidth;
+		I32		TextureHeight;
+		I32		TextureExponent;
+		void *	TextureData;
+	};
+
+	// signature for generated scanline functions
+	typedef void (ScanlineFunction)(const RasterInfo * info, const EdgePos * start, const EdgePos * end);
+
 	struct FragmentGenerationInfo;
 
 	class MultiTexture;
@@ -72,7 +92,7 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		// Code generation of triangle scan line
 		// ----------------------------------------------------------------------
-		void CompileRasterScanLine();
+		void CompileRasterScanLine(void * targetBuffer);
 
 		void SetState(RasterizerState * state)	{ m_State = state; }
 		RasterizerState * GetState()			{ return m_State; }
