@@ -44,8 +44,9 @@
 #include "Rasterizer.h"
 #include "Surface.h"
 #include "Texture.h"
-#include "trivm.h"
-#include "Inst.h"
+#include "codegen.h.h"
+#include "instruction.h"
+#include "emit.h"
 
 using namespace EGL;
 using namespace triVM;
