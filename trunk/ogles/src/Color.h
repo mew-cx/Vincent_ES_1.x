@@ -247,7 +247,7 @@ namespace EGL {
 		static inline U8 mul(U8 color, U8 factor) {
 			U16 prod = color * factor;
 
-			return (prod + (prod >> 8)) >> 8;
+			return (prod + (prod >> 7)) >> 8;
 		}
 
 		static EGL_Fixed s_alphaFactor[256];		// lookup table to convert 0..255 into 0 .. 1.0

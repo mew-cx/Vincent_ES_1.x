@@ -57,8 +57,8 @@ using namespace EGL;
 namespace {
 
 	inline U8 MulU8(U8 a, U8 b) {
-		// TODO: use lookup table and treat ranges correctly
-		return (a * b) >> 8; 
+		U16 prod = a * b;
+		return (prod + (prod >> 7)) >> 8;
 	}
 
 	inline U8 ClampU8(U16 value) {
