@@ -23,6 +23,11 @@ namespace EGL {
 	class OGLES_API Color {
 
 	public:
+		enum {
+			MAX = 0xff
+		};
+
+	public:
 		U8	r, g, b, a;							// rgba components
 
 	public:
@@ -105,6 +110,14 @@ namespace EGL {
 			return Color(r, g, b, 0xFF);
 		}
 
+		static inline Color From565A(U16 u565, U8 alpha) {
+			U8 r = (u565 & 0x001Fu) << 3;
+			U8 g = (u565 & 0x07E0u) >> 3;
+			U8 b = (u565 & 0xF800u) >> 8;
+
+			return Color(r, g, b, alpha);
+		}
+
 		static inline Color From5551(U16 u5551) {
 			U8 r = (u5551 & 0x001Fu) << 3;
 			U8 g = (u5551 & 0x03E0u) >> 2;
@@ -112,6 +125,15 @@ namespace EGL {
 			U8 a = (u5551 & 0x8000u) >> 8;
 
 			return Color(r, g, b, a);
+		}
+
+		Color operator+(const Color& other) const {
+			return Color(clamp(r + other.r), clamp(g + other.g), 
+				clamp(b + other.b), clamp(a + other.a));
+		}
+
+		Color operator*(const Color& factor) const {
+			return Color(mul(r, factor.r), mul(g, factor.g), mul(b, factor.b), mul(a, factor.a));
 		}
 
 		// -------------------------------------------------------------------------
@@ -133,6 +155,18 @@ namespace EGL {
 		static void InitAlphaFactorTable();
 
 	private:
+		static U8 clamp(U16 value) {
+			return (value > MAX) ? (U8) MAX : (U8) value;
+		}
+
+		static U8 mul(U8 color, U8 factor) {
+			if (factor & 0x80) {
+				return (color * (factor + 1)) >> 8;
+			} else {
+				return (color * factor) >> 8;
+			}
+		}
+
 		static EGL_Fixed s_alphaFactor[256];		// lookup table to convert 0..255 into 0 .. 1.0
 	};
 

@@ -83,7 +83,7 @@ RasterizerState * Rasterizer :: GetState() const {
 }
 
 
-inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, const Color & color) {
+inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, Color color) {
 	// will have special cases based on settings
 	// for now, no special support for blending etc.
 
@@ -132,7 +132,6 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, const Color & 
 		}
 	}
 
-	// TODO: Update of stencil buffer
 	if (m_State->m_StencilTestEnabled) {
 
 		bool stencilTest;
@@ -268,6 +267,91 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, const Color & 
 	// Blending
 	if (m_State->m_BlendingEnabled) {
 
+		U16 dstValue = m_Surface->GetColorBuffer()[offset];
+		U8 dstAlpha = m_Surface->GetAlphaBuffer()[offset];
+		Color dstColor = Color::From565A(dstValue, dstAlpha);
+
+		Color srcCoeff, dstCoeff;
+
+		switch (m_State->m_BlendFuncSrc) {
+			default:
+			case RasterizerState::BlendFuncSrcZero:
+				srcCoeff = Color(0, 0, 0, 0);
+				break;
+
+			case RasterizerState::BlendFuncSrcOne:
+				srcCoeff = Color(Color::MAX, Color::MAX, Color::MAX, Color::MAX);
+				break;
+
+			case RasterizerState::BlendFuncSrcSrcColor:
+				srcCoeff = color;
+				break;
+
+			case RasterizerState::BlendFuncSrcOneMinusSrcColor:
+				srcCoeff = Color(Color::MAX - color.R(), Color::MAX - color.G(), Color::MAX - color.B(), Color::MAX - color.A());
+				break;
+
+			case RasterizerState::BlendFuncSrcSrcAlpha:
+				srcCoeff = Color(color.A(), color.A(), color.A(), color.A());
+				break;
+
+			case RasterizerState::BlendFuncSrcOneMinusSrcAlpha:
+				srcCoeff = Color(Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A());
+				break;
+
+			case RasterizerState::BlendFuncSrcDstAlpha:
+				srcCoeff = Color(dstAlpha, dstAlpha, dstAlpha, dstAlpha);
+				break;
+
+			case RasterizerState::BlendFuncSrcOneMinusDstAlpha:
+				srcCoeff = Color(Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha);
+				break;
+		}
+
+		switch (m_State->m_BlendFuncDst) {
+			default:
+			case RasterizerState::BlendFuncDstZero:
+				dstCoeff = Color(0, 0, 0, 0);
+				break;
+
+			case RasterizerState::BlendFuncDstOne:
+				dstCoeff = Color(Color::MAX, Color::MAX, Color::MAX, Color::MAX);
+				break;
+
+			case RasterizerState::BlendFuncDstSrcColor:
+				dstCoeff = color;
+				break;
+
+			case RasterizerState::BlendFuncDstOneMinusSrcColor:
+				dstCoeff = Color(Color::MAX - color.R(), Color::MAX - color.G(), Color::MAX - color.B(), Color::MAX - color.A());
+				break;
+
+			case RasterizerState::BlendFuncDstSrcAlpha:
+				dstCoeff = Color(color.A(), color.A(), color.A(), color.A());
+				break;
+
+			case RasterizerState::BlendFuncDstSrcOneMinusSrcAlpha:
+				dstCoeff = Color(Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A(), Color::MAX - color.A());
+				break;
+
+			case RasterizerState::BlendFuncDstDstAlpha:
+				dstCoeff = Color(dstAlpha, dstAlpha, dstAlpha, dstAlpha);
+				break;
+
+			case RasterizerState::BlendFuncDstOneMinusDstAlpha:
+				dstCoeff = Color(Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha, Color::MAX - dstAlpha);
+				break;
+
+			case RasterizerState::BlendFuncDstSrcAlphaSaturate:
+				{
+					U8 rev = Color::MAX - dstAlpha;
+					U8 f = (rev < color.A() ? rev : color.A());
+					dstCoeff = Color(f, f, f, Color::MAX);
+				}
+				break;
+		}
+
+		color = srcCoeff * color + dstCoeff * dstColor;
 	}
 
 	// Masking and write to framebuffer
@@ -275,7 +359,8 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, const Color & 
 		m_Surface->GetDepthBuffer()[offset] = depth;
 	}
 
-	Color maskedColor = color.Mask(m_State->m_MaskRed, m_State->m_MaskGreen, m_State->m_MaskBlue, m_State->m_MaskAlpha);
+	Color maskedColor = 
+		color.Mask(m_State->m_MaskRed, m_State->m_MaskGreen, m_State->m_MaskBlue, m_State->m_MaskAlpha);
 
 	if (m_State->m_LogicOpEnabled) {
 
@@ -283,6 +368,7 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, const Color & 
 		U16 oldValue = m_Surface->GetColorBuffer()[offset];
 		U16 value;
 
+		// TODO: Also apply logic OP to alpha value
 		switch (m_State->m_LogicOpcode) {
 			default:
 			case RasterizerState:: LogicOpClear:		value = 0;						break;
@@ -307,6 +393,10 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, const Color & 
 
 	} else {
 		m_Surface->GetColorBuffer()[offset] = maskedColor.ConvertTo565();
+
+		if (m_State->m_MaskAlpha) {
+			m_Surface->GetAlphaBuffer()[offset] = maskedColor.A();
+		}
 	}
 }
 

@@ -47,6 +47,7 @@ namespace EGL {
 		Context * GetCurrentContext();
 
 		U16 * GetColorBuffer();
+		U8 *  GetAlphaBuffer();
 		I32 * GetDepthBuffer();
 		U32 * GetStencilBuffer();
 
@@ -63,6 +64,7 @@ namespace EGL {
 		//HBITMAP	m_Bitmap;			// windows bitmap handle
 		Config	m_Config;			// configuration arguments
 		U16 *	m_ColorBuffer;		// pointer to frame buffer base address 5-6-5
+		U8 *	m_AlphaBuffer;		// pointer to alpha buffer
 		I32 *	m_DepthBuffer;		// pointer to Z-buffer base address
 		U32 *	m_StencilBuffer;	// stencil buffer
 
@@ -103,6 +105,10 @@ namespace EGL {
 
 	inline U16 * Surface :: GetColorBuffer() {
 		return m_ColorBuffer;
+	}
+
+	inline U8 * Surface :: GetAlphaBuffer() {
+		return m_AlphaBuffer;
 	}
 
 	inline I32 * Surface :: GetDepthBuffer() {
