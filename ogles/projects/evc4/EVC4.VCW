@@ -3,6 +3,24 @@ Microsoft eMbedded Visual Tools Workspace File, Format Version 4.00
 
 ###############################################################################
 
+Project: "3dsViewer"="..\..\..\3dsViewer\3dsViewer.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name evc4
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name OGLES
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "OGLES"=".\OGLES.VCP" - Package Owner=<4>
 
 Package=<5>
@@ -19,6 +37,18 @@ Package=<4>
 ###############################################################################
 
 Project: "codegen"=".\codegen.vcp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "evc4"="..\..\..\LIB3DS-1.2.0\evc4\evc4.vcp" - Package Owner=<4>
 
 Package=<5>
 {{{
