@@ -49,6 +49,9 @@
 #endif
 
 
+#pragma warning (disable:4786)
+
+
 #ifdef EGL_USE_GPP
 #	include <gpp.h>
 #endif
