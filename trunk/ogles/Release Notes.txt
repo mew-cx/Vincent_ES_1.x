@@ -11,6 +11,7 @@ Version 0.82
 This version addresses the following issues:
 
 1010509 - specular exponent in material not initialized
+1010508 - EGL_Power on x86 buggy
 
 
 Version 0.81

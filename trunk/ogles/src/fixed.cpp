@@ -261,21 +261,10 @@ xpow(EGL_Fixed x, EGL_Fixed y) {
 //	exponent	-	the exponent, exponent >= 0
 // --------------------------------------------------------------------------
 OGLES_API EGL_Fixed EGL_Power(EGL_Fixed a, EGL_Fixed n) {
-#if 1
+#if (defined(ARM) || defined(_ARM_))
     return xpow(a, n);
 #else
-    EGL_Fixed r = EGL_ONE;
-    I32 m = __GL_X_INT(n);
-    if (n == EGL_ZERO)
-    	return EGL_ONE;
-    else if (n < EGL_ONE)
-	return a;
-    do {
-	if (m & 1) r = EGL_Mul(r, a);
-	if (m >>= 1)
-	    a = EGL_Mul(a, a);
-    } while (m);
-    return r;
+	return EGL_FixedFromFloat(pow(EGL_FloatFromFixed(a), EGL_FloatFromFixed(n)));
 #endif
 }
 
