@@ -373,7 +373,13 @@ void Context :: RenderLine(RasterPos& from, RasterPos& to) {
 		ClipZ(from, to)) {
 		ClipCoordsToWindowCoords(from);
 		ClipCoordsToWindowCoords(to);
-		from.m_Color = from.m_FrontColor;
+
+		if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
+			from.m_Color = from.m_FrontColor;
+		} else {
+			from.m_Color = to.m_FrontColor;
+		}
+
 		to.m_Color = to.m_FrontColor;
 		m_Rasterizer->RasterLine(from, to);
 	}

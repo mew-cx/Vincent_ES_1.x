@@ -152,6 +152,10 @@ namespace EGL {
 			U8 g = (u565 & 0x07E0u) >> 3;
 			U8 r = (u565 & 0xF800u) >> 8;
 
+			if (r) r |= 7;
+			if (g) g |= 3;
+			if (b) b |= 7;
+
 			return Color(r, g, b, 0xFF);
 		}
 
@@ -159,6 +163,10 @@ namespace EGL {
 			U8 b = (u565 & 0x001Fu) << 3;
 			U8 g = (u565 & 0x07E0u) >> 3;
 			U8 r = (u565 & 0xF800u) >> 8;
+
+			if (r) r |= 7;
+			if (g) g |= 3;
+			if (b) b |= 7;
 
 			return Color(r, g, b, alpha);
 		}

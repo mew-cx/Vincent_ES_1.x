@@ -557,40 +557,68 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 
 		if (m_ColorMaterialEnabled) {
 			color = m_CurrentRGBA * m_LightModelAmbient;
+			color += m_FrontMaterial.GetEmisiveColor();
+
+			if (m_TwoSidedLightning) {
+
+				backColor = color;		
+
+				for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
+					if (m_LightEnabled & mask) {
+						m_Lights[index].AccumulateLight(eyeCoords, eyeNormal, 
+							m_FrontMaterial, m_CurrentRGBA, color, backColor);
+					}
+				}
+
+				color.Clamp();
+				backColor.Clamp();
+				
+				rasterPos->m_FrontColor = color;
+				rasterPos->m_BackColor = backColor;
+			} else {
+				for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
+					if (m_LightEnabled & mask) {
+						m_Lights[index].AccumulateLight(eyeCoords, eyeNormal, 
+							m_FrontMaterial, m_CurrentRGBA, color);
+					}
+				}
+
+				color.Clamp();
+				rasterPos->m_FrontColor = color;
+			}
 		} else {
 			color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
+			color += m_FrontMaterial.GetEmisiveColor();
+
+			if (m_TwoSidedLightning) {
+
+				backColor = color;		
+
+				for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
+					if (m_LightEnabled & mask) {
+						m_Lights[index].AccumulateLight(eyeCoords, eyeNormal, 
+							m_FrontMaterial, color, backColor);
+					}
+				}
+
+				color.Clamp();
+				backColor.Clamp();
+				
+				rasterPos->m_FrontColor = color;
+				rasterPos->m_BackColor = backColor;
+			} else {
+				for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
+					if (m_LightEnabled & mask) {
+						m_Lights[index].AccumulateLight(eyeCoords, eyeNormal, 
+							m_FrontMaterial, color);
+					}
+				}
+
+				color.Clamp();
+				rasterPos->m_FrontColor = color;
+			}
 		}
 
-		color += m_FrontMaterial.GetEmisiveColor();
-
-		if (m_TwoSidedLightning) {
-
-			backColor = color;		
-
-			for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
-				if (m_LightEnabled & mask) {
-					m_Lights[index].AccumulateLight(eyeCoords, eyeNormal, 
-						m_FrontMaterial, color, backColor);
-				}
-			}
-
-			color.Clamp();
-			backColor.Clamp();
-			
-			rasterPos->m_FrontColor = color;
-			rasterPos->m_BackColor = backColor;
-		} else {
-			for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
-				if (m_LightEnabled & mask) {
-					m_Lights[index].AccumulateLight(eyeCoords, eyeNormal, 
-						m_FrontMaterial, color);
-				}
-			}
-
-			color.Clamp();
-			rasterPos->m_FrontColor = color;
-		}
-			
 		// populate fog density here...
 		rasterPos->m_FogDensity = FogDensity(eyeDistance);
 	} else {

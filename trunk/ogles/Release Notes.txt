@@ -10,6 +10,8 @@ Version 0.75
 
 This version addresses the following issues:
 
+863629 - Lightning model is incomplete 
+949647 - SpecularColor test fails 
 949645 - Stencil test generates exception in code generator
 949644 - Texture functions fail in mustpass.c
 949642 - Scissor test not implemented for code generator

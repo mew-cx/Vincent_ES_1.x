@@ -211,6 +211,8 @@ namespace EGL {
 		void SetLogicOp(LogicOp opcode);
 
 		void SetShadeModel(ShadingModel mode);
+		ShadingModel GetShadeModel() const;
+
 		void EnableTexture(bool enabled);
 
 		void SetPointSize(EGL_Fixed size);
@@ -373,6 +375,10 @@ namespace EGL {
 
 	inline void RasterizerState :: SetShadeModel(ShadingModel mode) {
 		m_ShadingModel = mode;
+	}
+
+	inline RasterizerState::ShadingModel RasterizerState :: GetShadeModel() const {
+		return m_ShadingModel;
 	}
 
 	inline void RasterizerState :: EnableTexture(bool enabled) {

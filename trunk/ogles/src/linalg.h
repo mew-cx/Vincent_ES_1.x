@@ -630,6 +630,31 @@ namespace EGL {
 
 
 		// ----------------------------------------------------------------------
+		// Transform a 3-D vector using this matrix using only the upper right
+		// 3x3 sub-matrix. The vector is extended
+		// with a homogenuous coordinate of 1 before being multiplied.
+		//
+		// Parameters:
+		//	vector		-	The vector to be transformed
+		// ----------------------------------------------------------------------
+		inline Vec3D Multiply3x3(const Vec3D& vector) const {
+			return Vec3D(
+				EGL_Mul(vector.x(), Element(0, 0)) +
+				EGL_Mul(vector.y(), Element(0, 1)) +
+				EGL_Mul(vector.z(), Element(0, 2)),
+
+				EGL_Mul(vector.x(), Element(1, 0)) +
+				EGL_Mul(vector.y(), Element(1, 1)) +
+				EGL_Mul(vector.z(), Element(1, 2)),
+
+				EGL_Mul(vector.x(), Element(2, 0)) +
+				EGL_Mul(vector.y(), Element(2, 1)) +
+				EGL_Mul(vector.z(), Element(2, 2)));
+		}
+
+
+
+		// ----------------------------------------------------------------------
 		// Return the Z coordinate after transformation using this matrix
 		// Used for fog calculation, which requires eye distance
 		// ----------------------------------------------------------------------

@@ -186,18 +186,7 @@ void Context :: Lightxv(GLenum light, GLenum pname, const GLfixed *params) {
 		break;
 
 	case GL_SPOT_DIRECTION:
-		// TODO
-		{/*
-			GPP_VEC3D directionIn;
-			GPP_VEC4D directionTransformed;
-			directionIn.x = params[0];
-			directionIn.y = params[1];
-			directionIn.z = params[2];
-			gppVec3DTransform_16_32s(&directionIn, &directionTransformed,
-				m_ModelViewMatrixStack.CurrentMatrix());
-			pLight->SetDirection(*reinterpret_cast<GPP_VEC3D *>(&directionTransformed));
-			*/
-		}
+		pLight->SetDirection(m_ModelViewMatrixStack.CurrentMatrix().Multiply3x3(Vec3D(params)));
 		break;
 
 	default:
