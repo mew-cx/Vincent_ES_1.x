@@ -8,6 +8,64 @@ the bug database on sourceforge.
 Version 0.75
 ------------
 
+Vincent goes finally beta. The library is becoming sufficiently stable that I feel
+comfortable to advertise it to a larger user base. In addition, Vincent successfuly
+runs on Pocket PCs having StrongARM processors and Smartphones using TI OMAP processors.
+
+For the next point release, the plan is to rework the rasterizer to employ more of the
+ideas outlined in Hecker's artcile series on software rasterization (see link on web site).
+Also, now that a sufficiently sized set of regression tests is passed, I can finally
+address the overall performance issues that the library has. Especially the JIT has
+a huge performance potential once instruction re-ordering (both IR and on machine code 
+level) get incorporated. I just did not want to re-order instructions unless in-order
+execution was correct.
+
+I have been using the core parts of the OpenGL ES test suite to ensure a controlled level
+of quality for this release. I am excercising only the fixed point API as part of these
+tests. Note that these are internal runs executed on a Pocket PC with XScale porocessor. 
+There has not been an official submission of any tests results yet, and I do not claim
+any level of compliance with the OpenGL ES 1.0 API specification.
+
+
+
+OpenGL ES Coverage Test.
+Version 1.0 (2003/12/23)
+
+covgl passed.
+
+
+OpenGL ES Primitives Test.
+Version 1.0 (2003/12/23)
+
+primtest (fixed point) passed.
+
+
+OpenGL ES Conformance Test
+Version 1.0 (2003/12/23)
+
+Setup Report.
+    Verbose level = 1.
+    Random number seed = 32555.
+    Path inactive.
+
+Config Report.
+    Config ID = 1.
+    RGBA (5, 6, 5, 8).
+    Stencil (32).
+    Depth (32).
+
+Default State test passed.
+Must Pass test passed.
+
+Conform (fixed point) passed.
+******************** SUMMARY OF 'conform' RESULTS ********************
+SUMMARY: NO tests failed at any path level.
+SUMMARY: 1 conformant configs, 0 non-conformant configs.
+****************** END SUMMARY OF 'conform' RESULTS ******************
+
+
+
+
 This version addresses the following issues:
 
 946772 - mustpass conformance test fails
