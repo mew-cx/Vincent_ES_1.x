@@ -229,7 +229,7 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		// Rasterization of triangle scan line
 		// ----------------------------------------------------------------------
-		void RasterScanLine(const RasterInfo & info, const EdgePos & start, const EdgePos & end);
+		void RasterScanLine(RasterInfo & info, const EdgePos & start, const EdgePos & end);
 
 		// ----------------------------------------------------------------------
 		// Rasterization of fragment

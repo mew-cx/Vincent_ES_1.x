@@ -739,7 +739,7 @@ static void emit_unary_abs(cg_codegen_t * gen, cg_inst_unary_t * inst, int updat
 	ARM_MOV_REG_REG_COND(gen->cseg,
 						 inst->dest_value->physical_reg->regno,
 						 inst->operand.source->physical_reg->regno,
-						 ARMCOND_GT);
+						 ARMCOND_GE);
 					
 	ARM_MVN_REG_REG_COND(gen->cseg,
 						 inst->dest_value->physical_reg->regno,
