@@ -419,6 +419,54 @@ static ATOM UgRegisterClass(HINSTANCE hInstance, LPTSTR szWindowClass)
 }
 
 
+
+
+
+
+
+
+#define STRIKENUM_MAX 3
+typedef struct _FindAppT
+{
+	TCHAR *pzExeName;
+	HWND hwnd;
+} 
+FindAppT, *pFindAppT;
+
+BOOL CALLBACK FindApplicationWindowProc(HWND hwnd, LPARAM lParam)
+{
+	DWORD		dwProcessID;
+	INT		    iLen;
+	TCHAR	    szTempName[MAX_PATH]=TEXT("\0");
+	pFindAppT	pFindApp=(pFindAppT)lParam;
+
+	GetWindowThreadProcessId(hwnd,&dwProcessID);
+	if (!dwProcessID) 
+		return TRUE;
+
+	iLen=GetModuleFileName((HMODULE)dwProcessID,szTempName,MAX_PATH);
+	if (!iLen) 
+		return TRUE;
+
+	if (!_tcsicmp(szTempName, pFindApp->pzExeName) )
+	{	
+
+		// Check window title to make sure the main window is found.
+		GetWindowText(hwnd, szTempName, MAX_PATH);
+		if (!_tcsicmp(szTempName, pFindApp->pzExeName) ) 
+		{	
+			pFindApp->hwnd=hwnd;		
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+
+
+
+
 extern int main(int argc, const char * argv[]);
 
 #define MAX_ARGS 64
@@ -433,10 +481,74 @@ int WINAPI WinMain(	HINSTANCE hInstance,
 	int size;
 	char * str = 0;
 	char * pch;
+	char* cname = 0;
 	int result;
+
+
+
+
+	// WinCE: Only one application instance can be run
+	HANDLE hMuTex;
+	TCHAR szTempName[MAX_PATH], szExeName[MAX_PATH];
+
+	INT	i, iValue;
+	FindAppT findApp;
+	BOOL bGoAway;
+	
+	iValue=GetModuleFileName(NULL, szExeName,MAX_PATH);			
+	_tcscpy(szTempName,szExeName);
+	for(i = 0; i < iValue; i++) 
+	{
+		if (szTempName[i]=='\\') 
+			szTempName[i]='/';
+	}
+
+	hMuTex = CreateMutex(NULL, FALSE, szTempName);	 // create a mutex w/ the exe name
+	if (hMuTex!=NULL)
+	{
+		if (GetLastError() == ERROR_ALREADY_EXISTS) 
+		{
+			bGoAway = FALSE;
+			memset(&findApp,0,sizeof(FindAppT));
+
+			findApp.pzExeName=(TCHAR *)szExeName;
+
+			for (i=0; i< STRIKENUM_MAX; i++) 
+			{
+				EnumWindows(FindApplicationWindowProc,(LPARAM)&findApp);
+
+				if (findApp.hwnd) 
+				{			  // if a previous instance is found, set it to the foreground and quit.
+
+					HWND hWnd = (HWND)findApp.hwnd;
+					SetForegroundWindow(hWnd);
+
+					bGoAway=TRUE;
+					break;
+
+				}
+			}
+			if (bGoAway) 
+				return 0;
+		}
+	}
+
 
 	instance = hInstance;
 	UgRegisterClass(hInstance, WINDOW_CLASS_NAME);
+
+
+	/* convert unicode string to ansi */
+	size = WideCharToMultiByte( CP_ACP, 0, szExeName, -1,
+        cname, 0, NULL, NULL );
+	cname = malloc(size);
+	WideCharToMultiByte( CP_ACP, 0, szExeName, -1,
+        cname, size, NULL, NULL );
+
+	argv[0] = cname;				 // set first argument to this exe's name;
+											  // this results in the window title being the exe name,
+											 //	  which is how 	previous instances are identified
+
 
 	/* convert unicode string to ansi */
 	size = WideCharToMultiByte( CP_ACP, 0, lpCmdLine, -1,
@@ -447,11 +559,10 @@ int WINAPI WinMain(	HINSTANCE hInstance,
 
 	/* break ansi string into components */
 
-	argv[0] = "ctkw";
-
 	pch = strtok (str," ");
 
-	while (pch != NULL) {
+	while (pch != NULL) 
+	{
 		argv[argc++] = pch;
 	    pch = strtok (NULL, " ");
 	}
@@ -460,3 +571,6 @@ int WINAPI WinMain(	HINSTANCE hInstance,
 
 	return result;
 }
+
+
+
