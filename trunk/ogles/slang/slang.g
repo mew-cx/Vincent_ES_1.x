@@ -5,10 +5,15 @@
 --					This grammar is based on the OpenGL Shader Language
 --					Specification Version 1.051
 --
---					We will add a couple of additions to this grammar
---					[switch, enum, fixed, xvec?] to make it usable for
---					runtime generation of shaders for the OpenGL|ES
---					implementation.
+--					We added a couple of additions to this grammar to make it 
+--					usable for runtime generation of shaders for the 
+--					OpenGL|ES implementation.
+--
+--					Additions to the basic grammar are:
+--						o	new basic types ubyte, ushort and fixed
+--						o	corresponding vector types uvec?, svec?, xvec?
+--						o	simple enum declrations
+--						o	simplified switch statements
 --
 -----------------------------------------------------------------------------
 --
@@ -40,7 +45,7 @@
 	'rule' postfix_expression: primary_expression
 	'rule' postfix_expression: postfix_expression "[" integer_expression "]"
 	'rule' postfix_expression: function_call
-	'rule' postfix_expression: postfix_expression "." FIELD_SELECTION
+	'rule' postfix_expression: postfix_expression "." IDENTIFIER -- was: FIELD_SELECTION
 	'rule' postfix_expression: postfix_expression "++"
 	'rule' postfix_expression: postfix_expression "--"
 	
@@ -71,11 +76,23 @@
 
 'nonterm' constructor_identifier
 	'rule' constructor_identifier: "float"
+	'rule' constructor_identifier: "fixed"
+	'rule' constructor_identifier: "ubyte"
+	'rule' constructor_identifier: "ushort"
 	'rule' constructor_identifier: "int"
 	'rule' constructor_identifier: "bool"
 	'rule' constructor_identifier: "vec2"
 	'rule' constructor_identifier: "vec3"
 	'rule' constructor_identifier: "vec4"
+	'rule' constructor_identifier: "uvec2"
+	'rule' constructor_identifier: "uvec3"
+	'rule' constructor_identifier: "uvec4"
+	'rule' constructor_identifier: "svec2"
+	'rule' constructor_identifier: "svec3"
+	'rule' constructor_identifier: "svec4"
+	'rule' constructor_identifier: "xvec2"
+	'rule' constructor_identifier: "xvec3"
+	'rule' constructor_identifier: "xvec4"
 	'rule' constructor_identifier: "bvec2"
 	'rule' constructor_identifier: "bvec3"
 	'rule' constructor_identifier: "bvec4"
@@ -244,11 +261,23 @@
 'nonterm' type_specifier
 	'rule' type_specifier: "void"
 	'rule' type_specifier: "float"
+	'rule' type_specifier: "fixed"
+	'rule' type_specifier: "ubyte"
+	'rule' type_specifier: "ushort"
 	'rule' type_specifier: "int"
 	'rule' type_specifier: "bool"
 	'rule' type_specifier: "vec2"
 	'rule' type_specifier: "vec3"
 	'rule' type_specifier: "vec4"
+	'rule' type_specifier: "uvec2"
+	'rule' type_specifier: "uvec3"
+	'rule' type_specifier: "uvec4"
+	'rule' type_specifier: "svec2"
+	'rule' type_specifier: "svec3"
+	'rule' type_specifier: "svec4"
+	'rule' type_specifier: "xvec2"
+	'rule' type_specifier: "xvec3"
+	'rule' type_specifier: "xvec4"
 	'rule' type_specifier: "bvec2"
 	'rule' type_specifier: "bvec3"
 	'rule' type_specifier: "bvec4"
@@ -265,12 +294,24 @@
 	'rule' type_specifier: "sampler1dshadow"
 	'rule' type_specifier: "sampler2dshadow"
 	'rule' type_specifier: struct_specifier
+	'rule' type_specifier: enum_specifier
 	'rule' type_specifier: TYPE_NAME
 
 'nonterm' struct_specifier
 	'rule' struct_specifier: "struct" IDENTIFIER "{" struct_declaration_list "}"
 	'rule' struct_specifier: "struct" "{" struct_declaration_list "}"
 
+'nonterm' enum_specifier
+	'rule' enum_specifier: "enum" IDENTIFIER "{" enum_declaration_list "}"
+	
+'nonterm' enum_declaration_list
+	'rule' enum_declaration_list: enum_declaration
+	'rule' enum_declaration_list: enum_declaration_list "," enum_declaration
+	
+'nonterm' enum_declaration
+	'rule' enum_declaration: IDENTIFIER
+	'rule' enum_declaration: IDENTIFIER "=" constant_expression
+	
 'nonterm' struct_declaration_list
 	'rule' struct_declaration_list: struct_declaration
 	'rule' struct_declaration_list: struct_declaration_list struct_declaration
@@ -325,6 +366,32 @@
 
 'nonterm' selection_statement
 	'rule' selection_statement: "if" "(" expression ")" selection_rest_statement
+	'rule' selection_statement: "switch" "(" expression ")" "{" case_block_list "}"
+	
+'nonterm' case_block_list
+	'rule' case_block_list: case_label_list case_statement_list
+	'rule' case_block_list: case_block_list "break" case_label_list case_statement_list opt_break
+
+'nonterm' opt_break
+	'rule' opt_break: /* empty */
+	'rule' opt_break: "break"
+
+'nonterm' case_label_list
+	'rule' case_label_list: "case" constant_expression ":"
+	'rule' case_label_list: "case" "default" ":"
+	'rule' case_label_list: case_label_list "case" constant_expression ":"
+	'rule' case_label_list: case_label_list "case" "default" ":"
+	
+'nonterm' case_statement_list
+	'rule' case_statement_list: statement_no_break_decl
+	'rule' case_statement_list: case_statement_list statement_no_break_decl
+	
+'nonterm' statement_no_break_decl
+	'rule' statement_no_break_decl: compound_statement
+	'rule' statement_no_break_decl: expression_statement
+	'rule' statement_no_break_decl: selection_statement
+	'rule' statement_no_break_decl: iteration_statement
+	'rule' statement_no_break_decl: jump_statement_no_break
 
 'nonterm' selection_rest_statement
 	'rule' selection_rest_statement: statement "else" statement
@@ -352,14 +419,18 @@
 	'rule' for_rest_statement: conditionopt ";" expression
 
 'nonterm' jump_statement
-	'rule' jump_statement: "continue" ";"
 	'rule' jump_statement: "break" ";"
-	'rule' jump_statement: "return" ";"
-	'rule' jump_statement: "return" expression ";"
-	'rule' jump_statement: "discard" ";" -- Fragment shader only.
+	'rule' jump_statement: jump_statement_no_break
+	
+'nonterm' jump_statement_no_break
+	'rule' jump_statement_no_break: "continue" ";"
+	'rule' jump_statement_no_break: "return" ";"
+	'rule' jump_statement_no_break: "return" expression ";"
+	'rule' jump_statement_no_break: "discard" ";" -- Fragment shader only.
 
 'nonterm' translation_unit
 	'rule' translation_unit: translation_unit external_declaration
+	'rule' translation_unit: external_declaration
 
 'nonterm' external_declaration
 	'rule' external_declaration: function_definition
