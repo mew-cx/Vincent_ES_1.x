@@ -1,8 +1,6 @@
 #ifndef EGL_FRACTIONAL_COLOR_H
 #define EGL_FRACTIONAL_COLOR_H 1
 
-#pragma once
-
 // ==========================================================================
 //
 // FractionalColor	Fixed point representation of an RGBA color
@@ -47,7 +45,7 @@
 
 
 namespace EGL {
-	class OGLES_API FractionalColor {
+	class FractionalColor {
 
 	public:
 		EGL_Fixed	r, g, b, a;			// rgba components

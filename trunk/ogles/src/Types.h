@@ -1,8 +1,6 @@
 #ifndef EGL_TYPES_H
 #define EGL_TYPES_H 1
 
-#pragma once
-
 // ==========================================================================
 //
 // Types.h			Type declarations and helpers 
@@ -54,7 +52,7 @@ namespace EGL {
 		return a > b ? a : b;
 	}
 
-	struct OGLES_API Rect {
+	struct Rect {
 		Rect(GLint _x, GLint _y, GLsizei _width, GLsizei _height): 
 			x(_x), y(_y), width(_width), height(_height) 
 		{}

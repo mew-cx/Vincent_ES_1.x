@@ -1,8 +1,6 @@
 #ifndef EGL_ARRAYS_H
 #define EGL_ARRAYS_H 1
 
-#pragma once
-
 // ==========================================================================
 //
 // Arrays.h			Array type declarations and helpers 
@@ -45,12 +43,11 @@
 #include "Types.h"
 #include "linalg.h"
 #include "Texture.h"
-#include <vector>
 
 
 namespace EGL {
 
-	struct OGLES_API VertexArray {
+	struct VertexArray {
 		VertexArray() {
 			pointer = 0;
 			stride = 0;
@@ -86,7 +83,7 @@ namespace EGL {
 		const GLvoid *	pointer;
 	};
 
-	struct OGLES_API TextureArray {
+	struct TextureArray {
 
 		struct TextureRecord {
 			U32 value;

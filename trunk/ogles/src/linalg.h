@@ -1,9 +1,6 @@
 #ifndef EGL_LINALG_H
 #define EGL_LINALG_H 1
 
-#pragma once
-
-
 // ==========================================================================
 //
 // linalg.h	Implementation of Linear Algebra using Fixed Point Arithmetic
@@ -51,7 +48,7 @@ namespace EGL {
 	// --------------------------------------------------------------------------
 
 
-	class OGLES_API Vec3D {
+	class Vec3D {
 
 		// element names compatible to GPP_VEC3D
 		EGL_Fixed 	m_x, m_y, m_z;
@@ -237,7 +234,7 @@ namespace EGL {
 	// --------------------------------------------------------------------------
 
 
-	class OGLES_API Vec4D {
+	class Vec4D {
 
 		// element names compatible to GPP_VEC4D
 		EGL_Fixed 	m_x, m_y, m_z, m_w;
@@ -471,7 +468,7 @@ namespace EGL {
 	// --------------------------------------------------------------------------
 
 
-	class OGLES_API Matrix4x4 {
+	class Matrix4x4 {
 
 		enum {
 			ROWS = 4,			// number of rows per matrix

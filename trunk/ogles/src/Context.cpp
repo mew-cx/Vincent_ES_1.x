@@ -549,6 +549,8 @@ void Context :: Flush(void) { }
 
 void Context :: SetCurrentContext(Context * context) {
 
+	extern DWORD s_TlsIndexContext;
+
 	Context * oldContext = GetCurrentContext();
 
 	if (oldContext != context) {
@@ -565,6 +567,9 @@ void Context :: SetCurrentContext(Context * context) {
 
 
 Context * Context :: GetCurrentContext() {
+
+	extern DWORD s_TlsIndexContext;
+
 	return reinterpret_cast<EGLContext> (TlsGetValue(s_TlsIndexContext));
 }
 

@@ -1,8 +1,6 @@
 #ifndef EGL_CODE_GENERATOR_H
 #define EGL_CODE_GENERATOR_H 1
 
-#pragma once
-
 // ==========================================================================
 //
 // CodeGenerator.h		JIT Class for 3D Rendering Library
@@ -49,7 +47,6 @@
 #include "linalg.h"
 #include "Rasterizer.h"
 #include "RasterizerState.h"
-#include <map>
 
 
 extern "C" {

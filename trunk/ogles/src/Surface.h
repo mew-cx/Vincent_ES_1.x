@@ -1,8 +1,6 @@
 #ifndef EGL_SURFACE_H
 #define EGL_SURFACE_H 1
 
-#pragma once
-
 // ==========================================================================
 //
 // Surface.h		Drawing Surface Class for 3D Rendering Library
@@ -52,7 +50,7 @@
 
 namespace EGL {
 
-	class OGLES_API Surface {
+	class Surface {
 		friend Context;
 
 	public:

@@ -18,8 +18,8 @@
 ** EGL and native handle values must match their types.
 */
 
+#if (defined(WIN32) || defined(_WIN32_WCE)) 
 
-//#include <sys/types.h>
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #endif
@@ -27,6 +27,22 @@
 // Windows Header Files:
 #include <windows.h>
 
+typedef HDC		NativeDisplayType;
+typedef HWND	NativeWindowType;
+typedef HBITMAP NativePixmapType;
+
+#elif defined(__SYMBIAN32__)
+
+typedef void *	NativeDisplayType;
+typedef void *	NativeWindowType;
+typedef void *	NativePixmapType;
+
+#include <e32def.h>
+#else
+
+#	error "Unsupported Operating System"
+
+#endif
 
 #ifdef __cplusplus
 
@@ -48,16 +64,12 @@ typedef void *			EGLContext;
 
 #endif
 
-typedef HDC		NativeDisplayType;
-typedef HWND	NativeWindowType;
-typedef HBITMAP NativePixmapType;
-
 
 /*
 ** Types and resources
 */
 typedef int				EGLBoolean;
-typedef __int32			EGLint;
+typedef int				EGLint;
 typedef void *			EGLDisplay;
 
 /*

@@ -1,8 +1,6 @@
 #ifndef EGL_CONFIG_H
 #define EGL_CONFIG_H 1
 
-#pragma once
-
 // ==========================================================================
 //
 // Config.h			Configuration Management Class
@@ -49,7 +47,7 @@ namespace EGL {
 
 	class Context;
 
-	class OGLES_API Config {
+	class Config {
 
 		friend Context;
 

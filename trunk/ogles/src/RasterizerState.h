@@ -1,10 +1,6 @@
 #ifndef EGL_RASTERIZER_STATE_H
 #define EGL_RASTERIZER_STATE_H 1
 
-
-#pragma once
-
-
 // ==========================================================================
 //
 // RasterizerState	Rasterizer State Class for 3D Rendering Library
@@ -56,7 +52,7 @@ namespace EGL {
 	class Rasterizer;
 	class MultiTexture;
 
-	class OGLES_API RasterizerState {
+	class RasterizerState {
 
 		friend class Rasterizer;
 		friend class CodeGenerator;
