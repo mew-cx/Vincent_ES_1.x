@@ -17,6 +17,7 @@
 #include "OGLES.h"
 #include "GLES/gl.h"
 #include "Config.h"
+#include "Color.h"
 
 
 namespace EGL {
@@ -48,6 +49,8 @@ namespace EGL {
 		U8 GetBytesPerPixel() const			{ return s_BytesPerPixel[m_InternalFormat]; }
 
 		void * GetData() const				{ return m_Data; }
+
+		Color GetPixel(EGL_Fixed tu, EGL_Fixed tv) const;
 
 	private:
 		void *					m_Data;
@@ -113,6 +116,41 @@ namespace EGL {
 		WrappingMode	m_WrappingModeT;
 		U32				m_Levels;
 	};
+
+	inline Color Texture :: GetPixel(EGL_Fixed tu, EGL_Fixed tv) const {
+		I32 x = EGL_IntFromFixed(m_Width * EGL_CLAMP(tu, 0, EGL_ONE));
+		I32 y = EGL_IntFromFixed(m_Height * EGL_CLAMP(tv, 0, EGL_ONE));
+
+		// do wrapping mode here
+		I32 offset = x + (y << m_Exponent);
+
+		switch (m_InternalFormat) {
+			case TextureFormatAlpha:				// 8
+				return Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(m_Data)[offset]);
+
+			case TextureFormatLuminance:			// 8
+				{
+				U8 luminance = reinterpret_cast<const U8 *>(m_Data)[offset];
+				return Color (luminance, luminance, luminance, 0xff);
+				}
+
+			case TextureFormatLuminanceAlpha:		// 8-8
+				{
+				U8 luminance = reinterpret_cast<const U8 *>(m_Data)[offset * 2];
+				U8 alpha = reinterpret_cast<const U8 *>(m_Data)[offset * 2 + 1];
+				return Color (luminance, luminance, luminance, alpha);
+				}
+
+			case TextureFormatRGB:					// 5-6-5
+				return Color::From565(reinterpret_cast<const U16 *>(m_Data)[offset]);
+
+			case TextureFormatRGBA:					// 5-5-5-1
+				return Color::From5551(reinterpret_cast<const U16 *>(m_Data)[offset]);
+
+			default:
+				return Color(0xff, 0xff, 0xff, 0xff);
+		}
+	}
 
 }
 

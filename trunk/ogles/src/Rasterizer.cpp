@@ -16,6 +16,7 @@
 #include "stdafx.h"
 #include "Rasterizer.h"
 #include "Surface.h"
+#include "Texture.h"
 
 
 using namespace EGL;
@@ -134,15 +135,36 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 	FractionalColor colorIncrement = (end.m_Color - start.m_Color) * invSpan;
 	EGL_Fixed w = start.m_WindowCoords.w;
 	EGL_Fixed deltaW = EGL_Mul(end.m_WindowCoords.w - start.m_WindowCoords.w, invSpan);
+	EGL_Fixed deltaU = EGL_Mul(end.m_TextureCoords.tu - start.m_TextureCoords.tu, invSpan);
+	EGL_Fixed deltaV = EGL_Mul(end.m_TextureCoords.tv - start.m_TextureCoords.tv, invSpan);
+	EGL_Fixed tu = start.m_TextureCoords.tu;
+	EGL_Fixed tv = start.m_TextureCoords.tv;
 	I32 x = EGL_IntFromFixed(start.m_WindowCoords.x);
 	I32 xEnd = EGL_IntFromFixed(end.m_WindowCoords.x);
 
 	for (; x < xEnd; ++x) {
-		// TODO: hook up texture color lookup in here
 
-		Fragment(x, y, w, color);
+		if (m_State->m_TextureEnabled) {
+			FractionalColor texColor = m_State->m_Texture->GetTexture(0)->GetPixel(tu, tv);
+
+#if 0
+			switch (m_State->m_TextureMode) {
+				case TextureModeDecal:
+				case TextureModeReplace:
+				case TextureModeBlend:
+				case TextureModeAdd:
+				case TextureModeModulate:
+			}
+#endif
+			Fragment(x, y, w, color * texColor);
+		} else {
+			Fragment(x, y, w, color);
+		}
+
 		color += colorIncrement;
 		w += deltaW;
+		tu += deltaU;
+		tv += deltaV;
 	}
 }
 
