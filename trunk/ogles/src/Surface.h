@@ -62,7 +62,6 @@ namespace EGL {
 		HDC		m_HDC;				// windows device context handle
 		//HBITMAP	m_Bitmap;			// windows bitmap handle
 		Config	m_Config;			// configuration arguments
-		U16 *	m_AlphaBuffer;		// alpha buffer
 		U16 *	m_ColorBuffer;		// pointer to frame buffer base address 5-6-5
 		I32 *	m_DepthBuffer;		// pointer to Z-buffer base address
 		U32 *	m_StencilBuffer;	// stencil buffer
