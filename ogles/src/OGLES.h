@@ -48,6 +48,7 @@
 #endif
 
 #ifdef EGL_ON_SYMBIAN
+#   define EGL_USE_TOP_DOWN_SURFACE
 #	ifdef OGLES_EXPORTS
 #		define OGLES_API EXPORT_C
 #	else

@@ -1253,7 +1253,7 @@ TAny PaintProc(CWindowGc* hdc, const TRect& aRect)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glTranslatex(EGL_FixedFromFloat(x), EGL_FixedFromFloat(y), EGL_FixedFromFloat(x - 600));
-	glScalex(EGL_FixedFromInt(220), EGL_FixedFromInt(-220), EGL_FixedFromInt(220));
+	glScalex(EGL_FixedFromInt(220), EGL_FixedFromInt(220), EGL_FixedFromInt(220));
 	glRotatex(EGL_FixedFromFloat(angle), 0, EGL_FixedFromInt(1), 0);
 	glRotatex(EGL_FixedFromFloat(280.0f), EGL_FixedFromInt(1), 0, 0);
 

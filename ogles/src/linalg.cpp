@@ -316,6 +316,9 @@ Matrix4x4 Matrix4x4 :: CreateFrustrum(EGL_Fixed l, EGL_Fixed r,
 	matrix.Element(3, 3) = 0;	
 
 	matrix.m_identity = false;
+#ifdef EGL_USE_TOP_DOWN_SURFACE
+    matrix = CreateScale(EGL_ONE,-EGL_ONE,EGL_ONE)*matrix;
+#endif
 	return matrix;
 }
 
