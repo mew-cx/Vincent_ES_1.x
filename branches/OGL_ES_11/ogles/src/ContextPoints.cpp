@@ -132,8 +132,21 @@ void Context :: RenderPoint(RasterPos& point, EGL_Fixed size) {
 	ClipCoordsToWindowCoords(point);
 	point.m_Color = point.m_FrontColor;
 
+	if (m_PointSizeAttenuate) {
+		EGL_Fixed eyeDistance = point.m_EyeDistance;
+
+		EGL_Fixed factor =
+			EGL_InvSqrt(m_PointDistanceAttenuation[0] +
+						EGL_Mul(m_PointDistanceAttenuation[1], eyeDistance) +
+						EGL_Mul(m_PointDistanceAttenuation[2], EGL_Mul(eyeDistance, eyeDistance)));
+
+		size = EGL_Mul(size, factor);
+	}
+
 	// as long as we do not have anti-aliasing, determining the effective point size here is fine
-	m_Rasterizer->RasterPoint(point, EGL_Max(size, EGL_ONE));
+	EGL_Fixed pointSize = EGL_Max(size, EGL_ONE);
+
+	m_Rasterizer->RasterPoint(point, pointSize);
 }
 
 
@@ -180,10 +193,33 @@ void Context :: PointSizePointer(GLenum type, GLsizei stride, const GLvoid *poin
 }
 
 void Context :: PointParameterx(GLenum pname, GLfixed param) {
-	assert(0);
+	switch (pname) {
+	case GL_POINT_SIZE_MIN:
+	case GL_POINT_SIZE_MAX:
+	case GL_POINT_FADE_THRESHOLD_SIZE:
+		break;
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		break;
+	}
 }
 
 void Context :: PointParameterxv(GLenum pname, const GLfixed *params) {
-	assert(0);
+	switch (pname) {
+	case GL_POINT_DISTANCE_ATTENUATION:
+		m_PointDistanceAttenuation[0] = params[0];
+		m_PointDistanceAttenuation[1] = params[1];
+		m_PointDistanceAttenuation[2] = params[2];
+
+		m_PointSizeAttenuate =
+			(params[0] != EGL_ONE || params[1] || params[2]);
+
+		break;
+
+	default:
+		PointParameterx(pname, *params);
+		break;
+	}
 }
 

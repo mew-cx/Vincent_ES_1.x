@@ -91,6 +91,7 @@ namespace EGL {
 		FractionalColor		m_BackColor;		
 		TexCoord			m_TextureCoords;	// texture coords 0..1
 		EGL_Fixed			m_FogDensity;		// fog density at this vertex
+		EGL_Fixed			m_EyeDistance;		// eye distance at this vertex
 	};
 
 	// ----------------------------------------------------------------------

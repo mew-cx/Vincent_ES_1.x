@@ -67,6 +67,8 @@ namespace EGL {
 		// Default viewport configuration
 		// ----------------------------------------------------------------------
 		enum {
+			NUM_CLIP_PLANES = 6,
+
 			VIEWPORT_X = 0,
 			VIEWPORT_Y = 0,
 			VIEWPORT_WIDTH = 240,
@@ -451,6 +453,8 @@ private:
 		// Rendering State
 		// ----------------------------------------------------------------------
 
+		Vec4D				m_ClipPlanes[NUM_CLIP_PLANES];
+		U32					m_ClipPlaneEnabled;
 		Light				m_Lights[EGL_NUMBER_LIGHTS];
 		Material			m_FrontMaterial;
 		FractionalColor		m_LightModelAmbient;
@@ -468,6 +472,10 @@ private:
 		EGL_Fixed			m_DepthRangeBase, m_DepthRangeFactor;
 
 		EGL_Fixed			m_PointSize;
+		EGL_Fixed			m_PointSizeMin, m_PointSizeMax;
+		EGL_Fixed			m_PointFadeThresholdSize;
+		EGL_Fixed			m_PointDistanceAttenuation[3];
+		bool				m_PointSizeAttenuate;
 
 		bool				m_LightingEnabled;		// is lightning enabled?
 		bool				m_TwoSidedLightning;	// do we have two-sided lightning
