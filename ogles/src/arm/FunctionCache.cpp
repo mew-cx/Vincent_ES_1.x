@@ -88,7 +88,7 @@ FunctionCache :: ~FunctionCache() {
 }
 
 
-ScanlineFunction * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & state) {
+void * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & state) {
 
 	RasterizerState::CompareFunction comparison = 0;
 
@@ -126,7 +126,7 @@ ScanlineFunction * FunctionCache :: GetFunction(FunctionType type, const Rasteri
 				m_MostRecentlyUsed = function;
 			}
 
-			return reinterpret_cast<ScanlineFunction *>(m_Code + function->m_Offset);
+			return reinterpret_cast<void *>(m_Code + function->m_Offset);
 		}
 	}
 
@@ -155,7 +155,7 @@ ScanlineFunction * FunctionCache :: GetFunction(FunctionType type, const Rasteri
 		;
 	}
 
-	return reinterpret_cast<ScanlineFunction *>(m_Code + m_MostRecentlyUsed->m_Offset); 
+	return reinterpret_cast<void *>(m_Code + m_MostRecentlyUsed->m_Offset); 
 }
 
 

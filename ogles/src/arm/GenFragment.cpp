@@ -812,8 +812,6 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 	cg_block_t * block = currentBlock;
 
-	cg_virtual_reg_t * regDepthBuffer =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_DEPTH_BUFFER);
-
 	// Signature of generated function is:
 	// (I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv, EGL_Fixed fogDensity, const Color& baseColor);
 	
@@ -837,12 +835,42 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		BLT			(regXStartTest, continuation);
 		CMP			(regXEndTest, fragmentInfo.regX, regConstXEnd);
 		BGE			(regXEndTest, continuation);
+
+		if (fragmentInfo.regY) {
+			DECL_REG	(regConstYStart);
+			DECL_REG	(regConstYEnd);
+			DECL_FLAGS	(regYStartTest);
+			DECL_FLAGS	(regYEndTest);
+
+			LDI			(regConstYStart, m_State->m_ScissorTest.Y);
+			LDI			(regConstYEnd, m_State->m_ScissorTest.Y + m_State->m_ScissorTest.Height);
+
+			CMP			(regYStartTest, fragmentInfo.regY, regConstYStart);
+			BLT			(regYStartTest, continuation);
+			CMP			(regYEndTest, fragmentInfo.regY, regConstYEnd);
+			BGE			(regYEndTest, continuation);
+		}
 	}
 
 	//bool depthTest;
 	//U32 offset = x + y * m_Surface->GetWidth();
 	//I32 zBufferValue = m_Surface->GetDepthBuffer()[offset];
-	cg_virtual_reg_t * regOffset = fragmentInfo.regX;
+	cg_virtual_reg_t * regOffset;
+	
+	if (fragmentInfo.regY) {
+		regOffset = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+		cg_virtual_reg_t * regWidth = LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_WIDTH);
+
+		DECL_REG	(regScaledY);
+
+		MUL		(regScaledY, fragmentInfo.regY, regWidth);
+		ADD		(regOffset, regScaledY, fragmentInfo.regX);
+	} else {
+		regOffset = fragmentInfo.regX;
+	}
+
+	cg_virtual_reg_t * regDepthBuffer =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_DEPTH_BUFFER);
 
 	DECL_FLAGS	(regDepthTest);
 	DECL_REG	(regScaledY);
@@ -1767,10 +1795,14 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 			DECL_REG	(regClamped0);
 			DECL_REG	(regClamped1);
+			DECL_REG	(regRounded);
+
+			DECL_CONST_REG	(regConstantHalf, 0x80);
 
 			MAX		(regClamped0, fragmentInfo.regA, regConstant0);
 			MIN		(regClamped1, regClamped0, regConstantOne);
-			LSR		(regColorA, regClamped1, regConstant8);
+			ADD		(regRounded, regClamped1, regConstantHalf);
+			LSR		(regColorA, regRounded, regConstant8);
 		}
 		{
 			// create RGB 565 representation
@@ -1907,9 +1939,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	if (m_State->m_Stencil.Enabled) {
 
 		//bool stencilTest;
-		//U32 stencilRef = m_State->m_StencilReference & m_State->m_StencilMask;
+		//U32 stencilRef = m_State->m_Stencil.Reference & m_State->ComparisonMask;
 		//U32 stencilValue = m_Surface->GetStencilBuffer()[offset];
-		//U32 stencil = stencilValue & m_State->m_StencilMask;
+		//U32 stencil = stencilValue & m_State->m_Stencil.ComparisonMask;
 		DECL_REG	(regStencilRef);
 		DECL_REG	(regStencilMask);
 		DECL_REG	(regStencilAddr);
@@ -1919,8 +1951,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 		cg_virtual_reg_t * regStencilBuffer =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_STENCIL_BUFFER);
 
-		LDI		(regStencilRef, m_State->m_Stencil.Reference & m_State->m_Stencil.Mask);
-		LDI		(regStencilMask, m_State->m_Stencil.Mask);
+		LDI		(regStencilRef, m_State->m_Stencil.Reference & m_State->m_Stencil.ComparisonMask);
+		LDI		(regStencilMask, m_State->m_Stencil.ComparisonMask);
 		ADD		(regStencilAddr, regStencilBuffer, regOffset4);
 		LDW		(regStencilValue, regStencilAddr);
 		AND		(regStencil, regStencilValue, regStencilMask);
@@ -1937,7 +1969,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 			case RasterizerState::CompFuncLess:		
 				//stencilTest = stencilRef < stencil;	
-				passedTest = cg_op_bge;
+				passedTest = cg_op_bgt;
 				break;
 
 			case RasterizerState::CompFuncEqual:	
@@ -1947,12 +1979,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 			case RasterizerState::CompFuncLEqual:	
 				//stencilTest = stencilRef <= stencil;
-				passedTest = cg_op_bgt;
+				passedTest = cg_op_bge;
 				break;
 
 			case RasterizerState::CompFuncGreater:	
 				//stencilTest = stencilRef > stencil;	
-				passedTest = cg_op_ble;
+				passedTest = cg_op_blt;
 				break;
 
 			case RasterizerState::CompFuncNotEqual:	
@@ -1962,7 +1994,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 			case RasterizerState::CompFuncGEqual:	
 				//stencilTest = stencilRef >= stencil;
-				passedTest = cg_op_blt;
+				passedTest = cg_op_ble;
 				break;
 
 			case RasterizerState::CompFuncAlways:	
@@ -1986,8 +2018,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			switch (m_State->m_Stencil.Fail) {
 				default:
 				case RasterizerState::StencilOpKeep: 
-					regNewStencilValue = regStencilValue;
-					break;
+					goto no_write;
 
 				case RasterizerState::StencilOpZero: 
 					//stencilValue = 0; 
@@ -2046,7 +2077,24 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					break;
 			}
 
-			STW		(regNewStencilValue, regStencilAddr);
+			if (m_State->m_Stencil.Mask == ~0) {
+				STW		(regNewStencilValue, regStencilAddr);
+			} else {
+				DECL_REG	(regMaskedOriginal);
+				DECL_REG	(regMaskedNewValue);
+				DECL_REG	(regWriteValue);
+
+				DECL_CONST_REG	(regStencilWriteMask, m_State->m_Stencil.Mask);
+				DECL_REG	(regInverseWriteMask);
+
+				AND			(regMaskedNewValue, regNewStencilValue, regStencilWriteMask);
+				NOT			(regInverseWriteMask, regStencilWriteMask);
+				AND			(regMaskedOriginal, regStencilValue, regInverseWriteMask);
+				OR			(regWriteValue, regMaskedOriginal, regMaskedNewValue);
+				STW			(regWriteValue, regStencilAddr);
+			}
+
+no_write:
 			BRA		(continuation);
 		//}
 		}
@@ -2149,6 +2197,22 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				//m_Surface->GetStencilBuffer()[offset] = stencilValue;
 				//STW		(regNewStencilValue, regStencilAddr);
 			//}
+				if (m_State->m_Stencil.Mask == ~0) {
+					STW		(regNewStencilValue, regStencilAddr);
+				} else {
+					DECL_REG	(regMaskedOriginal);
+					DECL_REG	(regMaskedNewValue);
+					DECL_REG	(regWriteValue);
+
+					DECL_CONST_REG	(regStencilWriteMask, m_State->m_Stencil.Mask);
+					DECL_REG	(regInverseWriteMask);
+
+					AND			(regMaskedNewValue, regNewStencilValue, regStencilWriteMask);
+					NOT			(regInverseWriteMask, regStencilWriteMask);
+					AND			(regMaskedOriginal, regStencilValue, regInverseWriteMask);
+					OR			(regWriteValue, regMaskedOriginal, regMaskedNewValue);
+					STW			(regWriteValue, regStencilAddr);
+				}
 			}
 
 			if (m_State->m_DepthTest.Enabled) {
@@ -2229,6 +2293,22 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				//m_Surface->GetStencilBuffer()[offset] = stencilValue;
 				//STW		(regNewStencilValue, regStencilAddr);
 			//}
+				if (m_State->m_Stencil.Mask == ~0) {
+					STW		(regNewStencilValue, regStencilAddr);
+				} else {
+					DECL_REG	(regMaskedOriginal);
+					DECL_REG	(regMaskedNewValue);
+					DECL_REG	(regWriteValue);
+
+					DECL_CONST_REG	(regStencilWriteMask, m_State->m_Stencil.Mask);
+					DECL_REG	(regInverseWriteMask);
+
+					AND			(regMaskedNewValue, regNewStencilValue, regStencilWriteMask);
+					NOT			(regInverseWriteMask, regStencilWriteMask);
+					AND			(regMaskedOriginal, regStencilValue, regInverseWriteMask);
+					OR			(regWriteValue, regMaskedOriginal, regMaskedNewValue);
+					STW			(regWriteValue, regStencilAddr);
+				}
 			}
 
 		// stencil test bypassed
@@ -2722,11 +2802,15 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		DECL_REG	(regConstant255);
 		DECL_REG	(regAdjustedA);
 		DECL_REG	(regMultipliedA);
+		DECL_REG	(regRounded);
+
+		DECL_CONST_REG	(regHalf, 0x80);
 
 		LDI		(regConstant255, 255);
 		LDI		(regConstant8, 8);
 		MUL		(regMultipliedA, regColorA, regConstant255);
-		LSR		(regAdjustedA, regMultipliedA, regConstant8);
+		ADD		(regRounded, regMultipliedA, regHalf);
+		LSR		(regAdjustedA, regRounded, regConstant8);
 
 		regColorA = regAdjustedA;
 	}

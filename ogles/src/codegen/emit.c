@@ -586,6 +586,31 @@ static void emit_unary_negate(cg_codegen_t * gen, cg_inst_unary_t * inst,
 	{
 		case cg_inst_unary:
 			if (update_flags)
+				ARM_RSBS_REG_IMM(gen->cseg,
+								 inst->dest_value->physical_reg->regno,
+								 inst->operand.source->physical_reg->regno,
+								 0, 0);
+			else
+				ARM_RSB_REG_IMM(gen->cseg,
+								inst->dest_value->physical_reg->regno,
+								inst->operand.source->physical_reg->regno,
+								0, 0);
+
+			break;
+						
+		default:
+			assert(0);
+	}
+}
+
+
+static void emit_unary_complement(cg_codegen_t * gen, cg_inst_unary_t * inst,
+								  int update_flags)
+{
+	switch (inst->base.kind)
+	{
+		case cg_inst_unary:
+			if (update_flags)
 				ARM_MVNS_REG_REG(gen->cseg,
 								 inst->dest_value->physical_reg->regno,
 								 inst->operand.source->physical_reg->regno);
@@ -644,25 +669,6 @@ static void emit_unary_negate(cg_codegen_t * gen, cg_inst_unary_t * inst,
 		default:
 			assert(0);
 	}
-}
-
-
-static void emit_unary_complement(cg_codegen_t * gen, cg_inst_unary_t * inst,
-								  int update_flags)
-{
-	emit_unary_negate(gen, inst, 0);
-
-	if (update_flags)
-		ARM_SUBS_REG_IMM(gen->cseg,
-						 inst->dest_value->physical_reg->regno,
-						 inst->dest_value->physical_reg->regno,
-						 1, 0);
-	else
-		ARM_SUB_REG_IMM(gen->cseg,
-						inst->dest_value->physical_reg->regno,
-						inst->dest_value->physical_reg->regno,
-						1, 0);
-
 }
 
 

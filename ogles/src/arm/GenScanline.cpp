@@ -630,6 +630,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	FragmentGenerationInfo info;
 	info.regX = regLoop1XEntry;
+	info.regY = 0;
 	info.regU = regLoop1UEntry;
 	info.regV = regLoop1VEntry; 
 	info.regFog = regLoop1FogEntry;
@@ -940,6 +941,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	FragmentGenerationInfo info2;
 	info2.regX = regLoop2XEntry;
+	info2.regY = 0;
 	info2.regU = regLoop2UEntry;
 	info2.regV = regLoop2VEntry; 
 	info2.regFog = regLoop2FogEntry;
