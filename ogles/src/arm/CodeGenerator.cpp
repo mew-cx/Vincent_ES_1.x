@@ -2787,17 +2787,6 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	SUB_S	(regDiffX, flagXCompare, regEndWindowX, regStartWindowX);
 	BLE		(flagXCompare, endProc);
 
-	//FractionalColor baseColor = start.m_Color;
-	DECL_REG	(regStartColorR);
-	DECL_REG	(regStartColorG);
-	DECL_REG	(regStartColorB);
-	DECL_REG	(regStartColorA);
-
-	LDW		(regStartColorR, regAddrStartColorR);
-	LDW		(regStartColorG, regAddrStartColorG);
-	LDW		(regStartColorB, regAddrStartColorB);
-	LDW		(regStartColorA, regAddrStartColorA);
-	
 	DECL_REG	(regStartWindowZ);
 	DECL_REG	(regStartTextureU);
 	DECL_REG	(regStartTextureV);
@@ -2805,10 +2794,6 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regStartDepth);
 
 	LDW		(regStartWindowZ, regAddrStartWindowZ);
-	LDW		(regStartTextureU, regAddrStartTextureU);
-	LDW		(regStartTextureV, regAddrStartTextureV);
-	LDW		(regStartFog, regAddrStartFog);
-	LDW		(regStartDepth, regAddrStartWindowDepth);
 
 
 	//EGL_Fixed invTu = start.m_TextureCoords.tu;
@@ -2823,10 +2808,25 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regU);
 	DECL_REG	(regV);
 
+	LDW		(regStartTextureU, regAddrStartTextureU);
 	FINV	(regZ, regStartWindowZ);
+	LDW		(regStartTextureV, regAddrStartTextureV);
+	LDW		(regStartFog, regAddrStartFog);
 	FMUL	(regU, regStartTextureU, regZ);
+	LDW		(regStartDepth, regAddrStartWindowDepth);
 	FMUL	(regV, regStartTextureV, regZ);
 
+	//FractionalColor baseColor = start.m_Color;
+	DECL_REG	(regStartColorR);
+	DECL_REG	(regStartColorG);
+	DECL_REG	(regStartColorB);
+	DECL_REG	(regStartColorA);
+
+	LDW		(regStartColorR, regAddrStartColorR);
+	LDW		(regStartColorG, regAddrStartColorG);
+	LDW		(regStartColorB, regAddrStartColorB);
+	LDW		(regStartColorA, regAddrStartColorA);
+	
 	//cg_virtual_reg_t * x = EGL_IntFromFixed(start.m_WindowCoords.x);
 	//cg_virtual_reg_t * xEnd = EGL_IntFromFixed(end.m_WindowCoords.x);
 	DECL_REG	(regX);
@@ -2938,24 +2938,24 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regLoop0ScaledDiffU);
 	DECL_REG	(regLoop0DiffV);
 	DECL_REG	(regLoop0ScaledDiffV);
+	DECL_REG	(regLoop0ScaledDiffUOver2);
+	DECL_REG	(regLoop0ScaledDiffVOver2);
+	DECL_REG	(regAdjustedU0);
+	DECL_REG	(regAdjustedV0);
+
 
 	FSUB	(regLoop0DiffZ, regLoop0EndZ, regLoop0ZEntry); // Entry?
 	ASR		(regLoop0ScaledDiffZ, regLoop0DiffZ, regLogLinearSpan);
+
 	FSUB	(regLoop0DiffU, regLoop0EndU, regLoop0UEntry); // Entry?
 	ASR		(regLoop0ScaledDiffU, regLoop0DiffU, regLogLinearSpan);
+	ASR		(regLoop0ScaledDiffUOver2, regLoop0ScaledDiffU, regConstant1);
+	FADD	(regAdjustedU0, regLoop0UEntry, regLoop0ScaledDiffUOver2);
+
 	FSUB	(regLoop0DiffV, regLoop0EndV, regLoop0VEntry); // Entry?
 	ASR		(regLoop0ScaledDiffV, regLoop0DiffV, regLogLinearSpan);
-
-	DECL_REG	(regLoop0ScaledDiffUOver2);
-	DECL_REG	(regLoop0ScaledDiffVOver2);
-
-	ASR		(regLoop0ScaledDiffUOver2, regLoop0ScaledDiffU, regConstant1);
 	ASR		(regLoop0ScaledDiffVOver2, regLoop0ScaledDiffV, regConstant1);
-
-	DECL_REG	(regAdjustedU0);
-	DECL_REG	(regAdjustedV0);
-	FADD		(regAdjustedU0, regLoop0UEntry, regLoop0ScaledDiffUOver2);
-	FADD		(regAdjustedV0, regLoop0VEntry, regLoop0ScaledDiffVOver2);
+	FADD	(regAdjustedV0, regLoop0VEntry, regLoop0ScaledDiffVOver2);
 
 	// also not to include phi projection for z coming from inner loop
 
@@ -3132,19 +3132,18 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		DECL_REG	(regDeltaInvV);
 
 		LDW		(regDeltaInvZ, regAddrEndWindowZ);
-		LDW		(regDeltaInvU, regAddrEndTextureU);
 
 		MUL		(regDeltaXDeltaInvZ, regBlock4DiffX, regDeltaInvZ);
+		LDW		(regDeltaInvU, regAddrEndTextureU);
 		FADD	(regEndWindowZ, regBlock4InvZ, regDeltaXDeltaInvZ);
 		FINV	(regEndZ, regEndWindowZ);
 
 		MUL		(regDeltaXDeltaInvU, regBlock4DiffX, regDeltaInvU);
 		LDW		(regDeltaInvV, regAddrEndTextureV);
-		MUL		(regDeltaXDeltaInvV, regBlock4DiffX, regDeltaInvV);
-			
 		FADD	(regEndTextureU, regBlock4InvU, regDeltaXDeltaInvU);
-		FADD	(regEndTextureV, regBlock4InvV, regDeltaXDeltaInvV);
+		MUL		(regDeltaXDeltaInvV, regBlock4DiffX, regDeltaInvV);
 
+		FADD	(regEndTextureV, regBlock4InvV, regDeltaXDeltaInvV);
 		FMUL	(regEndU, regEndZ, regEndTextureU);
 		FMUL	(regEndV, regEndZ, regEndTextureV);
 	}
@@ -3175,20 +3174,21 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regLoop2ScaledDiffV);
 	DECL_REG	(regLoop2ScaledDiffUOver2);
 	DECL_REG	(regLoop2ScaledDiffVOver2);
+	DECL_REG	(regAdjustedU);
+	DECL_REG	(regAdjustedV);
 
 	FSUB	(regBlock4DiffZ, regEndZ, regBlock4Z);
 	FMUL	(regLoop2ScaledDiffZ, regBlock4DiffZ, regBlock4InvSpan);
+
 	FSUB	(regBlock4DiffU, regEndU, regBlock4U);
-	FMUL	(regLoop2ScaledDiffU, regBlock4DiffU, regBlock4InvSpan);
 	FSUB	(regBlock4DiffV, regEndV, regBlock4V);
-	FMUL	(regLoop2ScaledDiffV, regBlock4DiffV, regBlock4InvSpan);
 
+	FMUL	(regLoop2ScaledDiffU, regBlock4DiffU, regBlock4InvSpan);
 	ASR		(regLoop2ScaledDiffUOver2, regLoop2ScaledDiffU, regConstant1);
-	ASR		(regLoop2ScaledDiffVOver2, regLoop2ScaledDiffV, regConstant1);
-
-	DECL_REG	(regAdjustedU);
-	DECL_REG	(regAdjustedV);
 	FADD		(regAdjustedU, regBlock4U, regLoop2ScaledDiffUOver2);
+
+	FMUL	(regLoop2ScaledDiffV, regBlock4DiffV, regBlock4InvSpan);
+	ASR		(regLoop2ScaledDiffVOver2, regLoop2ScaledDiffV, regConstant1);
 	FADD		(regAdjustedV, regBlock4V, regLoop2ScaledDiffVOver2);
 
 	//for (; x < xEnd; ++x) {
