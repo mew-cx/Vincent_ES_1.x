@@ -102,3 +102,21 @@ int cg_bitset_union(cg_bitset_t * target, cg_bitset_t * source)
 
 	return result;
 }
+
+
+int cg_bitset_intersects(const cg_bitset_t * first, const cg_bitset_t * second) 
+{
+	size_t index;
+
+	assert(first);
+	assert(second);
+	assert(first->elements == second->elements);
+	
+	for (index = 0; index < first->elements / CG_BITSET_BITS_PER_WORD; ++index)
+	{
+		if (first->bits[index] & second->bits[index])
+			return 1;
+	}
+
+	return 0;
+}

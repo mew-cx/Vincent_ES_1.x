@@ -64,6 +64,8 @@ int cg_bitset_union_minus(cg_bitset_t * target, cg_bitset_t * source,
 
 int cg_bitset_union(cg_bitset_t * target, cg_bitset_t * source);
 
+int cg_bitset_intersects(const cg_bitset_t * first, const cg_bitset_t * second);
+
 #define CG_BITSET_TEST(bitset, element) \
 	(((bitset->bits)[(element) / CG_BITSET_BITS_PER_WORD] & \
 	  (1 << ((element) % CG_BITSET_BITS_PER_WORD))) != 0)

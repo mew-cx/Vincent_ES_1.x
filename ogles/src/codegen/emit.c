@@ -288,6 +288,7 @@ struct cg_codegen_t
 
 	physical_reg_list_t		free_regs;			/* phys regs free			*/
 	physical_reg_list_t		used_regs;			/* phys regs in use			*/
+	physical_reg_list_t		global_regs;		/* global phys regs in use	*/
 	
 	/************************************************************************/
 	/* for each block, the following array will be heads to the use chains  */
@@ -363,6 +364,7 @@ static void deallocate_reg(cg_codegen_t * gen, cg_physical_reg_t * physical_reg)
 static void assign_reg(cg_codegen_t * gen,
 					   cg_physical_reg_t * physical_reg, 
 					   cg_virtual_reg_t * reg);
+static void make_global(cg_codegen_t * gen, cg_physical_reg_t * reg);
 static cg_physical_reg_t * load_reg(cg_codegen_t * gen, cg_virtual_reg_t * reg,
 									 U32 mask);
 
@@ -1526,12 +1528,15 @@ static cg_physical_reg_t * allocate_reg(cg_codegen_t * gen, cg_virtual_reg_t * r
 	// physical register
 	// if so, return that register
 	
-	physical_reg = reg->physical_reg;
+	if (reg->representative)
+		physical_reg = reg->representative->physical_reg;
+	else
+		physical_reg = reg->physical_reg;
 	
-	if (physical_reg != 0 && physical_reg->virtual_reg == reg &&
+	if (physical_reg != 0 && physical_reg->virtual_reg && physical_reg->virtual_reg->representative == reg->representative &&
 		((1u << physical_reg->regno) & mask))
 	{
-		reg_list_move_to_front(&gen->used_regs, physical_reg);
+		reg_list_move_to_front(physical_reg->list, physical_reg);
 		return physical_reg;
 	}
 	
@@ -1595,7 +1600,7 @@ static void ensure_loaded(cg_codegen_t * gen,
 	{
 		if (reg->physical_reg != physical_reg && reg->physical_reg->defined)
 		{
-			reg_list_move_to_front(&gen->used_regs, reg->physical_reg);
+			reg_list_move_to_front(reg->physical_reg->list, reg->physical_reg);
 			ARM_MOV_REG_REG(gen->cseg, physical_reg->regno, reg->physical_reg->regno);
 			physical_reg->defined = 1;
 		} 
@@ -1606,6 +1611,16 @@ static void ensure_loaded(cg_codegen_t * gen,
 			assert(physical_reg->defined);
 		}
 	}
+}
+
+
+static void make_global(cg_codegen_t * gen, cg_physical_reg_t * reg)
+{
+	assert(reg->virtual_reg->is_global);
+	assert(reg->list == &gen->used_regs);
+
+	reg_list_remove(reg->list, reg);
+	reg_list_add(&gen->global_regs, reg);
 }
 
 
@@ -1688,7 +1703,8 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 	{
 		cg_virtual_reg_t * reg = *iter;
 		
-		if (reg->type != cg_reg_type_flags &&
+		if (!reg->is_global && !reg->representative->is_global &&
+			reg->type != cg_reg_type_flags &&
 			gen->use_chains[reg->reg_no] == (cg_inst_list_t *) 0)
 		{
 			deallocate_reg(gen, reg->physical_reg);
@@ -1894,6 +1910,38 @@ static void init_flags(cg_codegen_t * gen)
 }
 
 
+static void allocate_globals(cg_codegen_t * gen)
+{
+	cg_block_t * block = gen->current_block;
+	cg_proc_t * proc = block->proc;
+	cg_virtual_reg_list_t * node;
+	
+	for (node = proc->globals; node; node = node->next)
+	{
+		if (CG_BITSET_TEST(block->live_in, node->reg->reg_no))
+		{
+			cg_virtual_reg_t * reg = node->reg;
+			cg_physical_reg_t * physical_reg = reg->physical_reg;
+			assert(physical_reg->list == &gen->free_regs);
+			reg_list_remove(physical_reg->list, physical_reg);
+			assign_reg(gen, physical_reg, node->reg);
+			reg_list_add(&gen->global_regs, physical_reg);
+			physical_reg->defined = 1;
+		}
+		else if (CG_BITSET_TEST(block->live_out, node->reg->reg_no))
+		{
+			cg_virtual_reg_t * reg = node->reg;
+			cg_physical_reg_t * physical_reg = reg->physical_reg;
+			assert(physical_reg->list == &gen->free_regs);
+			reg_list_remove(physical_reg->list, physical_reg);
+			assign_reg(gen, physical_reg, node->reg);
+			reg_list_add(&gen->global_regs, physical_reg);
+			physical_reg->defined = 0;
+		}
+	}
+}
+
+
 static void begin_block(cg_codegen_t * gen)
 {
 	/* these assertions will change as soon as we preserve globals			*/
@@ -1901,6 +1949,8 @@ static void begin_block(cg_codegen_t * gen)
 	
 	assert(gen->used_regs.head == (cg_physical_reg_t *) 0);
 	assert(gen->used_regs.tail == (cg_physical_reg_t *) 0);
+	assert(gen->global_regs.head == (cg_physical_reg_t *) 0);
+	assert(gen->global_regs.tail == (cg_physical_reg_t *) 0);
 }
 
 
@@ -1925,6 +1975,16 @@ static void end_block(cg_codegen_t * gen)
 		}
 	}
 
+	while (gen->global_regs.tail != (cg_physical_reg_t *) 0)
+	{
+		cg_physical_reg_t * physical_reg = gen->global_regs.tail;
+
+		reg_list_remove(physical_reg->list, physical_reg);
+		reg_list_add(&gen->free_regs, physical_reg);
+		physical_reg->defined = physical_reg->dirty = 0;
+		physical_reg->virtual_reg = NULL;
+	}
+
 	init_flags(gen);
 }
 
@@ -1938,13 +1998,14 @@ static void flush_dirty_reg_set(cg_codegen_t * gen, size_t min_reg,
 	{
 		if (gen->registers[regno].dirty)
 		{
+			cg_virtual_reg_t * reg = gen->registers[regno].virtual_reg;
+
 			if (live == NULL || 
-				gen->registers[regno].virtual_reg &&
-				gen->registers[regno].virtual_reg->physical_reg == &gen->registers[regno] &&
-				CG_BITSET_TEST(live, gen->registers[regno].virtual_reg->reg_no))
+				reg && !reg->is_global && !reg->representative->is_global && 
+				reg->physical_reg == &gen->registers[regno] &&
+				CG_BITSET_TEST(live, reg->reg_no))
 			{
-				save_reg(gen, &gen->registers[regno], 
-						gen->registers[regno].virtual_reg);
+				save_reg(gen, &gen->registers[regno], reg);
 			}
 		}
 	}
@@ -2014,7 +2075,9 @@ void cg_codegen_emit_block(cg_codegen_t * gen, cg_block_t * block, int reinit)
 	
 	if (reinit)
 		begin_block(gen);
-	
+
+	allocate_globals(gen);
+
 	/************************************************************************/
 	/* Process and skip any phi mappings at beginning of block				*/
 	/************************************************************************/
@@ -2086,7 +2149,7 @@ static void begin_proc(cg_codegen_t * gen, cg_proc_t * proc)
 {
 	ARMReg regno;
 	cg_virtual_reg_t * reg = proc->registers;
-	size_t reg_args = 4, index;
+	size_t index, reg_args = 4;
 	
 	/************************************************************************/
 	/* Initialize literal pool for this procedure							*/
@@ -2102,11 +2165,18 @@ static void begin_proc(cg_codegen_t * gen, cg_proc_t * proc)
 
 	gen->used_regs.head = gen->used_regs.tail = (cg_physical_reg_t *) 0;
 	gen->free_regs.head = gen->free_regs.tail = (cg_physical_reg_t *) 0;
+	gen->global_regs.head = gen->global_regs.tail = (cg_physical_reg_t *) 0;
 
+	init_flags(gen);
+	
 	/************************************************************************/
-	/* argument registers - up to 4 arguments can be passed in as registers */
-	/* assign them to corresponding physical register marked dirty			*/
+	/* general registers - set them up as free								*/
 	/************************************************************************/
+	
+	for (regno = ARMREG_V1; regno <= ARMREG_V7; ++regno)
+	{
+		init_free(gen, &gen->registers[regno]);
+	}
 	
 	if (proc->num_args <= 4)
 	{
@@ -2126,17 +2196,6 @@ static void begin_proc(cg_codegen_t * gen, cg_proc_t * proc)
 	{
 		init_free(gen, &gen->registers[ARMREG_A1 + index]);
 	}
-	
-	/************************************************************************/
-	/* general registers - set them up as free								*/
-	/************************************************************************/
-	
-	for (regno = ARMREG_V1; regno <= ARMREG_V7; ++regno)
-	{
-		init_free(gen, &gen->registers[regno]);
-	}
-
-	init_flags(gen);
 }
 
 
@@ -2176,6 +2235,74 @@ static void emit_epilog(cg_codegen_t * gen, cg_proc_t * proc)
 		(1 << ARMREG_PC));
 }
 
+
+static int register_sort(const void * first, const void * second)
+{
+	cg_virtual_reg_t * const * p_first = (cg_virtual_reg_t * const *) first;
+	cg_virtual_reg_t * const * p_second = (cg_virtual_reg_t * const *) second;
+
+	int score = (*p_second)->def_cost + 2 * (*p_second)->use_cost -
+		(*p_first)->def_cost  - 2 * (*p_first)->use_cost;
+
+	return score;			/* sort descending */
+}
+
+
+static void select_global_regs(cg_codegen_t * gen, cg_proc_t * proc)
+{
+	size_t used_register_count = 0, index, reg_index;
+	cg_virtual_reg_t * reg;
+	cg_virtual_reg_t ** all_regs, **current_reg;
+	cg_virtual_reg_list_t * node;
+
+	for (reg = proc->registers, index = 0; reg && index < proc->num_args; reg = reg->next, ++index)
+	{
+		reg->is_arg = 1;
+
+		if (reg->representative && reg->representative != reg)
+			reg->representative->is_arg = 1;
+	}
+
+	for (reg = proc->registers; reg; reg = reg->next)
+	{
+		if (reg->representative == NULL || reg->representative == reg)
+			used_register_count++;
+	}
+
+	all_regs = (cg_virtual_reg_t **) _alloca(used_register_count * sizeof (cg_virtual_reg_t *));
+
+	for (reg = proc->registers, current_reg = all_regs; reg; reg = reg->next)
+	{
+		if (reg->representative == NULL || reg->representative == reg)
+			*current_reg++ = reg;
+	}
+
+	qsort(all_regs, used_register_count, sizeof(cg_virtual_reg_t *), register_sort);
+
+	/* simplest choice: do not try to pack registers */
+	/* mark up registers that are to be treated globally */
+	/* for each basic block where the register is used in live_in or live_out, perform a global
+	   allocation of that register */
+	/* initially, we do global allocation only among "permanent" ARM registers */
+
+	for (index = 0, reg_index = 0; index < ARM_NUM_VARIABLE_REGS && reg_index < used_register_count; ++reg_index)
+	{
+		cg_virtual_reg_t * reg = all_regs[reg_index];
+
+		if (!reg->is_arg && reg->type == cg_reg_type_general)
+		{
+			reg->is_global = 1;
+			reg->physical_reg = &gen->registers[index++ + ARMREG_V1];
+
+			node = (cg_virtual_reg_list_t *) cg_heap_allocate(proc->module->heap, sizeof(cg_virtual_reg_list_t));
+			node->reg = reg;
+			node->next = proc->globals;
+			proc->globals = node;
+		}
+	}
+}
+
+
 void cg_codegen_emit_proc(cg_codegen_t * gen, cg_proc_t * proc)
 {
 	cg_block_t * block;
@@ -2207,6 +2334,7 @@ void cg_codegen_emit_proc(cg_codegen_t * gen, cg_proc_t * proc)
 	/************************************************************************/
 	
 	begin_proc(gen, proc);
+	select_global_regs(gen, proc);
 	
 	for (block = proc->blocks; block != (cg_block_t *) 0; block = block->next)
 	{
