@@ -1021,6 +1021,10 @@ void Context :: CompressedTexImage2D(GLenum target, GLint level, GLenum internal
 	}
 
 	// extract the palette
+
+	if (!data)
+		return;
+
 	const U8 * dataPtr = reinterpret_cast<const U8 *>(data);
 	Color * colors = ExtractColorPalette(dataPtr, paletteFormat, paletteSize);
 	U16 * pixels = new U16[width * height];
@@ -1101,10 +1105,6 @@ void Context :: CompressedTexImage2D(GLenum target, GLint level, GLenum internal
 			if (height > 1) 
 				height >>= 1;
 		}
-	}
-
-	if (minLevel == 0 && maxLevel == 0 && m_GenerateMipmaps) {
-		UpdateMipmaps();
 	}
 
 	delete[] colors;
