@@ -55,11 +55,18 @@ RasterizerState :: RasterizerState():
 
 
 bool RasterizerState :: CompareCommon(const RasterizerState& other) const {
-	return m_ShadingModel == other.m_ShadingModel &&
+	if (!(m_ShadingModel == other.m_ShadingModel)  ||
+		!(m_Fog == other.m_Fog) ||
+		!(m_DepthTest == other.m_DepthTest)) {
+		return false;
+	}
 
-		m_Fog == other.m_Fog &&
-		m_DepthTest == other.m_DepthTest &&
-		m_Texture == other.m_Texture &&
+	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		if (!(m_Texture[unit] == other.m_Texture[unit]))
+			return false;
+	}
+
+	return
 		m_Mask == other.m_Mask &&
 		m_Alpha == other.m_Alpha &&
 		m_Blend == other.m_Blend &&

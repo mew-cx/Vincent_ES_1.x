@@ -184,24 +184,24 @@ void Rasterizer :: SetTexture(size_t unit, MultiTexture * texture) {
 
 
 void Rasterizer :: PrepareTexture() {
-	if (m_Texture[0] && m_State) {
-		m_State->SetWrappingModeS(m_Texture[0]->GetWrappingModeS());
-		m_State->SetWrappingModeT(m_Texture[0]->GetWrappingModeT());
-		m_State->SetMinFilterMode(m_Texture[0]->GetMinFilterMode());
-		m_State->SetMagFilterMode(m_Texture[0]->GetMagFilterMode());
-		m_State->SetMipmapFilterMode(m_Texture[0]->GetMipmapFilterMode());
-		m_State->SetInternalFormat(m_Texture[0]->GetInternalFormat());
-
+	if (m_State) {
 		for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			m_RasterInfo.Textures[unit] = m_Texture[unit]->m_TextureLevels;
+			if (m_State->m_Texture[unit].Enabled, m_Texture[unit]) {
+				m_State->SetWrappingModeS(unit, m_Texture[unit]->GetWrappingModeS());
+				m_State->SetWrappingModeT(unit, m_Texture[unit]->GetWrappingModeT());
+				m_State->SetMinFilterMode(unit, m_Texture[unit]->GetMinFilterMode());
+				m_State->SetMagFilterMode(unit, m_Texture[unit]->GetMagFilterMode());
+				m_State->SetMipmapFilterMode(unit, m_Texture[unit]->GetMipmapFilterMode());
+				m_State->SetInternalFormat(unit, m_Texture[unit]->GetInternalFormat());
 
-			m_UseMipmap[unit] = m_Texture[unit]->IsMipMap() && m_Texture[unit]->IsComplete();
-			m_RasterInfo.MaxMipmapLevel = EGL_Max(m_Texture[0]->GetTexture(0)->GetLogWidth(), m_Texture[0]->GetTexture(0)->GetLogHeight());
-		}
-	} else {
-		for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			m_RasterInfo.Textures[unit] = 0;
-			m_UseMipmap[unit] = false;
+				m_RasterInfo.Textures[unit] = m_Texture[unit]->m_TextureLevels;
+
+				m_UseMipmap[unit] = m_Texture[unit]->IsMipMap() && m_Texture[unit]->IsComplete();
+				m_RasterInfo.MaxMipmapLevel[unit] = EGL_Max(m_Texture[unit]->GetTexture(0)->GetLogWidth(), m_Texture[unit]->GetTexture(0)->GetLogHeight());
+			} else {
+				m_RasterInfo.Textures[unit] = 0;
+				m_UseMipmap[unit] = false;
+			}
 		}
 	}
 }
@@ -240,7 +240,7 @@ Color Rasterizer :: GetRawTexColor(const Texture * texture, EGL_Fixed tu, EGL_Fi
 
 	// for nearest texel
 
-	switch (m_Texture->GetWrappingModeS()) {
+	switch (m_Texture[TODO]->GetWrappingModeS()) {
 		case RasterizerState::WrappingModeClampToEdge:
 			if (tu < 0)
 				tu0 = 0;
@@ -257,7 +257,7 @@ Color Rasterizer :: GetRawTexColor(const Texture * texture, EGL_Fixed tu, EGL_Fi
 			break;
 	}
 
-	switch (m_Texture->GetWrappingModeT()) {
+	switch (m_Texture[TODO]->GetWrappingModeT()) {
 		case RasterizerState::WrappingModeClampToEdge:
 			if (tv < 0)
 				tv0 = 0;
@@ -282,7 +282,7 @@ Color Rasterizer :: GetRawTexColor(const Texture * texture, EGL_Fixed tu, EGL_Fi
 
 	void * data = texture->GetData();
 
-	switch (m_Texture->GetInternalFormat()) {
+	switch (m_Texture[TODO]->GetInternalFormat()) {
 		default:
 		case RasterizerState::TextureFormatAlpha:
 			return Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
@@ -396,15 +396,15 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 	// have offset, color, texOffset, texture
 
-	if (m_State->m_Texture.Enabled) {
+	if (m_State->m_Texture[TODO].Enabled) {
 
-		Texture * texture = rasterInfo->Textures + rasterInfo->MipmapLevel;
-		Color texColor = GetTexColor(texture, tu, tv, m_State->GetMinFilterMode());
+		Texture * texture = rasterInfo->Textures[TODO] + rasterInfo->MipmapLevel[TODO];
+		Color texColor = GetTexColor(texture, tu, tv, m_State->GetMinFilterMode(TODO));
 
-		switch (m_Texture->GetInternalFormat()) {
+		switch (m_Texture[TODO]->GetInternalFormat()) {
 			default:
 			case RasterizerState::TextureFormatAlpha:
-				switch (m_State->m_Texture.Mode) {
+				switch (m_State->m_Texture[TODO].Mode) {
 					case RasterizerState::TextureModeReplace:
 						color = Color(color.r, color.g, color.b, texColor.a);
 						break;
@@ -418,7 +418,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 				break;
 
 			case RasterizerState::TextureFormatLuminance:
-				switch (m_State->m_Texture.Mode) {
+				switch (m_State->m_Texture[TODO].Mode) {
 					case RasterizerState::TextureModeDecal:
 					case RasterizerState::TextureModeReplace:
 						color = Color(texColor.r, texColor.g, texColor.b, color.a);
@@ -432,9 +432,9 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					case RasterizerState::TextureModeBlend:
 						color =
 							Color(
-								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture.EnvColor.r, texColor.r),
-								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture.EnvColor.g, texColor.g),
-								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_Texture.EnvColor.b, texColor.b),
+								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture[TODO].EnvColor.r, texColor.r),
+								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture[TODO].EnvColor.g, texColor.g),
+								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_Texture[TODO].EnvColor.b, texColor.b),
 								color.a);
 						break;
 
@@ -451,7 +451,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 			case RasterizerState::TextureFormatRGB565:
 			case RasterizerState::TextureFormatRGB8:
-				switch (m_State->m_Texture.Mode) {
+				switch (m_State->m_Texture[TODO].Mode) {
 					case RasterizerState::TextureModeDecal:
 					case RasterizerState::TextureModeReplace:
 						color = Color(texColor.r, texColor.g, texColor.b, color.a);
@@ -465,9 +465,9 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					case RasterizerState::TextureModeBlend:
 						color =
 							Color(
-								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture.EnvColor.r, texColor.r),
-								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture.EnvColor.g, texColor.g),
-								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_Texture.EnvColor.b, texColor.b),
+								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture[TODO].EnvColor.r, texColor.r),
+								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture[TODO].EnvColor.g, texColor.g),
+								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_Texture[TODO].EnvColor.b, texColor.b),
 								color.a);
 						break;
 
@@ -483,7 +483,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 				break;
 
 			case RasterizerState::TextureFormatLuminanceAlpha:
-				switch (m_State->m_Texture.Mode) {
+				switch (m_State->m_Texture[TODO].Mode) {
 					case RasterizerState::TextureModeReplace:
 						color = texColor;
 						break;
@@ -504,9 +504,9 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					case RasterizerState::TextureModeBlend:
 						color =
 							Color(
-								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture.EnvColor.r, texColor.r),
-								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture.EnvColor.g, texColor.g),
-								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_Texture.EnvColor.b, texColor.b),
+								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture[TODO].EnvColor.r, texColor.r),
+								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture[TODO].EnvColor.g, texColor.g),
+								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_Texture[TODO].EnvColor.b, texColor.b),
 								MulU8(color.a, texColor.a));
 						break;
 
@@ -524,7 +524,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 			case RasterizerState::TextureFormatRGBA5551:
 			case RasterizerState::TextureFormatRGBA4444:
 			case RasterizerState::TextureFormatRGBA8:
-				switch (m_State->m_Texture.Mode) {
+				switch (m_State->m_Texture[TODO].Mode) {
 					case RasterizerState::TextureModeReplace:
 						color = texColor;
 						break;
@@ -545,9 +545,9 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					case RasterizerState::TextureModeBlend:
 						color =
 							Color(
-								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture.EnvColor.r, texColor.r),
-								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture.EnvColor.g, texColor.g),
-								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_Texture.EnvColor.b, texColor.b),
+								MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_Texture[TODO].EnvColor.r, texColor.r),
+								MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_Texture[TODO].EnvColor.g, texColor.g),
+								MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_Texture[TODO].EnvColor.b, texColor.b),
 								MulU8(color.a, texColor.a));
 						break;
 
@@ -953,30 +953,26 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 void Rasterizer :: PreparePoint() {
 
-	if (m_State->m_Texture.Enabled) {
-		PrepareTexture();
-	}
+	PrepareTexture();
 
 	m_PointFunction = (PointFunction *)
 		m_FunctionCache->GetFunction(FunctionCache::FunctionTypePoint,
 									 *m_State);
 
 	m_RasterInfo.Init(m_Surface, 0);
-	m_RasterInfo.MipmapLevel = 0;
+	memset(m_RasterInfo.MipmapLevel, 0, sizeof(m_RasterInfo.MipmapLevel));
 }
 
 
 void Rasterizer :: PrepareLine() {
-	if (m_State->m_Texture.Enabled) {
-		PrepareTexture();
-	}
+	PrepareTexture();
 
 	m_LineFunction = (LineFunction *)
 		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeLine,
 									 *m_State);
 
 	m_RasterInfo.Init(m_Surface, 0);
-	m_RasterInfo.MipmapLevel = 0;
+	memset(m_RasterInfo.MipmapLevel, 0, sizeof(m_RasterInfo.MipmapLevel));
 }
 
 
@@ -1030,8 +1026,8 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 
 		FractionalColor baseColor = from.m_Color;
 		EGL_Fixed OneOverZ = from.m_WindowCoords.invZ;
-		EGL_Fixed tuOverZ = EGL_Mul(from.m_TextureCoords.tu, OneOverZ);
-		EGL_Fixed tvOverZ = EGL_Mul(from.m_TextureCoords.tv, OneOverZ);
+		EGL_Fixed tuOverZ = EGL_Mul(from.m_TextureCoords[TODO].tu, OneOverZ);
+		EGL_Fixed tvOverZ = EGL_Mul(from.m_TextureCoords[TODO].tv, OneOverZ);
 		EGL_Fixed fogDensity = from.m_FogDensity;
 		EGL_Fixed depth = from.m_WindowCoords.depth;
 
@@ -1045,11 +1041,11 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 
 		EGL_Fixed deltaZ = EGL_Mul(OneOverZTo - OneOverZ, invSpan);
 
-		EGL_Fixed deltaU = EGL_Mul(EGL_Mul(to.m_TextureCoords.tu, OneOverZTo) -
-								   EGL_Mul(from.m_TextureCoords.tu, OneOverZ), invSpan);
+		EGL_Fixed deltaU = EGL_Mul(EGL_Mul(to.m_TextureCoords[TODO].tu, OneOverZTo) -
+								   EGL_Mul(from.m_TextureCoords[TODO].tu, OneOverZ), invSpan);
 
-		EGL_Fixed deltaV = EGL_Mul(EGL_Mul(to.m_TextureCoords.tv, OneOverZTo) -
-								   EGL_Mul(from.m_TextureCoords.tv, OneOverZ), invSpan);
+		EGL_Fixed deltaV = EGL_Mul(EGL_Mul(to.m_TextureCoords[TODO].tv, OneOverZTo) -
+								   EGL_Mul(from.m_TextureCoords[TODO].tv, OneOverZ), invSpan);
 
 		EGL_Fixed deltaDepth = EGL_Mul(to.m_WindowCoords.depth - from.m_WindowCoords.depth, invSpan);
 		// -- end increments
@@ -1127,8 +1123,8 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 
 		FractionalColor baseColor = from.m_Color;
 		EGL_Fixed OneOverZ = from.m_WindowCoords.invZ;
-		EGL_Fixed tuOverZ = EGL_Mul(from.m_TextureCoords.tu, OneOverZ);
-		EGL_Fixed tvOverZ = EGL_Mul(from.m_TextureCoords.tv, OneOverZ);
+		EGL_Fixed tuOverZ = EGL_Mul(from.m_TextureCoords[TODO].tu, OneOverZ);
+		EGL_Fixed tvOverZ = EGL_Mul(from.m_TextureCoords[TODO].tv, OneOverZ);
 		EGL_Fixed fogDensity = from.m_FogDensity;
 		EGL_Fixed depth = from.m_WindowCoords.depth;
 
@@ -1142,11 +1138,11 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 
 		EGL_Fixed deltaZ = EGL_Mul(OneOverZTo - OneOverZ, invSpan);
 
-		EGL_Fixed deltaU = EGL_Mul(EGL_Mul(to.m_TextureCoords.tu, OneOverZTo) -
-								   EGL_Mul(from.m_TextureCoords.tu, OneOverZ), invSpan);
+		EGL_Fixed deltaU = EGL_Mul(EGL_Mul(to.m_TextureCoords[TODO].tu, OneOverZTo) -
+								   EGL_Mul(from.m_TextureCoords[TODO].tu, OneOverZ), invSpan);
 
-		EGL_Fixed deltaV = EGL_Mul(EGL_Mul(to.m_TextureCoords.tv, OneOverZTo) -
-								   EGL_Mul(from.m_TextureCoords.tv, OneOverZ), invSpan);
+		EGL_Fixed deltaV = EGL_Mul(EGL_Mul(to.m_TextureCoords[TODO].tv, OneOverZTo) -
+								   EGL_Mul(from.m_TextureCoords[TODO].tv, OneOverZ), invSpan);
 
 		EGL_Fixed deltaDepth = EGL_Mul(to.m_WindowCoords.depth - from.m_WindowCoords.depth, invSpan);
 		// -- end increments
@@ -1230,8 +1226,8 @@ void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
 
 
 	if (!m_State->m_Point.SpriteEnabled && !m_State->m_Point.CoordReplaceEnabled) {
-		EGL_Fixed tu = point.m_TextureCoords.tu;
-		EGL_Fixed tv = point.m_TextureCoords.tv;
+		EGL_Fixed tu = point.m_TextureCoords[TODO].tu;
+		EGL_Fixed tv = point.m_TextureCoords[TODO].tv;
 
 		for (I32 y = ymin; y <= ymax; y++) {
 			for (I32 x = xmin; x <= xmax; x++) {
@@ -1242,14 +1238,14 @@ void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
 		EGL_Fixed delta = EGL_Inverse(size);
 
 		if (m_UseMipmap) {
-			EGL_Fixed maxDu = delta >> (16 - m_Texture->GetTexture(0)->GetLogWidth());
-			EGL_Fixed maxDv = delta >> (16 - m_Texture->GetTexture(0)->GetLogHeight());
+			EGL_Fixed maxDu = delta >> (16 - m_Texture[TODO]->GetTexture(0)->GetLogWidth());
+			EGL_Fixed maxDv = delta >> (16 - m_Texture[TODO]->GetTexture(0)->GetLogHeight());
 
 			EGL_Fixed rho = maxDu + maxDv;
 
 			// we start with nearest/minification only selection; will add LINEAR later
 
-			m_RasterInfo.MipmapLevel = EGL_Min(Log2(rho), m_RasterInfo.MaxMipmapLevel);
+			m_RasterInfo.MipmapLevel[TODO] = EGL_Min(Log2(rho), m_RasterInfo.MaxMipmapLevel[TODO]);
 		}
 
 		for (I32 y = ymin, tv = delta / 2; y <= ymax; y++, tv += delta) {

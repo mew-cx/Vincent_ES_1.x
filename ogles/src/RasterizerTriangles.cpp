@@ -165,18 +165,22 @@ namespace {
 // ---------------------------------------------------------------------------
 
 void Rasterizer :: PrepareTriangle() {
-	if (m_State->m_Texture.Enabled) {
-		PrepareTexture();
-	}
+	PrepareTexture();
 
 	m_ScanlineFunction = (ScanlineFunction *)
 		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeScanline, 
 									 *m_State);
 
-	bool needsColor = !m_State->m_Texture.Enabled || 
-					  m_State->m_Texture.Mode != RasterizerState::TextureModeReplace;
+	// could be optimized
+	bool needsColor = !m_State->m_Texture[0].Enabled || 
+					  m_State->m_Texture[0].Mode != RasterizerState::TextureModeReplace;
 
-	bool needsTexture = m_State->m_Texture.Enabled;
+	bool needsTexture = false;
+	
+	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		needsTexture |= m_State->m_Texture[unit].Enabled;
+	}
+
 	bool needsFog = m_State->m_Fog.Enabled;
 	bool needsDepth = m_State->m_DepthTest.Enabled || m_State->m_Mask.Depth || m_State->m_Stencil.Enabled;
 	bool needsScissor = m_State->m_ScissorTest.Enabled;
@@ -195,7 +199,7 @@ void Rasterizer :: PrepareTriangle() {
 	if (m_RasterTriangleFunction == 0)
 		m_RasterTriangleFunction = RasterTriangleAll;
 
-	m_RasterInfo.MipmapLevel = 0;
+	memset(m_RasterInfo.MipmapLevel, 0, sizeof(m_RasterInfo.MipmapLevel));
 }
 
 
@@ -222,22 +226,22 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 	const FractionalColor& colorIncrement = delta.m_Color;
 
 	EGL_Fixed deltaInvZ = delta.m_WindowCoords.invZ;
-	EGL_Fixed deltaInvU = delta.m_TextureCoords.tu;
-	EGL_Fixed deltaInvV = delta.m_TextureCoords.tv;
+	EGL_Fixed deltaInvU = delta.m_TextureCoords[TODO].tu;
+	EGL_Fixed deltaInvV = delta.m_TextureCoords[TODO].tv;
 
-	EGL_Fixed deltaInvDu = delta.m_TextureCoords.dtudy;
-	EGL_Fixed deltaInvDv = delta.m_TextureCoords.dtvdy;
+	EGL_Fixed deltaInvDu = delta.m_TextureCoords[TODO].dtudy;
+	EGL_Fixed deltaInvDv = delta.m_TextureCoords[TODO].dtvdy;
 
 	EGL_Fixed deltaFog = delta.m_FogDensity;
 	EGL_Fixed deltaDepth = delta.m_WindowCoords.depth;
 
-	EGL_Fixed invTu = start.m_TextureCoords.tu;
-	EGL_Fixed dTuDxOverInvZ2 = start.m_TextureCoords.dtudx;
-	EGL_Fixed dTuDyOverInvZ2 = start.m_TextureCoords.dtudy;
+	EGL_Fixed invTu = start.m_TextureCoords[TODO].tu;
+	EGL_Fixed dTuDxOverInvZ2 = start.m_TextureCoords[TODO].dtudx;
+	EGL_Fixed dTuDyOverInvZ2 = start.m_TextureCoords[TODO].dtudy;
 
-	EGL_Fixed invTv = start.m_TextureCoords.tv;
-	EGL_Fixed dTvDxOverInvZ2 = start.m_TextureCoords.dtvdx;
-	EGL_Fixed dTvDyOverInvZ2 = start.m_TextureCoords.dtvdy;
+	EGL_Fixed invTv = start.m_TextureCoords[TODO].tv;
+	EGL_Fixed dTvDxOverInvZ2 = start.m_TextureCoords[TODO].dtvdx;
+	EGL_Fixed dTvDyOverInvZ2 = start.m_TextureCoords[TODO].dtvdy;
 
 	EGL_Fixed invZ = start.m_WindowCoords.invZ;
 
@@ -255,10 +259,10 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 
 		// to get started, do mipmap selection at beginning of span
 
-		if (m_UseMipmap) {
+		if (m_UseMipmap[TODO]) {
 			EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
-			EGL_Fixed maxDu = EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)) >> (16 - m_Texture->GetTexture(0)->GetLogWidth());
-			EGL_Fixed maxDv = EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)) >> (16 - m_Texture->GetTexture(0)->GetLogHeight());
+			EGL_Fixed maxDu = EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)) >> (16 - m_Texture[TODO]->GetTexture(0)->GetLogWidth());
+			EGL_Fixed maxDv = EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)) >> (16 - m_Texture[TODO]->GetTexture(0)->GetLogHeight());
 
 			//EGL_Fixed maxD = EGL_Max(maxDu, maxDv);
 			EGL_Fixed maxD = maxDu + maxDv;
@@ -267,7 +271,7 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 
 			// we start with nearest/minification only selection; will add LINEAR later
 
-			rasterInfo.MipmapLevel = EGL_Min(Log2(rho), rasterInfo.MaxMipmapLevel);
+			rasterInfo.MipmapLevel[TODO] = EGL_Min(Log2(rho), rasterInfo.MaxMipmapLevel[TODO]);
 
 			dTuDyOverInvZ2 += deltaInvDu << LOG_LINEAR_SPAN;
 			dTvDyOverInvZ2 += deltaInvDv << LOG_LINEAR_SPAN;
@@ -304,10 +308,10 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 
 		I32 deltaX = xEnd - x;
 
-		if (m_UseMipmap) {
+		if (m_UseMipmap[TODO]) {
 			EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
-			EGL_Fixed maxDu = EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)) >> (16 - m_Texture->GetTexture(0)->GetLogWidth());
-			EGL_Fixed maxDv = EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)) >> (16 - m_Texture->GetTexture(0)->GetLogHeight());
+			EGL_Fixed maxDu = EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)) >> (16 - m_Texture[TODO]->GetTexture(0)->GetLogWidth());
+			EGL_Fixed maxDv = EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)) >> (16 - m_Texture[TODO]->GetTexture(0)->GetLogHeight());
 
 			//EGL_Fixed maxD = EGL_Max(maxDu, maxDv);
 			EGL_Fixed maxD = maxDu + maxDv;
@@ -316,7 +320,7 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 
 			// we start with nearest/minification only selection; will add LINEAR later
 
-			rasterInfo.MipmapLevel = EGL_Min(Log2(rho), rasterInfo.MaxMipmapLevel);
+			rasterInfo.MipmapLevel[TODO] = EGL_Min(Log2(rho), rasterInfo.MaxMipmapLevel[TODO]);
 		}
 
 		EGL_Fixed endZ = EGL_Inverse(invZ + deltaX * deltaInvZ);

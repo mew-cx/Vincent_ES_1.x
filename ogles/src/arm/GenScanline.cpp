@@ -442,10 +442,10 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	// and texture level here
 	// ----------------------------------------------------------------------
 
-	if (m_State->m_Texture.MipmapFilterMode != RasterizerState::FilterModeNone) {
+	if (m_State->m_Texture[TODO].MipmapFilterMode != RasterizerState::FilterModeNone) {
 
-		if (m_State->m_Texture.MipmapFilterMode == RasterizerState::FilterModeNearest ||
-			/* remove this */ m_State->m_Texture.MipmapFilterMode == RasterizerState::FilterModeLinear) {
+		if (m_State->m_Texture[TODO].MipmapFilterMode == RasterizerState::FilterModeNearest ||
+			/* remove this */ m_State->m_Texture[TODO].MipmapFilterMode == RasterizerState::FilterModeLinear) {
 			//	EGL_Fixed maxDu = EGL_Mul(EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)), m_Texture->GetTexture(0)->GetWidth());
 			//	EGL_Fixed maxDv = EGL_Mul(EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)), m_Texture->GetTexture(0)->GetHeight());
 
@@ -743,10 +743,10 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	// and texture level here
 	// ----------------------------------------------------------------------
 
-	if (m_State->m_Texture.MipmapFilterMode != RasterizerState::FilterModeNone) {
+	if (m_State->m_Texture[TODO].MipmapFilterMode != RasterizerState::FilterModeNone) {
 
-		if (m_State->m_Texture.MipmapFilterMode == RasterizerState::FilterModeNearest ||
-			/* remove this */ m_State->m_Texture.MipmapFilterMode == RasterizerState::FilterModeLinear) {
+		if (m_State->m_Texture[TODO].MipmapFilterMode == RasterizerState::FilterModeNearest ||
+			/* remove this */ m_State->m_Texture[TODO].MipmapFilterMode == RasterizerState::FilterModeLinear) {
 			//	EGL_Fixed maxDu = EGL_Mul(EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)), m_Texture->GetTexture(0)->GetWidth());
 			//	EGL_Fixed maxDv = EGL_Mul(EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)), m_Texture->GetTexture(0)->GetHeight());
 
