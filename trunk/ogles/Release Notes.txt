@@ -10,6 +10,7 @@ Version 0.78
 
 This version addresses the following issues:
 
+970897 - Vertex Order test (Test number #5) failed.
 970910 - Triangle Tile test failed
 970911 - Spotlight tests failed
 970912 - Blend test failed.
@@ -17,6 +18,7 @@ This version addresses the following issues:
 970916 - Transformation Normal test failed.
 970918 - Fog Exponential test failed.
 970919 - Rescale Normal test failed.
+
 
 Version 0.77
 ------------

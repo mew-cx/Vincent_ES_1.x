@@ -549,13 +549,13 @@ namespace {
 	inline EGL_Fixed Det3x3(EGL_Fixed x0, EGL_Fixed x1, EGL_Fixed x2,
 							EGL_Fixed y0, EGL_Fixed y1, EGL_Fixed y2,
 							EGL_Fixed z0, EGL_Fixed z1, EGL_Fixed z2) {
-		return 
-			+EGL_Mul(EGL_Mul(x0, y1), z2)
-			+EGL_Mul(EGL_Mul(x1, y2), z0)
-			+EGL_Mul(EGL_Mul(x2, y0), z1)
-			-EGL_Mul(EGL_Mul(x0, y2), z1)
-			-EGL_Mul(EGL_Mul(x1, y0), z2)
-			-EGL_Mul(EGL_Mul(x2, y1), z0);
+		return (I32) ((
+			+I64(x0) * I64(y1) * I64(z2)
+			+I64(x1) * I64(y2) * I64(z0)
+			+I64(x2) * I64(y0) * I64(z1)
+			-I64(x0) * I64(y2) * I64(z1)
+			-I64(x1) * I64(y0) * I64(z2)
+			-I64(x2) * I64(y1) * I64(z0)) >> 32);
 	}
 }
 
@@ -603,9 +603,9 @@ void Context :: CullFace(GLenum mode) {
 inline bool Context :: IsCulled(RasterPos& a, RasterPos& b, RasterPos& c) {
 
 	EGL_Fixed sign = 
-		Det3x3(a.m_ClipCoords.w() >> 8, a.m_ClipCoords.x() >> 8, a.m_ClipCoords.y() >> 8,
-			   b.m_ClipCoords.w() >> 8, b.m_ClipCoords.x() >> 8, b.m_ClipCoords.y() >> 8,
-			   c.m_ClipCoords.w() >> 8, c.m_ClipCoords.x() >> 8, c.m_ClipCoords.y() >> 8);
+		Det3x3(a.m_ClipCoords.w(), a.m_ClipCoords.x(), a.m_ClipCoords.y(),
+			   b.m_ClipCoords.w(), b.m_ClipCoords.x(), b.m_ClipCoords.y(),
+			   c.m_ClipCoords.w(), c.m_ClipCoords.x(), c.m_ClipCoords.y());
 
 	switch (m_CullMode) {
 		case CullModeBack:
