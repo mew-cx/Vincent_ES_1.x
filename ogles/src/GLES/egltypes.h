@@ -48,7 +48,7 @@ typedef void *			EGLContext;
 
 #endif
 
-typedef DWORD	int32_t;
+typedef int		int32_t;
 typedef HDC		NativeDisplayType;
 typedef HWND	NativeWindowType;
 typedef HBITMAP NativePixmapType;

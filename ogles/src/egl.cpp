@@ -163,8 +163,11 @@ GLAPI EGLBoolean APIENTRY eglDestroyContext (EGLDisplay dpy, EGLContext ctx) {
 GLAPI EGLBoolean APIENTRY eglMakeCurrent (EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx) {
 
 	Context::SetCurrentContext(ctx);
-	ctx->SetDrawSurface(draw);
-	ctx->SetReadSurface(read);
+
+	if (ctx) {
+		ctx->SetDrawSurface(draw);
+		ctx->SetReadSurface(read);
+	}
 
 	return EGL_TRUE;
 
