@@ -22,9 +22,40 @@ using namespace EGL;
 
 RasterizerState :: RasterizerState():
 	m_Version(0),
-	m_DepthFunc(CompFuncLess),
-	m_DepthTestEnabled(false)
 
+	// initial values for alpha test
+	m_AlphaTestEnabled(false),
+	m_AlphaFunc(CompFuncAlways),
+	m_AlphaReference(0),
+
+	// initial values for stencil test
+	m_StencilTestEnabled(false),
+	m_StencilFunc(CompFuncAlways),
+	m_StencilMask(0xFFFFFFFFu),
+	m_StencilReference(0),
+	m_StencilFail(StencilOpKeep),
+	m_StencilZFail(StencilOpKeep),
+	m_StencilZPass(StencilOpKeep),
+
+	// inititial values for depth test
+	m_DepthFunc(CompFuncLess),
+	m_DepthTestEnabled(false),
+
+	// initial values for blending
+	m_BlendingEnabled(false),
+	m_BlendFuncSrc(BlendFuncSrcOne),
+	m_BlendFuncDst(BlendFuncDstZero),
+
+	// initial values for masks
+	m_MaskDepth(true),
+	m_MaskRed(true),
+	m_MaskGreen(true),
+	m_MaskBlue(true),
+	m_MaskAlpha(true),
+
+	// initial values for logic op
+	m_LogicOpEnabled(false),
+	m_LogicOpcode(LogicOpCopy)
 {
 }
 

@@ -69,6 +69,10 @@ namespace EGL {
 			return b;
 		}
 
+		inline Color Mask(bool maskR, bool maskG, bool maskB, bool maskA) const {
+			return Color(maskR ? r : 0, maskG ? g : 0, maskB ? b : 0, maskA ? a : 0);
+		}
+
 		inline U16 ConvertTo565() const {
 			return r >> 3 | (g & 0xFC) << 3 | (b & 0xF8) << 8;
 		}
