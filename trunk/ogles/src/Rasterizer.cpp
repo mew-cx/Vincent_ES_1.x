@@ -82,10 +82,14 @@ namespace {
 		U32 y1 = static_cast<U32>(x1);
 		U32 y2 = static_cast<U32>(x2);
 
-		return Permutation[
+		I8 * result = Permutation[
 			(((y1 - y0) >> 29) & 4) |
 			(((y2 - y0) >> 30) & 2) |
 			(((y2 - y1) >> 31) & 1)];
+
+		assert(result[0] | result[1] | result[2]);
+
+		return result;
 	}
 
 	inline int Greater(I32 x0, I32 x1) {

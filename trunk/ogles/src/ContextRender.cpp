@@ -516,24 +516,25 @@ EGL_Fixed Context :: FogDensity(EGL_Fixed eyeDistance) const {
 // --------------------------------------------------------------------------
 void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 
-	// apply model view matrix to vertex coordinate -> eye coordinates vertex
-	Vec4D eyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
-
-	EGL_Fixed eyeDistance = 
-		m_ModelViewMatrixStack.CurrentMatrix().GetTransformedZ(m_CurrentVertex);
-
-	// apply inverse of model view matrix to normals -> eye coordinates normals
-	Vec3D eyeNormal = (m_InverseModelViewMatrix * m_CurrentNormal).Project();
-
-	// TO DO: apply proper re-normalization/re-scaling of normal vector
-	if (m_RescaleNormalEnabled || m_NormalizeEnabled) {
-		eyeNormal.Normalize();
-	}
-
 	// apply projection matrix to eye coordinates 
-	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * eyeCoords;
-
+	rasterPos->m_ClipCoords = m_VertexTransformation * m_CurrentVertex;
+	
 	if (m_LightingEnabled) {
+
+		// apply model view matrix to vertex coordinate -> eye coordinates vertex
+		Vec4D eyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
+
+		EGL_Fixed eyeDistance = eyeCoords.z();
+
+		// apply inverse of model view matrix to normals -> eye coordinates normals
+		Vec3D eyeNormal = (m_InverseModelViewMatrix * m_CurrentNormal).Project();
+
+		// TO DO: apply proper re-normalization/re-scaling of normal vector
+		if (m_RescaleNormalEnabled || m_NormalizeEnabled) {
+			eyeNormal.Normalize();
+		}
+
+	
 		// for each light that is turned on, call into calculation
 		int mask = 1;
 
@@ -571,12 +572,18 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 
 	// apply texture transform to texture coordinates
 	// really should have a transformation primitive of the correct dimensionality
-	Vec3D inCoords(m_CurrentTextureCoords.tu, m_CurrentTextureCoords.tv, 0);
-	Vec4D outCoords = m_TextureMatrixStack.CurrentMatrix() * inCoords;
-	rasterPos->m_TextureCoords.tu = outCoords.x();
-	rasterPos->m_TextureCoords.tv = outCoords.y();
+
+	if (m_TextureMatrixStack.CurrentMatrix().IsIdentity()) {
+		rasterPos->m_TextureCoords.tu = m_CurrentTextureCoords.tu;
+		rasterPos->m_TextureCoords.tv = m_CurrentTextureCoords.tv;
+	} else {
+		Vec3D inCoords(m_CurrentTextureCoords.tu, m_CurrentTextureCoords.tv, 0);
+		Vec4D outCoords = m_TextureMatrixStack.CurrentMatrix() * inCoords;
+		rasterPos->m_TextureCoords.tu = outCoords.x();
+		rasterPos->m_TextureCoords.tv = outCoords.y();
+	}
 
 	// populate fog density here...
-	rasterPos->m_FogDensity = FogDensity(eyeDistance);
+	rasterPos->m_FogDensity = 0;//FogDensity(eyeDistance);
 
 }

@@ -448,6 +448,7 @@ namespace EGL {
 		};
 
 		EGL_Fixed m_elements[16];
+		bool m_identity;		// flag to mark identity matrix
 
 	public:
 		// ----------------------------------------------------------------------
@@ -469,6 +470,10 @@ namespace EGL {
 			return m_elements[row + column * ROWS]; 
 		}
 
+		inline bool IsIdentity() const {
+			return m_identity;
+		}
+
 		// ----------------------------------------------------------------------
 		// Default constructor: Initialize the matrix as identity matrix
 		// ----------------------------------------------------------------------
@@ -488,6 +493,8 @@ namespace EGL {
 			for (int index = 0; index < ELEMENTS; ++index) {
 				m_elements[index] = elements[index];
 			}
+
+			m_identity = false;
 		}
 
 
@@ -522,6 +529,7 @@ namespace EGL {
 			Element(2, 3) = m23;
 			Element(3, 3) = m33;
 
+			m_identity = false;
 		}
 
 
@@ -532,6 +540,8 @@ namespace EGL {
 			for (int index = 0; index < ELEMENTS; ++index) {
 				m_elements[index] = other.m_elements[index];
 			}
+
+			m_identity = other.m_identity;
 		}
 
 
@@ -542,6 +552,8 @@ namespace EGL {
 			for (int index = 0; index < ELEMENTS; ++index) {
 				m_elements[index] = other.m_elements[index];
 			}
+
+			m_identity = other.m_identity;
 
 			return *this;
 		}
@@ -556,6 +568,7 @@ namespace EGL {
 			Element(1, 0) = Element(1, 2) = Element(1, 3) = 0;
 			Element(2, 0) = Element(2, 1) = Element(2, 3) = 0;
 			Element(3, 0) = Element(3, 1) = Element(3, 2) = 0;
+			m_identity = true;
 		}
 
 
@@ -580,6 +593,7 @@ namespace EGL {
 				}
 			}
 
+			result.m_identity = m_identity && other.m_identity;
 			return result;
 		}
 
