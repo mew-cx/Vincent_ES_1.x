@@ -418,7 +418,7 @@ Config Config :: s_AllConfigurations[1] = {
 		5,				//	EGLint	redSize,
 		6,				//	EGLint	greenSize,
 		5,				//	EGLint	blueSize,
-		16,				//	EGLint	alphaSize,
+		8,				//	EGLint	alphaSize,
 		EGL_NONE,		//	EGLint	configCaveat,
 		1,				//	EGLint	configID,
 		32,				//	EGLint	depthSize,

@@ -8,6 +8,7 @@ the bug database on sourceforge.
 Version 0.71
 ------------
 
+943505 - glReadPixels incomplete
 942837 - Texture modulation does not work
 935473 - Add support for (Strong)ARM 
 921582 - Code generation does not support blending 
