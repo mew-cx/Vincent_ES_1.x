@@ -561,8 +561,9 @@ static void call_runtime(cg_codegen_t * gen, void * target)
 	/* part of the runtime library											*/
 
 	ARM_MOV_REG_REG(gen->cseg, ARMREG_LR, ARMREG_PC);
+	cg_codegen_reference(gen, gen->literal_base, cg_reference_offset12);
 	ARM_LDR_IMM(gen->cseg, ARMREG_PC, ARMREG_PC, 
-		cg_codegen_emit_literal(gen, (U32) target));
+		(cg_codegen_emit_literal(gen, (U32) target) - 8) & 0xfff);
 }
 
 
@@ -1278,14 +1279,13 @@ static void emit_load_immediate(cg_codegen_t * gen,
 					  inst->value);
 }
 
-
-static void flush_dirty_regs(cg_codegen_t * gen);
+static void flush_dirty_regs(cg_codegen_t * gen, cg_bitset_t * live);
 static void flush_dirty_args(cg_codegen_t * gen);
 
 static void emit_branch(cg_codegen_t * gen, cg_inst_branch_t * inst)
 {
 	ARMCond cond;
-	flush_dirty_regs(gen);
+	flush_dirty_regs(gen, inst->target->block->live_in);
 	
 	switch (inst->base.kind) 
 	{
@@ -1930,7 +1930,7 @@ static void end_block(cg_codegen_t * gen)
 
 
 static void flush_dirty_reg_set(cg_codegen_t * gen, size_t min_reg,
-								size_t max_reg)
+								size_t max_reg, cg_bitset_t * live)
 {
 	size_t regno;
 	
@@ -1938,22 +1938,28 @@ static void flush_dirty_reg_set(cg_codegen_t * gen, size_t min_reg,
 	{
 		if (gen->registers[regno].dirty)
 		{
-			save_reg(gen, &gen->registers[regno], 
-					 gen->registers[regno].virtual_reg);
+			if (live == NULL || 
+				gen->registers[regno].virtual_reg &&
+				gen->registers[regno].virtual_reg->physical_reg == &gen->registers[regno] &&
+				CG_BITSET_TEST(live, gen->registers[regno].virtual_reg->reg_no))
+			{
+				save_reg(gen, &gen->registers[regno], 
+						gen->registers[regno].virtual_reg);
+			}
 		}
 	}
 }
 
 
-static void flush_dirty_regs(cg_codegen_t * gen)
+static void flush_dirty_regs(cg_codegen_t * gen, cg_bitset_t * live)
 {
-	flush_dirty_reg_set(gen, 0, PHYSICAL_REGISTERS - 1);
+	flush_dirty_reg_set(gen, 0, PHYSICAL_REGISTERS - 1, live);
 }
 
 
 static void flush_dirty_args(cg_codegen_t * gen)
 {
-	flush_dirty_reg_set(gen, ARMREG_A1, ARMREG_A4);
+	flush_dirty_reg_set(gen, ARMREG_A1, ARMREG_A4, NULL);
 }
 
 
@@ -1978,7 +1984,7 @@ static void init_use_chains(cg_codegen_t * gen, cg_block_t * block)
 		gen->use_chains[regno] = (cg_inst_list_t *) 0;
 	}
 	
-	for (inst = block->insts; inst != (cg_inst_t *) 0; inst = inst->base.next)
+	for (inst = block->insts.head; inst != (cg_inst_t *) 0; inst = inst->base.next)
 	{
 		cg_virtual_reg_t * buffer[64];
 		cg_virtual_reg_t **iter, ** end = cg_inst_use(inst, buffer, buffer + 64);
@@ -2013,7 +2019,7 @@ void cg_codegen_emit_block(cg_codegen_t * gen, cg_block_t * block, int reinit)
 	/* Process and skip any phi mappings at beginning of block				*/
 	/************************************************************************/
 	
-	for (inst = block->insts; 
+	for (inst = block->insts.head; 
 		 inst != (cg_inst_t *) 0 && inst->base.kind == cg_inst_phi; 
 		 inst = inst->base.next)
 	{
@@ -2031,7 +2037,7 @@ void cg_codegen_emit_block(cg_codegen_t * gen, cg_block_t * block, int reinit)
 		cg_codegen_emit_inst(gen, inst);
 	}
 	
-	flush_dirty_regs(gen);
+	flush_dirty_regs(gen, block->live_out);
 	end_block(gen);
 	gen->current_block = (cg_block_t *) 0;
 }
@@ -2265,23 +2271,41 @@ static void fix_ref(cg_segment_t * seg, size_t source, size_t target,
 	switch(type) 
 	{
 		case cg_reference_branch24:
-		{
-			U32 instruction = cg_segment_get_u32(seg, target);
-			
-			// add the correct displacement
-			U32 offset = instruction & 0x00FFFFFFu;
-			U32 opcode = instruction & 0xFF000000u;
-			
-			if (offset & 0x800000) 
-				offset |= 0xFF000000u;
+			{
+				U32 instruction = cg_segment_get_u32(seg, target);
+				
+				// add the correct displacement
+				U32 offset = instruction & 0x00FFFFFFu;
+				U32 opcode = instruction & 0xFF000000u;
+				
+				if (offset & 0x800000) 
+					offset |= 0xFF000000u;
 
-			offset = offset + ((source - target) >> 2);
-			instruction = opcode | (0x00FFFFFFu & offset);
+				offset = offset + ((source - target) >> 2);
+				instruction = opcode | (0x00FFFFFFu & offset);
+				
+				cg_segment_set_u32(seg, target, instruction);
+			}
+		break;
 			
-			cg_segment_set_u32(seg, target, instruction);
-		}
+		case cg_reference_offset12:
+			{
+				U32 instruction = cg_segment_get_u32(seg, target);
+
+				// add the correct displacement
+				U32 offset = instruction & 0x00000FFFu;
+				U32 opcode = instruction & 0xFFFFF000u;
+				
+				if (offset & 0x800) 
+					offset |= 0xFFFFF000u;
+
+				offset = offset + (source - target);
+				instruction = opcode | (0x00000FFFu & offset);
+				
+				cg_segment_set_u32(seg, target, instruction);
+			}
 			break;
-			
+
 		default:
 			assert(0);
 	}

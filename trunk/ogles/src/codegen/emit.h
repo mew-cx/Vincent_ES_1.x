@@ -54,6 +54,7 @@ typedef struct cg_codegen_t cg_codegen_t;
 
 typedef enum 
 {
+	cg_reference_offset12,					/* LDR relative from code		*/
 	cg_reference_branch24,					/* branch relative from code	*/
 	cg_reference_absolute32,				/* absolute 32-bit address		*/
 } 
