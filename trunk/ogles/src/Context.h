@@ -24,7 +24,8 @@
 #include "RasterizerState.h"
 #include "Rasterizer.h"
 #include "MatrixStack.h"
-
+#include "Texture.h"
+#include <list>
 
 namespace EGL {
 
@@ -63,59 +64,9 @@ namespace EGL {
 
 
 	class Surface;
-	class Rasterizer;
+	class MultiTexture;
 
 	#define EGL_NUMBER_LIGHTS 8
-
-	//
-	// THIS SECTION IS ONLY TEMPORARILY HERE UNTIL WE REFACTORED THE RASTERIZER
-	//
-
-
-	#ifdef EGL_USE_GPP
-		typedef GPP_TLVERTEX_V2F_C4F_T2F EGL_TLVERTEX_V2F_C4F_T2F;
-		typedef GPP_TEXTURE_PARAMS EGL_TEXTURE_PARAMS;
-		typedef GPP_RASTER_PARAMS EGL_RASTER_PARAMS;
-		typedef GppStatus EglStatus;
-	#else
-	#define EGL_MAX_TEXTURES 1
-
-	typedef struct{
-		I32		x, w;
-		U32		r, g, b, a;
-		U32		tu, tv;
-	} EGL_TLVERTEX_V2F_C4F_T2F;
-
-	typedef struct{
-		U16*	m_pTexBuffer;					//RGB565 Format
-		U16		m_Height;
-		U16		m_Width;
-	} EGL_TEXTURE_PARAMS;
-
-	typedef struct{
-		U16*	m_pFrameBuf;					//RGB565 Format
-		I32*	m_pZBuffer;
-		U32		m_rgba;							//RGBA8888 Format
-		EGL_TEXTURE_PARAMS m_texture[EGL_MAX_TEXTURES];
-	} EGL_RASTER_PARAMS;
-
-	typedef enum {
-
-		gppStsNoErr			=  0,				// OK MODE
-
-		gppStsNullPtrErr    = -5,				// ERROR MODES
-		gppStsBadArgErr     = -4,
-		gppStsDivByZeroErr	= -3,
-		gppStsOverFlowErr   = -2,
-		gppStsUnderFlowErr  = -1,
-		
-	} EglStatus;								// NOTE: Error codes are returned 
-
-	#endif
-
-
-	typedef EglStatus (*ScanLineFunction)(EGL_TLVERTEX_V2F_C4F_T2F* startPt, EGL_TLVERTEX_V2F_C4F_T2F* endPt, EGL_RASTER_PARAMS* pRaster_Params);
-
 
 	class Context {
 
@@ -271,6 +222,14 @@ namespace EGL {
 			return m_Rasterizer;
 		}
 
+		MultiTexture * GetCurrentTexture() {
+			return GetRasterizerState()->GetTexture();
+		}
+
+		const MultiTexture * GetCurrentTexture() const {
+			return GetRasterizerState()->GetTexture();
+		}
+
 		static void SetCurrentContext(Context * context);
 		static Context * GetCurrentContext();
 		static Context * DefaultContext();
@@ -336,17 +295,17 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 
 		void SelectArrayElement(int index);
-		void CurrentValuesToRasterPos(EGL_RASTER_POS * rasterPos);
-		void InterpolateRasterPos(EGL_RASTER_POS * a, EGL_RASTER_POS * b, GLfixed x, EGL_RASTER_POS * result);
+		void CurrentValuesToRasterPos(RasterPos * rasterPos);
+		void InterpolateRasterPos(RasterPos * a, RasterPos * b, GLfixed x, RasterPos * result);
 
 	public:
-		void RenderPoint(EGL_RASTER_POS * pos0);
+		void RenderPoint(RasterPos * pos0);
 
-		void RenderLine(EGL_RASTER_POS * pos0, EGL_RASTER_POS * pos1);
+		void RenderLine(RasterPos * pos0, RasterPos * pos1);
 
 		void PrepareRenderTriangle();
-		void RenderTriangle(EGL_RASTER_POS * pos0, EGL_RASTER_POS * pos1, EGL_RASTER_POS * pos2);
-		void RenderClippedXTriangle(EGL_RASTER_POS * pos0, EGL_RASTER_POS * pos1, EGL_RASTER_POS * pos2);
+		void RenderTriangle(RasterPos * pos0, RasterPos * pos1, RasterPos * pos2);
+		void RenderClippedXTriangle(RasterPos * pos0, RasterPos * pos1, RasterPos * pos2);
 
 	private:
 		GLenum				m_LastError;
@@ -394,7 +353,7 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		Vec3D				m_DefaultNormal;
 		FractionalColor		m_DefaultRGBA;
-		TEX_COORD			m_DefaultTextureCoords;
+		TexCoord			m_DefaultTextureCoords;
 
 		// ----------------------------------------------------------------------
 		// Current values for setup
@@ -402,7 +361,7 @@ namespace EGL {
 		Vec3D				m_CurrentVertex;	// don't support vertex at inf
 		Vec3D				m_CurrentNormal;
 		FractionalColor		m_CurrentRGBA;
-		TEX_COORD			m_CurrentTextureCoords;
+		TexCoord			m_CurrentTextureCoords;
 
 		// ----------------------------------------------------------------------
 		// Rendering State
@@ -430,16 +389,17 @@ namespace EGL {
 		I32					m_PixelStorePackAlignment;
 		I32					m_PixelStoreUnpackAlignment;
 
-		/*
-		RenderPointFunc		m_RenderPointFunc		= &RenderPoint;
-		RenderLineFunc		m_RenderLineFunc		= &RenderLine;
-		RenderTriangleFunc	m_RenderTriangleFunc	= &RenderTriangle;
-		*/
-
 		RasterizerState		m_RasterizerState;
-		Rasterizer			* m_Rasterizer;
-		ScanLineFunction	m_ScanLineFunction;
-		EGL_RASTER_PARAMS	m_RasterParameters;
+		Rasterizer *		m_Rasterizer;
+
+		// ----------------------------------------------------------------------
+		// texturing related state
+		// ----------------------------------------------------------------------
+		typedef std::list<MultiTexture *> TextureVector;
+
+		MultiTexture		m_DefaultTexture;
+		TextureVector		m_Textures;
+		U32					m_CurrentTexture;
 
 		// ----------------------------------------------------------------------
 		// Object-Life Cycle State

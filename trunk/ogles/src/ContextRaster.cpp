@@ -37,8 +37,8 @@
 //		N/A
 //
 // --------------------------------------------------------------------------
-void Context :: InterpolateRasterPos(EGL_RASTER_POS * p0, EGL_RASTER_POS * p1, 
-									 GLfixed x, EGL_RASTER_POS * result) {
+void Context :: InterpolateRasterPos(RasterPos * p0, RasterPos * p1, 
+									 GLfixed x, RasterPos * result) {
 
 	I32 w1x1, w0x0, w0_w1x, denominator;
 
@@ -188,7 +188,7 @@ private:
 struct EdgeInterpolator {
 
 public:
-	inline EdgeInterpolator(EGL_RASTER_POS * p1, EGL_RASTER_POS * p2, I32 invDelta):
+	inline EdgeInterpolator(RasterPos * p1, RasterPos * p2, I32 invDelta):
 		x (p1->m_WindowsCoords.x, p2->m_WindowsCoords.x, invDelta),
 		z (p1->m_WindowsCoords.z, p2->m_WindowsCoords.z, 
 		   p1->m_WindowsCoords.w, p2->m_WindowsCoords.w,
@@ -231,7 +231,7 @@ public:
 struct EdgeBuffer {
 public:
 
-	inline void SetToVertex(EGL_RASTER_POS * p) {
+	inline void SetToVertex(RasterPos * p) {
 		m_Buffer.x = p->m_WindowsCoords.x;
 		m_Buffer.w = p->m_WindowsCoords.z;
 		m_Buffer.r = p->m_Color.r;
@@ -378,8 +378,8 @@ void Context :: PrepareRenderTriangle() {
 // Returns:
 //		N/A
 // --------------------------------------------------------------------------
-void Context :: RenderTriangle(EGL_RASTER_POS * pos0, EGL_RASTER_POS * pos1, 
-							   EGL_RASTER_POS * pos2) {
+void Context :: RenderTriangle(RasterPos * pos0, RasterPos * pos1, 
+							   RasterPos * pos2) {
 
 	// ----------------------------------------------------------------------
 	// First, quick check if the triangle is fully cut away in y-direction
@@ -417,7 +417,7 @@ void Context :: RenderTriangle(EGL_RASTER_POS * pos0, EGL_RASTER_POS * pos1,
 	// x-direction
 	// ----------------------------------------------------------------------
 
-	EGL_RASTER_POS * pos[3];
+	RasterPos * pos[3];
 	pos[0] = pos0;
 	pos[1] = pos1;
 	pos[2] = pos2;
@@ -449,7 +449,7 @@ void Context :: RenderTriangle(EGL_RASTER_POS * pos0, EGL_RASTER_POS * pos1,
 
 	case 1: // configuration E
 		{
-			EGL_RASTER_POS pos3, pos4;
+			RasterPos pos3, pos4;
 			InterpolateRasterPos(pos0, pos1, m_MaxX, &pos3);
 			InterpolateRasterPos(pos0, pos2, m_MaxX, &pos4);
 			RenderClippedXTriangle(pos0, &pos3, &pos4);
@@ -459,7 +459,7 @@ void Context :: RenderTriangle(EGL_RASTER_POS * pos0, EGL_RASTER_POS * pos1,
 
 	case 2: // configuration D
 		{
-			EGL_RASTER_POS pos3, pos4;
+			RasterPos pos3, pos4;
 			InterpolateRasterPos(pos0, pos2, m_MaxX, &pos3);
 			InterpolateRasterPos(pos1, pos2, m_MaxX, &pos4);
 			RenderClippedXTriangle(pos0, &pos3, pos1);
@@ -476,7 +476,7 @@ void Context :: RenderTriangle(EGL_RASTER_POS * pos0, EGL_RASTER_POS * pos1,
 
 	case 5: // configuration J
 		{
-			EGL_RASTER_POS pos3, pos4, pos5, pos6;
+			RasterPos pos3, pos4, pos5, pos6;
 			InterpolateRasterPos(pos0, pos2, m_MinX, &pos3);
 			InterpolateRasterPos(pos0, pos2, m_MaxX, &pos4);
 			InterpolateRasterPos(pos0, pos1, m_MinX, &pos5);
@@ -489,7 +489,7 @@ void Context :: RenderTriangle(EGL_RASTER_POS * pos0, EGL_RASTER_POS * pos1,
 
 	case 6: // configuration I
 		{
-			EGL_RASTER_POS pos3, pos4, pos5, pos6;
+			RasterPos pos3, pos4, pos5, pos6;
 			InterpolateRasterPos(pos0, pos2, m_MinX, &pos3);
 			InterpolateRasterPos(pos0, pos2, m_MaxX, &pos4);
 			InterpolateRasterPos(pos0, pos1, m_MinX, &pos5);
@@ -503,7 +503,7 @@ void Context :: RenderTriangle(EGL_RASTER_POS * pos0, EGL_RASTER_POS * pos1,
 
 	case 7: // configuration H
 		{
-			EGL_RASTER_POS pos3, pos4;
+			RasterPos pos3, pos4;
 			InterpolateRasterPos(pos0, pos1, m_MinX, &pos3);
 			InterpolateRasterPos(pos0, pos2, m_MinX, &pos4);
 			RenderClippedXTriangle(&pos3, &pos4, pos1);
@@ -514,7 +514,7 @@ void Context :: RenderTriangle(EGL_RASTER_POS * pos0, EGL_RASTER_POS * pos1,
 
 	case 10: // configuration F
 		{
-			EGL_RASTER_POS pos3, pos4, pos5, pos6;
+			RasterPos pos3, pos4, pos5, pos6;
 			InterpolateRasterPos(pos0, pos2, m_MinX, &pos3);
 			InterpolateRasterPos(pos0, pos2, m_MaxX, &pos4);
 			InterpolateRasterPos(pos1, pos2, m_MinX, &pos5);
@@ -527,7 +527,7 @@ void Context :: RenderTriangle(EGL_RASTER_POS * pos0, EGL_RASTER_POS * pos1,
 
 	case 11: // configuration G
 		{
-			EGL_RASTER_POS pos3, pos4;
+			RasterPos pos3, pos4;
 			InterpolateRasterPos(pos1, pos2, m_MinX, &pos3);
 			InterpolateRasterPos(pos0, pos2, m_MinX, &pos4);
 			RenderClippedXTriangle(pos2, &pos3, &pos4);
@@ -545,9 +545,9 @@ void Context :: RenderTriangle(EGL_RASTER_POS * pos0, EGL_RASTER_POS * pos1,
 }
 
 
-void Context :: RenderClippedXTriangle(EGL_RASTER_POS * pos1, EGL_RASTER_POS * pos2, EGL_RASTER_POS * pos3) {
+void Context :: RenderClippedXTriangle(RasterPos * pos1, RasterPos * pos2, RasterPos * pos3) {
 
-	EGL_RASTER_POS * pos[3];
+	RasterPos * pos[3];
 	pos[0] = pos1;
 	pos[1] = pos2;
 	pos[2] = pos3;

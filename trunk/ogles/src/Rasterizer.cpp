@@ -110,3 +110,58 @@ void Context :: UpdateWindowClipping(void) {
 
 
 #endif
+
+
+
+#if 0
+	//
+	// THIS SECTION IS ONLY TEMPORARILY HERE UNTIL WE REFACTORED THE RASTERIZER
+	//
+
+
+	#ifdef EGL_USE_GPP
+		typedef GPP_TLVERTEX_V2F_C4F_T2F EGL_TLVERTEX_V2F_C4F_T2F;
+		typedef GPP_TEXTURE_PARAMS EGL_TEXTURE_PARAMS;
+		typedef GPP_RASTER_PARAMS EGL_RASTER_PARAMS;
+		typedef GppStatus EglStatus;
+	#else
+	#define EGL_MAX_TEXTURES 1
+
+	typedef struct{
+		I32		x, w;
+		U32		r, g, b, a;
+		U32		tu, tv;
+	} EGL_TLVERTEX_V2F_C4F_T2F;
+
+	typedef struct{
+		U16*	m_pTexBuffer;					//RGB565 Format
+		U16		m_Height;
+		U16		m_Width;
+	} EGL_TEXTURE_PARAMS;
+
+	typedef struct{
+		U16*	m_pFrameBuf;					//RGB565 Format
+		I32*	m_pZBuffer;
+		U32		m_rgba;							//RGBA8888 Format
+		EGL_TEXTURE_PARAMS m_texture[EGL_MAX_TEXTURES];
+	} EGL_RASTER_PARAMS;
+
+	typedef enum {
+
+		gppStsNoErr			=  0,				// OK MODE
+
+		gppStsNullPtrErr    = -5,				// ERROR MODES
+		gppStsBadArgErr     = -4,
+		gppStsDivByZeroErr	= -3,
+		gppStsOverFlowErr   = -2,
+		gppStsUnderFlowErr  = -1,
+		
+	} EglStatus;								// NOTE: Error codes are returned 
+
+	#endif
+
+
+	typedef EglStatus (*ScanLineFunction)(EGL_TLVERTEX_V2F_C4F_T2F* startPt, EGL_TLVERTEX_V2F_C4F_T2F* endPt, EGL_RASTER_PARAMS* pRaster_Params);
+
+
+#endif

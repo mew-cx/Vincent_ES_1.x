@@ -33,17 +33,25 @@ class Texture;
 
 namespace EGL {
 
-	typedef struct {
-		U32		tu, tv;				// u and v coordinates for texture mapping
-	} TEX_COORD;
+	// ----------------------------------------------------------------------
+	// u and v coordinates for texture mapping
+	// ----------------------------------------------------------------------
+	struct TexCoord {
+		EGL_Fixed		tu, tv;		// texture coordinates between 0 and 1
+	};
 
 
-	typedef struct RasterPos {
-		Vec4D						m_WindowsCoords;	
-		FractionalColor				m_Color;
-		TEX_COORD					m_TextureCoords;
+	// ----------------------------------------------------------------------
+	// Vertex information as input for rasterizer
+	// ----------------------------------------------------------------------
+	struct RasterPos {
+		Vec4D				m_WindowsCoords;	// x, y window coords
+												// z
+												// w
+		FractionalColor		m_Color;			// color in range 0..255
+		TexCoord			m_TextureCoords;	// texture coords 0..1
 
-	} EGL_RASTER_POS;
+	};
 
 
 
@@ -79,8 +87,6 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		// Whole framebuffer operations
 		// ----------------------------------------------------------------------
-		void Clear(U32 mask);
-
 		void ReadPixels(I32 x, I32 y, U32 width, U32 height,
 			PixelFormat format, PixelType type, void *pixels);
 
