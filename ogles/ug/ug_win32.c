@@ -1,0 +1,439 @@
+/*
+ * GLESonGL implementation
+ * Version:  1.0
+ *
+ * Copyright (C) 2003  David Blythe   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * DAVID BLYTHE BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <GLES/egl.h>
+#include <Windows.h>
+#include <aygshell.h>
+
+#include "ug.h"
+
+#ifndef DEBUG
+#define DEBUG(x)
+#endif
+
+typedef struct {
+    void (*idle)(UGWindow w);
+    NativeDisplayType dpy;
+    struct ugwindow* win, * winlist;
+    EGLDisplay egldpy;
+} UGCtx_t;
+
+typedef struct ugwindow {
+    HWND win;
+    int width, height;
+    int redraw;
+    void (*draw)(UGWindow w);
+    void (*reshape)(UGWindow w, int width,int height);
+    void (*kbd)(UGWindow w, int key, int x, int y);
+    void (*pointer)(UGWindow w, int button, int state, int x, int y);
+    void (*motion)(UGWindow w, int x, int y);
+    UGCtx_t* ug;
+    struct ugwindow* next, * prev;
+    EGLSurface surface;
+    EGLConfig eglconfig;
+    EGLContext eglctx;
+} UGWindow_t;
+
+static wchar_t WINDOW_CLASS_NAME[] = L"ug window";
+static SHACTIVATEINFO s_sai;
+static HINSTANCE instance;
+
+
+UGCtx APIENTRY
+ugInit(void) {
+    UGCtx_t* ug = malloc(sizeof *ug);
+    if (ug) {
+		memset(ug, 0, sizeof *ug);
+		if (!(ug->dpy = GetDC(0))) {
+abort:
+			free(ug);
+			return 0;
+		}
+		ug->egldpy = eglGetDisplay(ug->dpy);
+		if (!eglInitialize(ug->egldpy, NULL, NULL)) goto abort;
+    }
+    return (UGCtx)ug;
+}
+
+void APIENTRY
+ugFini(UGCtx ug) {
+    /*XXXblythe open windows?*/
+    UGCtx_t* _ug = (UGCtx_t*)ug;
+    eglTerminate(_ug->egldpy);
+    free(_ug);
+}
+
+UGCtx APIENTRY ugCtxFromWin(UGWindow uwin) {
+    return (UGCtx)((UGWindow_t*)uwin)->ug;
+}
+
+static void
+bind_context(UGCtx_t* ug, UGWindow_t* w) {
+    if (!eglMakeCurrent(ug->egldpy, w->surface, w->surface, w->eglctx)) {
+		printf("botch makecurrent\n");
+		exit(1);
+    }
+    ug->win = w;
+}
+
+UGWindow APIENTRY
+ugCreateWindow(UGCtx ug,  const char* config,
+		const char* title, int width, int height, int x, int y) {
+    UGWindow_t *w = malloc(sizeof *w);
+    UGCtx_t* _ug = (UGCtx_t*)ug;
+
+    if (w) {
+		EGLint n, vid;
+		EGLConfig configs[1];
+		wchar_t * str;
+		int size;
+
+		/*XXXblythe horrible hack, need to parse config string*/
+		static int attribs[] = { EGL_RED_SIZE, 1, EGL_NONE }; /*XXXblythe*/
+		static int attribs2[] = {EGL_RED_SIZE, 1, EGL_DEPTH_SIZE, 1, EGL_NONE};
+		int depth = strstr(config, "UG_DEPTH") != 0;
+
+		memset(w, 0, sizeof *w);
+		w->ug = _ug;
+		if (!eglChooseConfig(_ug->egldpy, depth ? attribs2 : attribs, configs, 1, &n)) {
+			free(w);
+			return 0;
+		}
+		w->eglconfig = configs[0];
+		eglGetConfigAttrib(_ug->egldpy, configs[0], EGL_NATIVE_VISUAL_ID, &vid);
+
+		size = MultiByteToWideChar( CP_ACP, 0, title, -1,
+			0, 0);
+		str = malloc(size * sizeof(wchar_t));
+		MultiByteToWideChar( CP_ACP, 0, title, -1,
+			str, size);
+
+		w->win = CreateWindow(WINDOW_CLASS_NAME, str, WS_VISIBLE,
+			x, y, width, height, NULL, NULL, instance, NULL);
+
+		free(str);
+
+		if (!w->win)
+		{	
+			free(w);
+			return 0;
+		}
+
+		w->next = _ug->winlist;
+		_ug->winlist = w;
+		w->prev = 0;
+		if (w->next) w->next->prev = w;
+		w->surface = eglCreateWindowSurface(_ug->egldpy, w->eglconfig, (NativeWindowType)(w->win), 0);
+		/*XXXblythe share*/
+		w->eglctx = eglCreateContext(_ug->egldpy, w->eglconfig, NULL, NULL);
+		bind_context(_ug, w);
+    }
+    return (UGWindow)w;
+}
+
+void APIENTRY
+ugDestroyWindow(UGWindow uwin) {
+    UGWindow_t* w = (UGWindow_t*)uwin;
+    UGCtx_t* ug = w->ug;
+    eglDestroySurface(ug->egldpy, w->surface);
+	DestroyWindow(w->win);
+    if (ug->winlist == w) ug->winlist = w->next;
+    if (w->next) w->next->prev = w->prev;
+    if (w->prev) w->prev->next = w->next;
+    free(w);
+}
+
+void APIENTRY
+ugReshapeFunc(UGWindow uwin, void (*f)(UGWindow uwin, int width, int height)) {
+    UGWindow_t *w = (UGWindow_t*)uwin;
+    w->reshape = f;
+}
+
+void APIENTRY
+ugDisplayFunc(UGWindow uwin, void (*f)(UGWindow uwin)) {
+    UGWindow_t *w = (UGWindow_t*)uwin;
+    w->draw = f;
+}
+
+void APIENTRY
+ugKeyboardFunc(UGWindow uwin, void (*f)(UGWindow uwin, int key, int x, int y)) {
+    UGWindow_t *w = (UGWindow_t*)uwin;
+    w->kbd = f;
+}
+
+void APIENTRY
+ugPointerFunc(UGWindow uwin, void (*f)(UGWindow uwin, int button, int state, int x, int y)) {
+    UGWindow_t *w = (UGWindow_t*)uwin;
+    w->pointer = f;
+}
+
+void APIENTRY
+ugMotionFunc(UGWindow uwin, void (*f)(UGWindow uwin, int x, int y)) {
+    UGWindow_t *w = (UGWindow_t*)uwin;
+    w->motion = f;
+}
+
+void APIENTRY
+ugIdleFunc(UGCtx ug, void (*f)(UGWindow w)) {
+    UGCtx_t *_ug = (UGCtx_t*)ug;
+    _ug->idle = f;
+}
+
+static UGCtx_t * context;
+
+static int GetKey(int vk) {
+	switch (vk) {
+	case VK_F1:			return UG_KEY_F1;
+	case VK_F2:			return UG_KEY_F2;
+	case VK_F3:			return UG_KEY_F3;
+	case VK_F4:			return UG_KEY_F4;
+	case VK_F5:			return UG_KEY_F5;
+	case VK_F6:			return UG_KEY_F6;
+	case VK_F7:			return UG_KEY_F7;
+	case VK_F8:			return UG_KEY_F8;
+	case VK_F9:			return UG_KEY_F9;
+	case VK_F10:		return UG_KEY_F10;
+	case VK_F11:		return UG_KEY_F11;
+	case VK_F12:		return UG_KEY_F12;
+	case VK_LEFT:		return UG_KEY_LEFT;
+	case VK_UP:			return UG_KEY_UP;
+	case VK_RIGHT:		return UG_KEY_RIGHT;
+	case VK_DOWN:		return UG_KEY_DOWN;
+	case VK_PRIOR:		return UG_KEY_PAGE_UP;
+	case VK_NEXT:		return UG_KEY_PAGE_DOWN;
+	case VK_HOME:		return UG_KEY_HOME;
+	case VK_END:		return UG_KEY_END;
+	case VK_INSERT:		return UG_KEY_INSERT;
+	default:			return 0;
+	}
+}
+
+//
+//  FUNCTION: WndProc(HWND, unsigned, WORD, LONG)
+//
+//  PURPOSE:  Processes messages for the main window.
+//
+//  WM_COMMAND	- process the application menu
+//  WM_PAINT	- Paint the main window
+//  WM_DESTROY	- post a quit message and return
+//
+//
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	UGWindow_t* w;
+	int key;
+	POINT point;
+
+	for(w = context->winlist; w; w = w->next) {
+		if (w->win == hWnd) goto found;
+	}
+
+	return DefWindowProc(hWnd, message, wParam, lParam);
+
+found:
+	bind_context(context, w);
+	
+	switch (message) 
+	{
+		case WM_COMMAND:
+			break;
+
+		case WM_CREATE:
+            // Initialize the shell activate info structure
+            memset (&s_sai, 0, sizeof (s_sai));
+            s_sai.cbSize = sizeof (s_sai);
+			break;
+
+		case WM_PAINT:
+			if (w->draw) {
+				(w->draw)((UGWindow) w);
+			}
+
+			break; 
+
+		case WM_SIZE:
+			if (w->reshape) {
+				(w->reshape)((UGWindow)w, LOWORD(lParam), HIWORD(lParam));
+			}
+
+			break;
+
+		case WM_MBUTTONDOWN:
+			if (w->pointer) {
+				int but, state = UG_BUT_DOWN;
+
+				if (wParam & MK_LBUTTON)
+					but = UG_BUT_LEFT;
+				else if (wParam & MK_MBUTTON)
+					but = UG_BUT_MIDDLE;
+				else if (wParam & MK_RBUTTON)
+					but = UG_BUT_RIGHT;
+				else
+					break;
+
+			(*w->pointer)((UGWindow)w, but, state, LOWORD(lParam), HIWORD(lParam));
+			}
+	    break;
+
+		case WM_TIMER:
+			if (context->idle) {
+				(context->idle)((UGWindow)w);
+			}
+
+			break;
+
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			break;
+
+		case WM_ACTIVATE:
+            // Notify shell of our activate message
+			SHHandleWMActivate(hWnd, wParam, lParam, &s_sai, FALSE);
+     		break;
+
+		case WM_SETTINGCHANGE:
+			SHHandleWMSettingChange(hWnd, wParam, lParam, &s_sai);
+     		break;
+
+		case WM_CHAR:
+			if (w->kbd) {
+				GetCursorPos(&point);
+				(w->kbd)((UGWindow)w, wParam, point.x, point.y);
+			}
+
+			break;
+
+		case WM_KEYDOWN:
+			key = GetKey((int) lParam);
+
+			if (key) {
+				if (w->kbd) {
+					GetCursorPos(&point);
+					(w->kbd)((UGWindow)w, key, point.x, point.y);
+				}
+			} else {
+				return DefWindowProc(hWnd, message, wParam, lParam);
+			}
+
+			break;
+
+		default:
+			return DefWindowProc(hWnd, message, wParam, lParam);
+   }
+
+   return 0;
+}
+
+void APIENTRY
+ugMainLoop(UGCtx ug) {
+	MSG msg;
+
+	context = (UGCtx_t *) ug;
+
+	// Main message loop:
+	while (GetMessage(&msg, NULL, 0, 0)) 
+	{
+		//if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) 
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+}
+
+void APIENTRY
+ugPostRedisplay(UGWindow uwin) {
+    UGWindow_t* w = (UGWindow_t*)uwin;
+    InvalidateRect(w->win, 0, TRUE);
+}
+
+void APIENTRY
+ugSwapBuffers(UGWindow uwin) {
+    UGWindow_t* w = (UGWindow_t*)uwin;
+    eglSwapBuffers(w->ug->dpy, w->surface);
+}
+
+static ATOM UgRegisterClass(HINSTANCE hInstance, LPTSTR szWindowClass)
+{
+	WNDCLASS	wc;
+
+    wc.style			= CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc		= (WNDPROC) WndProc;
+    wc.cbClsExtra		= 0;
+    wc.cbWndExtra		= 0;
+    wc.hInstance		= hInstance;
+    wc.hIcon			= 0;
+    wc.hCursor			= 0;
+    wc.hbrBackground	= (HBRUSH) GetStockObject(WHITE_BRUSH);
+    wc.lpszMenuName		= 0;
+    wc.lpszClassName	= szWindowClass;
+
+	return RegisterClass(&wc);
+}
+
+
+extern int main(int argc, const char * argv[]);
+
+#define MAX_ARGS 64
+
+int WINAPI WinMain(	HINSTANCE hInstance,
+					HINSTANCE hPrevInstance,
+					LPTSTR    lpCmdLine,
+					int       nCmdShow)
+{
+	int argc = 1;
+	const char * argv[MAX_ARGS];
+	int size;
+	char * str = 0;
+	char * pch;
+	int result;
+
+	instance = hInstance;
+	UgRegisterClass(hInstance, WINDOW_CLASS_NAME);
+
+	/* convert unicode string to ansi */
+	size = WideCharToMultiByte( CP_ACP, 0, lpCmdLine, -1,
+        str, 0, NULL, NULL );
+	str = malloc(size);
+	WideCharToMultiByte( CP_ACP, 0, lpCmdLine, -1,
+        str, size, NULL, NULL );
+
+	/* break ansi string into components */
+
+	argv[0] = "ctkw";
+
+	pch = strtok (str," ");
+
+	while (pch != NULL) {
+		argv[argc++] = pch;
+	    pch = strtok (NULL, " ");
+	}
+
+	result = main(argc, argv);
+
+	return result;
+}
