@@ -37,6 +37,8 @@ typedef HBITMAP NativePixmapType;
 
 #include <e32def.h>
 
+#ifdef __cplusplus
+
 class RWindow;
 class CWindowGc;
 class CFbsBitmap;
@@ -44,6 +46,14 @@ class CFbsBitmap;
 typedef CWindowGc *		NativeDisplayType;
 typedef RWindow *		NativeWindowType;
 typedef CFbsBitmap * 	NativePixmapType;
+
+#else
+
+typedef void *			NativeDisplayType;
+typedef void *			NativeWindowType;
+typedef void *			NativePixmapType;
+
+#endif
 
 #define EGL_DEFAULT_DISPLAY ((NativeDisplayType) 0)
 
