@@ -52,6 +52,7 @@
 
 #include "OGLES.h"
 #include <math.h>
+#include <assert.h>
 
 
 // --------------------------------------------------------------------------
@@ -181,6 +182,7 @@ inline OGLES_API EGL_Fixed EGL_Mul(EGL_Fixed a, EGL_Fixed b) {
 //	b			-	divisor
 // --------------------------------------------------------------------------
 inline OGLES_API EGL_Fixed EGL_Div(EGL_Fixed a, EGL_Fixed b) {
+	assert(b);
 	return (EGL_Fixed) ((((I64) a) << EGL_PRECISION) / ((I64) b));
 }
 
@@ -192,6 +194,7 @@ inline OGLES_API EGL_Fixed EGL_Div(EGL_Fixed a, EGL_Fixed b) {
 //	value		-	the number whose inverse should be calculated
 // --------------------------------------------------------------------------
 inline OGLES_API EGL_Fixed EGL_Inverse(EGL_Fixed value) {
+	assert(value);
 	if (value == 0) {
 		return EGL_ONE;
 	} else {
@@ -219,6 +222,7 @@ inline OGLES_API EGL_Fixed EGL_Sqrt(EGL_Fixed value) {
 //					calculated
 // --------------------------------------------------------------------------
 inline OGLES_API EGL_Fixed EGL_InvSqrt(EGL_Fixed value) {
+	assert(value);
 	return EGL_FixedFromFloat(1.0f / (float) sqrt(EGL_FloatFromFixed(value)));
 }
 
@@ -273,6 +277,8 @@ inline OGLES_API EGL_Fixed EGL_Mul(EGL_Fixed a, EGL_Fixed b) {
 //	b			-	divisor
 // --------------------------------------------------------------------------
 inline OGLES_API EGL_Fixed EGL_Div(EGL_Fixed a, EGL_Fixed b) {
+	assert(b);
+	assert(-b);
 	I32 result;
 	gppDiv_16_32s(a, b, &result);
 	return result;

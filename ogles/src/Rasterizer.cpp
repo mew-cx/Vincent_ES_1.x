@@ -761,6 +761,11 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 	// In the edge buffer, z, tu and tv are actually divided by w
 
 	FractionalColor baseColor = start.m_Color;
+
+	if (!(end.m_WindowCoords.x - start.m_WindowCoords.x)) {
+		return;
+	}
+
 	EGL_Fixed invSpan = EGL_Inverse(end.m_WindowCoords.x - start.m_WindowCoords.x);
 
 	FractionalColor colorIncrement = (end.m_Color - start.m_Color) * invSpan;
@@ -1134,7 +1139,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	} else {
 		invDeltaY2 = 0;
 
-		incX2 = 0;
+		incX2 = pos2.m_WindowCoords.x - pos1.m_WindowCoords.x;
 		incR2 = 0;
 		incG2 = 0;
 		incB2 = 0;
@@ -1182,7 +1187,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	} else {
 		invDeltaY3 = 0;
 
-		incX3 = 0;
+		incX3 = pos3.m_WindowCoords.x - pos1.m_WindowCoords.x;
 		incR3 = 0;
 		incG3 = 0;
 		incB3 = 0;
@@ -1228,7 +1233,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	} else {
 		invDeltaY23 = 0;
 
-		incX23 = 0;
+		incX23 = pos3.m_WindowCoords.x - pos2.m_WindowCoords.x;
 		incR23 = 0;
 		incG23 = 0;
 		incB23 = 0;
