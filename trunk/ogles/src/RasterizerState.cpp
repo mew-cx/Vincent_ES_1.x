@@ -51,11 +51,7 @@ RasterizerState :: RasterizerState():
 
 	// fog
 	m_FogEnabled(false),
-	m_FogMode(FogModeExp),
 	m_FogColor(Color(0, 0, 0, 0)),
-	m_FogStart(0),
-	m_FogEnd(EGL_ONE),
-	m_FogDensity(EGL_ONE),
 
 	// initial values for alpha test
 	m_AlphaTestEnabled(false),
@@ -99,11 +95,7 @@ RasterizerState :: RasterizerState(const RasterizerState& other):
 
 	// fog
 	m_FogEnabled(other.m_FogEnabled),
-	m_FogMode(other.m_FogMode),
 	m_FogColor(other.m_FogColor),
-	m_FogStart(other.m_FogStart),
-	m_FogEnd(other.m_FogEnd),
-	m_FogDensity(other.m_FogDensity),
 
 	// initial values for alpha test
 	m_AlphaTestEnabled(other.m_AlphaTestEnabled),
@@ -151,11 +143,7 @@ RasterizerState& RasterizerState :: operator=(const RasterizerState& other) {
 
 	// fog
 	m_FogEnabled = other.m_FogEnabled;
-	m_FogMode = other.m_FogMode;
 	m_FogColor = other.m_FogColor;
-	m_FogStart = other.m_FogStart;
-	m_FogEnd = other.m_FogEnd;
-	m_FogDensity = other.m_FogDensity;
 
 	// initial values for alpha test
 	m_AlphaTestEnabled = other.m_AlphaTestEnabled;

@@ -616,6 +616,19 @@ namespace EGL {
 
 
 		// ----------------------------------------------------------------------
+		// Return the Z coordinate after transformation using this matrix
+		// Used for fog calculation, which requires eye distance
+		// ----------------------------------------------------------------------
+		inline EGL_Fixed GetTransformedZ(const Vec3D& vector) const {
+			return
+				EGL_Mul(vector.x(), Element(2, 0)) +
+				EGL_Mul(vector.y(), Element(2, 1)) +
+				EGL_Mul(vector.z(), Element(2, 2)) +
+				Element(2, 3);
+		}
+
+
+		// ----------------------------------------------------------------------
 		// Transform a 4-D vector using this matrix. 
 		//
 		// Parameters:

@@ -467,6 +467,44 @@ void Context :: SelectArrayElement(int index) {
 }
 
 
+namespace {
+
+	inline EGL_Fixed Exp(EGL_Fixed value) {
+		return EGL_FixedFromFloat(exp(EGL_FloatFromFixed(-value)));
+	}
+
+	inline EGL_Fixed Exp2(EGL_Fixed value) {
+		return Exp(EGL_Mul(value, value));
+	}
+}
+
+
+// --------------------------------------------------------------------------
+// Calculate the fog density for a vertex at the given distance
+// --------------------------------------------------------------------------
+EGL_Fixed Context :: FogDensity(EGL_Fixed eyeDistance) const {
+
+	if (eyeDistance <= m_FogStart) {
+		return EGL_ONE;
+	} else if (eyeDistance >= m_FogEnd) {
+		return 0;
+	}
+
+	switch (m_FogMode) {
+		default:
+		case FogLinear:
+			return EGL_Div(m_FogEnd - eyeDistance, m_FogEnd - m_FogStart);
+
+		case FogModeExp:
+			return Exp(EGL_Mul(-m_FogDensity, eyeDistance));
+
+		case FogModeExp2:
+			return Exp2(EGL_Mul(-m_FogDensity, eyeDistance));
+	}
+
+}
+
+
 // --------------------------------------------------------------------------
 // Perform lightning and geometry transformation on the current vertex
 // and store the results in buffer for the rasterization stage of the
@@ -480,6 +518,9 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 
 	// apply model view matrix to vertex coordinate -> eye coordinates vertex
 	Vec4D eyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
+
+	EGL_Fixed eyeDistance = 
+		m_ModelViewMatrixStack.CurrentMatrix().GetTransformedZ(m_CurrentVertex);
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal = (m_InverseModelViewMatrix * m_CurrentNormal).Project();
@@ -534,4 +575,8 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 	Vec4D outCoords = m_TextureMatrixStack.CurrentMatrix() * inCoords;
 	rasterPos->m_TextureCoords.tu = outCoords.x();
 	rasterPos->m_TextureCoords.tv = outCoords.y();
+
+	// populate fog density here...
+	rasterPos->m_FogDensity = FogDensity(eyeDistance);
+
 }

@@ -84,24 +84,19 @@ namespace EGL {
 		ScreenCoord			m_WindowCoords;		
 		FractionalColor		m_Color;			// color in range 0..255
 		TexCoord			m_TextureCoords;	// texture coords 0..1
+		EGL_Fixed			m_FogDensity;		// fog density at this vertex
 	};
 
 	struct EdgePos {
 		EdgeCoord			m_WindowCoords;		
 		FractionalColor		m_Color;			// color in range 0..255
 		TexCoord			m_TextureCoords;	// texture coords 0..1
-
+		EGL_Fixed			m_FogDensity;		// fog density at this vertex
 	};
 
 
 
 	class OGLES_API Rasterizer {
-
-	private:
-		enum {
-			FOG_INTERVAL_BITS = 8,
-			FOG_INTERVAL = 1 << FOG_INTERVAL_BITS				// 256 steps for 0..1 depth
-		};
 
 	public:
 		enum PixelFormat {
@@ -180,11 +175,10 @@ namespace EGL {
 		// Rasterization of fragment
 		// ----------------------------------------------------------------------
 
-		void Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv, const Color& baseColor);
+		void Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv, 
+			EGL_Fixed fogDensity, const Color& baseColor);
 			// will have special cases based on settings
 			// the coordinates are integer coordinates
-
-		void InitFogTable();
 
 	private:
 		// ----------------------------------------------------------------------
@@ -208,8 +202,6 @@ namespace EGL {
 		EGL_Fixed				m_MaxY;
 
 		int						m_MipMapLevel;
-
-		U16						m_FogTable[FOG_INTERVAL + 1];	// we can optimize later
 
 		bool					m_IsPrepared;
 
