@@ -718,36 +718,100 @@ inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
 
 	if (m_State->m_LogicOpEnabled) {
 
-		U16 dstValue = rasterInfo->ColorBuffer[offset];
-		U8 dstAlpha = rasterInfo->AlphaBuffer[offset];
+		U16 oldValue = rasterInfo->ColorBuffer[offset];
+		U8 oldAlpha = rasterInfo->AlphaBuffer[offset];
 
-		U32 newValue = maskedColor.ConvertToRGBA();
-		U32 oldValue = Color::From565A(dstValue, dstAlpha).ConvertToRGBA();
-		U32 value;
+		U16 newValue = maskedColor.ConvertTo565();
+		U8 newAlpha = maskedColor.A();
+
+		U16 value;
+		U8 alpha;
 
 		switch (m_State->m_LogicOpcode) {
 			default:
-			case RasterizerState:: LogicOpClear:		value = 0;						break;
-			case RasterizerState:: LogicOpAnd:			value = newValue & oldValue;	break;
-			case RasterizerState:: LogicOpAndReverse:	value = newValue & ~oldValue;	break;
-			case RasterizerState:: LogicOpCopy:			value = newValue;				break;
-			case RasterizerState:: LogicOpAndInverted:	value = ~newValue & oldValue;	break;
-			case RasterizerState:: LogicOpNoop:			value = oldValue;				break;
-			case RasterizerState:: LogicOpXor:			value = newValue ^ oldValue;	break;
-			case RasterizerState:: LogicOpOr:			value = newValue | oldValue;	break;
-			case RasterizerState:: LogicOpNor:			value = ~(newValue | oldValue); break;
-			case RasterizerState:: LogicOpEquiv:		value = ~(newValue ^ oldValue); break;
-			case RasterizerState:: LogicOpInvert:		value = ~oldValue;				break;
-			case RasterizerState:: LogicOpOrReverse:	value = newValue | ~oldValue;	break;
-			case RasterizerState:: LogicOpCopyInverted:	value = ~newValue;				break;
-			case RasterizerState:: LogicOpOrInverted:	value = ~newValue | oldValue;	break;
-			case RasterizerState:: LogicOpNand:			value = ~(newValue & oldValue); break;
-			case RasterizerState:: LogicOpSet:			value = 0xFFFF;					break;
+			case RasterizerState:: LogicOpClear:		
+				value = 0; 
+				alpha = 0;						
+				break;
+
+			case RasterizerState:: LogicOpAnd:			
+				value = newValue & oldValue;	
+				alpha = newAlpha & oldAlpha;
+				break;
+
+			case RasterizerState:: LogicOpAndReverse:	
+				value = newValue & ~oldValue;	
+				alpha = newAlpha & ~oldAlpha;	
+				break;
+
+			case RasterizerState:: LogicOpCopy:			
+				value = newValue;				
+				alpha = newAlpha;				
+				break;
+
+			case RasterizerState:: LogicOpAndInverted:	
+				value = ~newValue & oldValue;	
+				alpha = ~newAlpha & oldAlpha;	
+				break;
+
+			case RasterizerState:: LogicOpNoop:			
+				value = oldValue;				
+				alpha = oldAlpha;				
+				break;
+
+			case RasterizerState:: LogicOpXor:			
+				value = newValue ^ oldValue;	
+				alpha = newAlpha ^ oldAlpha;	
+				break;
+
+			case RasterizerState:: LogicOpOr:			
+				value = newValue | oldValue;	
+				alpha = newAlpha | oldAlpha;	
+				break;
+
+			case RasterizerState:: LogicOpNor:			
+				value = ~(newValue | oldValue); 
+				alpha = ~(newAlpha | oldAlpha); 
+				break;
+
+			case RasterizerState:: LogicOpEquiv:		
+				value = ~(newValue ^ oldValue); 
+				alpha = ~(newAlpha ^ oldAlpha); 
+				break;
+
+			case RasterizerState:: LogicOpInvert:		
+				value = ~oldValue;				
+				alpha = ~oldAlpha;				
+				break;
+
+			case RasterizerState:: LogicOpOrReverse:	
+				value = newValue | ~oldValue;	
+				alpha = newAlpha | ~oldAlpha;	
+				break;
+
+			case RasterizerState:: LogicOpCopyInverted:	
+				value = ~newValue;				
+				alpha = ~newAlpha;				
+				break;
+
+			case RasterizerState:: LogicOpOrInverted:	
+				value = ~newValue | oldValue;	
+				alpha = ~newAlpha | oldAlpha;	
+				break;
+
+			case RasterizerState:: LogicOpNand:			
+				value = ~(newValue & oldValue); 
+				alpha = ~(newAlpha & oldAlpha); 
+				break;
+
+			case RasterizerState:: LogicOpSet:			
+				value = 0xFFFF;					
+				alpha = 0xFF;					
+				break;
 		}
 
-		maskedColor = Color::FromRGBA(value);
-		rasterInfo->ColorBuffer[offset] = maskedColor.ConvertTo565();
-		rasterInfo->AlphaBuffer[offset] = maskedColor.A();
+		rasterInfo->ColorBuffer[offset] = value;
+		rasterInfo->AlphaBuffer[offset] = alpha;
 
 	} else {
 		rasterInfo->ColorBuffer[offset] = maskedColor.ConvertTo565();

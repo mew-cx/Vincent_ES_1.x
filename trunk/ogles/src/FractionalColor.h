@@ -120,10 +120,10 @@ namespace EGL {
 		// convert fixed point to byte format
 		inline operator Color() const {
 			return Color(
-				EGL_IntFromFixed(0xFF * r),
-				EGL_IntFromFixed(0xFF * g),
-				EGL_IntFromFixed(0xFF * b),
-				EGL_IntFromFixed(0xFF * a));
+				EGL_IntFromFixed((0x1FF * r) >> 1),
+				EGL_IntFromFixed((0x1FF * g) >> 1),
+				EGL_IntFromFixed((0x1FF * b) >> 1),
+				EGL_IntFromFixed((0x1FF * a) >> 1));
 		}
 
 		inline void Clamp() {
