@@ -320,9 +320,20 @@ namespace EGL {
 		// Private Functions - Rendering of individual elements
 		// ----------------------------------------------------------------------
 
+private:
 		void SelectArrayElement(int index);
 		void CurrentValuesToRasterPos(RasterPos * rasterPos);
 		void InterpolateRasterPos(RasterPos * a, RasterPos * b, GLfixed x, RasterPos * result);
+
+private:
+		// ----------------------------------------------------------------------
+		// Perform clipping, depth division & actual call into rasterizer
+		// ----------------------------------------------------------------------
+		void RenderPoint(RasterPos& point);
+		void RenderLine(RasterPos& from, RasterPos& to);
+		void RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c);
+
+		void ClipCoordsToWindowCoords(RasterPos & pos);
 
 	private:
 		GLenum				m_LastError;
@@ -431,6 +442,8 @@ namespace EGL {
 												// thread
 		bool				m_ViewportInitialized;	// if true, the viewport has been
 													// initialized
+
+		RasterPos			m_Temporary[16];	// temporary coordinates
 	};
 
 
@@ -451,6 +464,19 @@ namespace EGL {
 
 	inline Surface * Context :: GetReadSurface() const {
 		return m_ReadSurface;
+	}
+
+	inline void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
+
+		// perform depth division
+		I32 invDenominator = EGL_Inverse(pos.m_ClipCoords.w());
+		Vec3D viewPortScale = m_ViewportScale * invDenominator;
+
+		pos.m_WindowCoords.x = EGL_Mul(pos.m_ClipCoords.x(), viewPortScale.x()) + m_ViewportOrigin.x();
+		pos.m_WindowCoords.y = EGL_Mul(pos.m_ClipCoords.y(), viewPortScale.y()) + m_ViewportOrigin.y();
+		pos.m_WindowCoords.w = pos.m_ClipCoords.w() >> 12;
+		// TODO: adjustment of w coordinate based on DepthRange setting
+
 	}
 
 }

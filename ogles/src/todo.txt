@@ -9,21 +9,24 @@ Completion:
 - Mipmapping for textures
 - Move allocation of TLS variables to DLL initialization code
 - Build script to allow creation of all versions of libraries
-- Make distrubutions available on SF
 - Compressed bitmaps
 - rescale normal vs. normalize
+- depth coordinate scaling/transform
 
 
 Optimization:
 -------------
 
-- Math code for XScale
 - Create configuration header file
+
 - Make stencil support configuration parameter
+
 - Create specialized rasterization functions
 - merge matrix multiplications for setup
 - transform lights instead of transforming eye normals
 - Create specialized setup functions
+
+
 - investigate blitting options
 - JIT and shading language
 

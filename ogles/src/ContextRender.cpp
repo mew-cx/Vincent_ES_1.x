@@ -490,16 +490,7 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 	}
 
 	// apply projection matrix to eye coordinates 
-	Vec4D clipCoords = m_ProjectionMatrixStack.CurrentMatrix() * eyeCoords;
-
-	// perform depth division
-	I32 invDenominator = EGL_Inverse(clipCoords.w());
-	Vec3D viewPortScale = m_ViewportScale * invDenominator;
-
-	rasterPos->m_WindowCoords.x = EGL_Mul(clipCoords.x(), viewPortScale.x()) + m_ViewportOrigin.x();
-	rasterPos->m_WindowCoords.y = EGL_Mul(clipCoords.y(), viewPortScale.y()) + m_ViewportOrigin.y();
-	rasterPos->m_WindowCoords.w = clipCoords.w() >> 12;
-	// TODO: adjustment of w coordinate based on DepthRange setting
+	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * eyeCoords;
 
 	if (m_LightingEnabled) {
 		// for each light that is turned on, call into calculation
