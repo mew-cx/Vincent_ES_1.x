@@ -131,7 +131,7 @@ void Context :: Lightx(GLenum light, GLenum pname, GLfixed param) {
 		return;
 	}
 
-	Light * pLight = m_Lights + (light - light);
+	Light * pLight = m_Lights + (light - GL_LIGHT0);
 
 	switch (pname) {
 	case GL_SPOT_EXPONENT:
@@ -166,7 +166,7 @@ void Context :: Lightxv(GLenum light, GLenum pname, const GLfixed *params) {
 		return;
 	}
 
-	Light * pLight = m_Lights + (light - light);
+	Light * pLight = m_Lights + (light - GL_LIGHT0);
 
 	switch (pname) {
 	case GL_AMBIENT:
