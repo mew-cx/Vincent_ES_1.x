@@ -69,6 +69,10 @@ void Context :: Scissor(GLint x, GLint y, GLsizei width, GLsizei height) {
 
 void Context :: DepthRangex(GLclampx zNear, GLclampx zFar) { 
 
-	GetRasterizerState()->SetDepthRange(zNear, zFar);
+	zNear = EGL_CLAMP(zNear, 0, EGL_ONE);
+	zFar = EGL_CLAMP(zFar, 0, EGL_ONE);
+
+	m_DepthRangeBase = (zNear + zFar) / 2;
+	m_DepthRangeFactor = (zFar - zNear) / 2;
 }
 

@@ -422,6 +422,8 @@ private:
 		FogMode				m_FogMode;			// the fog color is still in the
 		EGL_Fixed			m_FogStart, m_FogDensity, m_FogEnd;	// rasterizer state
 
+		EGL_Fixed			m_DepthRangeBase, m_DepthRangeFactor;
+
 		bool				m_LightingEnabled;	// is lightning enabled?
 		bool				m_CullFaceEnabled;
 		bool				m_ReverseFaceOrientation;
@@ -492,12 +494,17 @@ private:
 
 		// perform depth division
 		I32 invDenominator = EGL_Inverse(pos.m_ClipCoords.w());
-		Vec3D viewPortScale = m_ViewportScale * invDenominator;
 
-		pos.m_WindowCoords.x = EGL_Mul(pos.m_ClipCoords.x(), viewPortScale.x()) + m_ViewportOrigin.x();
-		pos.m_WindowCoords.y = EGL_Mul(pos.m_ClipCoords.y(), viewPortScale.y()) + m_ViewportOrigin.y();
-		pos.m_WindowCoords.w = pos.m_ClipCoords.w() >> 12;
-		// TODO: adjustment of w coordinate based on DepthRange setting
+		pos.m_WindowCoords.x = 
+			EGL_Mul(pos.m_ClipCoords.x(), EGL_Mul(m_ViewportScale.x(), invDenominator)) + m_ViewportOrigin.x();
+
+		pos.m_WindowCoords.y = 
+			EGL_Mul(pos.m_ClipCoords.y(), EGL_Mul(m_ViewportScale.y(), invDenominator)) + m_ViewportOrigin.y();
+
+		pos.m_WindowCoords.z = 
+			EGL_Mul(pos.m_ClipCoords.z(), EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase;
+
+		pos.m_WindowCoords.w = pos.m_ClipCoords.w();
 
 	}
 
