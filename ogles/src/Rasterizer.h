@@ -348,13 +348,21 @@ namespace EGL {
 	}
 
 
-#	if (defined(ARM) || defined(_ARM_))
+#	if EGL_USE_JIT
 
 	inline void Rasterizer :: RasterPoint(const RasterPos& point) {
 		m_PointFunction(&m_RasterInfo, &point);
 	}
 
-#	else 
+	inline void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
+		m_LineFunction(&m_RasterInfo, &p_from, &p_to);
+	}
+
+	inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos & start, const EdgePos & end) {
+		m_ScanlineFunction(&rasterInfo, &start, &end);
+	}
+
+#	else // EGL_USE_JIT
 
 	inline void Rasterizer :: RasterPoint(const RasterPos& point) {
 
@@ -369,7 +377,7 @@ namespace EGL {
 		Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
 	}
 
-#	endif
+#	endif // EGL_USE_JIT
 
 }
 
