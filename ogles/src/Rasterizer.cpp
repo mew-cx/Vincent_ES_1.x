@@ -1034,19 +1034,30 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	// determine the appropriate mipmapping level
 	if (m_State->m_TextureEnabled) {
 		if (m_Texture->IsMipMap()) {
-			EGL_Fixed textureArea = 
-				TriangleArea(a.m_TextureCoords.tu, a.m_TextureCoords.tv,
-							 b.m_TextureCoords.tu, b.m_TextureCoords.tv,
-							 c.m_TextureCoords.tu, c.m_TextureCoords.tv);
-
 			int logWidth = Log2(m_Texture->GetTexture(0)->GetWidth());
 			int logHeight = Log2(m_Texture->GetTexture(0)->GetHeight());
 
+			int logWidthA = logWidth >> 1;
+			int logHeightA = logHeight >> 1;
+			int logWidthB = logWidth - logWidthA;
+			int logHeightB = logHeight - logHeightA;
+
+			EGL_Fixed textureArea = 
+				TriangleArea(a.m_TextureCoords.tu << logWidthA, a.m_TextureCoords.tv << logHeightA,
+							 b.m_TextureCoords.tu << logWidthA, b.m_TextureCoords.tv << logHeightA,
+							 c.m_TextureCoords.tu << logWidthA, c.m_TextureCoords.tv << logHeightA);
+
+
 			EGL_Fixed screenArea = 
-				TriangleArea(a.m_WindowCoords.x >> logWidth, a.m_WindowCoords.y >> logHeight,
-							 b.m_WindowCoords.x >> logWidth, b.m_WindowCoords.y >> logHeight,
-							 c.m_WindowCoords.x >> logWidth, c.m_WindowCoords.y >> logHeight);
-			EGL_Fixed invScreenArea = EGL_Inverse(screenArea);
+				TriangleArea(a.m_WindowCoords.x >> logWidthB, a.m_WindowCoords.y >> logHeightB,
+							 b.m_WindowCoords.x >> logWidthB, b.m_WindowCoords.y >> logHeightB,
+							 c.m_WindowCoords.x >> logWidthB, c.m_WindowCoords.y >> logHeightB);
+			EGL_Fixed invScreenArea;
+			
+			if (screenArea != 0)
+				invScreenArea = EGL_Inverse(screenArea);
+			else 
+				invScreenArea = EGL_FixedFromInt(256);
 
 			EGL_Fixed ratio = EGL_Mul(textureArea, invScreenArea) >> EGL_PRECISION;
 			
@@ -1079,9 +1090,24 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	const RasterPos &pos2 = *pos[permutation[1]];
 	const RasterPos &pos3 = *pos[permutation[2]];
 
-	EGL_Fixed invZ1 = EGL_Inverse(pos1.m_WindowCoords.z);
-	EGL_Fixed invZ2 = EGL_Inverse(pos2.m_WindowCoords.z);
-	EGL_Fixed invZ3 = EGL_Inverse(pos3.m_WindowCoords.z);
+	EGL_Fixed invZ1;
+	EGL_Fixed invZ2;
+	EGL_Fixed invZ3;
+
+	if (pos1.m_WindowCoords.z)
+		invZ1 = EGL_Inverse(pos1.m_WindowCoords.z);
+	else
+		invZ1 = EGL_ONE;
+
+	if (pos2.m_WindowCoords.z)
+		invZ2 = EGL_Inverse(pos2.m_WindowCoords.z);
+	else
+		invZ2 = EGL_ONE;
+
+	if (pos3.m_WindowCoords.z)
+		invZ3 = EGL_Inverse(pos3.m_WindowCoords.z);
+	else
+		invZ3 = EGL_ONE;
 
 	EdgePos start, end;
 	start.m_WindowCoords.x = end.m_WindowCoords.x = pos1.m_WindowCoords.x;

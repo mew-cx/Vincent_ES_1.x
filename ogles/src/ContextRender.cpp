@@ -84,7 +84,7 @@ void Context :: EnableClientState(GLenum array) {
 
 void Context :: ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) { 
 
-	if (type != GL_UNSIGNED_BYTE && type != GL_FIXED) {
+	if (type != GL_UNSIGNED_BYTE && type != GL_FIXED && type != GL_FLOAT) {
 		RecordError(GL_INVALID_ENUM);
 		return;
 	}
@@ -109,6 +109,9 @@ void Context :: ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvo
 			stride = sizeof (GLfixed) * size;
 			break;
 
+		case GL_FLOAT:
+			stride = sizeof (GLfloat) * size;
+			break;
 		}
 	}
 
@@ -120,7 +123,7 @@ void Context :: ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvo
 
 void Context :: NormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer) { 
 
-	if (type != GL_BYTE && type != GL_SHORT && type != GL_FIXED) {
+	if (type != GL_BYTE && type != GL_SHORT && type != GL_FIXED && type != GL_FLOAT) {
 		RecordError(GL_INVALID_ENUM);
 		return;
 	}
@@ -146,6 +149,10 @@ void Context :: NormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer
 			stride = sizeof (GLfixed) * size;
 			break;
 
+		case GL_FLOAT:
+			stride = sizeof (GLfloat) * size;
+			break;
+
 		}
 	}
 
@@ -157,7 +164,7 @@ void Context :: NormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer
 
 void Context :: VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) { 
 
-	if (type != GL_BYTE && type != GL_SHORT && type != GL_FIXED) {
+	if (type != GL_BYTE && type != GL_SHORT && type != GL_FIXED && type != GL_FLOAT) {
 		RecordError(GL_INVALID_ENUM);
 		return;
 	}
@@ -184,6 +191,10 @@ void Context :: VertexPointer(GLint size, GLenum type, GLsizei stride, const GLv
 
 		case GL_FIXED:
 			stride = sizeof (GLfixed) * size;
+			break;
+
+		case GL_FLOAT:
+			stride = sizeof (GLfloat) * size;
 			break;
 
 		}
@@ -197,7 +208,7 @@ void Context :: VertexPointer(GLint size, GLenum type, GLsizei stride, const GLv
 
 void Context :: TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) { 
 
-	if (type != GL_BYTE && type != GL_SHORT && type != GL_FIXED) {
+	if (type != GL_BYTE && type != GL_SHORT && type != GL_FIXED && type != GL_FLOAT) {
 		RecordError(GL_INVALID_ENUM);
 		return;
 	}
@@ -224,6 +235,10 @@ void Context :: TexCoordPointer(GLint size, GLenum type, GLsizei stride, const G
 
 		case GL_FIXED:
 			stride = sizeof (GLfixed) * size;
+			break;
+
+		case GL_FLOAT:
+			stride = sizeof (GLfloat) * size;
 			break;
 
 		}

@@ -56,26 +56,11 @@ void Context :: BindTexture(GLenum target, GLuint texture) {
 		return;
 	}
 
-	if (texture >= m_Textures.size() || m_Textures[texture] == 0) {
-		// allocate a new texture
-		if (m_Textures.size() < texture) {
-			U32 newSize = m_Textures.size() * 2;
+	MultiTexture * multiTexture = m_Textures.GetTexture(texture);
 
-			if (newSize <= texture) {
-				newSize = texture + 1;
-			}
-
-			m_Textures.resize(newSize);
-		}
-
-		m_Textures[texture] = new MultiTexture();
-		m_Textures[texture]->SetWrappingModeS(GetRasterizerState()->GetWrappingModeS());
-		m_Textures[texture]->SetWrappingModeT(GetRasterizerState()->GetWrappingModeT());
-		m_Textures[texture]->SetMinFilterMode(GetRasterizerState()->GetMinFilterMode());
-		m_Textures[texture]->SetMagFilterMode(GetRasterizerState()->GetMagFilterMode());
+	if (multiTexture) {
+		GetRasterizer()->SetTexture(multiTexture);
 	}
-
-	GetRasterizer()->SetTexture(m_Textures[texture]);
 }
 
 void Context :: DeleteTextures(GLsizei n, const GLuint *textures) { 
@@ -84,31 +69,15 @@ void Context :: DeleteTextures(GLsizei n, const GLuint *textures) {
 		U32 texture = *textures++;
 
 		if (texture != 0) {
-			if (texture < m_Textures.size() && m_Textures[texture] != 0) {
-				if (m_Textures[texture] == GetRasterizer()->GetTexture()) {
-					GetRasterizer()->SetTexture(m_Textures[0]);
-				}
-
-				delete m_Textures[texture];
-				m_Textures[texture] = 0;
-			}
+			m_Textures.Deallocate(texture);
 		}
 	}
 }
 
 void Context :: GenTextures(GLsizei n, GLuint *textures) { 
 
-	U32 nextIndex = 1;
-
-	for (; n != 0 && nextIndex < m_Textures.size(); ++nextIndex) {
-		if (m_Textures[nextIndex] == 0) {
-			*textures++ = nextIndex;
-			--n;
-		}
-	}
-	
 	while (n != 0) {
-		*textures++ = nextIndex;
+		*textures++ = m_Textures.Allocate();
 		--n;
 	}
 }
