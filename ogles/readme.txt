@@ -102,6 +102,16 @@ To build the libraries, open the corresponding project/workspace from the projec
 subtree. If the download is correct, the project should build right away without 
 any further adjustment.
 
+The file OGLES.h contains several configuration parameters that you can use to
+fine-tine the library build. The most interesting parameters are:
+
+EGL_NUM_TEXTURE_UNITS		default: 2	the number of texture units; OpenGL ES 1.0 requires >= 1,
+						OpenGL ES 1.1 requires >= 2
+						
+EGL_MIPMAP_PER_TEXEL		default: 1	should mipmap selection happen on a per-pixel level?
+						1 is for full conformance, 0 uses mipmap selection per
+						primitive instead, and hence won't fully pass the 
+						conformance test.
 
 How do I get support?
 ---------------------
