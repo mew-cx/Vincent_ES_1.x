@@ -2153,11 +2153,15 @@ void Context :: GetTexParameterxv(GLenum target, GLenum pname, GLfixed *params) 
 		return;
 	}
 
+#if 0
 	switch (pname) {
 
 	default:
+#endif
 		RecordError(GL_INVALID_ENUM);
+#if 0
 		break;
 	}
+#endif
 }
 
