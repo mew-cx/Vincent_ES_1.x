@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// render.cpp	Rendering Context Class for Embedded OpenGL Implementation
+// render.cpp	Rendering Context Class for OpenGL (R) ES Implementation
 //
 //				Rendering Operations
 //
@@ -263,10 +263,6 @@ void Context :: Normal3x(GLfixed nx, GLfixed ny, GLfixed nz) {
 	m_DefaultNormal = Vec3D(nx, ny, nz);
 }
 
-
-// --------------------------------------------------------------------------
-// General preparation/setup for rendering
-// --------------------------------------------------------------------------
 
 // --------------------------------------------------------------------------
 // Actual mesh rendering
