@@ -31,7 +31,7 @@ void Context :: RenderPoints(GLint first, GLsizei count) {
 	while (count >= 1) {
 		count -= 1;
 
-		EGL_RASTER_POS pos0;
+		RasterPos pos0;
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos0);
 
@@ -47,7 +47,7 @@ void Context :: RenderPoints(GLsizei count, const GLubyte * indices) {
 	while (count >= 1) {
 		count -= 1;
 
-		EGL_RASTER_POS pos0;
+		RasterPos pos0;
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
 
@@ -63,7 +63,7 @@ void Context :: RenderPoints(GLsizei count, const GLushort * indices) {
 	while (count >= 1) {
 		count -= 1;
 
-		EGL_RASTER_POS pos0;
+		RasterPos pos0;
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
 

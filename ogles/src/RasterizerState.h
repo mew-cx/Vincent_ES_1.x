@@ -26,11 +26,9 @@
 #include "FractionalColor.h"
 
 
-class Texture;
-
-
 namespace EGL {
 	class Rasterizer;
+	class MultiTexture;
 
 	class OGLES_API RasterizerState {
 
@@ -111,6 +109,14 @@ namespace EGL {
 			ShadeModelSmooth
 		};
 
+		enum TextureMode {
+			TextureModeDecal,
+			TextureModeReplace,
+			TextureModeBlend,
+			TextureModeAdd,
+			TextureModeModulate
+		};
+
 	public:
 		RasterizerState();
 		~RasterizerState();
@@ -122,8 +128,12 @@ namespace EGL {
 		// Primitive rendering state
 		// ----------------------------------------------------------------------
 
-		void SetTexture(Texture * texture);
-		Texture * GetTexture() const;
+		void SetTexture(MultiTexture * texture);
+		MultiTexture * GetTexture()					{ VersionChanged(); return m_Texture; }
+		const MultiTexture * GetTexture() const		{ return m_Texture; }
+
+		void SetTexEnvColor(const FractionalColor& color);
+		void SetTextureMode(TextureMode mode);
 
 		void SetDepthRange(EGL_Fixed zNear, EGL_Fixed zFar);
 		void SetFogMode(FogMode mode);
@@ -194,7 +204,14 @@ namespace EGL {
 		bool					m_InvertSampleCoverage;
 
 		ShadingModel			m_ShadingModel;
+
+		// ----------------------------------------------------------------------
+		// Texture environment rendering state
+		// ----------------------------------------------------------------------
+
+		FractionalColor			m_TexEnvColor;
 		bool					m_TextureEnabled;
+		TextureMode				m_TextureMode;
 
 		// ----------------------------------------------------------------------
 		// Fragment rendering state
@@ -237,7 +254,7 @@ namespace EGL {
 
 		StencilOp				m_StencilFail, m_StencilZFail, m_StencilZPass;
 
-		Texture *				m_Texture;			// current texture 
+		MultiTexture *			m_Texture;			// current texture 
 
 		U32						m_Version;			// version numbers gets
 													// incremented with each 
@@ -259,8 +276,13 @@ namespace EGL {
 	};
 
 
-	inline void RasterizerState :: SetTexture(Texture * texture) {
+	inline void RasterizerState :: SetTexture(MultiTexture * texture) {
 		m_Texture = texture;
+		VersionChanged();
+	}
+
+	inline void RasterizerState :: SetTexEnvColor(const FractionalColor& color) {
+		m_TexEnvColor = color;
 		VersionChanged();
 	}
 
@@ -318,6 +340,11 @@ namespace EGL {
 
 	inline void RasterizerState :: EnableTexture(bool enabled) {
 		m_TextureEnabled = enabled;
+		VersionChanged();
+	}
+
+	inline void RasterizerState :: SetTextureMode(const TextureMode mode) {
+		m_TextureMode = mode;
 		VersionChanged();
 	}
 

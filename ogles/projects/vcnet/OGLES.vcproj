@@ -27,16 +27,14 @@
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"
-				AdditionalOptions="">
+				Detect64BitPortabilityProblems="FALSE"
+				DebugInformationFormat="4">
 				<IntelOptions
 					Optimization="0"
 					MinimalRebuild="1"
 					BasicRuntimeChecks="3"
 					RuntimeLibrary="1"
-					AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /ZI /nologo /W3 /Wp64 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_USRDLL&quot; /D &quot;OGLES_EXPORTS&quot; /D &quot;_WINDLL&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /Yu&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Debug/GLES_CL.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Debug/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Debug/vc70.pdb&quot; /Gd /TP"
-					MSOriginalAdditionalOptions=""/>
+					AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_USRDLL&quot; /D &quot;OGLES_EXPORTS&quot; /D &quot;_WINDLL&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /Yu&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Debug/GLES_CL.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Debug/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Debug/vc70.pdb&quot; /Gd /TP"/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -49,11 +47,9 @@
 				ProgramDatabaseFile="$(OutDir)/vcnet.pdb"
 				SubSystem="2"
 				ImportLibrary="$(OutDir)/vcnet.lib"
-				TargetMachine="1"
-				AdditionalOptions="">
+				TargetMachine="1">
 				<IntelOptions
-					AllOptions="/NOLOGO /DLL /OUT:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/GLES_CL.dll&quot; /INCREMENTAL /DEBUG /PDB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/vcnet.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /IMPLIB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/vcnet.lib&quot; /MACHINE:IX86  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"
-					MSOriginalAdditionalOptions=""/>
+					AllOptions="/NOLOGO /DLL /OUT:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/GLES_CL.dll&quot; /INCREMENTAL /DEBUG /PDB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/vcnet.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /IMPLIB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Debug/vcnet.lib&quot; /MACHINE:IX86  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
 			</Tool>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -89,9 +85,8 @@
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="3"
-				AdditionalOptions="">
+				Detect64BitPortabilityProblems="FALSE"
+				DebugInformationFormat="3">
 				<IntelOptions
 					Optimization="2"
 					InlineFunctionExpansion="1"
@@ -100,8 +95,7 @@
 					RuntimeLibrary="0"
 					BufferSecurityCheck="1"
 					EnableFunctionLevelLinking="1"
-					AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /Zi /nologo /W3 /Wp64 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_USRDLL&quot; /D &quot;OGLES_EXPORTS&quot; /D &quot;_WINDLL&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /Yu&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Release/GLES_CL.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Release/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Release/vc70.pdb&quot; /Gd /TP"
-					MSOriginalAdditionalOptions=""/>
+					AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /Zi /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_USRDLL&quot; /D &quot;OGLES_EXPORTS&quot; /D &quot;_WINDLL&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /Yu&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Release/GLES_CL.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Release/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Release/vc70.pdb&quot; /Gd /TP"/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -115,11 +109,9 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				ImportLibrary="$(OutDir)/vcnet.lib"
-				TargetMachine="1"
-				AdditionalOptions="">
+				TargetMachine="1">
 				<IntelOptions
-					AllOptions="/NOLOGO /DLL /OUT:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/GLES_CL.dll&quot; /INCREMENTAL:NO /DEBUG /PDB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/OGLES.pdb&quot; /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /TLBID:1 /IMPLIB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/vcnet.lib&quot; /MACHINE:IX86  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"
-					MSOriginalAdditionalOptions=""/>
+					AllOptions="/NOLOGO /DLL /OUT:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/GLES_CL.dll&quot; /INCREMENTAL:NO /DEBUG /PDB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/OGLES.pdb&quot; /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /TLBID:1 /IMPLIB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/vcnet.lib&quot; /MACHINE:IX86  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
 			</Tool>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -170,6 +162,8 @@
 			<File
 				RelativePath="..\..\src\ContextRender.cpp"/>
 			<File
+				RelativePath="..\..\src\ContextTexture.cpp"/>
+			<File
 				RelativePath="..\..\src\ContextTriangles.cpp"/>
 			<File
 				RelativePath="..\..\src\ContextViewport.cpp"/>
@@ -201,22 +195,18 @@
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-						AdditionalOptions="">
+						UsePrecompiledHeader="1">
 						<IntelOptions
-							AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /ZI /nologo /W3 /Wp64 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_USRDLL&quot; /D &quot;OGLES_EXPORTS&quot; /D &quot;_WINDLL&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /Yc&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Debug/GLES_CL.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Debug/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Debug/vc70.pdb&quot; /Gd /TP"
-							MSOriginalAdditionalOptions=""/>
+							AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_USRDLL&quot; /D &quot;OGLES_EXPORTS&quot; /D &quot;_WINDLL&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /Yc&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Debug/GLES_CL.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Debug/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Debug/vc70.pdb&quot; /Gd /TP"/>
 					</Tool>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-						AdditionalOptions="">
+						UsePrecompiledHeader="1">
 						<IntelOptions
-							AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /Zi /nologo /W3 /Wp64 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_USRDLL&quot; /D &quot;OGLES_EXPORTS&quot; /D &quot;_WINDLL&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /Yc&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Release/GLES_CL.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Release/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Release/vc70.pdb&quot; /Gd /TP"
-							MSOriginalAdditionalOptions=""/>
+							AllOptions="/c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /Zi /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_USRDLL&quot; /D &quot;OGLES_EXPORTS&quot; /D &quot;_WINDLL&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /Yc&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Release/GLES_CL.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Release/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\x86\Release/vc70.pdb&quot; /Gd /TP"/>
 					</Tool>
 				</FileConfiguration>
 			</File>

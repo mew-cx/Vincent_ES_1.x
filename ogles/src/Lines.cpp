@@ -36,7 +36,7 @@ void Context :: RenderLines(GLint first, GLsizei count) {
 	while (count >= 2) {
 		count -= 2;
 
-		EGL_RASTER_POS pos0, pos1;
+		RasterPos pos0, pos1;
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos0);
 		SelectArrayElement(first++);
@@ -54,7 +54,7 @@ void Context :: RenderLines(GLsizei count, const GLubyte * indices) {
 	while (count >= 2) {
 		count -= 2;
 
-		EGL_RASTER_POS pos0, pos1;
+		RasterPos pos0, pos1;
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
 		SelectArrayElement(*indices++);
@@ -72,7 +72,7 @@ void Context :: RenderLines(GLsizei count, const GLushort * indices) {
 	while (count >= 2) {
 		count -= 2;
 
-		EGL_RASTER_POS pos0, pos1;
+		RasterPos pos0, pos1;
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
 		SelectArrayElement(*indices++);
@@ -93,7 +93,7 @@ void Context :: RenderLineStrip(GLint first, GLsizei count) {
 	if (count >= 2) {
 		m_Rasterizer->PrepareLine();
 
-		EGL_RASTER_POS pos0, pos1;
+		RasterPos pos0, pos1;
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos0);
 		--count;
@@ -124,7 +124,7 @@ void Context :: RenderLineStrip(GLsizei count, const GLubyte * indices) {
 	if (count >= 2) {
 		m_Rasterizer->PrepareLine();
 
-		EGL_RASTER_POS pos0, pos1;
+		RasterPos pos0, pos1;
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
 		--count;
@@ -155,7 +155,7 @@ void Context :: RenderLineStrip(GLsizei count, const GLushort * indices) {
 	if (count >= 2) {
 		m_Rasterizer->PrepareLine();
 
-		EGL_RASTER_POS pos0, pos1;
+		RasterPos pos0, pos1;
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
 		--count;
@@ -191,7 +191,7 @@ void Context :: RenderLineLoop(GLint first, GLsizei count) {
 	if (count >= 2) {
 		m_Rasterizer->PrepareLine();
 
-		EGL_RASTER_POS pos0, pos1, start;
+		RasterPos pos0, pos1, start;
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&start);
 		SelectArrayElement(first++);
@@ -229,7 +229,7 @@ void Context :: RenderLineLoop(GLsizei count, const GLubyte * indices) {
 	if (count >= 2) {
 		m_Rasterizer->PrepareLine();
 
-		EGL_RASTER_POS pos0, pos1, start;
+		RasterPos pos0, pos1, start;
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&start);
 		SelectArrayElement(*indices++);
@@ -267,7 +267,7 @@ void Context :: RenderLineLoop(GLsizei count, const GLushort * indices) {
 	if (count >= 2) {
 		m_Rasterizer->PrepareLine();
 
-		EGL_RASTER_POS pos0, pos1, start;
+		RasterPos pos0, pos1, start;
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&start);
 		SelectArrayElement(*indices++);

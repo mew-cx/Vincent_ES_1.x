@@ -1,70 +1,93 @@
 // ==========================================================================
 //
-// matrix.cpp	Rendering Context Class for Embedded OpenGL Implementation
-//
-//				Texturing Functions
+// Texture.h		Texture Class for Embedded OpenGL Implementation
 //
 // --------------------------------------------------------------------------
 //
-// 08-07-2003	Hans-Martin Will	initial version
+// 10-15-2003		Hans-Martin Will	initial version
 //
 // ==========================================================================
 
 
 #include "stdafx.h"
-#include "context.h"
-#include <string.h>
-#include "fixed.h"
-
+#include "Texture.h"
+#include <stdlib.h>
 
 using namespace EGL;
 
 
-void Context :: ActiveTexture(GLenum texture) { 
+// --------------------------------------------------------------------------
+// Class Texture
+// --------------------------------------------------------------------------
+
+
+U8 Texture :: s_BytesPerPixel[] = {
+	0,				// undefined
+	1,				// LUMINANCE
+	1,				// LUMINANCE_ALPHA
+	2,				// RGB
+	2				// RGBA
+};
+
+
+Texture :: Texture():
+	m_Data(0), m_InternalFormat(static_cast<TextureFormatInternal>(0))
+{
 }
 
-void Context :: BindTexture(GLenum target, GLuint texture) { 
+
+Texture :: ~Texture() {
+	if (m_Data != 0) {
+		free(m_Data);
+		m_Data = 0;
+	}
 }
 
-void Context :: ClientActiveTexture(GLenum texture) { 
+
+namespace {
+	U32 Log(U32 value) {
+		U32 result = 0;
+		U32 mask = 1;
+
+		while ((value & mask) != value) {
+			++result;
+			mask = (mask << 1) | 1;
+		}
+
+		return result;
+	}
 }
 
-void Context :: CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data) { 
+
+void Texture :: Initialize(U32 width, U32 height, TextureFormatInternal format) {
+
+	if (m_Data != 0) {
+		free(m_Data);
+	}
+
+	m_Width = width;
+	m_Height = height;
+
+	if (width > height) {
+		m_Exponent = Log(width);
+	} else {
+		m_Exponent = Log(height);
+	}
+
+	U32 pixels = width * height;
+	m_InternalFormat = format;
+	m_Data = malloc(pixels * GetBytesPerPixel());
 }
 
-void Context :: CompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data) { 
+
+// --------------------------------------------------------------------------
+// Class MultiTexture
+// --------------------------------------------------------------------------
+
+
+MultiTexture :: MultiTexture() {
 }
 
-void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border) { 
+
+MultiTexture :: ~MultiTexture() {
 }
-
-void Context :: CopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height) { 
-}
-
-void Context :: DeleteTextures(GLsizei n, const GLuint *textures) { 
-}
-
-void Context :: GenTextures(GLsizei n, GLuint *textures) { 
-}
-
-void Context :: TexEnvx(GLenum target, GLenum pname, GLfixed param) { 
-}
-
-void Context :: TexEnvxv(GLenum target, GLenum pname, const GLfixed *params) { 
-}
-
-void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels) { 
-
-	// Let's start very simple: only one kind of 2d texture for level 0
-
-	m_RasterParameters.m_texture[0].m_pTexBuffer = (U16 *) pixels;
-	m_RasterParameters.m_texture[0].m_Width = width;
-	m_RasterParameters.m_texture[0].m_Height = height;
-}
-
-void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) { 
-}
-
-void Context :: TexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels) { 
-}
-

@@ -458,7 +458,7 @@ void Context :: SelectArrayElement(int index) {
 }
 
 
-void Context :: CurrentValuesToRasterPos(EGL_RASTER_POS * rasterPos) {
+void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 
 	// apply model view matrix to vertex coordinate -> eye coordinates vertex
 	Vec4D eyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
@@ -486,9 +486,6 @@ void Context :: CurrentValuesToRasterPos(EGL_RASTER_POS * rasterPos) {
 	gppVec3DAdd_n_32s(reinterpret_cast<GPP_VEC3D *>(&clipCoords), &m_ViewportOrigin, 
 		reinterpret_cast<GPP_VEC3D *>(&rasterPos->m_WindowsCoords));
 	rasterPos->m_WindowsCoords.w = clipCoords.w;
-
-	// adjust depth to rendering surface representation
-	rasterPos->m_WindowsCoords.z = m_DrawSurface->DepthBitsFromDepth(rasterPos->m_WindowsCoords.z);
 
 #endif
 
