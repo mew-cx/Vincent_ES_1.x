@@ -21,6 +21,8 @@ This version addresses the following issues:
 
 980877 - Mipmaps Selection test failed.
 980878 - Mipmaps Interpolation test failed.
+996378 - Color buffer is effectively 16-bit
+996379 - Trap exceptions when context not set.
 
 
 Version 0.79

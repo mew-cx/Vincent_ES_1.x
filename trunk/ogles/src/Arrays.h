@@ -157,8 +157,9 @@ namespace EGL {
 			size_t newAllocatedTextures = m_AllocatedTextures * FACTOR;
 
 			TextureRecord * newTextures = new TextureRecord[newAllocatedTextures];
+			size_t index;
 
-			for (size_t index = 0; index < m_AllocatedTextures; ++index) {
+			for (index = 0; index < m_AllocatedTextures; ++index) {
 				newTextures[index] = m_Textures[index];
 			}
 

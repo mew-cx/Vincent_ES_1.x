@@ -59,14 +59,14 @@ const U8 Texture :: s_BytesPerPixel[] = {
 };
 
 
-Texture :: Init()	
+void Texture :: Init()	
 {
 	m_Data = 0;
 	m_InternalFormat = RasterizerState::TextureFormatInvalid;
 }
 
 
-Texture :: Dispose() {
+void Texture :: Dispose() {
 	if (m_Data != 0) {
 		free(m_Data);
 		m_Data = 0;

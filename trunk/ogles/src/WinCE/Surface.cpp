@@ -55,7 +55,7 @@ Surface :: Surface(const Config & config, HDC hdc)
 	U32 height = GetHeight();
 
 	m_AlphaBuffer = new U8[width * height];
-	m_DepthBuffer = new I32[width * height];
+	m_DepthBuffer = new U16[width * height];
 	m_StencilBuffer = new U32[width * height];
 
 	if (hdc != INVALID_HANDLE_VALUE) {
@@ -185,7 +185,7 @@ namespace {
 }
 
 
-void Surface :: ClearDepthBuffer(GLclampx depth, bool mask, const Rect& scissor) {
+void Surface :: ClearDepthBuffer(U16 depth, bool mask, const Rect& scissor) {
 
 	if (!mask || !m_DepthBuffer)
 		return;

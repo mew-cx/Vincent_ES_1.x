@@ -65,11 +65,11 @@ namespace EGL {
 		~Surface();
 
 		// Is the depth value re-scaled based on near/far settings?.
-		void ClearDepthBuffer(GLclampx depth, bool mask, const Rect& scissor);
+		void ClearDepthBuffer(U16 depth, bool mask, const Rect& scissor);
 		void ClearColorBuffer(const Color & rgba, const Color & mask, const Rect& scissor);
 		void ClearStencilBuffer(U32 value, U32 mask, const Rect& scissor);
 
-		void ClearDepthBuffer(GLclampx depth, bool mask);
+		void ClearDepthBuffer(U16 depth, bool mask);
 		void ClearColorBuffer(const Color & rgba, const Color & mask);
 		void ClearStencilBuffer(U32 value, U32 mask);
 
@@ -83,7 +83,7 @@ namespace EGL {
 
 		U16 * GetColorBuffer();
 		U8 *  GetAlphaBuffer();
-		I32 * GetDepthBuffer();
+		U16 * GetDepthBuffer();
 		U32 * GetStencilBuffer();
 
 		Config * GetConfig();
@@ -101,7 +101,7 @@ namespace EGL {
 		Config			m_Config;			// configuration arguments
 		U16 *			m_ColorBuffer;		// pointer to frame buffer base address 5-6-5
 		U8 *			m_AlphaBuffer;		// pointer to alpha buffer
-		I32 *			m_DepthBuffer;		// pointer to Z-buffer base address
+		U16 *			m_DepthBuffer;		// pointer to Z-buffer base address
 		U32 *			m_StencilBuffer;	// stencil buffer
 
 		Rect			m_Rect;
@@ -140,7 +140,7 @@ namespace EGL {
 		return m_AlphaBuffer;
 	}
 
-	inline I32 * Surface :: GetDepthBuffer() {
+	inline U16 * Surface :: GetDepthBuffer() {
 		return m_DepthBuffer;
 	}
 
@@ -160,7 +160,7 @@ namespace EGL {
 		return m_Rect;
 	}
 
-	inline void Surface :: ClearDepthBuffer(GLclampx depth, bool mask) {
+	inline void Surface :: ClearDepthBuffer(U16 depth, bool mask) {
 		ClearDepthBuffer(depth, mask, GetRect());
 	}
 

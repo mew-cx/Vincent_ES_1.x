@@ -89,7 +89,7 @@ void Context :: Fogfv (GLenum pname, const GLfloat *params) {
 
 	switch (pname) {
 	case GL_FOG_MODE:
-		param = *params;
+		param = static_cast<GLenum>(*params);
 		Fogxv(pname, &param);
 		break;
 
