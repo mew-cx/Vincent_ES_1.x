@@ -526,13 +526,13 @@ EGL_Fixed Context :: FogDensity(EGL_Fixed eyeDistance) const {
 	switch (m_FogMode) {
 		default:
 		case FogLinear:
-			return EGL_CLAMP(EGL_Div(m_FogEnd - eyeDistance, m_FogEnd - m_FogStart), 0, EGL_ONE);
+			return EGL_CLAMP(EGL_Div(m_FogEnd - eyeDistance, m_FogEnd - m_FogStart) + 128, 0, EGL_ONE);
 
 		case FogModeExp:
-			return EGL_CLAMP(Exp(EGL_Mul(m_FogDensity, eyeDistance)), 0, EGL_ONE);
+			return EGL_CLAMP(Exp(EGL_Mul(m_FogDensity, eyeDistance)) + 128, 0, EGL_ONE);
 
 		case FogModeExp2:
-			return EGL_CLAMP(Exp2(EGL_Mul(m_FogDensity, eyeDistance)), 0, EGL_ONE);
+			return EGL_CLAMP(Exp2(EGL_Mul(m_FogDensity, eyeDistance)) + 128, 0, EGL_ONE);
 	}
 
 }

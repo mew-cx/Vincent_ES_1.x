@@ -159,7 +159,7 @@ void CodeGenerator :: Compile(FunctionCache * target, FunctionCache::FunctionTyp
 	cg_module_inst_use_chains(m_Module);
 	//cg_module_reorder_instructions(m_Module);
 
-	//Dump("dump35.txt", m_Module);
+	Dump("dump35.txt", m_Module);
 
 	cg_module_dataflow(m_Module);
 	cg_module_interferences(m_Module);

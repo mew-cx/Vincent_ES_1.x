@@ -88,29 +88,61 @@ namespace {
 }
 
 
-
-
 void CodeGenerator :: GenerateRasterPoint() {
 
-#if 0
 	cg_proc_t * procedure = cg_proc_create(m_Module);
 
 	// The signature of the generated function is:
-	//	(const RasterInfo * info, const EdgePos& start, const EdgePos& end);
-	// Do not pass in y coordinate but rather assume that raster info pointers have been
-	// adjusted to point to current scanline in memory
-	// In the edge buffers, z, tu and tv are actually divided by w
+	//	(const RasterInfo * info, const RasterPos& pos);
 
 	DECL_REG	(regInfo);		// virtual register containing info structure pointer
-	DECL_REG	(regStart);		// virtual register containing start edge buffer pointer
-	DECL_REG	(regEnd);		// virtual register containing end edge buffer pointer
+	DECL_REG	(regPos);		// virtual register containing vertex coordinate pointer
 
-	procedure->num_args = 3;	// the previous three declarations make up the arguments
+	procedure->num_args = 2;	// the previous two declarations make up the arguments
 
 	cg_block_t * block = cg_block_create(procedure, 1);
 
+	// load argument values
+	cg_virtual_reg_t * regTexture = LOAD_DATA(block, regInfo, OFFSET_TEXTURES);
+
+	FragmentGenerationInfo info;
+
+	info.regInfo = regInfo;
+	info.regTexture = regTexture;
+
+	//I32 x = EGL_IntFromFixed(point.m_WindowCoords.x);
+	//I32 y = EGL_IntFromFixed(point.m_WindowCoords.y);
+	DECL_REG	(regX);
+	DECL_REG	(regY);
+
+	TRUNC		(regX, LOAD_DATA(block, regPos, OFFSET_RASTER_POS_WINDOW_X));
+	TRUNC		(regY, LOAD_DATA(block, regPos, OFFSET_RASTER_POS_WINDOW_Y));
+
+	info.regX = regX;
+	info.regY = regY;
+
+	//EGL_Fixed depth = point.m_WindowCoords.depth;
+	//EGL_Fixed tu = point.m_TextureCoords.tu;
+	//EGL_Fixed tv = point.m_TextureCoords.tv;
+	//FractionalColor baseColor = point.m_Color;
+	//EGL_Fixed fogDensity = point.m_FogDensity;
+	info.regU = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TU);
+	info.regV = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TV); 
+	info.regFog = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_FOG);
+	info.regDepth = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_WINDOW_DEPTH);
+	info.regR = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_COLOR_R);
+	info.regG = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_COLOR_G);
+	info.regB = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_COLOR_B);
+	info.regA = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_COLOR_A);
+
+	cg_block_ref_t * postFragment = cg_block_ref_create(procedure);
+
+	GenerateFragment(procedure, block, postFragment, info, 1);
+
+	block = cg_block_create(procedure, 1);
+	postFragment->block = block;
+
 	RET();
 
-# endif
 }
 

@@ -63,7 +63,7 @@ namespace EGL {
 		FunctionCache(size_t totalSize = 65536, float percentageKeep = 0.6);
 		~FunctionCache();
 
-		ScanlineFunction * GetFunction(FunctionType type, const RasterizerState & state);
+		void * GetFunction(FunctionType type, const RasterizerState & state);
 
 	private:
 		void * AddFunction(FunctionType type, const RasterizerState & state, size_t size);
