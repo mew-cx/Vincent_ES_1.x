@@ -1543,12 +1543,18 @@ static cg_physical_reg_t * allocate_reg(cg_codegen_t * gen, cg_virtual_reg_t * r
 		return physical_reg;
 	}
 	
-	if (gen->free_regs.tail != (cg_physical_reg_t *) 0)
+	physical_reg = gen->free_regs.tail;
+
+	while (physical_reg)
 	{
-		physical_reg = gen->free_regs.tail;
-		reg_list_remove(&gen->free_regs, physical_reg);
-		reg_list_add(&gen->used_regs, physical_reg);
-		return physical_reg;
+		if ((1u << physical_reg->regno) & mask)
+		{
+			reg_list_remove(&gen->free_regs, physical_reg);
+			reg_list_add(&gen->used_regs, physical_reg);
+			return physical_reg;
+		}
+
+		physical_reg = physical_reg->prev;
 	}
 
 	// determine a spill candidate
