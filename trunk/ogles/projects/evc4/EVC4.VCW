@@ -18,7 +18,19 @@ Package=<4>
 
 ###############################################################################
 
-Project: "alpha3D"=.\alpha3D.vcp - Package Owner=<4>
+Project: "codegen"=.\codegen.vcp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "colormat"=.\colormat.vcp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -29,18 +41,6 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name ug
     End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "codegen"=.\codegen.vcp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
 }}}
 
 ###############################################################################
@@ -159,7 +159,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "fog"=.\fog.vcp - Package Owner=<4>
+Project: "material"=.\material.vcp - Package Owner=<4>
 
 Package=<5>
 {{{
