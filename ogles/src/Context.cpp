@@ -330,7 +330,7 @@ void Context :: Toggle(GLenum cap, bool value) {
 		break;
 
 	case GL_POLYGON_OFFSET_FILL:
-		GetRasterizerState()->EnableFog(value);
+		GetRasterizerState()->EnablePolygonOffsetFill(value);
 		break;
 
 	case GL_MULTISAMPLE:

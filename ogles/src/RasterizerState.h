@@ -216,6 +216,7 @@ namespace EGL {
 		void SetPointSize(EGL_Fixed size);
 		void SetPointSmoothEnabled(bool enabled);
 
+		void EnablePolygonOffsetFill(bool enabled);
 		void SetPolygonOffset(EGL_Fixed factor, EGL_Fixed units);
 		void SetSampleCoverage(EGL_Fixed value, bool invert);
 
@@ -257,6 +258,8 @@ namespace EGL {
 
 		EGL_Fixed				m_PolygonOffsetFactor;
 		EGL_Fixed				m_PolygonOffsetUnits;
+		bool					m_PolygonOffsetFillEnabled;
+
 		EGL_Fixed				m_SampleCoverage;
 		bool					m_InvertSampleCoverage;
 
@@ -378,6 +381,10 @@ namespace EGL {
 
 	inline void RasterizerState :: SetPointSize(EGL_Fixed size) {
 		m_PointSize = size;
+	}
+
+	inline void RasterizerState :: EnablePolygonOffsetFill(bool enabled) {
+		m_PolygonOffsetFillEnabled = enabled;
 	}
 
 	inline void RasterizerState :: SetPolygonOffset(EGL_Fixed factor, EGL_Fixed units) {

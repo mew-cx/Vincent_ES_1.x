@@ -70,6 +70,11 @@ RasterizerState :: RasterizerState():
 	m_DepthFunc(CompFuncLess),
 	m_DepthTestEnabled(false),
 
+	// polygon offset
+	m_PolygonOffsetFactor(0),
+	m_PolygonOffsetUnits(0),
+	m_PolygonOffsetFillEnabled(false),
+
 	// initial values for blending
 	m_BlendingEnabled(false),
 	m_BlendFuncSrc(BlendFuncSrcOne),
@@ -128,6 +133,11 @@ RasterizerState :: RasterizerState(const RasterizerState& other):
 	// inititial values for depth test
 	m_DepthFunc(other.m_DepthFunc),
 	m_DepthTestEnabled(other.m_DepthTestEnabled),
+
+	// polygon offset
+	m_PolygonOffsetFactor(other.m_PolygonOffsetFactor),
+	m_PolygonOffsetUnits(other.m_PolygonOffsetUnits),
+	m_PolygonOffsetFillEnabled(other.m_PolygonOffsetFillEnabled),
 
 	// initial values for blending
 	m_BlendingEnabled(other.m_BlendingEnabled),
@@ -190,6 +200,11 @@ RasterizerState& RasterizerState :: operator=(const RasterizerState& other) {
 	// inititial values for depth test
 	m_DepthFunc = other.m_DepthFunc;
 	m_DepthTestEnabled = other.m_DepthTestEnabled;
+
+	// polygon offset
+	m_PolygonOffsetFactor= other.m_PolygonOffsetFactor;
+	m_PolygonOffsetUnits = other.m_PolygonOffsetUnits;
+	m_PolygonOffsetFillEnabled = other.m_PolygonOffsetFillEnabled;
 
 	// initial values for blending
 	m_BlendingEnabled = other.m_BlendingEnabled;

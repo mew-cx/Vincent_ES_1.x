@@ -1024,7 +1024,31 @@ namespace {
 
 		return result;
 	}
+
+#define DET_SHIFT 4
+
+	inline EGL_Fixed Det2x2(EGL_Fixed a11, EGL_Fixed a12, EGL_Fixed a21, EGL_Fixed a22) {
+		return EGL_Mul(a11 >> DET_SHIFT, a22 >> DET_SHIFT) -
+			EGL_Mul(a12 >> DET_SHIFT, a21 >> DET_SHIFT);
+	}
+
 }
+
+
+#define SOLVE_PARAM(dx, dy, p1, p2, p3, scale) \
+	EGL_Fixed dx = EGL_Mul(																\
+			Det2x2(																		\
+				p2 - p1, pos2.m_WindowCoords.y - pos1.m_WindowCoords.y,					\
+				p3 - p1, pos3.m_WindowCoords.y - pos1.m_WindowCoords.y),				\
+			scale);																		\
+	EGL_Fixed dy = EGL_Mul(																\
+			Det2x2(																		\
+				pos2.m_WindowCoords.x - pos1.m_WindowCoords.x, p2 - p1,					\
+				pos3.m_WindowCoords.x - pos1.m_WindowCoords.x, p3 - p1),				\
+			scale)
+
+#define SOLVE(dx, dy, param, scale) \
+	SOLVE_PARAM(dx, dy, pos1.param, pos2.param, pos3.param, scale)
 
 
 // ---------------------------------------------------------------------------
@@ -1101,6 +1125,56 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	const RasterPos &pos2 = *pos[permutation[1]];
 	const RasterPos &pos3 = *pos[permutation[2]];
 
+	EGL_Fixed depth1 = pos1.m_WindowCoords.depth;
+	EGL_Fixed depth2 = pos2.m_WindowCoords.depth;
+	EGL_Fixed depth3 = pos3.m_WindowCoords.depth;
+
+	// ----------------------------------------------------------------------
+	// determine if the depth coordinate needs to be adjusted to
+	// support polygon-offset
+	// ----------------------------------------------------------------------
+
+	if (m_State->m_PolygonOffsetFillEnabled) {
+
+		EGL_Fixed factor = m_State->m_PolygonOffsetFactor;
+		EGL_Fixed units = m_State->m_PolygonOffsetUnits;
+
+		EGL_Fixed depthSlope = 0; 
+		// calculation here
+
+		// This calculation is based on the plane equation version of the rasterizer,
+		// and should be moved out of this block once the rasterizer is converted
+
+		EGL_Fixed denominator = 
+			Det2x2(
+				pos2.m_WindowCoords.x - pos1.m_WindowCoords.x, pos2.m_WindowCoords.y - pos1.m_WindowCoords.y,
+				pos3.m_WindowCoords.x - pos1.m_WindowCoords.x, pos3.m_WindowCoords.y - pos1.m_WindowCoords.y);
+
+		if (denominator)
+		{
+			EGL_Fixed invDenominator = EGL_Inverse(denominator);
+			SOLVE(dDepthdX, dDepthdY, m_WindowCoords.depth, invDenominator);
+
+			EGL_Fixed gradX = dDepthdX > 0 ? dDepthdX : -dDepthdX;
+			EGL_Fixed gradY = dDepthdY > 0 ? dDepthdY : -dDepthdY;
+
+			depthSlope = gradX > gradY ? gradX : gradY;
+		}
+
+
+		I32 offset = EGL_IntFromFixed(EGL_Mul(factor, depthSlope) + units * PolygonOffsetUnitSize);
+
+		if (offset > 0) {
+			depth1 = depth1 < DepthRangeMax - offset ? depth1 + offset : depth1;
+			depth2 = depth2 < DepthRangeMax - offset ? depth2 + offset : depth2;
+			depth3 = depth3 < DepthRangeMax - offset ? depth3 + offset : depth3;
+		} else {
+			depth1 = depth1 > -offset ? depth1 + offset : depth1;
+			depth2 = depth2 > -offset ? depth2 + offset : depth2;
+			depth3 = depth3 > -offset ? depth3 + offset : depth3;
+		}
+	}
+
 	EGL_Fixed invZ1 = pos1.m_WindowCoords.invZ;
 	EGL_Fixed invZ2 = pos2.m_WindowCoords.invZ;
 	EGL_Fixed invZ3 = pos3.m_WindowCoords.invZ;
@@ -1108,7 +1182,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	EdgePos start, end;
 	start.m_WindowCoords.x = end.m_WindowCoords.x = pos1.m_WindowCoords.x;
 	start.m_WindowCoords.invZ = end.m_WindowCoords.invZ = invZ1;
-	start.m_WindowCoords.depth = end.m_WindowCoords.depth = pos1.m_WindowCoords.depth;
+	start.m_WindowCoords.depth = end.m_WindowCoords.depth = depth1;
 	start.m_Color = end.m_Color = pos1.m_Color;
 	start.m_TextureCoords.tu = end.m_TextureCoords.tu = EGL_Mul(pos1.m_TextureCoords.tu, invZ1);
 	start.m_TextureCoords.tv = end.m_TextureCoords.tv = EGL_Mul(pos1.m_TextureCoords.tv, invZ1);
@@ -1140,7 +1214,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		incB2 = EGL_Mul(pos2.m_Color.b - pos1.m_Color.b, invDeltaY2);
 		incA2 = EGL_Mul(pos2.m_Color.a - pos1.m_Color.a, invDeltaY2);
 		incFog2 = EGL_Mul(pos1.m_FogDensity - pos2.m_FogDensity, invDeltaY2);
-		incDepth2 = EGL_Mul(pos2.m_WindowCoords.depth - pos1.m_WindowCoords.depth, invDeltaY2);
+		incDepth2 = EGL_Mul(depth2 - depth1, invDeltaY2);
 
 		// perspective interpolation
 		incZ2 = EGL_Mul(invZ2 - invZ1, invDeltaY2);
@@ -1192,7 +1266,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		incB3 = EGL_Mul(pos3.m_Color.b - pos1.m_Color.b, invDeltaY3);
 		incA3 = EGL_Mul(pos3.m_Color.a - pos1.m_Color.a, invDeltaY3);
 		incFog3 = EGL_Mul(pos1.m_FogDensity - pos3.m_FogDensity, invDeltaY3);
-		incDepth3 = EGL_Mul(pos3.m_WindowCoords.depth - pos1.m_WindowCoords.depth, invDeltaY3);
+		incDepth3 = EGL_Mul(depth3 - depth1, invDeltaY3);
 
 		// perspective interpolation
 		incZ3 = EGL_Mul(invZ3 - invZ1, invDeltaY3);
@@ -1240,7 +1314,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		incB23 = EGL_Mul(pos3.m_Color.b - pos2.m_Color.b, invDeltaY23);
 		incA23 = EGL_Mul(pos3.m_Color.a - pos2.m_Color.a, invDeltaY23);
 		incFog23 = EGL_Mul(pos2.m_FogDensity - pos3.m_FogDensity, invDeltaY23);
-		incDepth23 = EGL_Mul(pos3.m_WindowCoords.depth - pos2.m_WindowCoords.depth, invDeltaY23);
+		incDepth23 = EGL_Mul(depth3 - depth2, invDeltaY23);
 
 		// perspective interpolation
 		incZ23 = EGL_Mul(invZ3 - invZ2, invDeltaY23);
@@ -1308,7 +1382,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 		start.m_WindowCoords.x = pos2.m_WindowCoords.x;
 		start.m_WindowCoords.invZ = invZ2;
-		start.m_WindowCoords.depth = pos2.m_WindowCoords.depth;
+		start.m_WindowCoords.depth = depth2;
 		start.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
 		start.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
 		start.m_Color = pos2.m_Color;
@@ -1382,7 +1456,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 		end.m_WindowCoords.x = pos2.m_WindowCoords.x;
 		end.m_Color = pos2.m_Color;
 		end.m_WindowCoords.invZ = invZ2;
-		end.m_WindowCoords.depth = pos2.m_WindowCoords.depth;
+		end.m_WindowCoords.depth = depth2;
 		end.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
 		end.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
 		end.m_FogDensity = EGL_ONE - pos2.m_FogDensity;
