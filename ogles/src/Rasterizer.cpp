@@ -936,6 +936,11 @@ void Rasterizer :: PreparePoint() {
 		SetTexture(m_Texture);
 	}
 
+	m_PointFunction = (PointFunction *)
+		m_FunctionCache->GetFunction(FunctionCache::FunctionTypePoint, 
+									 *m_State);
+
+	m_RasterInfo.Init(m_Surface, 0);
 	m_RasterInfo.MipmapLevel = 0;
 }
 
@@ -950,20 +955,6 @@ void Rasterizer :: PrepareLine() {
 
 
 void Rasterizer :: Finish() {
-}
-
-
-void Rasterizer :: RasterPoint(const RasterPos& point) {
-
-	I32 x = EGL_IntFromFixed(point.m_WindowCoords.x);
-	I32 y = EGL_IntFromFixed(point.m_WindowCoords.y);
-	EGL_Fixed depth = point.m_WindowCoords.depth;
-	EGL_Fixed tu = point.m_TextureCoords.tu;
-	EGL_Fixed tv = point.m_TextureCoords.tv;
-	FractionalColor baseColor = point.m_Color;
-	EGL_Fixed fogDensity = point.m_FogDensity;
-
-	Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
 }
 
 

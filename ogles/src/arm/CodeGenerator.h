@@ -63,6 +63,7 @@ namespace EGL {
 
 	struct FragmentGenerationInfo {
 		cg_virtual_reg_t * regX;
+		cg_virtual_reg_t * regY;
 		cg_virtual_reg_t * regDepth;
 		cg_virtual_reg_t * regU;
 		cg_virtual_reg_t * regV; 
@@ -159,6 +160,15 @@ namespace EGL {
 #	define OFFSET_COLOR_ALPHA				offsetof(FractionalColor, a)
 
 	// -------------------------------------------------------------------------
+	// For ScreenCoord
+	// -------------------------------------------------------------------------
+
+#	define OFFSET_SCREEN_X					offsetof(ScreenCoord, x)
+#	define OFFSET_SCREEN_Y					offsetof(ScreenCoord, y)
+#	define OFFSET_SCREEN_INV_Z				offsetof(ScreenCoord, invZ)
+#	define OFFSET_SCREEN_DEPTH				offsetof(ScreenCoord, depth)
+
+	// -------------------------------------------------------------------------
 	// For EdgeCoord
 	// -------------------------------------------------------------------------
 
@@ -201,6 +211,32 @@ namespace EGL {
 #	define OFFSET_EDGE_BUFFER_TEX_DTUDY		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_DTUDY)
 #	define OFFSET_EDGE_BUFFER_TEX_DTVDX		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_DTVDX)
 #	define OFFSET_EDGE_BUFFER_TEX_DTVDY		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_DTVDY)
+
+	// -------------------------------------------------------------------------
+	// For RasterPos
+	// -------------------------------------------------------------------------
+
+#	define OFFSET_RASTER_POS_WINDOW			offsetof(RasterPos, m_WindowCoords)
+#	define OFFSET_RASTER_POS_COLOR			offsetof(RasterPos, m_Color)
+#	define OFFSET_RASTER_POS_TEXTURE		offsetof(RasterPos, m_TextureCoords)
+#	define OFFSET_RASTER_POS_FOG			offsetof(RasterPos, m_FogDensity)
+
+#	define OFFSET_RASTER_POS_WINDOW_X		(OFFSET_RASTER_POS_WINDOW + OFFSET_SCREEN_X)
+#	define OFFSET_RASTER_POS_WINDOW_Y		(OFFSET_RASTER_POS_WINDOW + OFFSET_SCREEN_Y)
+#	define OFFSET_RASTER_POS_WINDOW_INV_Z	(OFFSET_RASTER_POS_WINDOW + OFFSET_SCREEN_INV_Z)
+#	define OFFSET_RASTER_POS_WINDOW_DEPTH	(OFFSET_RASTER_POS_WINDOW + OFFSET_SCREEN_DEPTH)
+
+#	define OFFSET_RASTER_POS_COLOR_R		(OFFSET_RASTER_POS_COLOR + OFFSET_COLOR_RED)
+#	define OFFSET_RASTER_POS_COLOR_G		(OFFSET_RASTER_POS_COLOR + OFFSET_COLOR_GREEN)
+#	define OFFSET_RASTER_POS_COLOR_B		(OFFSET_RASTER_POS_COLOR + OFFSET_COLOR_BLUE)
+#	define OFFSET_RASTER_POS_COLOR_A		(OFFSET_RASTER_POS_COLOR + OFFSET_COLOR_ALPHA)
+
+#	define OFFSET_RASTER_POS_TEX_TU			(OFFSET_RASTER_POS_TEXTURE + OFFSET_TEX_COORD_TU)
+#	define OFFSET_RASTER_POS_TEX_TV			(OFFSET_RASTER_POS_TEXTURE + OFFSET_TEX_COORD_TV)
+#	define OFFSET_RASTER_POS_TEX_DTUDX		(OFFSET_RASTER_POS_TEXTURE + OFFSET_TEX_COORD_DTUDX)
+#	define OFFSET_RASTER_POS_TEX_DTUDY		(OFFSET_RASTER_POS_TEXTURE + OFFSET_TEX_COORD_DTUDY)
+#	define OFFSET_RASTER_POS_TEX_DTVDX		(OFFSET_RASTER_POS_TEXTURE + OFFSET_TEX_COORD_DTVDX)
+#	define OFFSET_RASTER_POS_TEX_DTVDY		(OFFSET_RASTER_POS_TEXTURE + OFFSET_TEX_COORD_DTVDY)
 
 
 #endif //ndef EGL_CODE_GENERATOR_H

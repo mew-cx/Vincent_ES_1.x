@@ -169,7 +169,7 @@ void Rasterizer :: PrepareTriangle() {
 		SetTexture(m_Texture);
 	}
 
-	m_ScanlineFunction = 
+	m_ScanlineFunction = (ScanlineFunction *)
 		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeScanline, 
 									 *m_State);
 
