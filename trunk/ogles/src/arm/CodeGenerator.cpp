@@ -266,6 +266,21 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	//	return;
 	//}
 
+	if (m_State->m_ScissorTestEnabled) {
+		DECL_REG	(regConstXStart);
+		DECL_REG	(regConstXEnd);
+		DECL_FLAGS	(regXStartTest);
+		DECL_FLAGS	(regXEndTest);
+
+		LDI			(regConstXStart, m_State->m_ScissorX);
+		LDI			(regConstXEnd, m_State->m_ScissorX + m_State->m_ScissorWidth);
+
+		CMP			(regXStartTest, fragmentInfo.regX, regConstXStart);
+		BLT			(regXStartTest, continuation);
+		CMP			(regXEndTest, fragmentInfo.regX, regConstXEnd);
+		BGE			(regXEndTest, continuation);
+	}
+
 	//bool depthTest;
 	//U32 offset = x + y * m_Surface->GetWidth();
 	//I32 zBufferValue = m_Surface->GetDepthBuffer()[offset];

@@ -1345,151 +1345,325 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	I32 yEnd = EGL_IntFromFixed(pos2.m_WindowCoords.y);
 	I32 y;
 
-	if (incX2 < incX3) {
-		for (y = yStart; y < yEnd; ++y) {
-			RasterScanLine(start, end, y);
+	y = yStart;
 
-			// update start
-			start.m_WindowCoords.x += incX2;
-			start.m_Color.r += incR2;
-			start.m_Color.g += incG2;
-			start.m_Color.b += incB2;
-			start.m_Color.a += incA2;
+	if (m_State->m_ScissorTestEnabled) {
 
-			start.m_WindowCoords.invZ += incZ2;
-			start.m_TextureCoords.tu += incTu2;
-			start.m_TextureCoords.tv += incTv2;
+		// TO DO: This can be optimized, but we'll address it when we convert the whole
+		// function to the plane equation approach
 
-			start.m_FogDensity += incFog2;
-			start.m_WindowCoords.depth += incDepth2;
+		I32 yScissorStart = m_State->m_ScissorY;
+		I32 yScissorEnd = yScissorStart + m_State->m_ScissorHeight;
 
-			// update end
-			end.m_WindowCoords.x += incX3;
-			end.m_Color.r += incR3;
-			end.m_Color.g += incG3;
-			end.m_Color.b += incB3;
-			end.m_Color.a += incA3;
+		if (incX2 < incX3) {
 
-			end.m_WindowCoords.invZ += incZ3;
-			end.m_TextureCoords.tu += incTu3;
-			end.m_TextureCoords.tv += incTv3;
+			for (; y < yEnd; ++y) {
 
-			end.m_FogDensity += incFog3;
-			end.m_WindowCoords.depth += incDepth3;
-		}
+				if (y >= yScissorStart && y < yScissorEnd) 
+					RasterScanLine(start, end, y);
 
-		yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
+				// update start
+				start.m_WindowCoords.x += incX2;
+				start.m_Color.r += incR2;
+				start.m_Color.g += incG2;
+				start.m_Color.b += incB2;
+				start.m_Color.a += incA2;
 
-		start.m_WindowCoords.x = pos2.m_WindowCoords.x;
-		start.m_WindowCoords.invZ = invZ2;
-		start.m_WindowCoords.depth = depth2;
-		start.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
-		start.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
-		start.m_Color = pos2.m_Color;
-		start.m_FogDensity = EGL_ONE - pos2.m_FogDensity;
+				start.m_WindowCoords.invZ += incZ2;
+				start.m_TextureCoords.tu += incTu2;
+				start.m_TextureCoords.tv += incTv2;
 
-		for (; y < yEnd; ++y) {
-			RasterScanLine(start, end, y);
-			// update start
-			start.m_WindowCoords.x += incX23;
-			start.m_Color.r += incR23;
-			start.m_Color.g += incG23;
-			start.m_Color.b += incB23;
-			start.m_Color.a += incA23;
+				start.m_FogDensity += incFog2;
+				start.m_WindowCoords.depth += incDepth2;
 
-			start.m_WindowCoords.invZ += incZ23;
-			start.m_TextureCoords.tu += incTu23;
-			start.m_TextureCoords.tv += incTv23;
+				// update end
+				end.m_WindowCoords.x += incX3;
+				end.m_Color.r += incR3;
+				end.m_Color.g += incG3;
+				end.m_Color.b += incB3;
+				end.m_Color.a += incA3;
 
-			start.m_FogDensity += incFog23;
-			start.m_WindowCoords.depth += incDepth23;
+				end.m_WindowCoords.invZ += incZ3;
+				end.m_TextureCoords.tu += incTu3;
+				end.m_TextureCoords.tv += incTv3;
 
-			// update end
-			end.m_WindowCoords.x += incX3;
-			end.m_Color.r += incR3;
-			end.m_Color.g += incG3;
-			end.m_Color.b += incB3;
-			end.m_Color.a += incA3;
+				end.m_FogDensity += incFog3;
+				end.m_WindowCoords.depth += incDepth3;
+			}
 
-			end.m_WindowCoords.invZ += incZ3;
-			end.m_TextureCoords.tu += incTu3;
-			end.m_TextureCoords.tv += incTv3;
+			yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
 
-			end.m_FogDensity += incFog3;
-			end.m_WindowCoords.depth += incDepth3;
+			start.m_WindowCoords.x = pos2.m_WindowCoords.x;
+			start.m_WindowCoords.invZ = invZ2;
+			start.m_WindowCoords.depth = depth2;
+			start.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
+			start.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
+			start.m_Color = pos2.m_Color;
+			start.m_FogDensity = EGL_ONE - pos2.m_FogDensity;
+
+			for (; y < yEnd; ++y) {
+
+				if (y >= yScissorStart && y < yScissorEnd) 
+					RasterScanLine(start, end, y);
+
+				// update start
+				start.m_WindowCoords.x += incX23;
+				start.m_Color.r += incR23;
+				start.m_Color.g += incG23;
+				start.m_Color.b += incB23;
+				start.m_Color.a += incA23;
+
+				start.m_WindowCoords.invZ += incZ23;
+				start.m_TextureCoords.tu += incTu23;
+				start.m_TextureCoords.tv += incTv23;
+
+				start.m_FogDensity += incFog23;
+				start.m_WindowCoords.depth += incDepth23;
+
+				// update end
+				end.m_WindowCoords.x += incX3;
+				end.m_Color.r += incR3;
+				end.m_Color.g += incG3;
+				end.m_Color.b += incB3;
+				end.m_Color.a += incA3;
+
+				end.m_WindowCoords.invZ += incZ3;
+				end.m_TextureCoords.tu += incTu3;
+				end.m_TextureCoords.tv += incTv3;
+
+				end.m_FogDensity += incFog3;
+				end.m_WindowCoords.depth += incDepth3;
+			}
+		} else {
+			for (; y < yEnd; ++y) {
+
+				if (y >= yScissorStart && y < yScissorEnd) 
+					RasterScanLine(start, end, y);
+
+				// update start
+				start.m_WindowCoords.x += incX3;
+				start.m_Color.r += incR3;
+				start.m_Color.g += incG3;
+				start.m_Color.b += incB3;
+				start.m_Color.a += incA3;
+
+				start.m_WindowCoords.invZ += incZ3;
+				start.m_TextureCoords.tu += incTu3;
+				start.m_TextureCoords.tv += incTv3;
+
+				start.m_FogDensity += incFog3;
+				start.m_WindowCoords.depth += incDepth3;
+
+				// update end
+				end.m_WindowCoords.x += incX2;
+				end.m_Color.r += incR2;
+				end.m_Color.g += incG2;
+				end.m_Color.b += incB2;
+				end.m_Color.a += incA2;
+
+				end.m_WindowCoords.invZ += incZ2;
+				end.m_TextureCoords.tu += incTu2;
+				end.m_TextureCoords.tv += incTv2;
+
+				end.m_FogDensity += incFog2;
+				end.m_WindowCoords.depth += incDepth2;
+			}
+
+			yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
+
+			end.m_WindowCoords.x = pos2.m_WindowCoords.x;
+			end.m_Color = pos2.m_Color;
+			end.m_WindowCoords.invZ = invZ2;
+			end.m_WindowCoords.depth = depth2;
+			end.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
+			end.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
+			end.m_FogDensity = EGL_ONE - pos2.m_FogDensity;
+
+			for (; y < yEnd; ++y) {
+
+				if (y >= yScissorStart && y < yScissorEnd) 
+					RasterScanLine(start, end, y);
+
+				// update start
+				start.m_WindowCoords.x += incX3;
+				start.m_Color.r += incR3;
+				start.m_Color.g += incG3;
+				start.m_Color.b += incB3;
+				start.m_Color.a += incA3;
+
+				start.m_WindowCoords.invZ += incZ3;
+				start.m_TextureCoords.tu += incTu3;
+				start.m_TextureCoords.tv += incTv3;
+
+				start.m_FogDensity += incFog3;
+				start.m_WindowCoords.depth += incDepth3;
+
+				// update end
+				end.m_WindowCoords.x += incX23;
+				end.m_Color.r += incR23;
+				end.m_Color.g += incG23;
+				end.m_Color.b += incB23;
+				end.m_Color.a += incA23;
+
+				end.m_WindowCoords.invZ += incZ23;
+				end.m_TextureCoords.tu += incTu23;
+				end.m_TextureCoords.tv += incTv23;
+
+				end.m_FogDensity += incFog23;
+				end.m_WindowCoords.depth += incDepth23;
+			}
 		}
 	} else {
-		for (y = yStart; y < yEnd; ++y) {
-			RasterScanLine(start, end, y);
+		if (incX2 < incX3) {
 
-			// update start
-			start.m_WindowCoords.x += incX3;
-			start.m_Color.r += incR3;
-			start.m_Color.g += incG3;
-			start.m_Color.b += incB3;
-			start.m_Color.a += incA3;
+			for (; y < yEnd; ++y) {
 
-			start.m_WindowCoords.invZ += incZ3;
-			start.m_TextureCoords.tu += incTu3;
-			start.m_TextureCoords.tv += incTv3;
+				RasterScanLine(start, end, y);
 
-			start.m_FogDensity += incFog3;
-			start.m_WindowCoords.depth += incDepth3;
+				// update start
+				start.m_WindowCoords.x += incX2;
+				start.m_Color.r += incR2;
+				start.m_Color.g += incG2;
+				start.m_Color.b += incB2;
+				start.m_Color.a += incA2;
 
-			// update end
-			end.m_WindowCoords.x += incX2;
-			end.m_Color.r += incR2;
-			end.m_Color.g += incG2;
-			end.m_Color.b += incB2;
-			end.m_Color.a += incA2;
+				start.m_WindowCoords.invZ += incZ2;
+				start.m_TextureCoords.tu += incTu2;
+				start.m_TextureCoords.tv += incTv2;
 
-			end.m_WindowCoords.invZ += incZ2;
-			end.m_TextureCoords.tu += incTu2;
-			end.m_TextureCoords.tv += incTv2;
+				start.m_FogDensity += incFog2;
+				start.m_WindowCoords.depth += incDepth2;
 
-			end.m_FogDensity += incFog2;
-			end.m_WindowCoords.depth += incDepth2;
-		}
+				// update end
+				end.m_WindowCoords.x += incX3;
+				end.m_Color.r += incR3;
+				end.m_Color.g += incG3;
+				end.m_Color.b += incB3;
+				end.m_Color.a += incA3;
 
-		yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
+				end.m_WindowCoords.invZ += incZ3;
+				end.m_TextureCoords.tu += incTu3;
+				end.m_TextureCoords.tv += incTv3;
 
-		end.m_WindowCoords.x = pos2.m_WindowCoords.x;
-		end.m_Color = pos2.m_Color;
-		end.m_WindowCoords.invZ = invZ2;
-		end.m_WindowCoords.depth = depth2;
-		end.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
-		end.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
-		end.m_FogDensity = EGL_ONE - pos2.m_FogDensity;
+				end.m_FogDensity += incFog3;
+				end.m_WindowCoords.depth += incDepth3;
+			}
 
-		for (; y < yEnd; ++y) {
-			RasterScanLine(start, end, y);
-			// update start
-			start.m_WindowCoords.x += incX3;
-			start.m_Color.r += incR3;
-			start.m_Color.g += incG3;
-			start.m_Color.b += incB3;
-			start.m_Color.a += incA3;
+			yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
 
-			start.m_WindowCoords.invZ += incZ3;
-			start.m_TextureCoords.tu += incTu3;
-			start.m_TextureCoords.tv += incTv3;
+			start.m_WindowCoords.x = pos2.m_WindowCoords.x;
+			start.m_WindowCoords.invZ = invZ2;
+			start.m_WindowCoords.depth = depth2;
+			start.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
+			start.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
+			start.m_Color = pos2.m_Color;
+			start.m_FogDensity = EGL_ONE - pos2.m_FogDensity;
 
-			start.m_FogDensity += incFog3;
-			start.m_WindowCoords.depth += incDepth3;
+			for (; y < yEnd; ++y) {
+				
+				RasterScanLine(start, end, y);
 
-			// update end
-			end.m_WindowCoords.x += incX23;
-			end.m_Color.r += incR23;
-			end.m_Color.g += incG23;
-			end.m_Color.b += incB23;
-			end.m_Color.a += incA23;
+				// update start
+				start.m_WindowCoords.x += incX23;
+				start.m_Color.r += incR23;
+				start.m_Color.g += incG23;
+				start.m_Color.b += incB23;
+				start.m_Color.a += incA23;
 
-			end.m_WindowCoords.invZ += incZ23;
-			end.m_TextureCoords.tu += incTu23;
-			end.m_TextureCoords.tv += incTv23;
+				start.m_WindowCoords.invZ += incZ23;
+				start.m_TextureCoords.tu += incTu23;
+				start.m_TextureCoords.tv += incTv23;
 
-			end.m_FogDensity += incFog23;
-			end.m_WindowCoords.depth += incDepth23;
+				start.m_FogDensity += incFog23;
+				start.m_WindowCoords.depth += incDepth23;
+
+				// update end
+				end.m_WindowCoords.x += incX3;
+				end.m_Color.r += incR3;
+				end.m_Color.g += incG3;
+				end.m_Color.b += incB3;
+				end.m_Color.a += incA3;
+
+				end.m_WindowCoords.invZ += incZ3;
+				end.m_TextureCoords.tu += incTu3;
+				end.m_TextureCoords.tv += incTv3;
+
+				end.m_FogDensity += incFog3;
+				end.m_WindowCoords.depth += incDepth3;
+			}
+		} else {
+			for (; y < yEnd; ++y) {
+				RasterScanLine(start, end, y);
+
+				// update start
+				start.m_WindowCoords.x += incX3;
+				start.m_Color.r += incR3;
+				start.m_Color.g += incG3;
+				start.m_Color.b += incB3;
+				start.m_Color.a += incA3;
+
+				start.m_WindowCoords.invZ += incZ3;
+				start.m_TextureCoords.tu += incTu3;
+				start.m_TextureCoords.tv += incTv3;
+
+				start.m_FogDensity += incFog3;
+				start.m_WindowCoords.depth += incDepth3;
+
+				// update end
+				end.m_WindowCoords.x += incX2;
+				end.m_Color.r += incR2;
+				end.m_Color.g += incG2;
+				end.m_Color.b += incB2;
+				end.m_Color.a += incA2;
+
+				end.m_WindowCoords.invZ += incZ2;
+				end.m_TextureCoords.tu += incTu2;
+				end.m_TextureCoords.tv += incTv2;
+
+				end.m_FogDensity += incFog2;
+				end.m_WindowCoords.depth += incDepth2;
+			}
+
+			yEnd = EGL_IntFromFixed(pos3.m_WindowCoords.y);
+
+			end.m_WindowCoords.x = pos2.m_WindowCoords.x;
+			end.m_Color = pos2.m_Color;
+			end.m_WindowCoords.invZ = invZ2;
+			end.m_WindowCoords.depth = depth2;
+			end.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
+			end.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
+			end.m_FogDensity = EGL_ONE - pos2.m_FogDensity;
+
+			for (; y < yEnd; ++y) {
+				RasterScanLine(start, end, y);
+				// update start
+				start.m_WindowCoords.x += incX3;
+				start.m_Color.r += incR3;
+				start.m_Color.g += incG3;
+				start.m_Color.b += incB3;
+				start.m_Color.a += incA3;
+
+				start.m_WindowCoords.invZ += incZ3;
+				start.m_TextureCoords.tu += incTu3;
+				start.m_TextureCoords.tv += incTv3;
+
+				start.m_FogDensity += incFog3;
+				start.m_WindowCoords.depth += incDepth3;
+
+				// update end
+				end.m_WindowCoords.x += incX23;
+				end.m_Color.r += incR23;
+				end.m_Color.g += incG23;
+				end.m_Color.b += incB23;
+				end.m_Color.a += incA23;
+
+				end.m_WindowCoords.invZ += incZ23;
+				end.m_TextureCoords.tu += incTu23;
+				end.m_TextureCoords.tv += incTv23;
+
+				end.m_FogDensity += incFog23;
+				end.m_WindowCoords.depth += incDepth23;
+			}
 		}
 	}
 }
