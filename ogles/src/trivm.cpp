@@ -643,3 +643,90 @@ void EGL::triVM::RemoveUnusedCode(Module * module) {
 		}
 	}
 }
+
+
+namespace {
+	class FindDefinitionSweep: public Sweep {
+	public:
+		FindDefinitionSweep(RegisterDefinitionMap * result): definitions(result) {
+		}
+
+	protected:
+		virtual void  visitUnary(triVM::Instruction * instruction){ 
+			if (instruction->unary.rC >= 0) {
+				addRegister(instruction->unary.rC, instruction);
+			}
+
+			addRegister(instruction->unary.rD, instruction);
+		}
+
+		virtual void  visitBinary(triVM::Instruction * instruction){ 
+			if (instruction->binary.rC >= 0) {
+				addRegister(instruction->binary.rC, instruction);
+			}
+
+			addRegister(instruction->binary.rD, instruction);
+		}
+		
+		virtual void  visitCompare(triVM::Instruction * instruction){ 
+
+			addRegister(instruction->compare.rD, instruction);
+		}
+
+		virtual void  visitLoad(triVM::Instruction * instruction){ 
+
+			addRegister(instruction->load.rD, instruction);
+		}
+
+		virtual void  visitStore(triVM::Instruction * instruction){ 
+		}
+
+		virtual void  visitLoadImmediate(triVM::Instruction * instruction){ 
+			addRegister(instruction->loadImmediate.rD, instruction);
+		}
+
+		virtual void  visitBranchReg(triVM::Instruction * instruction){ 
+		}
+
+		virtual void  visitBranchLabel(triVM::Instruction * instruction){ 
+		}
+
+		virtual void  visitBranchConditionally(triVM::Instruction * instruction){ 
+		}
+
+		virtual void  visitPhi(triVM::Instruction * instruction) { 
+
+			addRegister(instruction->phi.rD, instruction);
+		}
+
+		virtual void  visitCall(triVM::Instruction * instruction) { 
+			// always executed
+
+			RegisterList * registers = instruction->call.results;
+
+			for (RegisterList::iterator iter = registers->begin(); iter != registers->end(); ++iter) {
+				addRegister(*iter, instruction);
+			}
+		}
+
+		virtual void  visitRet(triVM::Instruction * instruction) { 
+		}
+
+	private:
+		RegisterDefinitionMap * definitions;
+
+	private:
+		void addRegister(int reg, Instruction * instruction) {
+			(*definitions)[reg] = instruction;
+		}
+	};
+
+}
+
+
+RegisterDefinitionMap * EGL::triVM::FindDefinitions(Module * module) {
+	RegisterDefinitionMap * result = new RegisterDefinitionMap;
+	FindDefinitionSweep finder(result);
+	finder.sweep(module);
+	return result;
+}
