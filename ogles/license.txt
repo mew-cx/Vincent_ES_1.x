@@ -25,7 +25,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 ------------------------------------------------------------------------------
 
-Parts of this software is
+Part of this software is
 
 Copyright (c) 2002 Wild West Software
 Copyright (c) 2001, 2002 Sergey Chaban
