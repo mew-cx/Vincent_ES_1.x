@@ -914,18 +914,23 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 
 		I32 x;
 		I32 endX;
+		EGL_Fixed roundedX, preStepX;
 
 		if (deltaX < 0) {
 			deltaY = -deltaY;
 			deltaX = -deltaX;
 			start = &p_to;
 			end = &p_from;
-			x = EGL_IntFromFixed(p_to.m_WindowCoords.x + ((EGL_ONE)/2));
+			roundedX = EGL_NearestInt(p_to.m_WindowCoords.x + 1);
+			x = EGL_IntFromFixed(roundedX);
+			preStepX = roundedX + (EGL_ONE/2) - p_to.m_WindowCoords.x;
 			endX = EGL_IntFromFixed(p_from.m_WindowCoords.x + ((EGL_ONE)/2));
 		} else {
 			start = &p_from;
 			end = &p_to;
-			x = EGL_IntFromFixed(p_from.m_WindowCoords.x + ((EGL_ONE)/2-1));
+			roundedX = EGL_NearestInt(p_from.m_WindowCoords.x);
+			x = EGL_IntFromFixed(roundedX);
+			preStepX = roundedX + (EGL_ONE/2) - p_from.m_WindowCoords.x;
 			endX = EGL_IntFromFixed(p_to.m_WindowCoords.x + ((EGL_ONE)/2-1));
 		}
 
@@ -956,6 +961,18 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 
 		EGL_Fixed deltaDepth = EGL_Mul(to.m_WindowCoords.depth - from.m_WindowCoords.depth, invSpan);
 
+		baseColor.r += EGL_Mul(colorIncrement.r, preStepX);
+		baseColor.g += EGL_Mul(colorIncrement.g, preStepX);
+		baseColor.b += EGL_Mul(colorIncrement.b, preStepX);
+		baseColor.a += EGL_Mul(colorIncrement.a, preStepX);
+
+		fogDensity  += EGL_Mul(deltaFog, preStepX);
+		depth       += EGL_Mul(deltaDepth, preStepX);
+
+		OneOverZ	+= EGL_Mul(deltaZ, preStepX);
+		tuOverZ		+= EGL_Mul(deltaU, preStepX);
+		tvOverZ		+= EGL_Mul(deltaV, preStepX);
+		
 		I32 y = EGL_IntFromFixed(from.m_WindowCoords.y + ((EGL_ONE)/2-1));
 
 		I32 yIncrement = (deltaY > 0) ? 1 : -1;
@@ -990,18 +1007,23 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 
 		I32 y;
 		I32 endY;
+		EGL_Fixed roundedY, preStepY;
 
 		if (deltaY < 0) {
 			deltaY = -deltaY;
 			deltaX = -deltaX;
 			start = &p_to;
 			end = &p_from;
-			y = EGL_IntFromFixed(p_to.m_WindowCoords.y + ((EGL_ONE)/2));
+			roundedY = EGL_NearestInt(p_to.m_WindowCoords.y + 1);
+			y = EGL_IntFromFixed(roundedY);
+			preStepY = roundedY + (EGL_ONE/2) - p_to.m_WindowCoords.y;
 			endY = EGL_IntFromFixed(p_from.m_WindowCoords.y + ((EGL_ONE)/2));
 		} else {
 			start = &p_from;
 			end = &p_to;
-			y = EGL_IntFromFixed(p_from.m_WindowCoords.y + ((EGL_ONE)/2-1));
+			roundedY = EGL_NearestInt(p_from.m_WindowCoords.y);
+			y = EGL_IntFromFixed(roundedY);
+			preStepY = roundedY + (EGL_ONE/2) - p_from.m_WindowCoords.y;
 			endY = EGL_IntFromFixed(p_to.m_WindowCoords.y + ((EGL_ONE)/2-1));
 		}
 
@@ -1031,6 +1053,18 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 								   EGL_Mul(from.m_TextureCoords.tv, OneOverZ), invSpan);
 
 		EGL_Fixed deltaDepth = EGL_Mul(to.m_WindowCoords.depth - from.m_WindowCoords.depth, invSpan);
+
+		baseColor.r += EGL_Mul(colorIncrement.r, preStepY);
+		baseColor.g += EGL_Mul(colorIncrement.g, preStepY);
+		baseColor.b += EGL_Mul(colorIncrement.b, preStepY);
+		baseColor.a += EGL_Mul(colorIncrement.a, preStepY);
+
+		fogDensity  += EGL_Mul(deltaFog, preStepY);
+		depth       += EGL_Mul(deltaDepth, preStepY);
+
+		OneOverZ	+= EGL_Mul(deltaZ, preStepY);
+		tuOverZ		+= EGL_Mul(deltaU, preStepY);
+		tvOverZ		+= EGL_Mul(deltaV, preStepY);
 
 		I32 x = EGL_IntFromFixed(from.m_WindowCoords.x + ((EGL_ONE)/2-1));
 
