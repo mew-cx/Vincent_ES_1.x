@@ -58,6 +58,7 @@ void Context :: PointSizex(GLfixed size) {
 inline EGL_Fixed Context :: SelectPointSizeArrayElement(int index) {
 
 	if (!m_PointSizeArray.effectivePointer) {
+		// as long as we do not have anti-aliasing, determining the point size here is fine
 		return m_PointSize;
 	} else {
 		EGL_Fixed coords[1];
@@ -130,7 +131,9 @@ void Context :: RenderPoint(RasterPos& point, EGL_Fixed size) {
 
 	ClipCoordsToWindowCoords(point);
 	point.m_Color = point.m_FrontColor;
-	m_Rasterizer->RasterPoint(point, m_PointSize);
+
+	// as long as we do not have anti-aliasing, determining the effective point size here is fine
+	m_Rasterizer->RasterPoint(point, EGL_Max(size, EGL_ONE));
 }
 
 

@@ -29,6 +29,7 @@ This version addresses the following issues:
 1008788	- Auto mipmap generation
 1008786 - Buffer Objects
 1012401 - Optimize SelectArrayElement
+1008792 - Enhanced point sprites and point sprite arrays
 
 
 Version 0.81
