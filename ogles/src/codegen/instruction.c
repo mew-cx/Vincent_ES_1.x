@@ -1958,6 +1958,7 @@ static void count_uses(int * result, cg_block_t * block)
 		
 		for (iter = buffer; iter != end; ++iter)
 		{
+			regno = (*iter)->reg_no;
 			++result[regno];
 		}
 	}
@@ -1966,7 +1967,8 @@ static void count_uses(int * result, cg_block_t * block)
 
 static void block_interferences(cg_block_t * block)
 {
-	cg_heap_t * heap = block->proc->module->heap;
+	cg_proc_t * proc = block->proc;
+	cg_heap_t * heap = proc->module->heap;
 	cg_inst_t * inst;
 	size_t outer_index, inner_index;
 
@@ -1978,7 +1980,9 @@ static void block_interferences(cg_block_t * block)
 	//	for each use, remove current use from use list; if # uses = 0 and not in live out, remove variable from live register set
 
 	cg_bitset_t * live = cg_bitset_create(heap, block->live_in->elements);
-	int * uses = (int *) malloc(sizeof(int) * block->live_in->elements);
+	int * uses = (int *) malloc(sizeof(int *) * proc->num_registers);
+
+	assert(proc->num_registers == block->live_in->elements);
 
 	count_uses(uses, block);
 	cg_bitset_assign(live, block->live_in);
@@ -2039,6 +2043,8 @@ static void block_interferences(cg_block_t * block)
 		
 		for (iter = buffer; iter != end; ++iter)
 		{
+			assert((*iter)->reg_no >= 0);
+			assert((*iter)->reg_no < proc->num_registers);
 			--uses[(*iter)->reg_no];
 
 			if (uses[(*iter)->reg_no] == 0 && !CG_BITSET_TEST(block->live_out, (*iter)->reg_no)) 
