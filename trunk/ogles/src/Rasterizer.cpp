@@ -457,7 +457,7 @@ inline void Rasterizer :: Fragment(const RasterInfo * rasterInfo,
 
 	// fog
 	if (m_State->m_FogEnabled) {
-		color = Color::Blend(color, m_State->m_FogColor, fogDensity);
+		color = Color::Blend(color, m_State->m_FogColor, fogDensity >> 8);
 	}
 
 	// have color

@@ -501,22 +501,16 @@ namespace {
 // --------------------------------------------------------------------------
 EGL_Fixed Context :: FogDensity(EGL_Fixed eyeDistance) const {
 
-	if (eyeDistance <= m_FogStart) {
-		return EGL_ONE;
-	} else if (eyeDistance >= m_FogEnd) {
-		return 0;
-	}
-
 	switch (m_FogMode) {
 		default:
 		case FogLinear:
-			return EGL_Div(m_FogEnd - eyeDistance, m_FogEnd - m_FogStart);
+			return EGL_CLAMP(EGL_Div(m_FogEnd - eyeDistance, m_FogEnd - m_FogStart), 0, EGL_ONE);
 
 		case FogModeExp:
-			return Exp(EGL_Mul(-m_FogDensity, eyeDistance));
+			return EGL_CLAMP(Exp(EGL_Mul(m_FogDensity, eyeDistance)), 0, EGL_ONE);
 
 		case FogModeExp2:
-			return Exp2(EGL_Mul(-m_FogDensity, eyeDistance));
+			return EGL_CLAMP(Exp2(EGL_Mul(m_FogDensity, eyeDistance)), 0, EGL_ONE);
 	}
 
 }
@@ -547,7 +541,7 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 		// apply model view matrix to vertex coordinate -> eye coordinates vertex
 		Vec4D eyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
 
-		EGL_Fixed eyeDistance = eyeCoords.z();
+		EGL_Fixed eyeDistance = EGL_Abs(eyeCoords.z());
 
 		// apply inverse of model view matrix to normals -> eye coordinates normals
 		Vec3D eyeNormal = (m_InverseModelViewMatrix * m_CurrentNormal).Project();
@@ -632,7 +626,7 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 
 		if (m_RasterizerState.IsEnabledFog()) {
 			// populate fog density here...
-			EGL_Fixed eyeDistance = m_ModelViewMatrixStack.CurrentMatrix().GetTransformedZ(m_CurrentVertex);
+			EGL_Fixed eyeDistance = EGL_Abs(m_ModelViewMatrixStack.CurrentMatrix().GetTransformedZ(m_CurrentVertex));
 			rasterPos->m_FogDensity = FogDensity(eyeDistance);
 		} else {
 			// populate fog density here...

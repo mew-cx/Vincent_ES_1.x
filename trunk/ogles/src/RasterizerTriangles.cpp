@@ -499,7 +499,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	start.m_Color = pos1.m_Color;
 	start.m_TextureCoords.tu = EGL_Mul(pos1.m_TextureCoords.tu, invZ1);
 	start.m_TextureCoords.tv = EGL_Mul(pos1.m_TextureCoords.tv, invZ1);
-	start.m_FogDensity = EGL_ONE - pos1.m_FogDensity;
+	start.m_FogDensity = pos1.m_FogDensity;
 
 	// set up the triangle
 	// init start, end, deltas
@@ -554,7 +554,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			start.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
 			start.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
 			start.m_Color = pos2.m_Color;
-			start.m_FogDensity = EGL_ONE - pos2.m_FogDensity;
+			start.m_FogDensity = pos2.m_FogDensity;
 
 			TrianglePartScissor(rasterInfo, start, delta, delta23, delta3.m_WindowCoords.x,
 				y, yEnd, yScissorStart, yScissorEnd);
@@ -591,7 +591,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			start.m_TextureCoords.tu = EGL_Mul(pos2.m_TextureCoords.tu, invZ2);
 			start.m_TextureCoords.tv = EGL_Mul(pos2.m_TextureCoords.tv, invZ2);
 			start.m_Color = pos2.m_Color;
-			start.m_FogDensity = EGL_ONE - pos2.m_FogDensity;
+			start.m_FogDensity = pos2.m_FogDensity;
 
 			TrianglePart(rasterInfo, start, delta, delta23, delta3.m_WindowCoords.x, y, yEnd);
 		} else {
