@@ -955,3 +955,23 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 
 	}
 }
+
+
+I32 RasterInfo::InversionTable[] = {
+	0, 
+	EGL_FixedFromFloat(1.0f / 1.0f), 
+	EGL_FixedFromFloat(1.0f / 2.0f), 
+	EGL_FixedFromFloat(1.0f / 3.0f), 
+	EGL_FixedFromFloat(1.0f / 4.0f),
+	EGL_FixedFromFloat(1.0f / 5.0f), 
+	EGL_FixedFromFloat(1.0f / 6.0f), 
+	EGL_FixedFromFloat(1.0f / 7.0f),
+	EGL_FixedFromFloat(1.0f / 8.0f), 
+	EGL_FixedFromFloat(1.0f / 9.0f),
+	EGL_FixedFromFloat(1.0f / 10.0f), 
+	EGL_FixedFromFloat(1.0f / 11.0f), 
+	EGL_FixedFromFloat(1.0f / 12.0f),
+	EGL_FixedFromFloat(1.0f / 13.0f), 
+	EGL_FixedFromFloat(1.0f / 14.0f), 
+	EGL_FixedFromFloat(1.0f / 15.0f),
+};

@@ -173,6 +173,7 @@ namespace {
 #	define OFFSET_TEXTURE_LOG_BYTES_PER_PIXEL	offsetof(RasterInfo, TextureLogBytesPerPixel)
 #	define OFFSET_TEXTURE_EXPONENT				offsetof(RasterInfo, TextureExponent)
 #	define OFFSET_TEXTURE_DATA					offsetof(RasterInfo, TextureData)
+#	define OFFSET_INVERSE_TABLE_PTR				offsetof(RasterInfo, InversionTablePtr)
 
 	// -------------------------------------------------------------------------
 	// For FractionalColor
@@ -2884,7 +2885,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	cg_virtual_reg_t * regTextureLogWidth =		LOAD_DATA(block, regInfo, OFFSET_TEXTURE_LOG_WIDTH);
 	cg_virtual_reg_t * regTextureLogHeight =	LOAD_DATA(block, regInfo, OFFSET_TEXTURE_LOG_HEIGHT);
 	cg_virtual_reg_t * regTextureExponent =		LOAD_DATA(block, regInfo, OFFSET_TEXTURE_EXPONENT);
-
+	cg_virtual_reg_t * regInverseTablePtr =		LOAD_DATA(block, regInfo, OFFSET_INVERSE_TABLE_PTR);
 
 	// surface color buffer, depth buffer, alpha buffer, stencil buffer
 	cg_virtual_reg_t * regColorBuffer =			LOAD_DATA(block, regInfo, OFFSET_SURFACE_COLOR_BUFFER);
@@ -3173,11 +3174,17 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FMUL	(regEndV, regEndZ, regEndTextureV);
 
 		//invSpan = EGL_Inverse(EGL_FixedFromInt(deltaX));
-	DECL_REG	(regFixedBlock4DiffX);
+	DECL_REG	(regShiftedBlock4DiffX);
+	DECL_REG	(regConstant2);
+	DECL_REG	(regInverseAddr);
+
+	LDI			(regConstant2, 2);
+	LSL			(regShiftedBlock4DiffX, regBlock4DiffX, regConstant2);
+	ADD			(regInverseAddr, regInverseTablePtr, regShiftedBlock4DiffX);
+
 	DECL_REG	(regBlock4InvSpan);
 
-	FCNV	(regFixedBlock4DiffX, regBlock4DiffX);
-	FINV	(regBlock4InvSpan, regFixedBlock4DiffX);
+	LDW			(regBlock4InvSpan, regInverseAddr);
 
 		//EGL_Fixed deltaZ = EGL_Mul(endZ - z, invSpan);
 		//EGL_Fixed deltaTu = EGL_Mul(endTu - tu, invSpan);

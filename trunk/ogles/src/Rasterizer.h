@@ -112,6 +112,7 @@ namespace EGL {
 		U16 *	ColorBuffer;
 		U32 *	StencilBuffer;
 		U8 *	AlphaBuffer;
+		I32 *	InversionTablePtr;
 
 		// texture info
 		I32		TextureLogWidth;
@@ -129,7 +130,10 @@ namespace EGL {
 			ColorBuffer = surface->GetColorBuffer() + offset;
 			StencilBuffer = surface->GetStencilBuffer() + offset;
 			AlphaBuffer = surface->GetAlphaBuffer() + offset;
+			InversionTablePtr = InversionTable;
 		}
+
+		static I32 InversionTable[];
 	};
 
 	// signature for generated scanline functions
