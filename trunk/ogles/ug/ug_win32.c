@@ -432,7 +432,7 @@ found:
 
 		case WM_CHAR:
 
-			if (((TCHAR)wParam == 'c')||((TCHAR)wParam == 'C'))					
+			if (pfnSaveSurface && (((TCHAR)wParam == 'c')||((TCHAR)wParam == 'C')))					
 			{
 																								//show save file dialog
 				OPENFILENAME ofn ;		 // common dialog structure
