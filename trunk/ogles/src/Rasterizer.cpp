@@ -274,10 +274,6 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 	bool depthTest;
 
-	if (baseColor.R() == 0xff && baseColor.G() == 0 && baseColor.B() == 0) {
-		return;
-	}
-	
 	// fragment level clipping (for now)
 	if (m_State->m_ScissorTestEnabled) {
 		if (x < m_State->m_ScissorX || x - m_State->m_ScissorX >= m_State->m_ScissorWidth) {
