@@ -18,9 +18,7 @@
 
 // TODO: reference additional headers your program requires here
 
-#ifndef _WIN32_WCE
-#include <gdiplus.h>
-#else
+#ifdef _WIN32_WCE
 #include <commctrl.h>
 #include <aygshell.h>
 #include <sipapi.h>
