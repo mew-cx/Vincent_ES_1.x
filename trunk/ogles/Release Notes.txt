@@ -16,6 +16,7 @@ This version addresses the following issues:
 863632 - Initialization for multiple processes 
 863631 - Mipmapping still needs to be implemented 
 863640 - Depth coordinate now handled correctly
+863652 - Enhance performanced impact for stencil buffer on pipeline 
 
 
 Version 0.1

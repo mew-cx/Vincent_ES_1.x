@@ -125,6 +125,33 @@ RasterizerState * Rasterizer :: GetState() const {
 inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv, 
 								   EGL_Fixed fogDensity, const Color& baseColor) {
 
+	// fragment level clipping (for now)
+	if (m_Surface->GetWidth() <= x || x < 0 ||
+		m_Surface->GetHeight() <= y || y < 0) {
+		return;
+	}
+
+	bool depthTest;
+	
+	U32 offset = x + y * m_Surface->GetWidth();
+	I32 zBufferValue = m_Surface->GetDepthBuffer()[offset];
+
+	switch (m_State->m_DepthFunc) {
+		default:
+		case RasterizerState::CompFuncNever:	depthTest = false;						break;
+		case RasterizerState::CompFuncLess:		depthTest = depth < zBufferValue;		break;
+		case RasterizerState::CompFuncEqual:	depthTest = depth == zBufferValue;		break;
+		case RasterizerState::CompFuncLEqual:	depthTest = depth <= zBufferValue;		break;
+		case RasterizerState::CompFuncGreater:	depthTest = depth > zBufferValue;		break;
+		case RasterizerState::CompFuncNotEqual:	depthTest = depth != zBufferValue;		break;
+		case RasterizerState::CompFuncGEqual:	depthTest = depth >= zBufferValue;		break;
+		case RasterizerState::CompFuncAlways:	depthTest = true;						break;
+	}
+
+	if (!m_State->m_StencilTestEnabled && m_State->m_DepthTestEnabled && !depthTest) {
+		return;
+	}
+
 	Color color = baseColor;
 
 	if (m_State->m_TextureEnabled) {
@@ -290,32 +317,9 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 		}
 	}
 
-	bool depthTest;
-	
-	// fragment level clipping (for now)
-	if (m_Surface->GetWidth() <= x || x < 0 ||
-		m_Surface->GetHeight() <= y || y < 0) {
-		return;
-	}
-
 	// fog
 	if (m_State->m_FogEnabled) {
 		color = Color::Blend(color, m_State->m_FogColor, fogDensity);
-	}
-
-	U32 offset = x + y * m_Surface->GetWidth();
-	I32 zBufferValue = m_Surface->GetDepthBuffer()[offset];
-
-	switch (m_State->m_DepthFunc) {
-		default:
-		case RasterizerState::CompFuncNever:	depthTest = false;						break;
-		case RasterizerState::CompFuncLess:		depthTest = depth < zBufferValue;		break;
-		case RasterizerState::CompFuncEqual:	depthTest = depth == zBufferValue;		break;
-		case RasterizerState::CompFuncLEqual:	depthTest = depth <= zBufferValue;		break;
-		case RasterizerState::CompFuncGreater:	depthTest = depth > zBufferValue;		break;
-		case RasterizerState::CompFuncNotEqual:	depthTest = depth != zBufferValue;		break;
-		case RasterizerState::CompFuncGEqual:	depthTest = depth >= zBufferValue;		break;
-		case RasterizerState::CompFuncAlways:	depthTest = true;						break;
 	}
 
 	if (m_State->m_AlphaTestEnabled) {
@@ -468,7 +472,8 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 		}
 	}
 
-	if (!depthTest && m_State->m_DepthTestEnabled) {
+	if (m_State->m_StencilTestEnabled && !depthTest && m_State->m_DepthTestEnabled) {
+		// otherwise we returned at the top
 		return;
 	}
 
