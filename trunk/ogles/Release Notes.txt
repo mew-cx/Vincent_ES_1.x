@@ -10,6 +10,7 @@ Version 0.75
 
 This version addresses the following issues:
 
+951117 - glTexParameterf causes an error 
 863629 - Lightning model is incomplete 
 949647 - SpecularColor test fails 
 949645 - Stencil test generates exception in code generator

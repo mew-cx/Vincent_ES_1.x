@@ -344,7 +344,6 @@ void Context :: TexParameterf (GLenum target, GLenum pname, GLfloat param) {
 		default:
 			RecordError(GL_INVALID_ENUM);
 	}
-	TexParameterx(target, pname, EGL_FixedFromFloat(param));
 }
 
 void Context :: Translatef (GLfloat x, GLfloat y, GLfloat z) {
