@@ -546,8 +546,7 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 		// apply inverse of model view matrix to normals -> eye coordinates normals
 		Vec3D eyeNormal = (m_InverseModelViewMatrix * m_CurrentNormal).Project();
 
-		// TO DO: apply proper re-normalization/re-scaling of normal vector
-		if (m_RescaleNormalEnabled || m_NormalizeEnabled) {
+		if (m_NormalizeEnabled) {
 			eyeNormal.Normalize();
 		}
 
