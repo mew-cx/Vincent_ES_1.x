@@ -53,274 +53,276 @@ using namespace EGL;
 #define EGL_VERSION_MINOR 0
 
 
-GLAPI EGLBoolean APIENTRY eglInitialize (EGLDisplay dpy, EGLint *major, EGLint *minor) {
+extern "C" {
 
-	if (major != 0) {
-		*major = EGL_VERSION_MAJOR;
+	GLAPI EGLBoolean APIENTRY eglInitialize (EGLDisplay dpy, EGLint *major, EGLint *minor) {
+
+		if (major != 0) {
+			*major = EGL_VERSION_MAJOR;
+		}
+
+		if (minor != 0) {
+			*minor = EGL_VERSION_MINOR;
+		}
+
+		// allocate thread local storage
+		TlsInfo * info = reinterpret_cast<TlsInfo *>(Dll::Tls());
+
+		if (!info) {
+			info = new TlsInfo();
+			Dll::SetTls(info);
+		}
+
+		return TRUE;
 	}
 
-	if (minor != 0) {
-		*minor = EGL_VERSION_MINOR;
+
+	GLAPI EGLBoolean APIENTRY eglTerminate (EGLDisplay dpy) {
+
+		TlsInfo * info = reinterpret_cast<TlsInfo *>(Dll::Tls());
+
+		if (info) {
+			delete info;
+			Dll::SetTls(0);
+		}
+
+		return EGL_TRUE;
 	}
 
-	// allocate thread local storage
-	TlsInfo * info = reinterpret_cast<TlsInfo *>(Dll::Tls());
 
-	if (!info) {
-		info = new TlsInfo();
-		Dll::SetTls(info);
+	static void eglRecordError(EGLint error)
+		// Save an error code for the current thread
+		//
+		// error		-		The error code to be recorded in thread local storage
+	{
+		TlsInfo * info = reinterpret_cast<TlsInfo *>(Dll::Tls());
+
+		if (info) {
+			info->m_LastError = error;
+		}
 	}
 
-	return TRUE;
-}
 
-
-GLAPI EGLBoolean APIENTRY eglTerminate (EGLDisplay dpy) {
-
-	TlsInfo * info = reinterpret_cast<TlsInfo *>(Dll::Tls());
-
-	if (info) {
-		delete info;
-		Dll::SetTls(0);
+	GLAPI EGLDisplay APIENTRY eglGetDisplay (NativeDisplayType display) {
+		return reinterpret_cast<EGLDisplay>(display);
 	}
 
-	return EGL_TRUE;
-}
+	GLAPI const char * APIENTRY eglQueryString (EGLDisplay dpy, EGLint name) {
+		switch (name) {
+		case EGL_VENDOR:
+			return EGL_CONFIG_VENDOR;
 
+		case EGL_VERSION:
+			return EGL_VERSION_NUMBER;
 
-static void eglRecordError(EGLint error)
-	// Save an error code for the current thread
-	//
-	// error		-		The error code to be recorded in thread local storage
-{
-	TlsInfo * info = reinterpret_cast<TlsInfo *>(Dll::Tls());
-
-	if (info) {
-		info->m_LastError = error;
-	}
-}
-
-
-GLAPI EGLDisplay APIENTRY eglGetDisplay (NativeDisplayType display) {
-	return reinterpret_cast<EGLDisplay>(display);
-}
-
-GLAPI const char * APIENTRY eglQueryString (EGLDisplay dpy, EGLint name) {
-	switch (name) {
-	case EGL_VENDOR:
-		return EGL_CONFIG_VENDOR;
-
-	case EGL_VERSION:
-		return EGL_VERSION_NUMBER;
-
-	case EGL_EXTENSIONS:
-		return "";
-
-	default:
-		eglRecordError(EGL_BAD_PARAMETER);
-		return 0;
-	}
-}
-
-
-static struct {
-	const char * name;
-	void * ptr;
-
-} FunctionTable[] = {
-	{ "glQueryMatrixxOES", glQueryMatrixxOES },
-};
-
-
-GLAPI void (* APIENTRY eglGetProcAddress (const char *procname))() {
-
-	if (!procname) {
-		return 0;
-	}
-
-	size_t functions = sizeof(FunctionTable) / sizeof(FunctionTable[0]);
-
-	for (size_t index = 0; index < functions; ++index) {
-		if (!strcmp(FunctionTable[index].name, procname))
-			return (void (APIENTRY *)(void)) FunctionTable[index].ptr;
-	}
-
-	return 0;
-}
-
-
-GLAPI EGLBoolean APIENTRY eglGetConfigs (EGLDisplay dpy, EGLConfig *configs, EGLint config_size, EGLint *num_config) {
-	return Config::GetConfigs(configs, config_size, num_config);
-}
-
-GLAPI EGLBoolean APIENTRY eglChooseConfig (EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config) {
-	return Config::ChooseConfig(attrib_list, configs, config_size, num_config);
-}
-
-GLAPI EGLBoolean APIENTRY eglGetConfigAttrib (EGLDisplay dpy, EGLConfig config, EGLint attribute, EGLint *value) {
-	*value = config->GetConfigAttrib(attribute);
-	return EGL_TRUE;
-}
-
-
-GLAPI EGLSurface APIENTRY eglCreateWindowSurface (EGLDisplay dpy, EGLConfig config, NativeWindowType window, const EGLint *attrib_list) {
-#if 0
-	RECT rect;
-
-	GetClientRect(window, &rect);
-
-	Config surfaceConfig(*config);
-	surfaceConfig.SetConfigAttrib(EGL_SURFACE_TYPE, EGL_WINDOW_BIT);
-	surfaceConfig.SetConfigAttrib(EGL_WIDTH, rect.right - rect.left);
-	surfaceConfig.SetConfigAttrib(EGL_HEIGHT, rect.bottom - rect.top);
-	return EGL::Surface::NewL(surfaceConfig, GetWindowDC(window));
-
-
-# endif
-
-	return 0;
-}
-
-GLAPI EGLSurface APIENTRY eglCreatePixmapSurface (EGLDisplay dpy, EGLConfig config, NativePixmapType pixmap, const EGLint *attrib_list) {
-	// Cannot support rendering to arbitrary native surfaces; use pbuffer surface and eglCopySurfaces instead
-	return EGL_NO_SURFACE;
-}
-
-GLAPI EGLSurface APIENTRY eglCreatePbufferSurface (EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list) {
-	static EGLint validAttributes[] = {
-		EGL_WIDTH,
-		EGL_HEIGHT,
-		EGL_NONE
-	};
-
-	Config surfaceConfig(*config, attrib_list, validAttributes);
-	surfaceConfig.SetConfigAttrib(EGL_SURFACE_TYPE, EGL_PBUFFER_BIT);
-	return EGL::Surface::NewL(surfaceConfig);
-}
-
-GLAPI EGLBoolean APIENTRY eglDestroySurface (EGLDisplay dpy, EGLSurface surface) {
-	surface->Dispose();
-	return EGL_TRUE;
-}
-
-GLAPI EGLBoolean APIENTRY eglQuerySurface (EGLDisplay dpy, EGLSurface surface, EGLint attribute, EGLint *value) {
-	*value = surface->GetConfig()->GetConfigAttrib(attribute);
-	return EGL_TRUE;
-}
-
-GLAPI EGLContext APIENTRY eglCreateContext (EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list) {
-	return new Context(*config);
-}
-
-GLAPI EGLBoolean APIENTRY eglDestroyContext (EGLDisplay dpy, EGLContext ctx) {
-	ctx->Dispose();
-	return EGL_TRUE;
-}
-
-GLAPI EGLBoolean APIENTRY eglMakeCurrent (EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx) {
-
-	Context::SetCurrentContext(ctx);
-
-	if (ctx) {
-		ctx->SetDrawSurface(draw);
-		ctx->SetReadSurface(read);
-	}
-
-	return EGL_TRUE;
-
-}
-
-GLAPI EGLContext APIENTRY eglGetCurrentContext (void) {
-	return Context::GetCurrentContext();
-}
-
-GLAPI EGLSurface APIENTRY eglGetCurrentSurface (EGLint readdraw) {
-	EGLContext currentContext = eglGetCurrentContext();
-
-	if (currentContext != 0) {
-		switch (readdraw) {
-		case EGL_DRAW:
-			return currentContext->GetDrawSurface();
-
-		case EGL_READ:
-			return currentContext->GetReadSurface();
+		case EGL_EXTENSIONS:
+			return "";
 
 		default:
+			eglRecordError(EGL_BAD_PARAMETER);
 			return 0;
 		}
-	} else {
+	}
+
+
+	static struct {
+		const char * name;
+		void * ptr;
+
+	} FunctionTable[] = {
+		{ "glQueryMatrixxOES", glQueryMatrixxOES },
+	};
+
+
+	GLAPI void (* APIENTRY eglGetProcAddress (const char *procname))() {
+
+		if (!procname) {
+			return 0;
+		}
+
+		size_t functions = sizeof(FunctionTable) / sizeof(FunctionTable[0]);
+
+		for (size_t index = 0; index < functions; ++index) {
+			if (!strcmp(FunctionTable[index].name, procname))
+				return (void (APIENTRY *)(void)) FunctionTable[index].ptr;
+		}
+
 		return 0;
 	}
-}
 
-GLAPI EGLDisplay APIENTRY eglGetCurrentDisplay (void) {
-	return 0;
-}
 
-GLAPI EGLBoolean APIENTRY eglQueryContext (EGLDisplay dpy, EGLContext ctx, EGLint attribute, EGLint *value) {
-	*value = ctx->GetConfig()->GetConfigAttrib(attribute);
-	return EGL_TRUE;
-}
-
-GLAPI EGLBoolean APIENTRY eglWaitGL (void) {
-	return EGL_TRUE;
-}
-
-GLAPI EGLBoolean APIENTRY eglWaitNative (EGLint engine) {
-	return EGL_TRUE;
-}
-
-GLAPI EGLBoolean APIENTRY eglSwapBuffers (EGLDisplay dpy, EGLSurface draw) {
-#if 0
-	Context::GetCurrentContext()->Flush();
-
-	HDC nativeDisplay = GetNativeDisplay(dpy);
-	HDC memoryDC = draw->GetMemoryDC();
-
-	if (memoryDC == INVALID_HANDLE_VALUE) {
-		memoryDC = CreateCompatibleDC(nativeDisplay);
+	GLAPI EGLBoolean APIENTRY eglGetConfigs (EGLDisplay dpy, EGLConfig *configs, EGLint config_size, EGLint *num_config) {
+		return Config::GetConfigs(configs, config_size, num_config);
 	}
 
-	SelectObject(memoryDC, draw->GetBitmap());
-
-	BitBlt(nativeDisplay, 0, 0, draw->GetWidth(), draw->GetHeight(), memoryDC, 0, 0, SRCCOPY);
-
-	if (memoryDC != draw->GetMemoryDC()) {
-		DeleteDC(memoryDC);
+	GLAPI EGLBoolean APIENTRY eglChooseConfig (EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config) {
+		return Config::ChooseConfig(attrib_list, configs, config_size, num_config);
 	}
-#endif
-	return EGL_TRUE;
+
+	GLAPI EGLBoolean APIENTRY eglGetConfigAttrib (EGLDisplay dpy, EGLConfig config, EGLint attribute, EGLint *value) {
+		*value = config->GetConfigAttrib(attribute);
+		return EGL_TRUE;
+	}
+
+
+	GLAPI EGLSurface APIENTRY eglCreateWindowSurface (EGLDisplay dpy, EGLConfig config, NativeWindowType window, const EGLint *attrib_list) {
+	#if 0
+		RECT rect;
+
+		GetClientRect(window, &rect);
+
+		Config surfaceConfig(*config);
+		surfaceConfig.SetConfigAttrib(EGL_SURFACE_TYPE, EGL_WINDOW_BIT);
+		surfaceConfig.SetConfigAttrib(EGL_WIDTH, rect.right - rect.left);
+		surfaceConfig.SetConfigAttrib(EGL_HEIGHT, rect.bottom - rect.top);
+		return EGL::Surface::NewL(surfaceConfig, GetWindowDC(window));
+
+
+	# endif
+
+		return 0;
+	}
+
+	GLAPI EGLSurface APIENTRY eglCreatePixmapSurface (EGLDisplay dpy, EGLConfig config, NativePixmapType pixmap, const EGLint *attrib_list) {
+		// Cannot support rendering to arbitrary native surfaces; use pbuffer surface and eglCopySurfaces instead
+		return EGL_NO_SURFACE;
+	}
+
+	GLAPI EGLSurface APIENTRY eglCreatePbufferSurface (EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list) {
+		static EGLint validAttributes[] = {
+			EGL_WIDTH,
+			EGL_HEIGHT,
+			EGL_NONE
+		};
+
+		Config surfaceConfig(*config, attrib_list, validAttributes);
+		surfaceConfig.SetConfigAttrib(EGL_SURFACE_TYPE, EGL_PBUFFER_BIT);
+		return EGL::Surface::NewL(surfaceConfig);
+	}
+
+	GLAPI EGLBoolean APIENTRY eglDestroySurface (EGLDisplay dpy, EGLSurface surface) {
+		surface->Dispose();
+		return EGL_TRUE;
+	}
+
+	GLAPI EGLBoolean APIENTRY eglQuerySurface (EGLDisplay dpy, EGLSurface surface, EGLint attribute, EGLint *value) {
+		*value = surface->GetConfig()->GetConfigAttrib(attribute);
+		return EGL_TRUE;
+	}
+
+	GLAPI EGLContext APIENTRY eglCreateContext (EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list) {
+		return new Context(*config);
+	}
+
+	GLAPI EGLBoolean APIENTRY eglDestroyContext (EGLDisplay dpy, EGLContext ctx) {
+		ctx->Dispose();
+		return EGL_TRUE;
+	}
+
+	GLAPI EGLBoolean APIENTRY eglMakeCurrent (EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx) {
+
+		Context::SetCurrentContext(ctx);
+
+		if (ctx) {
+			ctx->SetDrawSurface(draw);
+			ctx->SetReadSurface(read);
+		}
+
+		return EGL_TRUE;
+
+	}
+
+	GLAPI EGLContext APIENTRY eglGetCurrentContext (void) {
+		return Context::GetCurrentContext();
+	}
+
+	GLAPI EGLSurface APIENTRY eglGetCurrentSurface (EGLint readdraw) {
+		EGLContext currentContext = eglGetCurrentContext();
+
+		if (currentContext != 0) {
+			switch (readdraw) {
+			case EGL_DRAW:
+				return currentContext->GetDrawSurface();
+
+			case EGL_READ:
+				return currentContext->GetReadSurface();
+
+			default:
+				return 0;
+			}
+		} else {
+			return 0;
+		}
+	}
+
+	GLAPI EGLDisplay APIENTRY eglGetCurrentDisplay (void) {
+		return 0;
+	}
+
+	GLAPI EGLBoolean APIENTRY eglQueryContext (EGLDisplay dpy, EGLContext ctx, EGLint attribute, EGLint *value) {
+		*value = ctx->GetConfig()->GetConfigAttrib(attribute);
+		return EGL_TRUE;
+	}
+
+	GLAPI EGLBoolean APIENTRY eglWaitGL (void) {
+		return EGL_TRUE;
+	}
+
+	GLAPI EGLBoolean APIENTRY eglWaitNative (EGLint engine) {
+		return EGL_TRUE;
+	}
+
+	GLAPI EGLBoolean APIENTRY eglSwapBuffers (EGLDisplay dpy, EGLSurface draw) {
+	#if 0
+		Context::GetCurrentContext()->Flush();
+
+		HDC nativeDisplay = GetNativeDisplay(dpy);
+		HDC memoryDC = draw->GetMemoryDC();
+
+		if (memoryDC == INVALID_HANDLE_VALUE) {
+			memoryDC = CreateCompatibleDC(nativeDisplay);
+		}
+
+		SelectObject(memoryDC, draw->GetBitmap());
+
+		BitBlt(nativeDisplay, 0, 0, draw->GetWidth(), draw->GetHeight(), memoryDC, 0, 0, SRCCOPY);
+
+		if (memoryDC != draw->GetMemoryDC()) {
+			DeleteDC(memoryDC);
+		}
+	#endif
+		return EGL_TRUE;
+	}
+
+	GLAPI EGLBoolean APIENTRY eglCopyBuffers (EGLDisplay dpy, EGLSurface surface, NativePixmapType target) {
+	#if 0
+		if (!target) {
+			return EGL_BAD_NATIVE_PIXMAP;
+		}
+
+		Context::GetCurrentContext()->Flush();
+
+		HDC nativeDisplay = GetNativeDisplay(dpy);
+		HDC memoryDC = surface->GetMemoryDC();
+		HDC targetDC = CreateCompatibleDC(nativeDisplay);;
+
+		if (memoryDC == INVALID_HANDLE_VALUE) {
+			memoryDC = CreateCompatibleDC(nativeDisplay);
+		}
+
+		SelectObject(memoryDC, surface->GetBitmap());
+		SelectObject(targetDC, target);
+
+		if (!BitBlt(targetDC, 0, 0, surface->GetWidth(), surface->GetHeight(), memoryDC, 0, 0, SRCCOPY))
+			return EGL_BAD_MATCH;
+
+		if (memoryDC != surface->GetMemoryDC()) {
+			DeleteDC(memoryDC);
+		}
+
+		DeleteDC(targetDC);
+	#endif
+		return EGL_TRUE;
+	}
+
 }
-
-GLAPI EGLBoolean APIENTRY eglCopyBuffers (EGLDisplay dpy, EGLSurface surface, NativePixmapType target) {
-#if 0
-	if (!target) {
-		return EGL_BAD_NATIVE_PIXMAP;
-	}
-
-	Context::GetCurrentContext()->Flush();
-
-	HDC nativeDisplay = GetNativeDisplay(dpy);
-	HDC memoryDC = surface->GetMemoryDC();
-	HDC targetDC = CreateCompatibleDC(nativeDisplay);;
-
-	if (memoryDC == INVALID_HANDLE_VALUE) {
-		memoryDC = CreateCompatibleDC(nativeDisplay);
-	}
-
-	SelectObject(memoryDC, surface->GetBitmap());
-	SelectObject(targetDC, target);
-
-	if (!BitBlt(targetDC, 0, 0, surface->GetWidth(), surface->GetHeight(), memoryDC, 0, 0, SRCCOPY))
-		return EGL_BAD_MATCH;
-
-	if (memoryDC != surface->GetMemoryDC()) {
-		DeleteDC(memoryDC);
-	}
-
-	DeleteDC(targetDC);
-#endif
-	return EGL_TRUE;
-}
-
-
