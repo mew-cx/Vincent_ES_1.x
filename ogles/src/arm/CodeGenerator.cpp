@@ -65,6 +65,9 @@ namespace {
 		return value;
 	}
 
+#define DECL_REG(reg) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_general)
+#define DECL_FLAGS(reg) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_flags)
+
 }
 
 // This method needs access to the following:
@@ -209,14 +212,15 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	//U32 offset = x + y * m_Surface->GetWidth();
 	//I32 zBufferValue = m_Surface->GetDepthBuffer()[offset];
 	cg_virtual_reg_t * regOffset = fragmentInfo.regX;
-	cg_virtual_reg_t * regDepthTest = cg_virtual_reg_create(procedure, cg_reg_type_flags);
-	cg_virtual_reg_t * regScaledY = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regConstant2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regOffset4 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regOffset2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regZBufferAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regZBufferValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+	DECL_FLAGS	(regDepthTest);
+	DECL_REG	(regScaledY);
+	DECL_REG	(regConstant1);
+	DECL_REG	(regConstant2);
+	DECL_REG	(regOffset4);
+	DECL_REG	(regOffset2);
+	DECL_REG	(regZBufferAddr);
+	DECL_REG	(regZBufferValue);
 
 	LDI		(regConstant1, 1);
 	LDI		(regConstant2, 2);
@@ -303,19 +307,19 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 		//EGL_Fixed tu0;
 		//EGL_Fixed tv0;
-		cg_virtual_reg_t * regU0 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regV0 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		DECL_REG	(regU0);
+		DECL_REG	(regV0);
 
 		switch (m_Texture->GetWrappingModeS()) {
 			case MultiTexture::WrappingModeClampToEdge:
 				//tu0 = EGL_CLAMP(tu, 0, EGL_ONE);
 				{
-					cg_virtual_reg_t * regConstantOne = cg_virtual_reg_create(procedure, cg_reg_type_general);
-					cg_virtual_reg_t * regConstantZero = cg_virtual_reg_create(procedure, cg_reg_type_general);
-					cg_virtual_reg_t * regCompareOne = cg_virtual_reg_create(procedure, cg_reg_type_flags);
-					cg_virtual_reg_t * regCompareZero = cg_virtual_reg_create(procedure, cg_reg_type_flags);
-					cg_virtual_reg_t * regNewU1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-					cg_virtual_reg_t * regNewU2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+					DECL_REG	(regConstantOne);
+					DECL_REG	(regConstantZero);
+					DECL_FLAGS	(regCompareOne);
+					DECL_FLAGS	(regCompareZero);
+					DECL_REG	(regNewU1);
+					DECL_REG	(regNewU2);
 
 					cg_block_ref_t * label1 = cg_block_ref_create(procedure);
 					cg_block_ref_t * label2 = cg_block_ref_create(procedure);
@@ -349,7 +353,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			case MultiTexture::WrappingModeRepeat:
 				//tu0 = tu & 0xffff;
 				{
-					cg_virtual_reg_t * regMask = cg_virtual_reg_create(procedure, cg_reg_type_general);
+					DECL_REG(regMask);
 
 					LDI		(regMask, 0xffff);
 					AND		(regU0, fragmentInfo.regU, regMask);
@@ -361,12 +365,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			case MultiTexture::WrappingModeClampToEdge:
 				//tv0 = EGL_CLAMP(tv, 0, EGL_ONE);
 				{
-					cg_virtual_reg_t * regConstantOne = cg_virtual_reg_create(procedure, cg_reg_type_general);
-					cg_virtual_reg_t * regConstantZero = cg_virtual_reg_create(procedure, cg_reg_type_general);
-					cg_virtual_reg_t * regCompareOne = cg_virtual_reg_create(procedure, cg_reg_type_flags);
-					cg_virtual_reg_t * regCompareZero = cg_virtual_reg_create(procedure, cg_reg_type_flags);
-					cg_virtual_reg_t * regNewV1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-					cg_virtual_reg_t * regNewV2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+					DECL_REG	(regConstantOne);
+					DECL_REG	(regConstantZero);
+					DECL_FLAGS	(regCompareOne);
+					DECL_FLAGS	(regCompareZero);
+					DECL_REG	(regNewV1);
+					DECL_REG	(regNewV2);
 
 					cg_block_ref_t * label1 = cg_block_ref_create(procedure);
 					cg_block_ref_t * label2 = cg_block_ref_create(procedure);
@@ -396,7 +400,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			case MultiTexture::WrappingModeRepeat:
 				//tv0 = tv & 0xffff;
 				{
-					cg_virtual_reg_t * regMask = cg_virtual_reg_create(procedure, cg_reg_type_general);
+					DECL_REG	(regMask);
+
 					LDI		(regMask, 0xffff);
 					AND		(regV0, fragmentInfo.regV, regMask);
 				}
@@ -416,12 +421,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		//cg_virtual_reg_t * texY = EGL_IntFromFixed(texture->GetHeight() * tv0);
 		//cg_virtual_reg_t * texOffset = texX + (texY << texture->GetExponent());
 		//void * data = texture->GetData();
-		cg_virtual_reg_t * regScaledU = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regTexX = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regScaledV = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regTexY = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regScaledTexY = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regTexOffset = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		DECL_REG	(regScaledU);
+		DECL_REG	(regTexX);
+		DECL_REG	(regScaledV);
+		DECL_REG	(regTexY);
+		DECL_REG	(regScaledTexY);
+		DECL_REG	(regTexOffset);
 
 		MUL		(regScaledU, regU0, fragmentInfo.regTextureWidth);
 		TRUNC	(regTexX, regScaledU);
@@ -438,10 +443,11 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regTexAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant7 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regShifted7 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regTexData = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+				DECL_REG	(regTexAddr);
+				DECL_REG	(regConstant7);
+				DECL_REG	(regShifted7);
+				DECL_REG	(regTexData);
 				
 
 				ADD		(regTexAddr, regTexOffset, fragmentInfo.regTextureData);
@@ -464,19 +470,20 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regTexAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regTexData = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regMask5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regMask6 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant3 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regColor5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regColor6 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+				DECL_REG	(regTexAddr);
+				DECL_REG	(regTexData);
+				DECL_REG	(regMask5);
+				DECL_REG	(regMask6);
+				DECL_REG	(regConstant2);
+				DECL_REG	(regConstant3);
+				DECL_REG	(regConstant5);
+				DECL_REG	(regConstant11);
+				DECL_REG	(regColor5);
+				DECL_REG	(regColor6);
+				DECL_REG	(regShiftedB);
+				DECL_REG	(regShiftedG);
+				DECL_REG	(regRG);
 
 				ADD		(regTexAddr, regTexOffset, fragmentInfo.regTextureData);
 				LDB		(regTexData, regTexAddr);
@@ -507,27 +514,28 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regTexAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regTexData = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regMask5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regMask6 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant3 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regColor5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regColor6 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regScaledOffset = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstantOne = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regMask = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regAlpha = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regMaskedAlphaByte = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant7 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regShifted7 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+				DECL_REG	(regTexAddr);
+				DECL_REG	(regTexData);
+				DECL_REG	(regMask5);
+				DECL_REG	(regMask6);
+				DECL_REG	(regConstant2);
+				DECL_REG	(regConstant3);
+				DECL_REG	(regConstant5);
+				DECL_REG	(regConstant11);
+				DECL_REG	(regColor5);
+				DECL_REG	(regColor6);
+				DECL_REG	(regShiftedB);
+				DECL_REG	(regShiftedG);
+				DECL_REG	(regRG);
+				DECL_REG	(regScaledOffset);
+				DECL_REG	(regConstantOne);
+				DECL_REG	(regMask);
+				DECL_REG	(regConstant8);
+				DECL_REG	(regAlpha);
+				DECL_REG	(regMaskedAlphaByte);
+				DECL_REG	(regConstant7);
+				DECL_REG	(regShifted7);
 
 				LDI		(regConstantOne, 1);
 				LSL		(regScaledOffset, regTexOffset, regConstantOne);
@@ -566,15 +574,16 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regScaledOffset = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstantOne = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regTexAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regMask5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regMask6 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regShifted5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regShifted11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+				DECL_REG	(regScaledOffset);
+				DECL_REG	(regConstantOne);
+				DECL_REG	(regTexAddr);
+				DECL_REG	(regMask5);
+				DECL_REG	(regMask6);
+				DECL_REG	(regConstant5);
+				DECL_REG	(regShifted5);
+				DECL_REG	(regConstant11);
+				DECL_REG	(regShifted11);
 
 				LDI		(regConstantOne, 1);
 				LSL		(regScaledOffset, regTexOffset, regConstantOne);
@@ -597,35 +606,36 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			case Texture::TextureFormatRGBA:					// 5-5-5-1
 				//texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
 				{
-				cg_virtual_reg_t * regTexData = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regScaledOffset = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstantOne = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regTexAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+				DECL_REG	(regTexData);
+				DECL_REG	(regScaledOffset);
+				DECL_REG	(regConstantOne);
+				DECL_REG	(regTexAddr);
 
 				LDI		(regConstantOne, 1);
 				LSL		(regScaledOffset, regTexOffset, regConstantOne);
 				ADD		(regTexAddr, regScaledOffset, fragmentInfo.regTextureData);
 				LDH		(regTexData, regTexAddr);
 
-				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant7 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regShifted7 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regMask100 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				DECL_REG	(regConstant7);
+				DECL_REG	(regShifted7);
+				DECL_REG	(regMask100);
 
 				LDI		(regConstant7, 7);
 				LDI		(regMask100, 0x100);
 				LSR		(regShifted7, regTexData, regConstant7);
 				AND		(regTexColorA, regShifted7, regMask100);
 
-				cg_virtual_reg_t * regMask5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regMask51 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant4 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant10 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regShifted4 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regShifted10 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				DECL_REG	(regMask5);
+				DECL_REG	(regMask51);
+				DECL_REG	(regConstant4);
+				DECL_REG	(regConstant10);
+				DECL_REG	(regShifted4);
+				DECL_REG	(regShifted10);
 
 				LDI		(regMask5, 0x1f);
 				AND		(regTexColorR, regTexData, regMask5);
@@ -638,11 +648,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				AND		(regTexColorB, regShifted10, regMask5);
 
 				regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-				cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+				DECL_REG	(regConstant5);
+				DECL_REG	(regConstant11);
+				DECL_REG	(regShiftedB);
+				DECL_REG	(regShiftedG);
+				DECL_REG	(regRG);
 
 				LDI		(regConstant5, 5);
 				LDI		(regConstant11, 11);
@@ -680,12 +691,13 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 						regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 						regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant31 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant63 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regScaledR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regScaledG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regScaledB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						DECL_REG	(regConstant31);
+						DECL_REG	(regConstant63);
+						DECL_REG	(regConstant16);
+						DECL_REG	(regScaledR);
+						DECL_REG	(regScaledG);
+						DECL_REG	(regScaledB);
 
 						LDI		(regConstant31, 0x1f);
 						LDI		(regConstant63, 0x3f);
@@ -698,11 +710,11 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						MUL		(regScaledB, fragmentInfo.regB, regConstant31);
 						LSR		(regColorB, regScaledB, regConstant16);
 
-						cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						DECL_REG	(regConstant5);
+						DECL_REG	(regConstant11);
+						DECL_REG	(regShiftedB);
+						DECL_REG	(regShiftedG);
+						DECL_REG	(regRG);
 
 						LDI		(regConstant5, 5);
 						LDI		(regConstant11, 11);
@@ -724,12 +736,15 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
 						regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 						regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant31 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant63 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regScaledR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regScaledG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regScaledB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						DECL_REG	(regConstant31);
+						DECL_REG	(regConstant63);
+						DECL_REG	(regConstant16);
+						DECL_REG	(regScaledR);
+						DECL_REG	(regScaledG);
+						DECL_REG	(regScaledB);
 
 						LDI		(regConstant31, 0x1f);
 						LDI		(regConstant63, 0x3f);
@@ -742,12 +757,11 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						MUL		(regScaledB, fragmentInfo.regB, regConstant31);
 						LSR		(regColorB, regScaledB, regConstant16);
 
-						cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						DECL_REG	(regConstant5);
+						DECL_REG	(regConstant11);
+						DECL_REG	(regShiftedB);
+						DECL_REG	(regShiftedG);
+						DECL_REG	(regRG);
 
 						LDI		(regConstant5, 5);
 						LDI		(regConstant11, 11);
@@ -756,8 +770,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						OR		(regRG, regTexColorR, regShiftedG);
 						OR		(regColor565, regRG, regShiftedB);
 
-						cg_virtual_reg_t * regAlphaProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						DECL_REG	(regAlphaProduct);
 
 						MUL		(regAlphaProduct, fragmentInfo.regA, regTexColorA);
 						LSR		(regColorA, regAlphaProduct, regConstant16);
@@ -779,7 +792,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						regColorB = regTexColorB;
 						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 						regColor565 = regTexColor565;
-						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						DECL_REG	(regConstant8);
 
 						LDI		(regConstant8, 8);
 						LSR		(regColorA, fragmentInfo.regA, regConstant8);
@@ -795,11 +809,13 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 						regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regScaledR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regScaledG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regScaledB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						DECL_REG	(regConstant8);
+						DECL_REG	(regConstant16);
+						DECL_REG	(regScaledR);
+						DECL_REG	(regScaledG);
+						DECL_REG	(regScaledB);
 
 						LDI		(regConstant8, 8);
 						LSR		(regColorA, fragmentInfo.regA, regConstant8);
@@ -812,12 +828,11 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						MUL		(regScaledB, regTexColorB, fragmentInfo.regB);
 						LSR		(regColorB, regScaledB, regConstant16);
 
-						cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						DECL_REG	(regConstant5);
+						DECL_REG	(regConstant11);
+						DECL_REG	(regShiftedB);
+						DECL_REG	(regShiftedG);
+						DECL_REG	(regRG);
 
 						LDI		(regConstant5, 5);
 						LDI		(regConstant11, 11);
@@ -838,33 +853,35 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						//		MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
 						//		color.a);
 						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant3 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant15 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
+						DECL_REG	(regConstant2);
+						DECL_REG	(regConstant3);
+						DECL_REG	(regConstant8);
+						DECL_REG	(regConstant15);
+
+						LSR		(regColorA, fragmentInfo.regA, regConstant8);
 						LDI		(regConstant2, 2);
 						LDI		(regConstant3, 3);
 						LDI		(regConstant8, 8);
-						LSR		(regColorA, fragmentInfo.regA, regConstant8);
 						LDI		(regConstant15, 15);
 
 						// red component
 						{
 							regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regColorAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regShifted);
+							DECL_REG	(regAdjusted);
+							DECL_REG	(regColorAdjusted);
 
 							LSR		(regShifted, fragmentInfo.regR, regConstant15);
 							SUB		(regAdjusted, fragmentInfo.regR, regShifted);
 							LSR		(regColorAdjusted, regAdjusted, regConstant3);
 
-							cg_virtual_reg_t * regShiftedAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t *	regDiff = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regTexEnv = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regDifference = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							DECL_REG	(regShiftedAdjusted);
+							DECL_REG	(regDiff);
+							DECL_REG	(regTexEnv);
+							DECL_REG	(regProduct);
+							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
 							LDI		(regTexEnv, m_State->m_TexEnvColor.r);
@@ -877,19 +894,20 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						// green component
 						{
 							regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regColorAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regShifted);
+							DECL_REG	(regAdjusted);
+							DECL_REG	(regColorAdjusted);
 
 							LSR		(regShifted, fragmentInfo.regG, regConstant15);
 							SUB		(regAdjusted, fragmentInfo.regG, regShifted);
 							LSR		(regColorAdjusted, regAdjusted, regConstant2);
 
-							cg_virtual_reg_t * regShiftedAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t *	regDiff = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regTexEnv = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regDifference = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							DECL_REG	(regShiftedAdjusted);
+							DECL_REG	(regDiff);
+							DECL_REG	(regTexEnv);
+							DECL_REG	(regProduct);
+							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
 							LDI		(regTexEnv, m_State->m_TexEnvColor.g);
@@ -902,19 +920,20 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						// blue component
 						{
 							regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regColorAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regShifted);
+							DECL_REG	(regAdjusted);
+							DECL_REG	(regColorAdjusted);
 
 							LSR		(regShifted, fragmentInfo.regB, regConstant15);
 							SUB		(regAdjusted, fragmentInfo.regB, regShifted);
 							LSR		(regColorAdjusted, regAdjusted, regConstant3);
 
-							cg_virtual_reg_t * regShiftedAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t *	regDiff = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regTexEnv = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regDifference = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							DECL_REG	(regShiftedAdjusted);
+							DECL_REG	(regDiff);
+							DECL_REG	(regTexEnv);
+							DECL_REG	(regProduct);
+							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
 							LDI		(regTexEnv, m_State->m_TexEnvColor.b);
@@ -926,12 +945,13 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 						// create RGB 565 representation
 						{
-							cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 							regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regConstant5);
+							DECL_REG	(regConstant11);
+							DECL_REG	(regShiftedB);
+							DECL_REG	(regShiftedG);
+							DECL_REG	(regRG);
 
 							LDI		(regConstant5, 5);
 							LDI		(regConstant11, 11);
@@ -953,10 +973,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						//		ClampU8(color.b + texColor.b),
 						//		color.a);
 						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant10 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant255 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						DECL_REG	(regConstant10);
+						DECL_REG	(regConstant11);
+						DECL_REG	(regConstant8);
 
 						LDI		(regConstant10, 10);
 						LDI		(regConstant11, 11);
@@ -966,10 +986,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						// R channel
 						{
 							regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regScaledR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regSumR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regNeedsClampingR = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+
+							DECL_REG	(regScaledR);
+							DECL_REG	(regShiftedR);
+							DECL_REG	(regSumR);
+							DECL_FLAGS	(regNeedsClampingR);
+							DECL_REG	(regConstant255);
 
 							LDI		(regConstant255, 0x1f);
 							LSR		(regShiftedR, fragmentInfo.regR, regConstant11);
@@ -977,7 +999,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							CMP		(regNeedsClampingR, regSumR, regConstant255);
 
 							cg_block_ref_t * noClampingR = cg_block_ref_create(procedure);
-							cg_virtual_reg_t * regClampedR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							DECL_REG	(regClampedR);
 
 							BLE		(regNeedsClampingR, noClampingR);
 							LDI		(regClampedR, 0x1f);
@@ -990,10 +1012,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						// G channel
 						{
 							regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regScaledG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regSumG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regNeedsClampingG = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+
+							DECL_REG	(regScaledG);
+							DECL_REG	(regShiftedG);
+							DECL_REG	(regSumG);
+							DECL_FLAGS	(regNeedsClampingG);
+							DECL_REG	(regConstant255);
 
 							LDI		(regConstant255, 0x3f);
 							LSR		(regShiftedG, fragmentInfo.regG, regConstant10);
@@ -1001,7 +1025,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							CMP		(regNeedsClampingG, regSumG, regConstant255);
 
 							cg_block_ref_t * noClampingG = cg_block_ref_create(procedure);
-							cg_virtual_reg_t * regClampedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							DECL_REG	(regClampedG);
 
 							BLE		(regNeedsClampingG, noClampingG);
 							LDI		(regClampedG, 0x3f);
@@ -1014,10 +1038,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						// B channel
 						{
 							regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regScaledB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regSumB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regNeedsClampingB = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+
+							DECL_REG	(regScaledB);
+							DECL_REG	(regShiftedB);
+							DECL_REG	(regSumB);
+							DECL_FLAGS	(regNeedsClampingB);
+							DECL_REG	(regConstant255);
 
 							LDI		(regConstant255, 0x1f);
 							LSR		(regShiftedB, fragmentInfo.regB, regConstant10);
@@ -1025,7 +1051,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							CMP		(regNeedsClampingB, regSumB, regConstant255);
 
 							cg_block_ref_t * noClampingB = cg_block_ref_create(procedure);
-							cg_virtual_reg_t * regClampedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							DECL_REG	(regClampedB);
 
 							BLE		(regNeedsClampingB, noClampingB);
 							LDI		(regClampedB, 0x1f);
@@ -1037,12 +1063,13 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						}
 						// create RGB 565 representation
 						{
-							cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 							regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regConstant5);
+							DECL_REG	(regConstant11);
+							DECL_REG	(regShiftedB);
+							DECL_REG	(regShiftedG);
+							DECL_REG	(regRG);
 
 							LDI		(regConstant5, 5);
 							LDI		(regConstant11, 11);
@@ -1079,12 +1106,14 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 						regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regScaledR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regScaledG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regScaledB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regAlphaProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						DECL_REG	(regConstant8);
+						DECL_REG	(regConstant16);
+						DECL_REG	(regScaledR);
+						DECL_REG	(regScaledG);
+						DECL_REG	(regScaledB);
+						DECL_REG	(regAlphaProduct);
 
 						LDI		(regConstant16, 16);
 						MUL		(regAlphaProduct, fragmentInfo.regA, regTexColorA);
@@ -1097,12 +1126,11 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						MUL		(regScaledB, regTexColorB, fragmentInfo.regB);
 						LSR		(regColorB, regScaledB, regConstant16);
 
-						cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+						DECL_REG	(regConstant5);
+						DECL_REG	(regConstant11);
+						DECL_REG	(regShiftedB);
+						DECL_REG	(regShiftedG);
+						DECL_REG	(regRG);
 
 						LDI		(regConstant5, 5);
 						LDI		(regConstant11, 11);
@@ -1125,13 +1153,14 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						//		color.a);
 
 						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant3 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant10 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant15 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regShiftedA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						DECL_REG	(regConstant2);
+						DECL_REG	(regConstant3);
+						DECL_REG	(regConstant8);
+						DECL_REG	(regConstant10);
+						DECL_REG	(regConstant11);
+						DECL_REG	(regConstant15);
+						DECL_REG	(regShiftedA);
 
 						LDI		(regConstant2, 2);
 						LDI		(regConstant3, 3);
@@ -1144,14 +1173,15 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 						// red component
 						{
-							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regToColor = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regDeltaColor = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regColorShift = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regDelta = cg_virtual_reg_create(procedure, cg_reg_type_general);
 							regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regShifted);
+							DECL_REG	(regAdjusted);
+							DECL_REG	(regToColor);
+							DECL_REG	(regDeltaColor);
+							DECL_REG	(regProduct);
+							DECL_REG	(regColorShift);
+							DECL_REG	(regDelta);
 
 							LSR		(regShifted, fragmentInfo.regR, regConstant15);
 							SUB		(regAdjusted, fragmentInfo.regR, regShifted);
@@ -1165,14 +1195,15 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 						// green component
 						{
-							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regToColor = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regDeltaColor = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regColorShift = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regDelta = cg_virtual_reg_create(procedure, cg_reg_type_general);
 							regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regShifted);
+							DECL_REG	(regAdjusted);
+							DECL_REG	(regToColor);
+							DECL_REG	(regDeltaColor);
+							DECL_REG	(regProduct);
+							DECL_REG	(regColorShift);
+							DECL_REG	(regDelta);
 
 							LSR		(regShifted, fragmentInfo.regG, regConstant15);
 							SUB		(regAdjusted, fragmentInfo.regG, regShifted);
@@ -1186,14 +1217,15 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 						// blue component
 						{
-							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regToColor = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regDeltaColor = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regColorShift = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regDelta = cg_virtual_reg_create(procedure, cg_reg_type_general);
 							regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regShifted);
+							DECL_REG	(regAdjusted);
+							DECL_REG	(regToColor);
+							DECL_REG	(regDeltaColor);
+							DECL_REG	(regProduct);
+							DECL_REG	(regColorShift);
+							DECL_REG	(regDelta);
 
 							LSR		(regShifted, fragmentInfo.regB, regConstant15);
 							SUB		(regAdjusted, fragmentInfo.regB, regShifted);
@@ -1207,12 +1239,13 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 						// create RGB 565 representation
 						{
-							cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 							regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regConstant5);
+							DECL_REG	(regConstant11);
+							DECL_REG	(regShiftedB);
+							DECL_REG	(regShiftedG);
+							DECL_REG	(regRG);
 
 							LDI		(regConstant5, 5);
 							LDI		(regConstant11, 11);
@@ -1234,12 +1267,13 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						//		MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
 						//		MulU8(color.a, texColor.a));
 						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant2 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant3 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant15 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regAlphaProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						DECL_REG	(regConstant2);
+						DECL_REG	(regConstant3);
+						DECL_REG	(regConstant8);
+						DECL_REG	(regConstant15);
+						DECL_REG	(regConstant16);
+						DECL_REG	(regAlphaProduct);
 
 						LDI		(regConstant2, 2);
 						LDI		(regConstant3, 3);
@@ -1252,19 +1286,20 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						// red component
 						{
 							regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regColorAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regShifted);
+							DECL_REG	(regAdjusted);
+							DECL_REG	(regColorAdjusted);
 
 							LSR		(regShifted, fragmentInfo.regR, regConstant15);
 							SUB		(regAdjusted, fragmentInfo.regR, regShifted);
 							LSR		(regColorAdjusted, regAdjusted, regConstant3);
 
-							cg_virtual_reg_t * regShiftedAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t *	regDiff = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regTexEnv = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regDifference = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							DECL_REG	(regShiftedAdjusted);
+							DECL_REG	(regDiff);
+							DECL_REG	(regTexEnv);
+							DECL_REG	(regProduct);
+							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
 							LDI		(regTexEnv, m_State->m_TexEnvColor.r);
@@ -1277,19 +1312,20 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						// green component
 						{
 							regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regColorAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regShifted);
+							DECL_REG	(regAdjusted);
+							DECL_REG	(regColorAdjusted);
 
 							LSR		(regShifted, fragmentInfo.regG, regConstant15);
 							SUB		(regAdjusted, fragmentInfo.regG, regShifted);
 							LSR		(regColorAdjusted, regAdjusted, regConstant2);
 
-							cg_virtual_reg_t * regShiftedAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t *	regDiff = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regTexEnv = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regDifference = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							DECL_REG	(regShiftedAdjusted);
+							DECL_REG	(regDiff);
+							DECL_REG	(regTexEnv);
+							DECL_REG	(regProduct);
+							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
 							LDI		(regTexEnv, m_State->m_TexEnvColor.g);
@@ -1302,19 +1338,20 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						// blue component
 						{
 							regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regColorAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regShifted);
+							DECL_REG	(regAdjusted);
+							DECL_REG	(regColorAdjusted);
 
 							LSR		(regShifted, fragmentInfo.regB, regConstant15);
 							SUB		(regAdjusted, fragmentInfo.regB, regShifted);
 							LSR		(regColorAdjusted, regAdjusted, regConstant3);
 
-							cg_virtual_reg_t * regShiftedAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t *	regDiff = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regTexEnv = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regDifference = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							DECL_REG	(regShiftedAdjusted);
+							DECL_REG	(regDiff);
+							DECL_REG	(regTexEnv);
+							DECL_REG	(regProduct);
+							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
 							LDI		(regTexEnv, m_State->m_TexEnvColor.b);
@@ -1326,12 +1363,13 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 						// create RGB 565 representation
 						{
-							cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 							regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regConstant5);
+							DECL_REG	(regConstant11);
+							DECL_REG	(regShiftedB);
+							DECL_REG	(regShiftedG);
+							DECL_REG	(regRG);
 
 							LDI		(regConstant5, 5);
 							LDI		(regConstant11, 11);
@@ -1353,12 +1391,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						//		ClampU8(color.b + texColor.b),
 						//		MulU8(color.a, texColor.a));
 						regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant10 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant255 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regAlphaProduct = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						DECL_REG	(regConstant10);
+						DECL_REG	(regConstant11);
+						DECL_REG	(regConstant16);
+						DECL_REG	(regConstant8);
+						DECL_REG	(regAlphaProduct);
 
 						LDI		(regConstant10, 10);
 						LDI		(regConstant11, 11);
@@ -1371,10 +1409,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						// R channel
 						{
 							regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regScaledR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regSumR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regNeedsClampingR = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+
+							DECL_REG	(regConstant255);
+							DECL_REG	(regScaledR);
+							DECL_REG	(regShiftedR);
+							DECL_REG	(regSumR);
+							DECL_FLAGS	(regNeedsClampingR);
 
 							LDI		(regConstant255, 0x1f);
 							LSR		(regShiftedR, fragmentInfo.regR, regConstant11);
@@ -1382,7 +1422,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							CMP		(regNeedsClampingR, regSumR, regConstant255);
 
 							cg_block_ref_t * noClampingR = cg_block_ref_create(procedure);
-							cg_virtual_reg_t * regClampedR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							DECL_REG	(regClampedR);
 
 							BLE		(regNeedsClampingR, noClampingR);
 							LDI		(regClampedR, 0x1f);
@@ -1395,10 +1435,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						// G channel
 						{
 							regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regScaledG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regSumG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regNeedsClampingG = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+
+							DECL_REG	(regConstant255);
+							DECL_REG	(regScaledG);
+							DECL_REG	(regShiftedG);
+							DECL_REG	(regSumG);
+							DECL_FLAGS	(regNeedsClampingG);
 
 							LDI		(regConstant255, 0x3f);
 							LSR		(regShiftedG, fragmentInfo.regG, regConstant10);
@@ -1406,7 +1448,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							CMP		(regNeedsClampingG, regSumG, regConstant255);
 
 							cg_block_ref_t * noClampingG = cg_block_ref_create(procedure);
-							cg_virtual_reg_t * regClampedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							DECL_REG	(regClampedG);
 
 							BLE		(regNeedsClampingG, noClampingG);
 							LDI		(regClampedG, 0x3f);
@@ -1419,10 +1461,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						// B channel
 						{
 							regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regScaledB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regSumB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regNeedsClampingB = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+
+							DECL_REG	(regConstant255);
+							DECL_REG	(regScaledB);
+							DECL_REG	(regShiftedB);
+							DECL_REG	(regSumB);
+							DECL_FLAGS	(regNeedsClampingB);
 
 							LDI		(regConstant255, 0x1f);
 							LSR		(regShiftedB, fragmentInfo.regB, regConstant10);
@@ -1430,7 +1474,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							CMP		(regNeedsClampingB, regSumB, regConstant255);
 
 							cg_block_ref_t * noClampingB = cg_block_ref_create(procedure);
-							cg_virtual_reg_t * regClampedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							DECL_REG	(regClampedB);
 
 							BLE		(regNeedsClampingB, noClampingB);
 							LDI		(regClampedB, 0x1f);
@@ -1442,12 +1486,13 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						}
 						// create RGB 565 representation
 						{
-							cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 							regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regConstant5);
+							DECL_REG	(regConstant11);
+							DECL_REG	(regShiftedB);
+							DECL_REG	(regShiftedG);
+							DECL_REG	(regRG);
 
 							LDI		(regConstant5, 5);
 							LDI		(regConstant11, 11);
@@ -1464,10 +1509,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		}
 	} else {
 		// color = baseColor
-		cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regConstant10 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		DECL_REG	(regConstant16);
+		DECL_REG	(regConstant11);
+		DECL_REG	(regConstant10);
+		DECL_REG	(regConstant8);
 
 		LDI		(regConstant16, 16);
 		LDI		(regConstant11, 11);
@@ -1477,8 +1522,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		//  needs to be converted to 565 format, alpha to 8 bits
 		{
 			regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+			DECL_REG	(regShifted);
+			DECL_REG	(regAdjusted);
 
 			LSR		(regShifted, fragmentInfo.regR, regConstant16);
 			SUB		(regAdjusted, fragmentInfo.regR, regShifted);
@@ -1487,8 +1533,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 		{
 			regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+			DECL_REG	(regShifted);
+			DECL_REG	(regAdjusted);
 
 			LSR		(regShifted, fragmentInfo.regG, regConstant16);
 			SUB		(regAdjusted, fragmentInfo.regG, regShifted);
@@ -1497,8 +1544,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 		{
 			regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			cg_virtual_reg_t * regShifted = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			cg_virtual_reg_t * regAdjusted = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+			DECL_REG	(regShifted);
+			DECL_REG	(regAdjusted);
 
 			LSR		(regShifted, fragmentInfo.regB, regConstant16);
 			SUB		(regAdjusted, fragmentInfo.regB, regShifted);
@@ -1506,63 +1554,67 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		}
 		{
 			regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
 			LSR		(regColorA, fragmentInfo.regA, regConstant8);
 		}
-		// create RGB 565 representation
-		cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		{
+			// create RGB 565 representation
+			regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-		LDI		(regConstant5, 5);
-		LDI		(regConstant11, 11);
-		LSL		(regShiftedB, regColorB, regConstant11);
-		LSL		(regShiftedG, regColorG, regConstant5);
-		OR		(regRG, regColorR, regShiftedG);
-		OR		(regColor565, regRG, regShiftedB);
+			DECL_REG	(regConstant5);
+			DECL_REG	(regShiftedB);
+			DECL_REG	(regShiftedG);
+			DECL_REG	(regRG);
+
+			LDI		(regConstant5, 5);
+			LDI		(regConstant11, 11);
+			LSL		(regShiftedB, regColorB, regConstant11);
+			LSL		(regShiftedG, regColorG, regConstant5);
+			OR		(regRG, regColorR, regShiftedG);
+			OR		(regColor565, regRG, regShiftedB);
+		}
 	}
 
 	// fog
 	if (m_State->m_FogEnabled) {
 		//color = Color::Blend(color, m_State->m_FogColor, fogDensity);
-		cg_virtual_reg_t * regFogColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regFogColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regFogColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		DECL_REG	(regFogColorR);
+		DECL_REG	(regFogColorG);
+		DECL_REG	(regFogColorB);
 
 		LDI		(regFogColorR, m_State->m_FogColor.r >> 3);
 		LDI		(regFogColorG, m_State->m_FogColor.g >> 2);
 		LDI		(regFogColorB, m_State->m_FogColor.b >> 3);
 
-		cg_virtual_reg_t * regDeltaR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regDeltaG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regDeltaB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		DECL_REG	(regDeltaR);
+		DECL_REG	(regDeltaG);
+		DECL_REG	(regDeltaB);
 
 		SUB		(regDeltaR, regColorR, regFogColorR);
 		SUB		(regDeltaG, regColorG, regFogColorG);
 		SUB		(regDeltaB, regColorB, regFogColorB);
 
-		cg_virtual_reg_t * regProductR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regProductG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regProductB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		DECL_REG	(regProductR);
+		DECL_REG	(regProductG);
+		DECL_REG	(regProductB);
 
 		MUL		(regProductR, regDeltaR, fragmentInfo.regFog);
 		MUL		(regProductG, regDeltaG, fragmentInfo.regFog);
 		MUL		(regProductB, regDeltaB, fragmentInfo.regFog);
 
-		cg_virtual_reg_t * regConstant16 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regShiftedProductR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regShiftedProductG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regShiftedProductB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		DECL_REG	(regConstant16);
+		DECL_REG	(regShiftedProductR);
+		DECL_REG	(regShiftedProductG);
+		DECL_REG	(regShiftedProductB);
 
 		LDI		(regConstant16, 16);
 		ASR		(regShiftedProductR, regProductR, regConstant16);
 		ASR		(regShiftedProductG, regProductG, regConstant16);
 		ASR		(regShiftedProductB, regProductB, regConstant16);
 
-		cg_virtual_reg_t * regNewColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regNewColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regNewColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		DECL_REG	(regNewColorR);
+		DECL_REG	(regNewColorG);
+		DECL_REG	(regNewColorB);
 
 		ADD		(regNewColorR, regShiftedProductR, regFogColorR);
 		ADD		(regNewColorG, regShiftedProductG, regFogColorG);
@@ -1573,12 +1625,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		regColorB = regNewColorB;
 
 		// create RGB 565 representation
-		cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regShiftedB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regShiftedG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regRG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regNewColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		DECL_REG	(regConstant5);
+		DECL_REG	(regConstant11);
+		DECL_REG	(regShiftedB);
+		DECL_REG	(regShiftedG);
+		DECL_REG	(regRG);
+		DECL_REG	(regNewColor565);
 
 		LDI		(regConstant5, 5);
 		LDI		(regConstant11, 11);
@@ -1594,8 +1646,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		//bool alphaTest;
 		//U8 alpha = color.A();
 		//U8 alphaRef = EGL_IntFromFixed(m_State->m_AlphaReference * 255);
-		cg_virtual_reg_t * regAlphaRef = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regAlphaTest = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+		DECL_REG	(regAlphaRef);
+		DECL_FLAGS	(regAlphaTest);
 
 		LDI		(regAlphaRef, m_State->m_AlphaReference >> 8);
 		CMP		(regAlphaTest, regColorA, regAlphaRef);
@@ -1663,12 +1715,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		//U32 stencilRef = m_State->m_StencilReference & m_State->m_StencilMask;
 		//U32 stencilValue = m_Surface->GetStencilBuffer()[offset];
 		//U32 stencil = stencilValue & m_State->m_StencilMask;
-		cg_virtual_reg_t * regStencilRef = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regStencilMask = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regStencilAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regStencil = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regStencilTest = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+		DECL_REG	(regStencilRef);
+		DECL_REG	(regStencilMask);
+		DECL_REG	(regStencilAddr);
+		DECL_REG	(regStencilValue);
+		DECL_REG	(regStencil);
+		DECL_FLAGS	(regStencilTest);
 
 		LDI		(regStencilRef, m_State->m_StencilReference & m_State->m_StencilMask);
 		LDI		(regStencilMask, m_State->m_StencilMask);
@@ -1756,8 +1808,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					//}
 					{
 						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regFlag = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+
+						DECL_REG	(regConstant1);
+						DECL_FLAGS	(regFlag);
 
 						LDI		(regConstant1, 1);
 						ADD_S	(regNewStencilValue, regFlag, regStencilValue, regConstant1);
@@ -1772,9 +1825,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					//}
 					{
 						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant0 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-						cg_virtual_reg_t * regFlag = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+
+						DECL_REG	(regConstant0);
+						DECL_REG	(regConstant1);
+						DECL_FLAGS	(regFlag);
 
 						LDI		(regConstant0, 0);
 						CMP		(regFlag, regStencilValue, regConstant0);
@@ -1840,8 +1894,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						//}
 						{
 							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regFlag = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+
+							DECL_REG	(regConstant1);
+							DECL_FLAGS	(regFlag);
 
 							LDI		(regConstant1, 1);
 							ADD_S	(regNewStencilValue, regFlag, regStencilValue, regConstant1);
@@ -1861,9 +1916,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						//}
 						{
 							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regConstant0 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regFlag = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+
+							DECL_REG	(regConstant0);
+							DECL_REG	(regConstant1);
+							DECL_FLAGS	(regFlag);
 
 							LDI		(regConstant0, 0);
 							CMP		(regFlag, regStencilValue, regConstant0);
@@ -1929,8 +1985,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						//}
 						{
 							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regFlag = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+
+							DECL_REG	(regConstant1);
+							DECL_FLAGS	(regFlag);
 
 							LDI		(regConstant1, 1);
 							ADD_S	(regNewStencilValue, regFlag, regStencilValue, regConstant1);
@@ -1945,9 +2002,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 						//}
 						{
 							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regConstant0 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-							cg_virtual_reg_t * regFlag = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+
+							DECL_REG	(regConstant0);
+							DECL_REG	(regConstant1);
+							DECL_FLAGS	(regFlag);
 
 							LDI		(regConstant0, 0);
 							CMP		(regFlag, regStencilValue, regConstant0);
@@ -1978,21 +2036,21 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 	//U16 dstValue = m_Surface->GetColorBuffer()[offset];
 	//U8 dstAlpha = m_Surface->GetAlphaBuffer()[offset];
-	cg_virtual_reg_t * regDstValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDstAlpha = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regColorAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAlphaAddr = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDstR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDstG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDstB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regDstValue);
+	DECL_REG	(regDstAlpha);
+	DECL_REG	(regColorAddr);
+	DECL_REG	(regAlphaAddr);
+	DECL_REG	(regDstR);
+	DECL_REG	(regDstG);
+	DECL_REG	(regDstB);
 
 	{
-		cg_virtual_reg_t * regConstant5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regConstant11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regShifted5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regShifted11 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regMask5 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		cg_virtual_reg_t * regMask6 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		DECL_REG	(regConstant5);
+		DECL_REG	(regConstant11);
+		DECL_REG	(regShifted5);
+		DECL_REG	(regShifted11);
+		DECL_REG	(regMask5);
+		DECL_REG	(regMask6);
 
 		ADD		(regColorAddr, fragmentInfo.regColorBuffer, regOffset2);
 		ADD		(regAlphaAddr, fragmentInfo.regAlphaBuffer, regOffset);
@@ -2191,11 +2249,11 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			STH		(regColor565, regColorAddr);
 		} else {
 			//m_Surface->GetColorBuffer()[offset] = maskedColor.ConvertTo565();
-			cg_virtual_reg_t * regSrcMask = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			cg_virtual_reg_t * regDstMask = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			cg_virtual_reg_t * regMaskedSrc = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			cg_virtual_reg_t * regMaskedDst = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			cg_virtual_reg_t * regCombined = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			DECL_REG	(regSrcMask);
+			DECL_REG	(regDstMask);
+			DECL_REG	(regMaskedSrc);
+			DECL_REG	(regMaskedDst);
+			DECL_REG	(regCombined);
 
 			U32 mask = (m_State->m_MaskRed ? 0x001f : 0) |
 				(m_State->m_MaskGreen ? 0x07e0 : 0) |
@@ -2212,9 +2270,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 		if (m_State->m_MaskAlpha) {
 			//m_Surface->GetAlphaBuffer()[offset] = maskedColor.A();
-			cg_virtual_reg_t * regConstant8 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			cg_virtual_reg_t * regShiftedA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			cg_virtual_reg_t * regAdjustedA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+			DECL_REG	(regConstant8);
+			DECL_REG	(regShiftedA);
+			DECL_REG	(regAdjustedA);
 
 			LDI		(regConstant8, 8);
 			LSR		(regShiftedA, regColorA, regConstant8);
@@ -2254,9 +2312,9 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	// adjusted to point to current scanline in memory
 	// In the edge buffers, z, tu and tv are actually divided by w
 
-	cg_virtual_reg_t * regInfo = cg_virtual_reg_create(procedure, cg_reg_type_general);		// virtual register containing info structure pointer
-	cg_virtual_reg_t * regStart = cg_virtual_reg_create(procedure, cg_reg_type_general);		// virtual register containing start edge buffer pointer
-	cg_virtual_reg_t * regEnd = cg_virtual_reg_create(procedure, cg_reg_type_general);		// virtual register containing end edge buffer pointer
+	DECL_REG	(regInfo);		// virtual register containing info structure pointer
+	DECL_REG	(regStart);		// virtual register containing start edge buffer pointer
+	DECL_REG	(regEnd);		// virtual register containing end edge buffer pointer
 
 	cg_block_t * block = cg_block_create(procedure);
 
@@ -2278,91 +2336,91 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	cg_virtual_reg_t * regSurfaceWidth =		LOAD_DATA(block, regInfo, OFFSET_SURFACE_WIDTH);
 
 	// x coordinate
-	cg_virtual_reg_t * regOffsetWindowX = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrStartWindowX = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrEndWindowX = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regOffsetWindowX);
+	DECL_REG	(regAddrStartWindowX);
+	DECL_REG	(regAddrEndWindowX);
 
 	LDI		(regOffsetWindowX, OFFSET_EDGE_BUFFER_WINDOW_X);
 	ADD		(regAddrStartWindowX, regStart, regOffsetWindowX);
 	ADD		(regAddrEndWindowX, regEnd, regOffsetWindowX);
 
 	// z coordinate
-	cg_virtual_reg_t * regOffsetWindowZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrStartWindowZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrEndWindowZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regOffsetWindowZ);
+	DECL_REG	(regAddrStartWindowZ);
+	DECL_REG	(regAddrEndWindowZ);
 
 	LDI		(regOffsetWindowZ, OFFSET_EDGE_BUFFER_WINDOW_Z);
 	ADD		(regAddrStartWindowZ, regStart, regOffsetWindowZ);
 	ADD		(regAddrEndWindowZ, regEnd, regOffsetWindowZ);
 
 	// u texture coordinate
-	cg_virtual_reg_t * regOffsetTextureU = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrStartTextureU = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrEndTextureU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regOffsetTextureU);
+	DECL_REG	(regAddrStartTextureU);
+	DECL_REG	(regAddrEndTextureU);
 
 	LDI		(regOffsetTextureU, OFFSET_EDGE_BUFFER_TEX_TU);
 	ADD		(regAddrStartTextureU, regStart, regOffsetTextureU);
 	ADD		(regAddrEndTextureU, regEnd, regOffsetTextureU);
 
 	// v texture coordinate
-	cg_virtual_reg_t * regOffsetTextureV = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrStartTextureV = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrEndTextureV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regOffsetTextureV);
+	DECL_REG	(regAddrStartTextureV);
+	DECL_REG	(regAddrEndTextureV);
 
 	LDI		(regOffsetTextureV, OFFSET_EDGE_BUFFER_TEX_TV);
 	ADD		(regAddrStartTextureV, regStart, regOffsetTextureV);
 	ADD		(regAddrEndTextureV, regEnd, regOffsetTextureV);
 
 	// r color component
-	cg_virtual_reg_t * regOffsetColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrStartColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrEndColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regOffsetColorR);
+	DECL_REG	(regAddrStartColorR);
+	DECL_REG	(regAddrEndColorR);
 
 	LDI		(regOffsetColorR, OFFSET_EDGE_BUFFER_COLOR_R);
 	ADD		(regAddrStartColorR, regStart, regOffsetColorR);
 	ADD		(regAddrEndColorR, regEnd, regOffsetColorR);
 
 	// g color component
-	cg_virtual_reg_t * regOffsetColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrStartColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrEndColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regOffsetColorG);
+	DECL_REG	(regAddrStartColorG);
+	DECL_REG	(regAddrEndColorG);
 
 	LDI		(regOffsetColorG, OFFSET_EDGE_BUFFER_COLOR_G);
 	ADD		(regAddrStartColorG, regStart, regOffsetColorG);
 	ADD		(regAddrEndColorG, regEnd, regOffsetColorG);
 
 	// b color component
-	cg_virtual_reg_t * regOffsetColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrStartColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrEndColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regOffsetColorB);
+	DECL_REG	(regAddrStartColorB);
+	DECL_REG	(regAddrEndColorB);
 
 	LDI		(regOffsetColorB, OFFSET_EDGE_BUFFER_COLOR_B);
 	ADD		(regAddrStartColorB, regStart, regOffsetColorB);
 	ADD		(regAddrEndColorB, regEnd, regOffsetColorB);
 
 	// a color component
-	cg_virtual_reg_t * regOffsetColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrStartColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrEndColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regOffsetColorA);
+	DECL_REG	(regAddrStartColorA);
+	DECL_REG	(regAddrEndColorA);
 
 	LDI		(regOffsetColorA, OFFSET_EDGE_BUFFER_COLOR_A);
 	ADD		(regAddrStartColorA, regStart, regOffsetColorA);
 	ADD		(regAddrEndColorA, regEnd, regOffsetColorA);
 
 	// fog density
-	cg_virtual_reg_t * regOffsetFog = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrStartFog = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regAddrEndFog = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regOffsetFog);
+	DECL_REG	(regAddrStartFog);
+	DECL_REG	(regAddrEndFog);
 
 	LDI		(regOffsetFog, OFFSET_EDGE_BUFFER_FOG);
 	ADD		(regAddrStartFog, regStart, regOffsetFog);
 	ADD		(regAddrEndFog, regEnd, regOffsetFog);
 
 	//EGL_Fixed invSpan = EGL_Inverse(end.m_WindowCoords.x - start.m_WindowCoords.x);
-	cg_virtual_reg_t * regEndWindowX = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regStartWindowX = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDiffX = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regInvSpan = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regEndWindowX);
+	DECL_REG	(regStartWindowX);
+	DECL_REG	(regDiffX);
+	DECL_REG	(regInvSpan);
 
 	LDW		(regEndWindowX, regAddrEndWindowX);
 	LDW		(regStartWindowX, regAddrStartWindowX);
@@ -2370,10 +2428,10 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FINV	(regInvSpan, regDiffX);
 
 	//FractionalColor baseColor = start.m_Color;
-	cg_virtual_reg_t * regStartColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regStartColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regStartColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regStartColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regStartColorR);
+	DECL_REG	(regStartColorG);
+	DECL_REG	(regStartColorB);
+	DECL_REG	(regStartColorA);
 
 	LDW		(regStartColorR, regAddrStartColorR);
 	LDW		(regStartColorG, regAddrStartColorG);
@@ -2381,30 +2439,30 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	LDW		(regStartColorA, regAddrStartColorA);
 
 	//FractionalColor colorIncrement = (end.m_Color - start.m_Color) * invSpan;
-	cg_virtual_reg_t * regEndColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regEndColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regEndColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regEndColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regEndColorR);
+	DECL_REG	(regEndColorG);
+	DECL_REG	(regEndColorB);
+	DECL_REG	(regEndColorA);
 
 	LDW		(regEndColorR, regAddrEndColorR);
 	LDW		(regEndColorG, regAddrEndColorG);
 	LDW		(regEndColorB, regAddrEndColorB);
 	LDW		(regEndColorA, regAddrEndColorA);
 
-	cg_virtual_reg_t * regDiffColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDiffColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDiffColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDiffColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regDiffColorR);
+	DECL_REG	(regDiffColorG);
+	DECL_REG	(regDiffColorB);
+	DECL_REG	(regDiffColorA);
 
 	SUB		(regDiffColorR, regEndColorR, regStartColorR);
 	SUB		(regDiffColorG, regEndColorG, regStartColorG);
 	SUB		(regDiffColorB, regEndColorB, regStartColorB);
 	SUB		(regDiffColorA, regEndColorA, regStartColorA);
 
-	cg_virtual_reg_t * regColorIncrementR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regColorIncrementG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regColorIncrementB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regColorIncrementA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regColorIncrementR);
+	DECL_REG	(regColorIncrementG);
+	DECL_REG	(regColorIncrementB);
+	DECL_REG	(regColorIncrementA);
 
 	FMUL	(regColorIncrementR, regDiffColorR, regInvSpan);
 	FMUL	(regColorIncrementG, regDiffColorG, regInvSpan);
@@ -2412,10 +2470,10 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FMUL	(regColorIncrementA, regDiffColorA, regInvSpan);
 
 	//EGL_Fixed deltaInvZ = EGL_Mul(end.m_WindowCoords.z - start.m_WindowCoords.z, invSpan);
-	cg_virtual_reg_t * regEndWindowZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regStartWindowZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDiffInvZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDeltaInvZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regEndWindowZ);
+	DECL_REG	(regStartWindowZ);
+	DECL_REG	(regDiffInvZ);
+	DECL_REG	(regDeltaInvZ);
 
 	LDW		(regEndWindowZ, regAddrEndWindowZ);
 	LDW		(regStartWindowZ, regAddrStartWindowZ);
@@ -2423,10 +2481,10 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FMUL	(regDeltaInvZ, regDiffInvZ, regInvSpan);
 
 	//EGL_Fixed deltaInvU = EGL_Mul(end.m_TextureCoords.tu - start.m_TextureCoords.tu, invSpan);
-	cg_virtual_reg_t * regEndTextureU = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regStartTextureU = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDiffInvU = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDeltaInvU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regEndTextureU);
+	DECL_REG	(regStartTextureU);
+	DECL_REG	(regDiffInvU);
+	DECL_REG	(regDeltaInvU);
 
 	LDW		(regEndTextureU, regAddrEndTextureU);
 	LDW		(regStartTextureU, regAddrStartTextureU);
@@ -2434,10 +2492,10 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FMUL	(regDeltaInvU, regDiffInvU, regInvSpan);
 
 	//EGL_Fixed deltaInvV = EGL_Mul(end.m_TextureCoords.tv - start.m_TextureCoords.tv, invSpan);
-	cg_virtual_reg_t * regEndTextureV = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regStartTextureV = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDiffInvV = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDeltaInvV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regEndTextureV);
+	DECL_REG	(regStartTextureV);
+	DECL_REG	(regDiffInvV);
+	DECL_REG	(regDeltaInvV);
 
 	LDW		(regEndTextureV, regAddrEndTextureV);
 	LDW		(regStartTextureV, regAddrStartTextureV);
@@ -2445,10 +2503,10 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	FMUL	(regDeltaInvV, regDiffInvV, regInvSpan);
 
 	//EGL_Fixed deltaFog = EGL_Mul(end.m_FogDensity - start.m_FogDensity, invSpan);
-	cg_virtual_reg_t * regEndFog = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regStartFog = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDiffFog = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDeltaFog = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regEndFog);
+	DECL_REG	(regStartFog);
+	DECL_REG	(regDiffFog);
+	DECL_REG	(regDeltaFog);
 
 	LDW		(regEndFog, regAddrEndFog);
 	LDW		(regStartFog, regAddrStartFog);
@@ -2463,9 +2521,9 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	//EGL_Fixed z = EGL_Inverse(invZ);
 	//EGL_Fixed tu = EGL_Mul(invTu, z);
 	//EGL_Fixed tv = EGL_Mul(invTv, z);
-	cg_virtual_reg_t * regZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regU = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regZ);
+	DECL_REG	(regU);
+	DECL_REG	(regV);
 
 	FINV	(regZ, regStartWindowZ);
 	FMUL	(regU, regStartTextureU, regZ);
@@ -2473,18 +2531,18 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	//cg_virtual_reg_t * x = EGL_IntFromFixed(start.m_WindowCoords.x);
 	//cg_virtual_reg_t * xEnd = EGL_IntFromFixed(end.m_WindowCoords.x);
-	cg_virtual_reg_t * regX = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regXEnd = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regX);
+	DECL_REG	(regXEnd);
 
 	TRUNC	(regX, regStartWindowX);
 	TRUNC	(regXEnd, regEndWindowX);
 
 	//cg_virtual_reg_t * xLinEnd = x + ((xEnd - x) & ~(LINEAR_SPAN - 1));
-	cg_virtual_reg_t * regSpanMask = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regMaskedSpan = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regXLinEnd = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regCompare0 = cg_virtual_reg_create(procedure, cg_reg_type_flags);
-	cg_virtual_reg_t * regIntDiffX = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regSpanMask);
+	DECL_REG	(regMaskedSpan);
+	DECL_REG	(regXLinEnd);
+	DECL_FLAGS	(regCompare0);
+	DECL_REG	(regIntDiffX);
 
 	LDI		(regSpanMask, ~(LINEAR_SPAN - 1));
 	TRUNC	(regIntDiffX, regDiffX);
@@ -2502,47 +2560,47 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	beginLoop0->block = block;
 
 	// Here we define all the loop registers and phi mappings
-	cg_virtual_reg_t * regLoop0ZEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop0Z = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1Z = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regLoop0ZEntry);
+	DECL_REG	(regLoop0Z);
+	DECL_REG	(regLoop1Z);
 
 	PHI		(regLoop0ZEntry, cg_create_virtual_reg_list(procedure->module->heap, regZ, regLoop0Z, regLoop1Z, NULL));
 
-	cg_virtual_reg_t * regLoop0UEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop0U = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1U = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regLoop0UEntry);
+	DECL_REG	(regLoop0U);
+	DECL_REG	(regLoop1U);
 
 	PHI		(regLoop0UEntry, cg_create_virtual_reg_list(procedure->module->heap, regU, regLoop0U, regLoop1U, NULL));
 
-	cg_virtual_reg_t * regLoop0VEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop0V = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1V = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regLoop0VEntry);
+	DECL_REG	(regLoop0V);
+	DECL_REG	(regLoop1V);
 
 	PHI		(regLoop0VEntry, cg_create_virtual_reg_list(procedure->module->heap, regV, regLoop0V, regLoop1V, NULL));
 
-	cg_virtual_reg_t * regLoop0InvZEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop0InvZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regLoop0InvZEntry);
+	DECL_REG	(regLoop0InvZ);
 
 	PHI		(regLoop0InvZEntry, cg_create_virtual_reg_list(procedure->module->heap, regStartWindowZ, regLoop0InvZ, NULL));
 
-	cg_virtual_reg_t * regLoop0InvUEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop0InvU = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regLoop0InvUEntry);
+	DECL_REG	(regLoop0InvU);
 
 	PHI		(regLoop0InvUEntry, cg_create_virtual_reg_list(procedure->module->heap, regStartTextureU, regLoop0InvU, NULL));
 
-	cg_virtual_reg_t * regLoop0InvVEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop0InvV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regLoop0InvVEntry);
+	DECL_REG	(regLoop0InvV);
 
 	PHI		(regLoop0InvVEntry, cg_create_virtual_reg_list(procedure->module->heap, regStartTextureV, regLoop0InvV, NULL));
 
 		//invZ += deltaInvZ << LOG_LINEAR_SPAN;
 		//invTu += deltaInvU << LOG_LINEAR_SPAN;
 		//invTv += deltaInvV << LOG_LINEAR_SPAN;
-	cg_virtual_reg_t * regLinearSpan = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regConstant1 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDeltaInvZTimesLinearSpan = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDeltaInvUTimesLinearSpan = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regDeltaInvVTimesLinearSpan = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regLinearSpan);
+	DECL_REG	(regConstant1);
+	DECL_REG	(regDeltaInvZTimesLinearSpan);
+	DECL_REG	(regDeltaInvUTimesLinearSpan);
+	DECL_REG	(regDeltaInvVTimesLinearSpan);
 
 	LDI		(regConstant1, 1);
 	LDI		(regLinearSpan, LINEAR_SPAN);
@@ -2557,9 +2615,9 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		//EGL_Fixed endTu = EGL_Mul(invTu, endZ);
 		//EGL_Fixed endTv = EGL_Mul(invTv, endZ);
 
-	cg_virtual_reg_t * regLoop0EndZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop0EndU = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop0EndV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regLoop0EndZ);
+	DECL_REG	(regLoop0EndU);
+	DECL_REG	(regLoop0EndV);
 
 	FINV	(regLoop0EndZ, regLoop0InvZ);
 	FMUL	(regLoop0EndU, regLoop0InvU, regLoop0EndZ);
@@ -2569,12 +2627,12 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		//EGL_Fixed deltaTu = (endTu - tu) >> LOG_LINEAR_SPAN; 
 		//EGL_Fixed deltaTv = (endTv - tv) >> LOG_LINEAR_SPAN;
 
-	cg_virtual_reg_t * regLoop0DiffZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop0ScaledDiffZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop0DiffU = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop0ScaledDiffU = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop0DiffV = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop0ScaledDiffV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regLoop0DiffZ);
+	DECL_REG	(regLoop0ScaledDiffZ);
+	DECL_REG	(regLoop0DiffU);
+	DECL_REG	(regLoop0ScaledDiffU);
+	DECL_REG	(regLoop0DiffV);
+	DECL_REG	(regLoop0ScaledDiffV);
 
 	FSUB	(regLoop0DiffZ, regLoop0EndZ, regLoop0Z); // Entry?
 	FDIV	(regLoop0ScaledDiffZ, regLoop0DiffZ, regLinearSpan);
@@ -2598,23 +2656,23 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	// phi for count, x, z, tu, tv, fog, r, g, b, a
 
-	cg_virtual_reg_t * regLoop1CountEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1Count = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1XEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1X = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1ZEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1UEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1VEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1FogEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1Fog = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1REntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1R = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1GEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1G = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1BEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1B = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1AEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop1A = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regLoop1CountEntry);
+	DECL_REG	(regLoop1Count);
+	DECL_REG	(regLoop1XEntry);
+	DECL_REG	(regLoop1X);
+	DECL_REG	(regLoop1ZEntry);
+	DECL_REG	(regLoop1UEntry);
+	DECL_REG	(regLoop1VEntry);
+	DECL_REG	(regLoop1FogEntry);
+	DECL_REG	(regLoop1Fog);
+	DECL_REG	(regLoop1REntry);
+	DECL_REG	(regLoop1R);
+	DECL_REG	(regLoop1GEntry);
+	DECL_REG	(regLoop1G);
+	DECL_REG	(regLoop1BEntry);
+	DECL_REG	(regLoop1B);
+	DECL_REG	(regLoop1AEntry);
+	DECL_REG	(regLoop1A);
 
 	PHI		(regLoop1CountEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Count, regLinearSpan, NULL));
 	PHI		(regLoop1XEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop1X, regX, NULL));
@@ -2674,13 +2732,14 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	ADD		(regLoop1X, regLoop1XEntry, regConstant1);
 
 		//} while (--count);
-	cg_virtual_reg_t * regLoop1Condition = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+	DECL_FLAGS	(regLoop1Condition);
 
 	SUB_S	(regLoop1Count, regLoop1Condition, regLoop1CountEntry, regConstant1);
 	BNE		(regLoop1Condition, beginLoop1);
 	//}
 
-	cg_virtual_reg_t * regLoop0Condition = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+	DECL_FLAGS	(regLoop0Condition);
+
 	CMP		(regLoop0Condition, regLoop1X, regXLinEnd);
 	BNE		(regLoop0Condition, beginLoop0);
 
@@ -2692,12 +2751,12 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	cg_block_ref_t * endLoop2 = cg_block_ref_create(procedure);
 	cg_block_ref_t * postFragmentLoop2 = cg_block_ref_create(procedure);
 
-	cg_virtual_reg_t * regBlock4X = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regBlock4Z = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regBlock4U = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regBlock4V = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regBlock4DiffX = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regBlock4Condition = cg_virtual_reg_create(procedure, cg_reg_type_flags);
+	DECL_REG	(regBlock4X);
+	DECL_REG	(regBlock4Z);
+	DECL_REG	(regBlock4U);
+	DECL_REG	(regBlock4V);
+	DECL_REG	(regBlock4DiffX);
+	DECL_FLAGS	(regBlock4Condition);
 
 	PHI		(regBlock4X, cg_create_virtual_reg_list(procedure->module->heap, regX, regLoop1X, NULL));
 	PHI		(regBlock4Z, cg_create_virtual_reg_list(procedure->module->heap, regLoop1Z, regZ, NULL));
@@ -2709,17 +2768,17 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		//EGL_Fixed endZ = EGL_Inverse(end.m_WindowCoords.z);
 		//EGL_Fixed endTu = EGL_Mul(end.m_TextureCoords.tu, endZ);
 		//EGL_Fixed endTv = EGL_Mul(end.m_TextureCoords.tv, endZ);
-	cg_virtual_reg_t * regEndZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regEndU = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regEndV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regEndZ);
+	DECL_REG	(regEndU);
+	DECL_REG	(regEndV);
 
 	FINV	(regEndZ, regEndWindowZ);
 	FMUL	(regEndU, regEndZ, regEndTextureU);
 	FMUL	(regEndV, regEndZ, regEndTextureV);
 
 		//invSpan = EGL_Inverse(EGL_FixedFromInt(xEnd - x));
-	cg_virtual_reg_t * regFixedBlock4DiffX = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regBlock4InvSpan = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regFixedBlock4DiffX);
+	DECL_REG	(regBlock4InvSpan);
 
 	FCNV	(regFixedBlock4DiffX, regBlock4DiffX);
 	FINV	(regBlock4InvSpan, regFixedBlock4DiffX);
@@ -2727,12 +2786,12 @@ void CodeGenerator :: GenerateRasterScanLine() {
 		//EGL_Fixed deltaZ = EGL_Mul(endZ - z, invSpan);
 		//EGL_Fixed deltaTu = EGL_Mul(endTu - tu, invSpan);
 		//EGL_Fixed deltaTv = EGL_Mul(endTv - tv, invSpan);
-	cg_virtual_reg_t * regBlock4DiffZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regBlock4DiffU = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regBlock4DiffV = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2ScaledDiffZ = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2ScaledDiffU = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2ScaledDiffV = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regBlock4DiffZ);
+	DECL_REG	(regBlock4DiffU);
+	DECL_REG	(regBlock4DiffV);
+	DECL_REG	(regLoop2ScaledDiffZ);
+	DECL_REG	(regLoop2ScaledDiffU);
+	DECL_REG	(regLoop2ScaledDiffV);
 
 	FSUB	(regBlock4DiffZ, regEndZ, regBlock4Z);
 	FMUL	(regLoop2ScaledDiffZ, regBlock4DiffZ, regBlock4InvSpan);
@@ -2747,24 +2806,24 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 	// phi for x, z, tu, tv, fog, r, g, b, a
 
-	cg_virtual_reg_t * regLoop2XEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2X = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2ZEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2Z = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2UEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2U = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2VEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2V = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2FogEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2Fog = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2REntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2R = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2GEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2G = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2BEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2B = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2AEntry = cg_virtual_reg_create(procedure, cg_reg_type_general);
-	cg_virtual_reg_t * regLoop2A = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regLoop2XEntry);
+	DECL_REG	(regLoop2X);
+	DECL_REG	(regLoop2ZEntry);
+	DECL_REG	(regLoop2Z);
+	DECL_REG	(regLoop2UEntry);
+	DECL_REG	(regLoop2U);
+	DECL_REG	(regLoop2VEntry);
+	DECL_REG	(regLoop2V);
+	DECL_REG	(regLoop2FogEntry);
+	DECL_REG	(regLoop2Fog);
+	DECL_REG	(regLoop2REntry);
+	DECL_REG	(regLoop2R);
+	DECL_REG	(regLoop2GEntry);
+	DECL_REG	(regLoop2G);
+	DECL_REG	(regLoop2BEntry);
+	DECL_REG	(regLoop2B);
+	DECL_REG	(regLoop2AEntry);
+	DECL_REG	(regLoop2A);
 
 
 	PHI		(regLoop2XEntry, cg_create_virtual_reg_list(procedure->module->heap, regLoop2X, regBlock4X, NULL));
@@ -2823,7 +2882,8 @@ void CodeGenerator :: GenerateRasterScanLine() {
 			//++x;
 	ADD		(regLoop2X, regLoop2XEntry, regConstant1);
 
-	cg_virtual_reg_t * regCondLoopEnd = cg_virtual_reg_create(procedure, cg_reg_type_general);
+	DECL_REG	(regCondLoopEnd);
+
 	CMP		(regCondLoopEnd, regLoop2X, regXEnd);
 	BLT		(regCondLoopEnd, beginLoop2);
 
