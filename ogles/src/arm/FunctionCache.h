@@ -1,19 +1,15 @@
-#ifndef EGL_CODE_GENERATOR_H
-#define EGL_CODE_GENERATOR_H 1
+#ifndef EGL_FUNCTION_CACHE_H
+#define EGL_FUNCTION_CACHE_H 1
 
 #pragma once
 
 // ==========================================================================
 //
-// CodeGenerator.h		JIT Class for 3D Rendering Library
-//
-//						This file contains the rasterizer functions that
-//						implement the runtime code generation support
-//						for optimized scan line rasterization routines.
+// FunctionCache.h		Cache of compiled functions for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //
-// 08-07-2003	Hans-Martin Will	initial version
+// 03-08-2004	Hans-Martin Will	initial version
 //
 // --------------------------------------------------------------------------
 //
@@ -45,50 +41,40 @@
 
 
 #include "OGLES.h"
-#include "fixed.h"
-#include "linalg.h"
-#include "Rasterizer.h"
 #include "RasterizerState.h"
-#include <map>
-
-
-extern "C" {
-	typedef struct cg_module_t cg_module_t;
-	typedef struct cg_proc_t cg_proc_t;
-	typedef struct cg_block_t cg_block_t;
-	typedef struct cg_block_ref_t cg_block_ref_t;
-}
+#include "Rasterizer.h"
 
 
 namespace EGL {
 
-	struct FragmentGenerationInfo;
-	class FunctionCache;
+	struct FunctionInfo;
+	class CodeGenerator;
 
-	class MultiTexture;
-
-	class CodeGenerator {
+	class OGLES_API FunctionCache {
+		friend CodeGenerator;
 
 	public:
-		// ----------------------------------------------------------------------
-		// Code generation of triangle scan line
-		// ----------------------------------------------------------------------
-		void CompileRasterScanLine(FunctionCache * target);
+		FunctionCache(size_t totalSize = 65536, float percentageKeep = 0.6);
+		~FunctionCache();
 
-		void SetState(const RasterizerState * state)	{ m_State = state; }
-		const RasterizerState * GetState()				{ return m_State; }
+		ScanlineFunction * GetFunction(const RasterizerState & state);
 
 	private:
-		void GenerateRasterScanLine();
-		void GenerateFragment(cg_proc_t * procedure, cg_block_t * currentBlock,
-			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
-			int weight);
+		void * AddFunction(const RasterizerState & state, size_t size);
+		void CompactCode();
 
 	private:
-		const RasterizerState *	m_State;
-		struct cg_module_t *m_Module;
+		U8 *				m_Code;
+		size_t				m_Used;
+		size_t				m_Total;
+		FunctionInfo *		m_Functions;
+		FunctionInfo *		m_MostRecentlyUsed;
+		FunctionInfo *		m_LeastRecentlyUsed;
+		size_t				m_UsedFunctions;
+		size_t				m_MaxFunctions;
+		float				m_PercentageKeep;
 	};
-
 }
 
-#endif //ndef EGL_CODE_GENERATOR_H
+
+#endif //ndef EGL_FUNCTION_CACHE_H

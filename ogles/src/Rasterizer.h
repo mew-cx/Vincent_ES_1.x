@@ -57,6 +57,7 @@ namespace EGL {
 
 	class Surface;
 	class Texture;
+	class FunctionCache;
 
 	// ----------------------------------------------------------------------
 	// u and v coordinates for texture mapping
@@ -92,7 +93,26 @@ namespace EGL {
 		EGL_Fixed			m_FogDensity;		// fog density at this vertex
 	};
 
+	struct EdgePos;
 
+	struct RasterInfo {
+		// surface info
+		I32		SurfaceWidth;
+		I32		SurfaceHeight;
+		I32 *	DepthBuffer;
+		U16 *	ColorBuffer;
+		U32 *	StencilBuffer;
+		U8 *	AlphaBuffer;
+
+		// texture info
+		I32		TextureWidth;
+		I32		TextureHeight;
+		I32		TextureExponent;
+		void *	TextureData;
+	};
+
+	// signature for generated scanline functions
+	typedef void (ScanlineFunction)(const RasterInfo * info, const EdgePos * start, const EdgePos * end);
 
 	class OGLES_API Rasterizer {
 
@@ -191,6 +211,9 @@ namespace EGL {
 		Surface *				m_Surface;			// rendering surface
 		MultiTexture *			m_Texture;			// current texture 
 		RasterizerState *		m_State;			// current rasterization settings
+		FunctionCache *			m_FunctionCache;
+
+		ScanlineFunction *		m_ScanlineFunction;
 
 		RasterPointFunction		m_RasterPointFunction;
 		RasterLineFunction		m_RasterLineFunction;
@@ -206,8 +229,6 @@ namespace EGL {
 
 		int						m_MipMapLevel;
 		bool					m_IsPrepared;
-
-		void *					m_CodeSegment;		// for generated functions
 
 	};
 

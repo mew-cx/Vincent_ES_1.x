@@ -43,8 +43,7 @@
 #include "Rasterizer.h"
 #include "Surface.h"
 #include "Texture.h"
-
-#include "arm/CodeGenerator.h"
+#include "arm/FunctionCache.h"
 
 using namespace EGL;
 
@@ -107,14 +106,13 @@ Rasterizer :: Rasterizer(RasterizerState * state):
 	m_IsPrepared(false),
 	m_State(state)
 {
-	m_CodeSegment = VirtualAlloc(0, 16384, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	m_FunctionCache = new FunctionCache();
 }
 
 
 Rasterizer :: ~Rasterizer() {
-	if (m_CodeSegment)
-	{
-		VirtualFree(m_CodeSegment, 16384, MEM_DECOMMIT);
+	if (m_FunctionCache) {
+		delete m_FunctionCache;
 	}
 }
 
@@ -862,10 +860,7 @@ void Rasterizer :: PrepareLine() {
 
 void Rasterizer :: PrepareTriangle() {
 	if (!m_IsPrepared) {
-		CodeGenerator generator;
-		generator.SetState(m_State);
-
-		generator.CompileRasterScanLine(m_CodeSegment);
+		m_ScanlineFunction = m_FunctionCache->GetFunction(*m_State);
 	}
 
 	m_MipMapLevel = 0;

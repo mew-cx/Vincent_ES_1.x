@@ -308,6 +308,12 @@
 			<File
 				RelativePath="..\..\src\arm\CodeGenerator.h">
 			</File>
+			<File
+				RelativePath="..\..\src\arm\FunctionCache.cpp">
+			</File>
+			<File
+				RelativePath="..\..\src\arm\FunctionCache.h">
+			</File>
 		</Filter>
 		<File
 			RelativePath=".\VTune\OGLES.vpj">
