@@ -83,7 +83,17 @@ typedef unsigned __int64	U64;
 typedef __int64				I64;
 
 
+// --------------------------------------------------------------------------
+// Memory helper macros
+// --------------------------------------------------------------------------
+
+// number of elements of an array
 #define elementsof(a) (sizeof(a) / sizeof(*(a)))
+
+// offset in bytes of a structure member from the base address
+#ifndef offsetof
+#define offsetof(s,m)   (size_t)&(((s *)0)->m)
+#endif
 
 // --------------------------------------------------------------------------
 // Common variables
