@@ -487,6 +487,7 @@ namespace {
 
 	inline int ClipXLow(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 
+#		define SET_COORDINATE setX
 #		define COORDINATE x()
 #		define CLIP_VALUE(p) (-(p)->m_ClipCoords.w())
 #		define COMPARISON >=
@@ -494,11 +495,13 @@ namespace {
 #		undef COMPARISON
 #		undef CLIP_VALUE
 #		undef COORDINATE
+#		undef SET_COORDINATE
 
 	}
 
 	inline int ClipXHigh(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 
+#		define SET_COORDINATE setX
 #		define COORDINATE x()
 #		define CLIP_VALUE(p) ((p)->m_ClipCoords.w())
 #		define COMPARISON <
@@ -506,11 +509,13 @@ namespace {
 #		undef COMPARISON
 #		undef CLIP_VALUE
 #		undef COORDINATE
+#		undef SET_COORDINATE
 
 	}
 
 	inline int ClipYLow(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 
+#		define SET_COORDINATE setY
 #		define COORDINATE y()
 #		define CLIP_VALUE(p) (-(p)->m_ClipCoords.w())
 #		define COMPARISON >=
@@ -518,11 +523,13 @@ namespace {
 #		undef COMPARISON
 #		undef CLIP_VALUE
 #		undef COORDINATE
+#		undef SET_COORDINATE
 
 	}
 
 	inline int ClipYHigh(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 
+#		define SET_COORDINATE setY
 #		define COORDINATE y()
 #		define CLIP_VALUE(p) ((p)->m_ClipCoords.w())
 #		define COMPARISON <
@@ -530,11 +537,13 @@ namespace {
 #		undef COMPARISON
 #		undef CLIP_VALUE
 #		undef COORDINATE
+#		undef SET_COORDINATE
 
 	}
 
 	inline int ClipZLow(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 
+#		define SET_COORDINATE setZ
 #		define COORDINATE z()
 #		define CLIP_VALUE(p) (-(p)->m_ClipCoords.w())
 #		define COMPARISON >=
@@ -542,11 +551,13 @@ namespace {
 #		undef COMPARISON
 #		undef CLIP_VALUE
 #		undef COORDINATE
+#		undef SET_COORDINATE
 
 	}
 
 	inline int ClipZHigh(RasterPos * input[], int inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 
+#		define SET_COORDINATE setZ
 #		define COORDINATE z()
 #		define CLIP_VALUE(p) ((p)->m_ClipCoords.w())
 #		define COMPARISON <
@@ -554,6 +565,7 @@ namespace {
 #		undef COMPARISON
 #		undef CLIP_VALUE
 #		undef COORDINATE
+#		undef SET_COORDINATE
 
 	}
 
