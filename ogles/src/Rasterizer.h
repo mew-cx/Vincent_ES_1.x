@@ -84,6 +84,7 @@ namespace EGL {
 	// ----------------------------------------------------------------------
 
 	struct RasterPos {
+		Vec4D				m_EyeCoords;
 		Vec4D				m_ClipCoords;
 		ScreenCoord			m_WindowCoords;		
 		FractionalColor		m_Color;
@@ -152,7 +153,7 @@ namespace EGL {
 	// signature for generated scanline functions
 	typedef void (ScanlineFunction)(const RasterInfo * info, const EdgePos * start, const EdgePos * end);
 	typedef void (LineFunction)(const RasterInfo * info, const RasterPos * from, const RasterPos * to);
-	typedef void (PointFunction)(const RasterInfo * info, const RasterPos * pos);
+	typedef void (PointFunction)(const RasterInfo * info, const RasterPos * pos, EGL_Fixed size);
 
 	class Rasterizer {
 
@@ -205,7 +206,7 @@ namespace EGL {
 		typedef void (Rasterizer::*RasterTriangleFunction)(const RasterPos& a, const RasterPos& b,
 			const RasterPos& c);
 
-		void RasterPoint(const RasterPos& point);
+		void RasterPoint(const RasterPos& point, EGL_Fixed size);
 		void RasterLine(const RasterPos& from, const RasterPos& to);
 		void RasterTriangle(const RasterPos& a, const RasterPos& b,
 			const RasterPos& c);
@@ -350,8 +351,8 @@ namespace EGL {
 
 #	if EGL_USE_JIT
 
-	inline void Rasterizer :: RasterPoint(const RasterPos& point) {
-		m_PointFunction(&m_RasterInfo, &point);
+	inline void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
+		m_PointFunction(&m_RasterInfo, &point, size);
 	}
 
 	inline void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
@@ -360,21 +361,6 @@ namespace EGL {
 
 	inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos & start, const EdgePos & end) {
 		m_ScanlineFunction(&rasterInfo, &start, &end);
-	}
-
-#	else // EGL_USE_JIT
-
-	inline void Rasterizer :: RasterPoint(const RasterPos& point) {
-
-		I32 x = EGL_IntFromFixed(point.m_WindowCoords.x);
-		I32 y = EGL_IntFromFixed(point.m_WindowCoords.y);
-		EGL_Fixed depth = point.m_WindowCoords.depth;
-		EGL_Fixed tu = point.m_TextureCoords.tu;
-		EGL_Fixed tv = point.m_TextureCoords.tv;
-		FractionalColor baseColor = point.m_Color;
-		EGL_Fixed fogDensity = point.m_FogDensity;
-
-		Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
 	}
 
 #	endif // EGL_USE_JIT

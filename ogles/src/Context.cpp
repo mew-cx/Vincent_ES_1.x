@@ -65,6 +65,7 @@ Context :: Context(const Config & config)
 	m_Viewport(0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
 
 	// server flags
+	m_ClipPlaneEnabled(0),
 	m_LightingEnabled(false),
 	m_TwoSidedLightning(false),
 	m_LightEnabled(0),				// no light on
@@ -81,6 +82,13 @@ Context :: Context(const Config & config)
 	m_SampleCoverageEnabled(false),
 	m_ScissorTestEnabled(false),
 
+	// point parameters
+	m_PointSize(EGL_ONE),
+	m_PointSizeMin(0),
+	m_PointSizeMax(EGL_ONE),		// what is the correct value?
+	m_PointFadeThresholdSize(EGL_ONE),
+	m_PointSizeAttenuate(false),
+
 	// fog parameters for setup phase
 	m_FogMode(FogModeExp),
 	m_FogStart(0),
@@ -94,6 +102,11 @@ Context :: Context(const Config & config)
 	m_NormalArrayEnabled(false),
 	m_ColorArrayEnabled(false),
 	m_TexCoordArrayEnabled(false),
+	m_PointSizeArrayEnabled(false),
+
+	// buffers
+	m_CurrentArrayBuffer(0),
+	m_CurrentElementArrayBuffer(0),
 
 	// general context state
 	m_Current(false),
@@ -114,13 +127,20 @@ Context :: Context(const Config & config)
 	ClearStencil(0);
 
 	m_Rasterizer = new Rasterizer(GetRasterizerState());	
-	m_Rasterizer->SetTexture(m_Textures.GetTexture(m_Textures.Allocate()));
+	m_Rasterizer->SetTexture(m_Textures.GetObject(m_Textures.Allocate()));
+	m_Buffers.Allocate();			// default buffer
 
 	m_LightModelAmbient.r = m_LightModelAmbient.g = m_LightModelAmbient.b = F(0.2f);
 	m_LightModelAmbient.a = F(1.0);
 
 	m_Lights[0].SetDiffuseColor(FractionalColor(F(1.0), F(1.0), F(1.0), F(1.0)));
 	m_Lights[0].SetSpecularColor(FractionalColor(F(1.0), F(1.0), F(1.0), F(1.0)));
+
+	m_PointDistanceAttenuation[0] = EGL_ONE;
+	m_PointDistanceAttenuation[1] = 0;
+	m_PointDistanceAttenuation[2] = 0;
+
+	memset(&m_ClipPlanes, 0, sizeof(m_ClipPlanes));
 }
 
 
@@ -347,6 +367,10 @@ void Context :: Toggle(GLenum cap, bool value) {
 		GetRasterizerState()->SetPointSmoothEnabled(value);
 		break;
 
+	case GL_POINT_SPRITE_OES:
+		GetRasterizerState()->SetPointSpriteEnabled(value);
+		break;
+
 	case GL_LINE_SMOOTH:
 		GetRasterizerState()->SetLineSmoothEnabled(value);
 		break;
@@ -362,6 +386,22 @@ void Context :: Toggle(GLenum cap, bool value) {
 
 	case GL_NORMALIZE:
 		m_NormalizeEnabled = value;
+		break;
+
+	case GL_CLIP_PLANE0:
+	case GL_CLIP_PLANE1:
+	case GL_CLIP_PLANE2:
+	case GL_CLIP_PLANE3:
+	case GL_CLIP_PLANE4:
+	case GL_CLIP_PLANE5:
+		{
+			size_t plane = cap - GL_CLIP_PLANE0;
+			U32 mask = ~(1u << plane);
+			U32 bit = cap ? (1u << plane) : 0;
+
+			m_ClipPlaneEnabled = (m_ClipPlaneEnabled & mask) | bit;
+		}
+
 		break;
 
 	case GL_RESCALE_NORMAL:
@@ -567,3 +607,21 @@ const GLubyte * Context :: GetString(GLenum name) {
 
 void Context :: Finish(void) { }
 void Context :: Flush(void) { }
+
+
+void Context :: GetBooleanv(GLenum pname, GLboolean *params) {
+	assert(0);
+}
+
+void Context :: GetFixedv(GLenum pname, GLfixed *params) {
+	assert(0);
+}
+
+void Context :: GetPointerv(GLenum pname, void **params) {
+	assert(0);
+}
+
+GLboolean Context :: IsEnabled(GLenum cap) {
+	assert(0);
+	return false;
+}

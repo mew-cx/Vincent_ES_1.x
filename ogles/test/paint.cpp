@@ -27,6 +27,10 @@
 #include "GLES/glext.h"
 #include "Color.h"
 
+#define USE_BUFFERS 1
+
+GLAPI EGLBoolean APIENTRY eglSaveSurfaceHM(EGLSurface surface, const TCHAR * filename);
+
 #ifndef _WIN32_WCE
 using namespace Gdiplus;
 
@@ -181,7 +185,7 @@ namespace {
 		DeleteDC(memDC);
 		DeleteDC(targetDC);
 
-		glTexParameterx(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+		glTexParameterx(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 
 #if 1
 		//Here we can bitmap bits: pBuffer. Note:
@@ -1220,6 +1224,13 @@ struct GLTXTLOAD{
 };
 
 
+#define VERTEX_BUFFER 0
+#define NORMAL_BUFFER 1
+#define TEXTURE_BUFFER 2
+
+
+GLuint buffers[3];
+
 void SetArrays(GLfixed vertexArray[][3], GLfixed normalArray[][3], GLfixed textureArray[][2]) {
 	int index = 0;
 
@@ -1255,6 +1266,18 @@ void SetArrays(GLfixed vertexArray[][3], GLfixed normalArray[][3], GLfixed textu
 			index++;
 		}
 	}
+
+#ifdef USE_BUFFERS
+
+	glGenBuffers(3, buffers);
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[VERTEX_BUFFER]);
+	glBufferData(GL_ARRAY_BUFFER, index * sizeof(GLfixed) * 3, vertexArray, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[NORMAL_BUFFER]);
+	glBufferData(GL_ARRAY_BUFFER, index * sizeof(GLfixed) * 3, normalArray, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[TEXTURE_BUFFER]);
+	glBufferData(GL_ARRAY_BUFFER, index * sizeof(GLfixed) * 2, textureArray, GL_STATIC_DRAW);
+
+#endif
 }
 
 
@@ -1397,25 +1420,36 @@ extern "C" void PaintProc(HWND hWnd) {
 	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	// Test Code until we have full OpenGL pipeline
-	glVertexPointer(3, GL_FIXED, 0, egl_vertices);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glNormalPointer(GL_FIXED, 0, egl_normals);
 	glEnableClientState(GL_NORMAL_ARRAY);
-	glTexCoordPointer(2, GL_FIXED, 0, egl_textures);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	// Test Code until we have full OpenGL pipeline
+#ifdef USE_BUFFERS
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[VERTEX_BUFFER]);
+	glVertexPointer(3, GL_FIXED, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[NORMAL_BUFFER]);
+	glNormalPointer(GL_FIXED, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[TEXTURE_BUFFER]);
+	glTexCoordPointer(2, GL_FIXED, 0, 0);
+#else
+	glVertexPointer(3, GL_FIXED, 0, egl_vertices);
+	glNormalPointer(GL_FIXED, 0, egl_normals);
+	glTexCoordPointer(2, GL_FIXED, 0, egl_textures);
+#endif
 
 
 	//glScissor(30, 30, 100, 100);
 	//glEnable(GL_SCISSOR_TEST);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
-//	glDrawArrays(GL_LINE_STRIP, 0, SIZE);
+	//glDrawArrays(GL_LINE_STRIP, 0, SIZE);
 	glDrawArrays(GL_TRIANGLES, 0, SIZE);
 
 	glFinish();
 	eglWaitGL();
 
 	DWORD endRaster = GetTickCount();
+	//eglSaveSurfaceHM(g_surface, L"image.bmp");
     eglSwapBuffers(display, g_surface);
 	DWORD endSwap = GetTickCount();
 
