@@ -336,14 +336,14 @@ namespace {
 		return EGL_Mul(x0, y0) + EGL_Mul(x1, y1);
 	}
 
-	inline void Adjust(RasterPos& dst, const RasterPos& src, EGL_Fixed scale) {
+	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, EGL_Fixed scale) {
 		EGL_Fixed invScale = EGL_ONE - scale;
 
-		dst.m_ClipCoords = dst.m_ClipCoords * scale + src.m_ClipCoords * invScale;
-		dst.m_Color = dst.m_Color * scale + src.m_Color * invScale;
-		dst.m_TextureCoords.tu = Interpolate(dst.m_TextureCoords.tu, scale, src.m_TextureCoords.tu, invScale);
-		dst.m_TextureCoords.tv = Interpolate(dst.m_TextureCoords.tv, scale, src.m_TextureCoords.tv, invScale);
-		dst.m_FogDensity = Interpolate(dst.m_FogDensity, scale, src.m_FogDensity, invScale);
+		result.m_ClipCoords = dst.m_ClipCoords * scale + src.m_ClipCoords * invScale;
+		result.m_Color = dst.m_Color * scale + src.m_Color * invScale;
+		result.m_TextureCoords.tu = Interpolate(dst.m_TextureCoords.tu, scale, src.m_TextureCoords.tu, invScale);
+		result.m_TextureCoords.tv = Interpolate(dst.m_TextureCoords.tv, scale, src.m_TextureCoords.tv, invScale);
+		result.m_FogDensity = Interpolate(dst.m_FogDensity, scale, src.m_FogDensity, invScale);
 	}
 
 	inline bool ClipX(RasterPos& from, RasterPos& to) {

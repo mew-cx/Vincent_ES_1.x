@@ -68,6 +68,8 @@ SUMMARY: 1 conformant configs, 0 non-conformant configs.
 
 Specifically, this version addresses the following issues:
 
+954678 - Line clipper does not handle degenerate configurations
+921584 - Line and point rendering possibly broken
 946772 - mustpass conformance test fails
 952667 - Polygon fill conventions need to be revised
 954677 - polycull test fails

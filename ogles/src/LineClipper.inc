@@ -49,9 +49,13 @@
 			return false;
 		}
 
-		EGL_Fixed factor = 
-			InterpolationCoefficient(from.m_ClipCoords.COORDINATE, -from.m_ClipCoords.w(), to.m_ClipCoords.COORDINATE);
-		Adjust(from, to, factor);
+		EGL_Fixed c_x = from.m_ClipCoords.COORDINATE;
+		EGL_Fixed c_w = -from.m_ClipCoords.w();
+		EGL_Fixed p_x = to.m_ClipCoords.COORDINATE;
+		EGL_Fixed p_w = -to.m_ClipCoords.w();
+		
+		EGL_Fixed factor = EGL_Div(p_w - p_x, (p_w - p_x) - (c_w - c_x)); 
+		Interpolate(from, from, to, factor);
 
 		return true;
 
@@ -60,25 +64,38 @@
 			return false;
 		}
 
-		EGL_Fixed factor = 
-			InterpolationCoefficient(from.m_ClipCoords.COORDINATE, from.m_ClipCoords.w(), to.m_ClipCoords.COORDINATE);
-		Adjust(from, to, factor);
+		EGL_Fixed c_x = from.m_ClipCoords.COORDINATE;
+		EGL_Fixed c_w = from.m_ClipCoords.w();
+		EGL_Fixed p_x = to.m_ClipCoords.COORDINATE;
+		EGL_Fixed p_w = to.m_ClipCoords.w();
+		
+		EGL_Fixed factor = EGL_Div(p_w - p_x, (p_w - p_x) - (c_w - c_x)); 
+		Interpolate(from, from, to, factor);
+
 
 		return true;
 
 	} else if (to.m_ClipCoords.COORDINATE < -to.m_ClipCoords.w()) {
 
-		EGL_Fixed factor = 
-			InterpolationCoefficient(to.m_ClipCoords.COORDINATE, -from.m_ClipCoords.w(), from.m_ClipCoords.COORDINATE);
-		Adjust(to, from, factor);
+		EGL_Fixed c_x = to.m_ClipCoords.COORDINATE;
+		EGL_Fixed c_w = -to.m_ClipCoords.w();
+		EGL_Fixed p_x = from.m_ClipCoords.COORDINATE;
+		EGL_Fixed p_w = -from.m_ClipCoords.w();
+		
+		EGL_Fixed factor = EGL_Div(p_w - p_x, (p_w - p_x) - (c_w - c_x)); 
+		Interpolate(to, to, from, factor);
 
 		return true;
 
 	} else if (to.m_ClipCoords.COORDINATE > to.m_ClipCoords.w()) {
 
-		EGL_Fixed factor = 
-			InterpolationCoefficient(to.m_ClipCoords.COORDINATE, from.m_ClipCoords.w(), from.m_ClipCoords.COORDINATE);
-		Adjust(to, from, factor);
+		EGL_Fixed c_x = to.m_ClipCoords.COORDINATE;
+		EGL_Fixed c_w = to.m_ClipCoords.w();
+		EGL_Fixed p_x = from.m_ClipCoords.COORDINATE;
+		EGL_Fixed p_w = from.m_ClipCoords.w();
+		
+		EGL_Fixed factor = EGL_Div(p_w - p_x, (p_w - p_x) - (c_w - c_x)); 
+		Interpolate(to, to, from, factor);
 
 		return true;
 
