@@ -71,7 +71,7 @@ namespace EGL {
 		FractionalColor			m_DiffuseColor;
 		FractionalColor			m_SpecularColor;
 		FractionalColor			m_EmisiveColor;
-		EGL_Fixed					m_SpecularExponent;
+		EGL_Fixed				m_SpecularExponent;
 	};
 
 

@@ -365,7 +365,7 @@ inline OGLES_API EGL_Fixed EGL_Cos(EGL_Fixed value) {
 //	exponent	-	the exponent, one of 0, 1, 2
 // --------------------------------------------------------------------------
 inline static EGL_Fixed EGL_Power(EGL_Fixed value, EGL_Fixed exponent) {
-	switch (exponent << EGL_PRECISION) {
+	switch (exponent >> EGL_PRECISION) {
 		default:
 		case 0:
 			return EGL_ONE;

@@ -951,7 +951,7 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 }
 
 void Context :: TexEnvx(GLenum target, GLenum pname, GLfixed param) { 
-	if (target != GL_TEXTURE_2D) {
+	if (target != GL_TEXTURE_ENV) {
 		return;
 	}
 
@@ -992,7 +992,7 @@ void Context :: TexEnvx(GLenum target, GLenum pname, GLfixed param) {
 }
 
 void Context :: TexEnvxv(GLenum target, GLenum pname, const GLfixed *params) { 
-	if (target != GL_TEXTURE_2D) {
+	if (target != GL_TEXTURE_ENV) {
 		return;
 	}
 

@@ -625,10 +625,17 @@ inline bool Context :: IsCulled(RasterPos& a, RasterPos& b, RasterPos& c) {
 
 void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
 
-	if (m_CullFaceEnabled) {
-		if (IsCulled(a, b, c)) {
-			return;
-		}
+	bool cullResult;
+	cullResult = IsCulled(a, b, c);
+
+	if (cullResult) { //do work only when triangle is backward facing.
+			if (m_CullFaceEnabled)
+				return;
+			else {
+				a.m_Color = a.m_BackColor;
+				b.m_Color = b.m_BackColor;
+				c.m_Color = c.m_BackColor;
+			}
 	}
 
 	RasterPos * array1[16];

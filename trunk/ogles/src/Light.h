@@ -72,7 +72,7 @@ public:
 
 	void SetQuadraticAttenuation(EGL_Fixed attenuation);
 
-	void SetSpecularExponent(EGL_Fixed exponent);
+//	void SetSpecularExponent(EGL_Fixed exponent);
 
 	void SetSpotExponent(EGL_Fixed exponent);
 
@@ -81,10 +81,8 @@ public:
 	void InitWithMaterial(const Material& material);
 
 	void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
-		FractionalColor& result);
-
-	void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
-		const FractionalColor& currentColor, FractionalColor& result);
+		const Material& currMaterial, FractionalColor& result, 
+		FractionalColor& result2);
 
 private:
 	FractionalColor			m_AmbientColor;
@@ -92,13 +90,13 @@ private:
 	FractionalColor			m_SpecularColor;
 	Vec4D					m_Position;
 	Vec3D					m_SpotDirection;
-	EGL_Fixed					m_ConstantAttenuation;
-	EGL_Fixed					m_LinearAttenuation;
-	EGL_Fixed					m_QuadraticAttenuation;
-	EGL_Fixed					m_SpecularExponent;
-	EGL_Fixed					m_SpotExponent;
-	EGL_Fixed					m_SpotCutoff;
-	EGL_Fixed					m_CosineSpotCutoff;
+	EGL_Fixed				m_ConstantAttenuation;
+	EGL_Fixed				m_LinearAttenuation;
+	EGL_Fixed				m_QuadraticAttenuation;
+//	EGL_Fixed				m_SpecularExponent;
+	EGL_Fixed				m_SpotExponent;
+	EGL_Fixed				m_SpotCutoff;
+	EGL_Fixed				m_CosineSpotCutoff;
 
 	// effective color contributions for current material settings
 	FractionalColor			m_EffectiveAmbientColor;

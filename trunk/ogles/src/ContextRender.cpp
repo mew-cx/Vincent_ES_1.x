@@ -530,6 +530,8 @@ EGL_Fixed Context :: FogDensity(EGL_Fixed eyeDistance) const {
 //					rasterization stage
 // --------------------------------------------------------------------------
 void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
+	FractionalColor color;
+	FractionalColor backColor;
 
 	// apply projection matrix to eye coordinates 
 	rasterPos->m_ClipCoords = m_VertexTransformation * m_CurrentVertex;
@@ -554,33 +556,24 @@ void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 		int mask = 1;
 
 		if (m_ColorMaterialEnabled) {
-			FractionalColor color = m_CurrentRGBA * m_LightModelAmbient;
-			color += m_FrontMaterial.GetEmisiveColor();
-
-			for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
-				if (m_LightEnabled & mask) {
-					m_Lights[index].AccumulateLight(eyeCoords, eyeNormal,
-						m_CurrentRGBA, color);
-				}
-			}
-
-			color.Clamp();
-			rasterPos->m_Color = color;
+			color = m_CurrentRGBA * m_LightModelAmbient;
 		} else {
-			FractionalColor color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
-			color += m_FrontMaterial.GetEmisiveColor();
-
-			for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
-				if (m_LightEnabled & mask) {
-					m_Lights[index].AccumulateLight(eyeCoords, eyeNormal,
-						color);
-				}
+			color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
+		}
+		color += m_FrontMaterial.GetEmisiveColor();
+			
+		for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
+			if (m_LightEnabled & mask) {
+				m_Lights[index].AccumulateLight(eyeCoords, eyeNormal, 
+					m_FrontMaterial, color, backColor);
 			}
-
-			color.Clamp();
-			rasterPos->m_Color = color;
 		}
 
+		color.Clamp();
+		backColor.Clamp();
+		
+		rasterPos->m_Color = color;
+		rasterPos->m_BackColor = backColor;
 		// populate fog density here...
 		rasterPos->m_FogDensity = FogDensity(eyeDistance);
 	} else {
