@@ -5,8 +5,8 @@ This document collects changes on a release to release base. For open known issu
 the bug database on sourceforge. 
 
 
-Version 0.75
-------------
+Version 0.75 (beta)
+-------------------
 
 Vincent goes finally beta. The library is becoming sufficiently stable that I feel
 comfortable to advertise it to a larger user base. In addition, Vincent successfuly
@@ -66,7 +66,7 @@ SUMMARY: 1 conformant configs, 0 non-conformant configs.
 
 
 
-This version addresses the following issues:
+Specifically, this version addresses the following issues:
 
 946772 - mustpass conformance test fails
 952667 - Polygon fill conventions need to be revised
