@@ -151,7 +151,7 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 		EGL_Fixed att = EGL_ONE;
 
 		if (m_SpotCutoff != EGL_FixedFromInt(180)) {
-			EGL_Fixed cosine = vp_li * m_SpotDirection;
+			EGL_Fixed cosine = -(vp_li * m_SpotDirection);
 
 			if (cosine < m_CosineSpotCutoff) {
 				return;
@@ -200,7 +200,7 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 		EGL_Fixed att = EGL_ONE;
 
 		if (m_SpotCutoff != EGL_FixedFromInt(180)) {
-			EGL_Fixed cosine = vp_li * m_SpotDirection;
+			EGL_Fixed cosine = -(vp_li * m_SpotDirection);
 
 			if (cosine < m_CosineSpotCutoff) {
 				return;
@@ -255,7 +255,7 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 	EGL_Fixed att = EGL_ONE;
 
 	if (m_SpotCutoff != EGL_FixedFromInt(180)) {
-		EGL_Fixed cosine = vp_li * m_SpotDirection;
+		EGL_Fixed cosine = -(vp_li * m_SpotDirection);
 
 		if (cosine < m_CosineSpotCutoff) {
 			return;
@@ -314,7 +314,7 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 	EGL_Fixed att = EGL_ONE;
 
 	if (m_SpotCutoff != EGL_FixedFromInt(180)) {
-		EGL_Fixed cosine = vp_li * m_SpotDirection;
+		EGL_Fixed cosine = -(vp_li * m_SpotDirection);
 
 		if (cosine < m_CosineSpotCutoff) {
 			return;
