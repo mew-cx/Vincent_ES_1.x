@@ -17,6 +17,7 @@ This version addresses the following issues:
 1010510 - specular color incorrect
 1010824 - Provide utility function to save screenshots
 1011519 - Improve rasterizer state comparisons
+1014020 - Fog Linear test failed.
 
 
 Version 0.81
