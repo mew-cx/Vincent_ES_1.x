@@ -138,6 +138,37 @@ namespace EGL {
 			TextureModeModulate
 		};
 
+		enum WrappingMode {
+			WrappingModeInvalid = -1,
+			WrappingModeClampToEdge,
+			WrappingModeRepeat
+		};
+
+		enum MinFilterMode {
+			MinFilterModeInvalid = -1,
+			MinFilterModeNearest,
+			MinFilterModeLinear,
+			MinFilterModeNearestMipmapNearest,
+			MinFilterModeNearestMipmapLinear,
+			MinFilterModeLinearMipmapNearest,
+			MinFilterModeLinearMipmapLinear,
+		};
+
+		enum MagFilterMode {
+			MagFilterModeInvalid = -1,
+			MagFilterModeNearest,
+			MagFilterModeLinear
+		};
+
+		enum TextureFormat {
+			TextureFormatInvalid = -1,
+			TextureFormatAlpha = 0,				// 8
+			TextureFormatLuminance = 1,			// 8
+			TextureFormatLuminanceAlpha = 2,	// 8-8
+			TextureFormatRGB = 3,				// 5-6-5
+			TextureFormatRGBA = 4				// 5-5-5-1
+		};
+
 	public:
 		RasterizerState();
 		RasterizerState(const RasterizerState& other);
@@ -158,6 +189,13 @@ namespace EGL {
 
 		void SetTexEnvColor(const Color& color);
 		void SetTextureMode(TextureMode mode);
+
+		void SetMinFilterMode(MinFilterMode mode);
+		void SetMagFilterMode(MagFilterMode mode);
+		void SetWrappingModeS(WrappingMode mode);
+		void SetWrappingModeT(WrappingMode mode);
+
+		void SetInternalFormat(TextureFormat format) const;
 
 		void SetDepthRange(EGL_Fixed zNear, EGL_Fixed zFar);
 
@@ -228,6 +266,11 @@ namespace EGL {
 		Color					m_TexEnvColor;
 		bool					m_TextureEnabled;
 		TextureMode				m_TextureMode;
+		MinFilterMode			m_MinFilterMode;
+		MagFilterMode			m_MagFilterMode;
+		WrappingMode			m_WrappingModeS;
+		WrappingMode			m_WrappingModeT;
+		TextureFormat			m_InternalFormat;
 
 		// ----------------------------------------------------------------------
 		// Fragment rendering state

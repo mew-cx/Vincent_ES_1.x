@@ -57,7 +57,7 @@ U8 Texture :: s_BytesPerPixel[] = {
 
 
 Texture :: Texture():
-	m_Data(0), m_InternalFormat(static_cast<TextureFormat>(0))
+	m_Data(0), m_InternalFormat(static_cast<RasterizerState::TextureFormat>(0))
 {
 }
 
@@ -85,7 +85,7 @@ namespace {
 }
 
 
-void Texture :: Initialize(U32 width, U32 height, TextureFormat format) {
+void Texture :: Initialize(U32 width, U32 height, RasterizerState::TextureFormat format) {
 
 	if (m_Data != 0) {
 		free(m_Data);
@@ -141,7 +141,7 @@ bool MultiTexture :: IsComplete() const {
 
 	U32 width = m_TextureLevels[0]->GetWidth();
 	U32 height = m_TextureLevels[0]->GetHeight();
-	Texture::TextureFormat format = m_TextureLevels[0]->GetInternalFormat();
+	RasterizerState::TextureFormat format = m_TextureLevels[0]->GetInternalFormat();
 
 	for (int index = 1; index < MAX_LEVELS; ++index) {
 		if (width == 1 && height == 1) {
