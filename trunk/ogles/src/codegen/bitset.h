@@ -45,7 +45,7 @@ extern "C" {
 typedef struct cg_bitset_t
 {
 	size_t		elements;
-	U32			bits[0];
+	U32			bits[1];
 }
 cg_bitset_t;
 
