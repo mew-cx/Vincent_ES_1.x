@@ -270,8 +270,10 @@ DEP_CPP_COLOR=\
 	"..\..\src\Init.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_COLOR=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -308,10 +310,8 @@ DEP_CPP_COLOR=\
 	"..\..\src\Init.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_COLOR=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -358,8 +358,10 @@ DEP_CPP_CONFI=\
 	"..\..\src\GLES\gl.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_CONFI=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -399,10 +401,8 @@ DEP_CPP_CONFI=\
 	"..\..\src\GLES\gl.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_CONFI=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -475,8 +475,10 @@ DEP_CPP_CONTE=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_CONTE=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -519,6 +521,7 @@ DEP_CPP_CONTE=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -545,6 +548,7 @@ DEP_CPP_CONTE=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -555,10 +559,8 @@ DEP_CPP_CONTE=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_CONTE=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -643,8 +645,10 @@ DEP_CPP_CONTEX=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_CONTEX=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -687,6 +691,7 @@ DEP_CPP_CONTEX=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -713,6 +718,7 @@ DEP_CPP_CONTEX=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -723,10 +729,8 @@ DEP_CPP_CONTEX=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_CONTEX=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -811,8 +815,10 @@ DEP_CPP_CONTEXT=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_CONTEXT=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -855,6 +861,7 @@ DEP_CPP_CONTEXT=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -881,6 +888,7 @@ DEP_CPP_CONTEXT=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -891,10 +899,8 @@ DEP_CPP_CONTEXT=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_CONTEXT=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -979,8 +985,10 @@ DEP_CPP_CONTEXTM=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_CONTEXTM=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -1023,6 +1031,7 @@ DEP_CPP_CONTEXTM=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -1049,6 +1058,7 @@ DEP_CPP_CONTEXTM=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -1059,10 +1069,8 @@ DEP_CPP_CONTEXTM=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_CONTEXTM=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -1147,8 +1155,10 @@ DEP_CPP_CONTEXTMA=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_CONTEXTMA=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -1191,6 +1201,7 @@ DEP_CPP_CONTEXTMA=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -1217,6 +1228,7 @@ DEP_CPP_CONTEXTMA=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -1227,10 +1239,8 @@ DEP_CPP_CONTEXTMA=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_CONTEXTMA=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -1315,8 +1325,10 @@ DEP_CPP_CONTEXTME=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_CONTEXTME=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -1359,6 +1371,7 @@ DEP_CPP_CONTEXTME=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -1385,6 +1398,7 @@ DEP_CPP_CONTEXTME=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -1395,10 +1409,8 @@ DEP_CPP_CONTEXTME=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_CONTEXTME=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -1483,8 +1495,10 @@ DEP_CPP_CONTEXTP=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_CONTEXTP=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -1527,6 +1541,7 @@ DEP_CPP_CONTEXTP=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -1553,6 +1568,7 @@ DEP_CPP_CONTEXTP=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -1563,10 +1579,8 @@ DEP_CPP_CONTEXTP=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_CONTEXTP=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -1652,8 +1666,10 @@ DEP_CPP_CONTEXTR=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_CONTEXTR=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -1696,6 +1712,7 @@ DEP_CPP_CONTEXTR=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -1722,6 +1739,7 @@ DEP_CPP_CONTEXTR=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -1732,10 +1750,8 @@ DEP_CPP_CONTEXTR=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_CONTEXTR=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -1821,8 +1837,10 @@ DEP_CPP_CONTEXTT=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_CONTEXTT=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -1865,6 +1883,7 @@ DEP_CPP_CONTEXTT=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -1891,6 +1910,7 @@ DEP_CPP_CONTEXTT=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -1901,10 +1921,8 @@ DEP_CPP_CONTEXTT=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_CONTEXTT=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -1991,8 +2009,10 @@ DEP_CPP_CONTEXTTR=\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
 	"..\..\src\TriangleClipper.inc"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_CONTEXTTR=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -2036,6 +2056,7 @@ DEP_CPP_CONTEXTTR=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -2063,6 +2084,7 @@ DEP_CPP_CONTEXTTR=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -2073,11 +2095,10 @@ DEP_CPP_CONTEXTTR=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	"..\..\src\TriangleClipper.inc"\
-	
-NODEP_CPP_CONTEXTTR=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	"..\..\src\TriangleClipperHigh.inc"\
+	"..\..\src\TriangleClipperLow.inc"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -2163,8 +2184,10 @@ DEP_CPP_CONTEXTV=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_CONTEXTV=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -2207,6 +2230,7 @@ DEP_CPP_CONTEXTV=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -2233,6 +2257,7 @@ DEP_CPP_CONTEXTV=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -2243,10 +2268,8 @@ DEP_CPP_CONTEXTV=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_CONTEXTV=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -2307,8 +2330,10 @@ DEP_CPP_DISPL=\
 	"..\..\src\GLES\gl.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_DISPL=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -2348,10 +2373,8 @@ DEP_CPP_DISPL=\
 	"..\..\src\GLES\gl.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_DISPL=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -2424,8 +2447,10 @@ DEP_CPP_EGL_C=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_EGL_C=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -2468,6 +2493,7 @@ DEP_CPP_EGL_C=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -2494,6 +2520,7 @@ DEP_CPP_EGL_C=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -2504,10 +2531,8 @@ DEP_CPP_EGL_C=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_EGL_C=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -2561,8 +2586,10 @@ DEP_CPP_FIXED=\
 	"..\..\src\gl_sin.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_FIXED=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -2596,10 +2623,8 @@ DEP_CPP_FIXED=\
 	"..\..\src\gl_sin.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_FIXED=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -2670,8 +2695,10 @@ DEP_CPP_GL_CP=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_GL_CP=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -2714,6 +2741,7 @@ DEP_CPP_GL_CP=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -2740,6 +2768,7 @@ DEP_CPP_GL_CP=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\Material.h"\
@@ -2750,10 +2779,8 @@ DEP_CPP_GL_CP=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_GL_CP=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -2818,8 +2845,10 @@ DEP_CPP_LIGHT=\
 	"..\..\src\Material.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_LIGHT=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -2865,10 +2894,8 @@ DEP_CPP_LIGHT=\
 	"..\..\src\Material.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_LIGHT=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -2914,8 +2941,10 @@ DEP_CPP_LINAL=\
 	"..\..\src\linalg.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_LINAL=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -2949,10 +2978,8 @@ DEP_CPP_LINAL=\
 	"..\..\src\linalg.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_LINAL=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3028,8 +3055,10 @@ DEP_CPP_LINES=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_LINES=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -3073,6 +3102,7 @@ DEP_CPP_LINES=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\LineClipper.inc"\
@@ -3100,6 +3130,7 @@ DEP_CPP_LINES=\
 	"..\..\src\GLES\egl.h"\
 	"..\..\src\GLES\egltypes.h"\
 	"..\..\src\GLES\gl.h"\
+	"..\..\src\GLES\glext.h"\
 	"..\..\src\Light.h"\
 	"..\..\src\linalg.h"\
 	"..\..\src\LineClipper.inc"\
@@ -3111,10 +3142,8 @@ DEP_CPP_LINES=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_LINES=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3176,8 +3205,10 @@ DEP_CPP_MATER=\
 	"..\..\src\Material.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_MATER=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -3217,10 +3248,8 @@ DEP_CPP_MATER=\
 	"..\..\src\Material.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_MATER=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3266,8 +3295,10 @@ DEP_CPP_MATRI=\
 	"..\..\src\MatrixStack.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_MATRI=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -3304,10 +3335,8 @@ DEP_CPP_MATRI=\
 	"..\..\src\MatrixStack.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_MATRI=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3346,8 +3375,10 @@ NODEP_CPP_OGLES=\
 DEP_CPP_OGLES=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_OGLES=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -3375,10 +3406,8 @@ DEP_CPP_OGLES=\
 DEP_CPP_OGLES=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_OGLES=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3440,8 +3469,10 @@ DEP_CPP_RASTE=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_RASTE=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -3509,10 +3540,8 @@ DEP_CPP_RASTE=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_RASTE=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3571,8 +3600,10 @@ DEP_CPP_RASTER=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_RASTER=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -3612,10 +3643,8 @@ DEP_CPP_RASTER=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_RASTER=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3678,8 +3707,10 @@ DEP_CPP_RASTERI=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_RASTERI=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -3746,10 +3777,8 @@ DEP_CPP_RASTERI=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_RASTERI=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3798,8 +3827,10 @@ NODEP_CPP_STDAF=\
 
 DEP_CPP_STDAF=\
 	"..\..\src\stdafx.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_STDAF=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 # ADD CPP /Yc"stdafx.h"
 
@@ -3827,10 +3858,8 @@ DEP_CPP_STDAF=\
 
 DEP_CPP_STDAF=\
 	"..\..\src\stdafx.h"\
-	
-NODEP_CPP_STDAF=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 # ADD BASE CPP /Yc"stdafx.h"
 # ADD CPP /Yc"stdafx.h"
@@ -3883,8 +3912,10 @@ DEP_CPP_SURFA=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_SURFA=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -3933,10 +3964,8 @@ DEP_CPP_SURFA=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
-	
-NODEP_CPP_SURFA=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3997,8 +4026,10 @@ DEP_CPP_TEXTU=\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_TEXTU=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -4053,10 +4084,8 @@ DEP_CPP_TEXTU=\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_TEXTU=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -4084,7 +4113,11 @@ NODEP_CPP_TEXTU=\
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\src\TriangleClipper.inc
+SOURCE=..\..\src\TriangleClipperHigh.inc
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\src\TriangleClipperLow.inc
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -4261,8 +4294,10 @@ DEP_CPP_CODEG=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_CODEG=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -4350,10 +4385,8 @@ DEP_CPP_CODEG=\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
 	"..\..\src\Texture.h"\
-	
-NODEP_CPP_CODEG=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -4434,8 +4467,10 @@ DEP_CPP_FUNCT=\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
-	{$(INCLUDE)}"gpp.h"\
+	
+NODEP_CPP_FUNCT=\
+	".\mnintrin.h"\
+	".\pp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
@@ -4502,10 +4537,8 @@ DEP_CPP_FUNCT=\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\stdafx.h"\
 	"..\..\src\Surface.h"\
-	
-NODEP_CPP_FUNCT=\
-	".\mnintrin.h"\
-	".\pp.h"\
+	{$(INCLUDE)}"Cmnintrin.h"\
+	{$(INCLUDE)}"gpp.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"

@@ -106,6 +106,9 @@ Context :: Context(const Config & config)
 	m_GenerateMipmaps(false)
 {
 	DepthRangex(VIEWPORT_NEAR, VIEWPORT_FAR);
+	ClearDepthx(EGL_ONE);
+	ClearStencil(0);
+
 	m_Rasterizer = new Rasterizer(GetRasterizerState());	
 	m_Rasterizer->SetTexture(m_Textures.GetTexture(m_Textures.Allocate()));
 
