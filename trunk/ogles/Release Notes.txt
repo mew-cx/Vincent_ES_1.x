@@ -13,7 +13,7 @@ This version addresses the following issues:
 
 863630 - Backface culling missing
 863633 - Culling and clipping is missing 
-
+863632 - Initialization for multiple processes 
 
 
 Version 0.1

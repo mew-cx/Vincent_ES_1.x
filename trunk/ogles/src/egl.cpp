@@ -52,11 +52,6 @@ using namespace EGL;
 #define EGL_VERSION_MINOR 0
 
 
-// Index into thread local storage for active EGL context
-// This allocation needs to change when we move the code into a DLL
-static DWORD s_TlsIndexError = TlsAlloc();
-
-
 static void eglRecordError(EGLint error) 
 	// Save an error code for the current thread
 	//

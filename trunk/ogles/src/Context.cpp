@@ -465,8 +465,6 @@ void Context :: Flush(void) { }
 // Context Management
 // --------------------------------------------------------------------------
 
-static DWORD s_TlsIndexContext = TlsAlloc();
-
 
 void Context :: SetCurrentContext(Context * context) {
 
