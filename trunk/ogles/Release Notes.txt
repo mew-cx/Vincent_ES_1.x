@@ -12,6 +12,17 @@ This build features a new rasterizer for triangles. Most notably, the new raster
 implements the plane equation approach with pixel and texel correct stepping of all
 parameters.
 
+To fully pass the conformance test, the base internal format for RGBA textures has been changed from
+RGBA5551 to RGBA8888. The base internal format can easily be set to the other supported formats by
+changing the return value of TextureFormatFromEnum in ContextTexture.cpp.
+
+The remaining issues with the conformance test are regardng mipmap selection and mipmap interpolation.
+Currently, Vincent uses mipmap selection on a per-triangle base as is common for most rasterizers.
+For those two remaining tests, mipmap selection will have to be done on a per-pixel base based
+on the current texture gradients. The plan is to create two EGL Config entries, one marked as
+slow (but conformant and using per pixel mipmap selection), the other being marked as non-conformant 
+(and using per-triangle mip mapping).
+
 This version addresses the following issues:
 
 961343 - Use DDA for triangle edges
@@ -21,6 +32,8 @@ This version addresses the following issues:
 980879 - Packed Pixels test failed.
 980882 - Copy Texture test failed. For this issue, there still needs to be a clarification 
 	 from the review board concerning the minimum bit depth required for textures.
+980876 - Compressed Paletted Texture test failed.	 
+987381 - Line clipper bug.
 
 
 Version 0.78
