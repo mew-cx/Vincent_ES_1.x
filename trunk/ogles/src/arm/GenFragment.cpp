@@ -251,81 +251,29 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 	if (m_State->m_TextureEnabled) {
 
-		//tu += ((EGL_ONE/2) >> rasterInfo->TextureLogWidth) - 1;
-		//tv += ((EGL_ONE/2) >> rasterInfo->TextureLogHeight) - 1;
-#if 0
-		DECL_REG	(regU);
-		DECL_REG	(regV);
-		DECL_REG	(regUDelta);
-		DECL_REG	(regVDelta);
-		DECL_REG	(regConstantHalf);
-		DECL_REG	(regShiftedHalfU);
-		DECL_REG	(regShiftedHalfV);
-		DECL_REG	(regConstant1);
-
-		cg_virtual_reg_t * regTextureLogWidth =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_LOG_WIDTH);
-		cg_virtual_reg_t * regTextureLogHeight =	LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_LOG_HEIGHT);
-
-		LDI		(regConstantHalf,	EGL_ONE/2);
-		LDI		(regConstant1,		1);
-		ASR		(regShiftedHalfU,	regConstantHalf, regTextureLogWidth);
-		ASR		(regShiftedHalfV,	regConstantHalf, regTextureLogHeight);
-		SUB		(regUDelta,			regShiftedHalfU, regConstant1);
-		SUB		(regVDelta,			regShiftedHalfV, regConstant1);
-		ADD		(regU,				fragmentInfo.regU, regUDelta);
-		ADD		(regV,				fragmentInfo.regV, regVDelta);
-#else
 		cg_virtual_reg_t * regU = fragmentInfo.regU;
 		cg_virtual_reg_t * regV = fragmentInfo.regV;
 
-		cg_virtual_reg_t * regTextureLogWidth =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_LOG_WIDTH);
-		cg_virtual_reg_t * regTextureLogHeight =	LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_LOG_HEIGHT);
-
-#endif
 		//EGL_Fixed tu0;
 		//EGL_Fixed tv0;
 
 		DECL_REG	(regU0);
 		DECL_REG	(regV0);
 
-		cg_virtual_reg_t * regMask = 0;
+		DECL_REG	(regMask);
+
+		LDI		(regMask, 0xffff);
 
 		switch (m_State->m_WrappingModeS) {
 			case RasterizerState::WrappingModeClampToEdge:
 				//tu0 = EGL_CLAMP(tu, 0, EGL_ONE);
 				{
-					DECL_REG	(regConstantOne);
 					DECL_REG	(regConstantZero);
-					DECL_FLAGS	(regCompareOne);
-					DECL_FLAGS	(regCompareZero);
-					DECL_REG	(regNewU1);
-					DECL_REG	(regNewU2);
-
-					cg_block_ref_t * label1 = cg_block_ref_create(procedure);
-					cg_block_ref_t * label2 = cg_block_ref_create(procedure);
-
-					LDI		(regConstantOne, EGL_FixedFromInt(1));
-					FCMP	(regCompareOne, regU, regConstantOne);
-					BLE		(regCompareOne, label1);
-					LDI		(regNewU1, EGL_FixedFromInt(1));
-					BRA		(label2);
-
-					block = cg_block_create(procedure, weight);
-					label1->block = block;
+					DECL_REG	(regTemp);
 
 					LDI		(regConstantZero, EGL_FixedFromInt(0));
-					FCMP	(regCompareZero, regU, regConstantZero);
-					BGE		(regCompareZero, label2);
-					LDI		(regNewU2, EGL_FixedFromInt(0));
-
-					block = cg_block_create(procedure, weight);
-					label2->block = block;
-
-					cg_virtual_reg_list_t * regList = 
-						cg_create_virtual_reg_list(procedure->module->heap,
-												   regU, regNewU1, regNewU2, NULL);
-
-					PHI		(regU0, regList);
+					MIN		(regTemp, regU, regMask);
+					MAX		(regU0, regTemp, regConstantZero);
 				}
 				break;
 
@@ -333,8 +281,6 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			case RasterizerState::WrappingModeRepeat:
 				//tu0 = tu & 0xffff;
 				{
-					regMask = cg_virtual_reg_create(block->proc, cg_reg_type_general);
-					LDI		(regMask, 0xffff);
 					AND		(regU0, regU, regMask);
 				}
 				break;
@@ -344,34 +290,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			case RasterizerState::WrappingModeClampToEdge:
 				//tv0 = EGL_CLAMP(tv, 0, EGL_ONE);
 				{
-					DECL_REG	(regConstantOne);
 					DECL_REG	(regConstantZero);
-					DECL_FLAGS	(regCompareOne);
-					DECL_FLAGS	(regCompareZero);
-					DECL_REG	(regNewV1);
-					DECL_REG	(regNewV2);
-
-					cg_block_ref_t * label1 = cg_block_ref_create(procedure);
-					cg_block_ref_t * label2 = cg_block_ref_create(procedure);
-
-					LDI		(regConstantOne, EGL_FixedFromInt(1));
-					FCMP	(regCompareOne, regV, regConstantOne);
-					BLE		(regCompareOne, label1);
-					LDI		(regNewV1, EGL_FixedFromInt(1));
-					BRA		(label2);
-
-					block = cg_block_create(procedure, weight);
-					label1->block = block;
+					DECL_REG	(regTemp);
 
 					LDI		(regConstantZero, EGL_FixedFromInt(0));
-					FCMP	(regCompareZero, regV, regConstantZero);
-					BGE		(regCompareZero, label2);
-					LDI		(regNewV2, EGL_FixedFromInt(0));
-
-					block = cg_block_create(procedure, weight);
-					label2->block = block;
-
-					PHI		(regV0, cg_create_virtual_reg_list(procedure->module->heap, regV, regNewV1, regNewV2, NULL));
+					MIN		(regTemp, regV, regMask);
+					MAX		(regV0, regTemp, regConstantZero);
 				}
 				break;
 
@@ -379,11 +303,6 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			case RasterizerState::WrappingModeRepeat:
 				//tv0 = tv & 0xffff;
 				{
-					if (!regMask) {
-						regMask = cg_virtual_reg_create(block->proc, cg_reg_type_general);
-						LDI		(regMask, 0xffff);
-					}
-
 					AND		(regV0, regV, regMask);
 				}
 				break;
@@ -410,6 +329,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		DECL_REG	(regTexOffset);
 		DECL_REG	(regConstant16);
 
+
+		cg_virtual_reg_t * regTextureLogWidth =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_LOG_WIDTH);
+		cg_virtual_reg_t * regTextureLogHeight =	LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_LOG_HEIGHT);
 		cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_DATA);
 		cg_virtual_reg_t * regTextureExponent =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_TEXTURE_EXPONENT);
 

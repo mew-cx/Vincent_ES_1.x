@@ -216,7 +216,11 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 		switch (m_Texture->GetWrappingModeS()) {
 			case RasterizerState::WrappingModeClampToEdge:
-				tu0 = EGL_CLAMP(tu, 0, EGL_ONE);
+				if (tu < 0)
+					tu0 = 0;
+				else if (tu >= EGL_ONE)
+					tu0 = EGL_ONE - 1;
+
 				break;
 
 			default:
@@ -227,7 +231,11 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 		switch (m_Texture->GetWrappingModeT()) {
 			case RasterizerState::WrappingModeClampToEdge:
-				tv0 = EGL_CLAMP(tv, 0, EGL_ONE);
+				if (tv < 0)
+					tv0 = 0;
+				else if (tv >= EGL_ONE)
+					tv0 = EGL_ONE - 1;
+
 				break;
 
 			default:
