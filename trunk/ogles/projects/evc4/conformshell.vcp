@@ -28,7 +28,7 @@ CFG=conformshell - Win32 (WCE ARMV4) Release ARM
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 # PROP ATL_Project 2
-CPP=C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xicle42
+CPP=clarm.exe
 
 !IF  "$(CFG)" == "conformshell - Win32 (WCE ARMV4) Release ARM"
 
@@ -47,7 +47,7 @@ CPP=C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xicle42
 # PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "NDEBUG" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /O2 /M$(CECrtMT) /c
-# ADD CPP /nologo /W3 /I "../.." /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "..\..\ctk" /I "..\.." /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /O2 /M$(CECrtMT) /c
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
@@ -72,7 +72,7 @@ BSC32=bscmake.exe
 # PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /YX /M$(CECrtMTDebug) /c
-# ADD CPP /nologo /W3 /Zi /Od /I "../.." /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "..\..\ctk" /I "..\.." /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /M$(CECrtMTDebug) /c
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
@@ -97,7 +97,7 @@ BSC32=bscmake.exe
 # PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /O2 /M$(CECrtMT) /c
-# ADD CPP /nologo /W3 /I "../.." /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /O2 /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "..\..\ctk" /I "..\.." /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /O2 /M$(CECrtMT) /c
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
@@ -122,7 +122,7 @@ BSC32=bscmake.exe
 # PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /M$(CECrtMTDebug) /c
-# ADD CPP /nologo /W3 /Zi /Od /I "../.." /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "..\..\ctk" /I "..\.." /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D "ARMV4" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "COMMON_LITE" /YX /M$(CECrtMTDebug) /c
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
@@ -151,6 +151,7 @@ DEP_CPP_DRIVE=\
 	"..\..\conform\conformshell\pathdata.h"\
 	"..\..\conform\conformshell\utils.h"\
 	"..\..\ctk\ctk.h"\
+	"..\..\ctk\GLES\gl.h"\
 	"..\..\ctk\GLES\glext.h"\
 	"..\..\fixed\fixed.h"\
 	"..\..\platform\gl_fixed_point.h"\
@@ -165,7 +166,6 @@ DEP_CPP_DRIVE=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
-	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # Begin Source File
@@ -178,6 +178,7 @@ DEP_CPP_PATH_=\
 	"..\..\conform\conformshell\pathdata.h"\
 	"..\..\conform\conformshell\utils.h"\
 	"..\..\ctk\ctk.h"\
+	"..\..\ctk\GLES\gl.h"\
 	"..\..\ctk\GLES\glext.h"\
 	"..\..\fixed\fixed.h"\
 	"..\..\platform\gl_fixed_point.h"\
@@ -192,7 +193,6 @@ DEP_CPP_PATH_=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
-	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # Begin Source File
@@ -202,6 +202,7 @@ DEP_CPP_PATHD=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\pathdata.h"\
 	"..\..\ctk\ctk.h"\
+	"..\..\ctk\GLES\gl.h"\
 	"..\..\ctk\GLES\glext.h"\
 	"..\..\fixed\fixed.h"\
 	"..\..\platform\gl_fixed_point.h"\
@@ -216,7 +217,6 @@ DEP_CPP_PATHD=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
-	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # Begin Source File
@@ -227,6 +227,7 @@ DEP_CPP_PATHS=\
 	"..\..\conform\conformshell\path.h"\
 	"..\..\conform\conformshell\pathdata.h"\
 	"..\..\ctk\ctk.h"\
+	"..\..\ctk\GLES\gl.h"\
 	"..\..\ctk\GLES\glext.h"\
 	"..\..\fixed\fixed.h"\
 	"..\..\platform\gl_fixed_point.h"\
@@ -241,7 +242,6 @@ DEP_CPP_PATHS=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
-	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # Begin Source File
@@ -253,6 +253,7 @@ DEP_CPP_SHELL=\
 	"..\..\conform\conformshell\pathdata.h"\
 	"..\..\conform\conformshell\utils.h"\
 	"..\..\ctk\ctk.h"\
+	"..\..\ctk\GLES\gl.h"\
 	"..\..\ctk\GLES\glext.h"\
 	"..\..\fixed\fixed.h"\
 	"..\..\platform\gl_fixed_point.h"\
@@ -267,7 +268,6 @@ DEP_CPP_SHELL=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
-	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # Begin Source File
@@ -279,6 +279,7 @@ DEP_CPP_UTIL_=\
 	"..\..\conform\conformshell\pathdata.h"\
 	"..\..\conform\conformshell\utils.h"\
 	"..\..\ctk\ctk.h"\
+	"..\..\ctk\GLES\gl.h"\
 	"..\..\ctk\GLES\glext.h"\
 	"..\..\fixed\fixed.h"\
 	"..\..\platform\gl_fixed_point.h"\
@@ -293,7 +294,6 @@ DEP_CPP_UTIL_=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
-	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # Begin Source File
@@ -303,6 +303,7 @@ DEP_CPP_UTILG=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\utilg.h"\
 	"..\..\ctk\ctk.h"\
+	"..\..\ctk\GLES\gl.h"\
 	"..\..\ctk\GLES\glext.h"\
 	"..\..\fixed\fixed.h"\
 	"..\..\platform\gl_fixed_point.h"\
@@ -317,7 +318,6 @@ DEP_CPP_UTILG=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
-	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # Begin Source File
@@ -327,6 +327,7 @@ DEP_CPP_UTILM=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\utilm.h"\
 	"..\..\ctk\ctk.h"\
+	"..\..\ctk\GLES\gl.h"\
 	"..\..\ctk\GLES\glext.h"\
 	"..\..\fixed\fixed.h"\
 	"..\..\platform\gl_fixed_point.h"\
@@ -341,7 +342,6 @@ DEP_CPP_UTILM=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
-	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # Begin Source File
@@ -351,6 +351,7 @@ DEP_CPP_UTILP=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\utilp.h"\
 	"..\..\ctk\ctk.h"\
+	"..\..\ctk\GLES\gl.h"\
 	"..\..\ctk\GLES\glext.h"\
 	"..\..\fixed\fixed.h"\
 	"..\..\platform\gl_fixed_point.h"\
@@ -365,7 +366,6 @@ DEP_CPP_UTILP=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
-	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # Begin Source File
@@ -375,6 +375,7 @@ DEP_CPP_UTILR=\
 	"..\..\conform\conformshell\conform.h"\
 	"..\..\conform\conformshell\utilru.h"\
 	"..\..\ctk\ctk.h"\
+	"..\..\ctk\GLES\gl.h"\
 	"..\..\ctk\GLES\glext.h"\
 	"..\..\fixed\fixed.h"\
 	"..\..\platform\gl_fixed_point.h"\
@@ -389,7 +390,6 @@ DEP_CPP_UTILR=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
-	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # Begin Source File
@@ -401,6 +401,7 @@ DEP_CPP_UTILS=\
 	"..\..\conform\conformshell\pathdata.h"\
 	"..\..\conform\conformshell\utils.h"\
 	"..\..\ctk\ctk.h"\
+	"..\..\ctk\GLES\gl.h"\
 	"..\..\ctk\GLES\glext.h"\
 	"..\..\fixed\fixed.h"\
 	"..\..\platform\gl_fixed_point.h"\
@@ -415,7 +416,6 @@ DEP_CPP_UTILS=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
-	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # Begin Source File
@@ -427,6 +427,7 @@ DEP_CPP_UTILT=\
 	"..\..\conform\conformshell\pathdata.h"\
 	"..\..\conform\conformshell\utilt.h"\
 	"..\..\ctk\ctk.h"\
+	"..\..\ctk\GLES\gl.h"\
 	"..\..\ctk\GLES\glext.h"\
 	"..\..\fixed\fixed.h"\
 	"..\..\platform\gl_fixed_point.h"\
@@ -441,7 +442,6 @@ DEP_CPP_UTILT=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
-	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # End Group
