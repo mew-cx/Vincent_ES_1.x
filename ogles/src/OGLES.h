@@ -85,5 +85,12 @@ typedef __int64				I64;
 
 #define elementsof(a) (sizeof(a) / sizeof(*(a)))
 
+// --------------------------------------------------------------------------
+// Common variables
+// --------------------------------------------------------------------------
+
+extern DWORD s_TlsIndexContext;	// thread local storage slot for current context
+extern DWORD s_TlsIndexError;	// thread local storage slot for EGL error
+
 
 #endif // ndef EGL_OGLES_H
