@@ -54,6 +54,129 @@ struct cg_label_t
 };
 
 
+typedef enum physical_reg_status_t
+{
+	reg_status_init,
+	reg_status_free,
+	reg_status_allocated,
+	reg_status_defined,
+	reg_status_dirty,
+	reg_status_secondary
+}
+physical_reg_status_t;
+
+
+typedef enum physical_reg_event_t
+{
+	reg_event_init,
+	reg_event_allocate,
+	reg_event_deallocate,
+	reg_event_load,
+	reg_event_save,
+	reg_event_define,
+	reg_event_reassign
+}
+physical_reg_event_t;
+
+
+/****************************************************************************/
+/* This method implements the finite state machine underlying physical		*/
+/* register allocation.														*/
+/****************************************************************************/
+static physical_reg_status_t update_register_status(physical_reg_status_t state, 
+													physical_reg_event_t event)
+{
+	if (event == reg_event_init)
+	{
+		return reg_status_init;
+	}
+
+	switch (state)
+	{
+	case reg_status_init:
+		switch (event)
+		{
+		case (reg_event_init):
+			return reg_status_free;
+
+		default:
+			assert(0);
+		}
+		break;
+
+	case reg_status_free:
+		switch (event)
+		{
+		case (reg_event_allocate):
+			return reg_status_allocated;
+
+		default:
+			assert(0);
+		}
+		break;
+
+	case reg_status_allocated:
+		switch (event)
+		{
+		case reg_event_load:
+			return reg_status_defined;
+
+		case reg_event_define:
+			return reg_status_dirty;
+
+		default:
+			assert(0);
+		}
+		break;
+
+	case reg_status_defined:
+		switch (event)
+		{
+		case reg_event_deallocate:
+			return reg_status_free;
+
+		case reg_event_reassign:
+			return reg_status_secondary;
+
+		default:
+			assert(0);
+		}
+		break;
+
+	case reg_status_dirty:
+		switch (event)
+		{
+		case reg_event_save:
+			return reg_status_defined;
+
+		default:
+			assert(0);
+		}
+		break;
+
+	case reg_status_secondary:
+		switch (event)
+		{
+		case reg_event_define:
+			return reg_status_dirty;
+
+		case reg_event_reassign:
+			return reg_status_defined;
+
+		default:
+			assert(0);
+		}
+		break;
+
+	default:
+		assert(0);
+		break;
+	}
+
+	return reg_status_init;
+}
+
+
 struct physical_reg_list_t;
 
 typedef struct cg_physical_reg_t 
@@ -64,8 +187,9 @@ typedef struct cg_physical_reg_t
 	ARMReg					regno;				/* physical register		*/
 	cg_virtual_reg_t *		virtual_reg;		/* assigned virtual reg.	*/
 	cg_inst_t *				next_use;			/* next use of ass. value   */
-	int						dirty : 1;			/* dirty flag				*/
-	int						defined : 1;		/* value has been set		*/
+	physical_reg_status_t	state;				/* current register state	*/
+	int						dirty: 1;
+	int						defined:1;
 }
 cg_physical_reg_t;
 
@@ -235,7 +359,7 @@ void cg_codegen_destroy(cg_codegen_t * gen)
 
 static cg_physical_reg_t * allocate_reg(cg_codegen_t * gen, cg_virtual_reg_t * reg,
 									 U32 mask);
-static void deallocate_reg(cg_codegen_t * gen, cg_virtual_reg_t * reg);
+static void deallocate_reg(cg_codegen_t * gen, cg_physical_reg_t * physical_reg);
 static void assign_reg(cg_codegen_t * gen,
 					   cg_physical_reg_t * physical_reg, 
 					   cg_virtual_reg_t * reg);
@@ -330,7 +454,7 @@ static void call_store_additional_args(cg_codegen_t * gen, cg_virtual_reg_list_t
 
 			if (gen->use_chains[reg->reg_no] == (cg_inst_list_t *) 0)
 			{
-				deallocate_reg(gen, reg);
+				deallocate_reg(gen, physical_reg);
 			}
 
 			args = args->next;
@@ -378,7 +502,7 @@ static void kill_argument_registers(cg_codegen_t * gen)
 		{
 			if (reg->physical_reg == physical_reg)
 			{
-				deallocate_reg(gen, reg);
+				deallocate_reg(gen, physical_reg);
 			}
 			else
 			{
@@ -861,7 +985,7 @@ static void emit_binary_multiply_fixed(cg_codegen_t * gen, cg_inst_binary_t * in
 
 	
 	// release the temporary register
-	deallocate_reg(gen, &temp_reg);
+	deallocate_reg(gen, temp_physical_reg);
 }
 
 
@@ -1064,18 +1188,18 @@ static void emit_store(cg_codegen_t * gen, cg_inst_store_t * inst)
 		case cg_op_stb:
 			switch (inst->base.kind)
 			{
-				case cg_inst_load:
+				case cg_inst_store:
 					ARM_STRB_IMM(gen->cseg, inst->source->physical_reg->regno, 
 								 inst->mem.base->physical_reg->regno, 0);
 					break;
 					
-				case cg_inst_arm_load_immed_offset:
+				case cg_inst_arm_store_immed_offset:
 					ARM_STRB_IMM(gen->cseg, inst->source->physical_reg->regno, 
 								 inst->mem.immed_offset.base->physical_reg->regno, 
 								 inst->mem.immed_offset.offset);
 					break;
 					
-				case cg_inst_arm_load_reg_offset:
+				case cg_inst_arm_store_reg_offset:
 					ARM_STRB_REG_REG(gen->cseg, inst->source->physical_reg->regno, 
 									 inst->mem.reg_offset.base->physical_reg->regno, 
 									 inst->mem.reg_offset.offset->physical_reg->regno);
@@ -1090,18 +1214,18 @@ static void emit_store(cg_codegen_t * gen, cg_inst_store_t * inst)
 		case cg_op_sth:
 			switch (inst->base.kind)
 			{
-				case cg_inst_load:
+				case cg_inst_store:
 					ARM_STRH_IMM(gen->cseg, inst->source->physical_reg->regno, 
 								 inst->mem.base->physical_reg->regno, 0);
 					break;
 					
-				case cg_inst_arm_load_immed_offset:
+				case cg_inst_arm_store_immed_offset:
 					ARM_STRH_IMM(gen->cseg, inst->source->physical_reg->regno, 
 								 inst->mem.immed_offset.base->physical_reg->regno, 
 								 inst->mem.immed_offset.offset);
 					break;
 					
-				case cg_inst_arm_load_reg_offset:
+				case cg_inst_arm_store_reg_offset:
 					ARM_STRH_REG_REG(gen->cseg, inst->source->physical_reg->regno, 
 									 inst->mem.reg_offset.base->physical_reg->regno, 
 									 inst->mem.reg_offset.offset->physical_reg->regno);
@@ -1116,18 +1240,18 @@ static void emit_store(cg_codegen_t * gen, cg_inst_store_t * inst)
 		case cg_op_stw:
 			switch (inst->base.kind)
 			{
-				case cg_inst_load:
+				case cg_inst_store:
 					ARM_STR_IMM(gen->cseg, inst->source->physical_reg->regno, 
 								inst->mem.base->physical_reg->regno, 0);
 					break;
 					
-				case cg_inst_arm_load_immed_offset:
+				case cg_inst_arm_store_immed_offset:
 					ARM_STR_IMM(gen->cseg, inst->source->physical_reg->regno, 
 								inst->mem.immed_offset.base->physical_reg->regno, 
 								inst->mem.immed_offset.offset);
 					break;
 					
-				case cg_inst_arm_load_reg_offset:
+				case cg_inst_arm_store_reg_offset:
 					ARM_STR_REG_REG(gen->cseg, inst->source->physical_reg->regno, 
 									inst->mem.reg_offset.base->physical_reg->regno, 
 									inst->mem.reg_offset.offset->physical_reg->regno);
@@ -1345,19 +1469,18 @@ static void restore_reg(cg_codegen_t * gen, cg_physical_reg_t * physical_reg,
 }
 
 
-static void deallocate_reg(cg_codegen_t * gen, cg_virtual_reg_t * reg)
+static void deallocate_reg(cg_codegen_t * gen, cg_physical_reg_t * physical_reg)
 	/************************************************************************/
 	/* free up a register because it is no longer used						*/
 	/************************************************************************/
 {
-	cg_physical_reg_t * physical_reg = reg->physical_reg;
+	cg_virtual_reg_t * reg = physical_reg->virtual_reg;
+
 	int used;
 	
-	if (physical_reg != (cg_physical_reg_t *) 0 &&
-		physical_reg->virtual_reg == reg)
+	if (reg != 0 && reg->physical_reg == physical_reg)
 	{
-		physical_reg->virtual_reg = (cg_virtual_reg_t *) 0;
-		reg->physical_reg = (cg_physical_reg_t *) 0;
+		//reg->physical_reg = (cg_physical_reg_t *) 0;
 		
 		used = CG_BITSET_TEST(gen->current_block->live_out, reg->reg_no) ||
 			gen->use_chains[reg->reg_no];
@@ -1366,14 +1489,19 @@ static void deallocate_reg(cg_codegen_t * gen, cg_virtual_reg_t * reg)
 		{
 			save_reg(gen, physical_reg, reg);
 		}
-		
-		if (physical_reg->list == &gen->used_regs) /* hack */
-			reg_list_remove(&gen->used_regs, physical_reg);
-
-		reg_list_add(&gen->free_regs, physical_reg);
-
-		physical_reg->dirty = 0;
 	}
+		
+	physical_reg->virtual_reg = (cg_virtual_reg_t *) 0;
+
+	if (physical_reg->list == &gen->used_regs) 
+	{
+		reg_list_remove(&gen->used_regs, physical_reg);
+		reg_list_add(&gen->free_regs, physical_reg);
+	}
+
+	assert(physical_reg->list == &gen->free_regs);
+
+	physical_reg->dirty = physical_reg->defined = 0;
 }
 
 
@@ -1413,8 +1541,9 @@ static cg_physical_reg_t * allocate_reg(cg_codegen_t * gen, cg_virtual_reg_t * r
 
 	// determine a spill candidate
 	physical_reg = spill_candidate(gen, reg, mask);
-	
-	deallocate_reg(gen, physical_reg->virtual_reg);
+	assert(physical_reg->list == &gen->used_regs);
+	deallocate_reg(gen, physical_reg);
+	assert(physical_reg->list == &gen->free_regs);
 	reg_list_remove(&gen->free_regs, physical_reg);
 	reg_list_add(&gen->used_regs, physical_reg);
 		
@@ -1436,11 +1565,15 @@ static void assign_reg(cg_codegen_t * gen,
 	{
 		physical_reg->virtual_reg = reg;
 
-		if (reg->physical_reg == (cg_physical_reg_t *) 0)
-			reg->physical_reg = physical_reg;
-		
 		physical_reg->defined = physical_reg->dirty = 0;
 	}
+
+	if (reg->physical_reg == (cg_physical_reg_t *) 0 ||
+		reg->physical_reg->virtual_reg != reg)
+	{
+		reg->physical_reg = physical_reg;
+	}
+		
 }
 
 
@@ -1533,7 +1666,7 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 
 			physical_reg = load_reg(gen, reg, 0);
 			restore_flags(gen, physical_reg);
-			deallocate_reg(gen, reg);
+			deallocate_reg(gen, physical_reg);
 			gen->flags.virtual_reg = reg;
 
 			continue;
@@ -1547,17 +1680,17 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 	/* the current instruction												*/
 	/************************************************************************/
 	
-#if 0
 	for (iter = buffer; iter != end; ++iter)
 	{
 		cg_virtual_reg_t * reg = *iter;
 		
-		if (gen->use_chains[reg->reg_no] == (cg_inst_list_t *) 0)
+		if (reg->type != cg_reg_type_flags &&
+			gen->use_chains[reg->reg_no] == (cg_inst_list_t *) 0)
 		{
-			deallocate_reg(gen, reg);
+			deallocate_reg(gen, reg->physical_reg);
 		}
 	}
-#endif	
+
 	/************************************************************************/
 	/* Allocate registers for all registers in def set						*/
 	/************************************************************************/
@@ -1618,20 +1751,6 @@ void cg_codegen_emit_simple_inst(cg_codegen_t * gen, cg_inst_t * inst)
 		
 		physical_reg = reg->physical_reg;
 		physical_reg->dirty = physical_reg->defined = 1;
-	}
-	
-
-	/* BUG BUG: This section is here only since it's broken above */
-	end = cg_inst_use(inst, buffer, buffer + 64);
-
-	for (iter = buffer; iter != end; ++iter)
-	{
-		cg_virtual_reg_t * reg = *iter;
-		
-		if (gen->use_chains[reg->reg_no] == (cg_inst_list_t *) 0)
-		{
-			deallocate_reg(gen, reg);
-		}
 	}
 }
 
@@ -1791,7 +1910,7 @@ static void end_block(cg_codegen_t * gen)
 		if (physical_reg->virtual_reg != NULL &&
 			physical_reg->virtual_reg->physical_reg == physical_reg) 
 		{
-			deallocate_reg(gen, physical_reg->virtual_reg);
+			deallocate_reg(gen, physical_reg);
 		}
 		else
 		{
