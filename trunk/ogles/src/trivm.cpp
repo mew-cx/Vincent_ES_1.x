@@ -273,170 +273,189 @@ namespace {
 		"phi"
 	};
 
-	std::ostream& operator<<(std::ostream& out, RegisterList * list) {
+	void DumpRegisterList(FILE * out, RegisterList * list) {
 		const char * separator = "";
 
 		for (RegisterList::iterator iter = list->begin(); iter != list->end(); ++iter) {
-			out << separator << "r" << *iter;
+			fprintf(out, "%sr%d", separator, *iter);
 			separator = ", ";
 		}
-
-		return out;
 	}
 
-	std::ostream& operator<<(std::ostream& out, Constant * constant) {
+	void DumpConstant(FILE * out, Constant * constant) {
 		switch (constant->base.kind) {
 		case ConstantInt:
-			out << constant->intConstant.value;
+			fprintf(out, "%d", constant->intConstant.value);
 			break;
 
 		case ConstantFixed:
-			out << (float) EGL_FloatFromFixed(constant->fixedConstant.value);
+			fprintf(out, "%f", (float) EGL_FloatFromFixed(constant->fixedConstant.value));
 			break;
 
 		case ConstantString:
-			out << "\"" << constant->stringConstant.value << "\"";
+			fprintf(out,  "\"%s\"", constant->stringConstant.value);
 			break;
 
 		case ConstantLabel:
-			out << constant->labelConstant.value->base.name;
+			fprintf(out, "%s", constant->labelConstant.value->base.name);
 			break;
 		}
 
-		return out;
 	}
 }
 
 
 class Dump: public Sweep {
 public:
-	Dump(std::ostream& stream): out(stream) {
+	Dump(FILE * stream): out(stream) {
 	}
 
 protected:
 	virtual void begin(triVM::Module * module){ 
-		out << "module " << module->name << std::endl;
+		fprintf(out, "module %s\n", module->name);
 	}
 
 	virtual void begin(triVM::Procedure * procedure){ 
-		out << "proc " << procedure->def->base.name << std::endl;
+		fprintf(out, "proc %s\n", procedure->def->base.name);
 	}
 
 	virtual void begin(triVM::Block * block){ 
-		out << std::endl;
+		fprintf(out, "\n");
 
 		for (LabelList::iterator iter = block->labels.begin(); iter != block->labels.end(); ++iter) {
-			out << (*iter)->base.name << ":" << std::endl;
+			fprintf(out, "%s:\n", (*iter)->base.name);
 		}
 	}
 
 	virtual void visit(triVM::Instruction * instruction) {
-		out << "\t";
+		fprintf(out, "\t");
 		Sweep::visit(instruction);
 
 #ifndef NDEBUG
 		if (instruction->base.comment != 0 && *instruction->base.comment != '\0') {
-			out << "\t\t\t\t; " << instruction->base.comment;
+			fprintf(out, "\t\t\t\t; %s", instruction->base.comment);
 		}
 #endif
 
-		out << std::endl;
+		fprintf(out, "\n");
 	}
 
 protected:
 	virtual void  visitUnary(triVM::Instruction * instruction){ 
 		if (instruction->unary.rC >= 0) {
-			out << opcodeName[instruction->base.opcode] << " (r" <<
-				instruction->unary.rD << ", r" << instruction->unary.rC << "), r" <<
-				instruction->unary.rS;
+			fprintf(out, "%s (r%d, r%d), r%d",
+				opcodeName[instruction->base.opcode],
+				instruction->unary.rD,
+				instruction->unary.rC,
+				instruction->unary.rS);
 		} else {
-			out << opcodeName[instruction->base.opcode] << " r" <<
-				instruction->unary.rD << ", r" << instruction->unary.rS;
+			fprintf(out, "%s r%d, r%d",
+				opcodeName[instruction->base.opcode],
+				instruction->unary.rD,
+				instruction->unary.rS);
 		}
 	}
 
-	virtual void  visitBinary(triVM::Instruction * instruction){ 
+	virtual void  visitBinary(triVM::Instruction * instruction) { 
 		if (instruction->binary.rC >= 0) {
-			out << opcodeName[instruction->base.opcode] << " (r" <<
-				instruction->binary.rD << ", r" << instruction->binary.rC << "), r" <<
-				instruction->binary.rS << ", r" << instruction->binary.rM;
+			fprintf(out, "%s (r%d, r%d), r%d, r%d",
+				opcodeName[instruction->base.opcode],
+				instruction->binary.rD,
+				instruction->binary.rC,
+				instruction->binary.rS,
+				instruction->binary.rM);
 		} else {
-			out << opcodeName[instruction->base.opcode] << " r" <<
-				instruction->binary.rD << ", r" << instruction->binary.rS << 
-				", r" << instruction->binary.rM;
+			fprintf(out, "%s r%d, r%d, r%d",
+				opcodeName[instruction->base.opcode],
+				instruction->binary.rD,
+				instruction->binary.rS,
+				instruction->binary.rM);
 		}
 	}
 	
-	virtual void  visitCompare(triVM::Instruction * instruction){ 
-		out << opcodeName[instruction->base.opcode] << " r" <<
-			instruction->compare.rD << ", r" << instruction->compare.rS << ", r" <<
-			instruction->compare.rC;
+	virtual void  visitCompare(triVM::Instruction * instruction) {
+		fprintf(out, "%s  r%d, r%d, r%d",
+			opcodeName[instruction->base.opcode],
+			instruction->compare.rD,
+			instruction->compare.rS,
+			instruction->compare.rC);
 	}
 
-	virtual void  visitLoad(triVM::Instruction * instruction){ 
-		out << opcodeName[instruction->base.opcode] << " r" <<
-			instruction->load.rD << ", [r" << instruction->load.rS << "]";
+	virtual void  visitLoad(triVM::Instruction * instruction) { 
+		fprintf(out, "%s r%d, [r%d]",
+			opcodeName[instruction->base.opcode],
+			instruction->load.rD,
+			instruction->load.rS);
 	}
 
-	virtual void  visitStore(triVM::Instruction * instruction){ 
-		out << opcodeName[instruction->base.opcode] << " [r" <<
-			instruction->store.rD << "], r" << instruction->store.rS;
+	virtual void  visitStore(triVM::Instruction * instruction) { 
+		fprintf(out, "%s [r%d], %d",
+			opcodeName[instruction->base.opcode],
+			instruction->store.rD,
+			instruction->store.rS);
 	}
 
-	virtual void  visitLoadImmediate(triVM::Instruction * instruction){ 
-		out << opcodeName[instruction->base.opcode] << " r" <<
-			instruction->loadImmediate.rD << ", " << instruction->loadImmediate.constant;
+	virtual void  visitLoadImmediate(triVM::Instruction * instruction) { 
+		fprintf(out, "%s r%d, ",
+			opcodeName[instruction->base.opcode],
+			instruction->loadImmediate.rD);
+		DumpConstant(out, instruction->loadImmediate.constant);
 	}
 
-	virtual void  visitBranchReg(triVM::Instruction * instruction){ 
-		out << opcodeName[instruction->base.opcode] << " [r" <<
-			instruction->branchReg.rS << "]";
+	virtual void  visitBranchReg(triVM::Instruction * instruction) { 
+		fprintf(out, "%s [r%d]", 
+			opcodeName[instruction->base.opcode],
+			instruction->branchReg.rS);
 	}
 
-	virtual void  visitBranchLabel(triVM::Instruction * instruction){ 
-		out << opcodeName[instruction->base.opcode] << " " <<
-			instruction->branchLabel.label->base.name;
+	virtual void  visitBranchLabel(triVM::Instruction * instruction) { 
+		fprintf(out, "%s %s",
+			opcodeName[instruction->base.opcode],
+			instruction->branchLabel.label->base.name);
 	}
 
-	virtual void  visitBranchConditionally(triVM::Instruction * instruction){ 
-		out << opcodeName[instruction->base.opcode] << " r" <<
-			instruction->branchConditionally.rS << ", " << 
-			instruction->branchConditionally.label->base.name;
+	virtual void  visitBranchConditionally(triVM::Instruction * instruction) { 
+		fprintf(out, "%s r%d, %s",
+			opcodeName[instruction->base.opcode],
+			instruction->branchConditionally.rS,
+			instruction->branchConditionally.label->base.name);
 	}
 
-	virtual void  visitPhi(triVM::Instruction * instruction){ 
-		out << "phi r" << instruction->phi.rD << ", " <<
-			instruction->phi.registers;
+	virtual void  visitPhi(triVM::Instruction * instruction) { 
+		fprintf(out, "phi r%d, ", instruction->phi.rD);
+		DumpRegisterList(out, instruction->phi.registers);
 	}
 
-	virtual void  visitCall(triVM::Instruction * instruction){ 
+	virtual void  visitCall(triVM::Instruction * instruction) { 
 
-		out << "call [r" << instruction->call.rS << "], (" <<
-			instruction->call.args << ")";
+		fprintf(out, "call [r%d], (", instruction->call.rS);
+		DumpRegisterList(out, instruction->call.args);
+		fprintf(out, ")");
 		
 		if (instruction->call.results != 0) {
-			out << ", " << instruction->call.results;
+			fprintf(out, ", ");
+			DumpRegisterList(out, instruction->call.results);
 		}
 	}
 
-	virtual void  visitRet(triVM::Instruction * instruction){ 
+	virtual void  visitRet(triVM::Instruction * instruction) { 
 
 		if (instruction->ret.registers != 0) {
-			out << "ret " << instruction->ret.registers;
+			fprintf(out, "ret ");
+			DumpRegisterList(out, instruction->ret.registers);
 		} else {
-			out << "ret";
+			fprintf(out, "ret");
 		}
 	}
 
 private:
-	std::ostream& out;
+	FILE * out;
 };
 
 
-std::ostream& operator<<(std::ostream& out, EGL::triVM::Module& module) {
+void EGL::triVM::DumpModule(FILE * out, EGL::triVM::Module * module) {
 	Dump dump(out);
-	dump.sweep(&module);
-	return out;
+	dump.sweep(module);
 }
 
 

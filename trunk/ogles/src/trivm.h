@@ -268,7 +268,19 @@ namespace triVM {
 		InstructionBranchConditionally,
 		InstructionPhi,
 		InstructionCall,
-		InstructionRet
+		InstructionRet,
+
+		// ARM specific formats -> should go to ARM folder...
+		InstructionArmBinaryImmediate,
+		InstructionArmBinaryShiftReg,
+		InstructionArmBinaryShiftImmed,
+
+		InstructionArmLoadImmedOffset,
+		InstructionArmStoreImmedOffset,
+		InstructionArmLoadRegOffset,
+		InstructionArmStoreRegOffset,
+		InstructionArmLoadRegImmedOffset,
+		InstructionArmStoreRegImmedOffset
 	};
 
 	struct InstructionBaseType {
@@ -702,11 +714,11 @@ namespace triVM {
 
 	extern RegisterDefinitionMap * FindDefinitions(Module * module);
 
+	extern void DumpModule(FILE * out, EGL::triVM::Module * module);
+
 } // namespace triVM
 } // namespace EGL
 
-
-extern std::ostream& operator<<(std::ostream& out, EGL::triVM::Module& module);
 
 #endif //ndef EGL_TRIVM_H
 

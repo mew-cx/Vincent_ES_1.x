@@ -227,6 +227,9 @@
 			<File
 				RelativePath="..\..\src\TriangleClipper.inc">
 			</File>
+			<File
+				RelativePath="..\..\src\trivm.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
