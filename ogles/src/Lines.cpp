@@ -343,6 +343,7 @@ namespace {
 		dst.m_Color = dst.m_Color * scale + src.m_Color * invScale;
 		dst.m_TextureCoords.tu = Interpolate(dst.m_TextureCoords.tu, scale, src.m_TextureCoords.tu, invScale);
 		dst.m_TextureCoords.tv = Interpolate(dst.m_TextureCoords.tv, scale, src.m_TextureCoords.tv, invScale);
+		dst.m_FogDensity = Interpolate(dst.m_FogDensity, scale, src.m_FogDensity, invScale);
 	}
 
 	inline bool ClipX(RasterPos& from, RasterPos& to) {

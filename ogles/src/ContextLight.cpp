@@ -57,15 +57,15 @@ void Context :: Fogx(GLenum pname, GLfixed param) {
 					break;
 
 				case GL_LINEAR:
-					GetRasterizerState()->SetFogMode(RasterizerState::FogLinear);
+					m_FogMode = FogLinear;
 					break;
 
 				case GL_EXP:
-					GetRasterizerState()->SetFogMode(RasterizerState::FogModeExp);
+					m_FogMode = FogModeExp;
 					break;
 
 				case GL_EXP2:
-					GetRasterizerState()->SetFogMode(RasterizerState::FogModeExp2);
+					m_FogMode = FogModeExp2;
 					break;
 
 			}
@@ -73,15 +73,15 @@ void Context :: Fogx(GLenum pname, GLfixed param) {
 			break;
 
 		case GL_FOG_START:
-			GetRasterizerState()->SetFogStart(param);
+			m_FogStart = param;
 			break;
 
 		case GL_FOG_END:
-			GetRasterizerState()->SetFogEnd(param);
+			m_FogEnd = param;
 			break;
 
 		case GL_FOG_DENSITY:
-			GetRasterizerState()->SetFogDensity(param);
+			m_FogDensity = param;
 			break;
 
 		default:

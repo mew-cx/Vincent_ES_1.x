@@ -115,12 +115,6 @@ namespace EGL {
 			BlendFuncSrcOneMinusDstAlpha
 		};
 
-		enum FogMode {
-			FogLinear,
-			FogModeExp,
-			FogModeExp2
-		};
-
 		enum StencilOp {
 			StencilOpZero,
 			StencilOpKeep,
@@ -165,10 +159,6 @@ namespace EGL {
 		void SetTextureMode(TextureMode mode);
 
 		void SetDepthRange(EGL_Fixed zNear, EGL_Fixed zFar);
-		void SetFogMode(FogMode mode);
-		void SetFogStart(EGL_Fixed start);
-		void SetFogEnd(EGL_Fixed end);
-		void SetFogDensity(EGL_Fixed density);
 
 		void SetFogColor(const Color& color);
 		void EnableFog(bool enabled);
@@ -221,8 +211,6 @@ namespace EGL {
 
 		EGL_Fixed				m_DepthRangeNear, m_DepthRangeFar;
 
-		FogMode					m_FogMode;
-		EGL_Fixed				m_FogStart, m_FogDensity, m_FogEnd;
 		Color					m_FogColor;
 
 		bool					m_FogEnabled;
@@ -313,27 +301,6 @@ namespace EGL {
 		m_DepthRangeFar = zFar;
 		VersionChanged();
 	}
-
-	inline void RasterizerState :: SetFogMode(FogMode mode) {
-		m_FogMode = mode;
-		VersionChanged();
-	}
-
-	inline void RasterizerState :: SetFogStart(EGL_Fixed start) {
-		m_FogStart = start;
-		VersionChanged();
-	}
-
-	inline void RasterizerState :: SetFogEnd(EGL_Fixed end) {
-		m_FogEnd = end;
-		VersionChanged();
-	}
-
-	inline void RasterizerState :: SetFogDensity(EGL_Fixed density) {
-		m_FogDensity = density;
-		VersionChanged();
-	}
-
 
 	inline void RasterizerState :: SetFogColor(const Color& color) {
 		m_FogColor = color;

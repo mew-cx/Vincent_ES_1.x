@@ -114,6 +114,12 @@ namespace EGL {
 			CullModeBackAndFront
 		};
 
+		enum FogMode {
+			FogLinear,
+			FogModeExp,
+			FogModeExp2
+		};
+
 	public:
 		Context(const Config & config);
 
@@ -341,6 +347,9 @@ private:
 		bool IsCulled(RasterPos& a, RasterPos& b, RasterPos& c);
 
 		void ClipCoordsToWindowCoords(RasterPos & pos);
+		EGL_Fixed FogDensity(EGL_Fixed eyeDistance) const;
+
+		void InitFogTable();
 
 	private:
 		GLenum				m_LastError;
@@ -409,6 +418,9 @@ private:
 		EGL_Fixed			m_DepthClearValue;
 		FractionalColor		m_ColorClearValue;
 		U32					m_StencilClearValue;
+
+		FogMode				m_FogMode;			// the fog color is still in the
+		EGL_Fixed			m_FogStart, m_FogDensity, m_FogEnd;	// rasterizer state
 
 		bool				m_LightingEnabled;	// is lightning enabled?
 		bool				m_CullFaceEnabled;

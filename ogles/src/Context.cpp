@@ -77,7 +77,11 @@ Context :: Context(const Config & config)
 	m_SampleAlphaToOneEnabled(false),
 	m_SampleCoverageEnabled(false),
 
-	//m_ScanLineFunction(&gppScanLine_G_Zal_16_32s),
+	// fog parameters for setup phase
+	m_FogMode(FogModeExp),
+	m_FogStart(0),
+	m_FogEnd(EGL_ONE),
+	m_FogDensity(EGL_ONE),
 
 	// client flags
 	m_VertexArrayEnabled(false),
