@@ -60,19 +60,26 @@
 			if (previous->m_ClipCoords.COORDINATE COMPARISON CLIP_VALUE(previous)) {
 				// line segment between previous and current is fully contained in cube
 				output[resultCount++] = current;
-				previous = current;
+				//previous = current;
 			} else {
 				// line segment between previous and current is intersected;
 				// create vertex at intersection, then add current
 				RasterPos & newVertex = *nextTemporary++;
 				output[resultCount++] = &newVertex;
 				// initialize the new vertex
-				EGL_Fixed factor = 
-					InterpolationCoefficient(previous->m_ClipCoords.COORDINATE, CLIP_VALUE(previous), current->m_ClipCoords.COORDINATE);
-				Interpolate(newVertex, *previous, *current, factor);
+				//EGL_Fixed factor = 
+				//	InterpolationCoefficient(previous->m_ClipCoords.COORDINATE, CLIP_VALUE(previous), current->m_ClipCoords.COORDINATE);
+				
+				EGL_Fixed c_x = current->m_ClipCoords.COORDINATE;
+				EGL_Fixed c_w = CLIP_VALUE(current);
+				EGL_Fixed p_x = previous->m_ClipCoords.COORDINATE;
+				EGL_Fixed p_w = CLIP_VALUE(previous);
+				
+				EGL_Fixed factor = EGL_Div(p_w - p_x, (p_w - p_x) - (c_w - c_x)); 
+				Interpolate(newVertex, *current, *previous, factor);
 
 				output[resultCount++] = current;
-				previous = current;
+				//previous = current;
 			}
 		} else {
 			if (previous->m_ClipCoords.COORDINATE COMPARISON CLIP_VALUE(previous)) {
@@ -81,13 +88,22 @@
 				RasterPos & newVertex = *nextTemporary++;
 				output[resultCount++] = &newVertex;
 				// initialize the new vertex
-				EGL_Fixed factor = 
-					InterpolationCoefficient(current->m_ClipCoords.COORDINATE, CLIP_VALUE(previous), previous->m_ClipCoords.COORDINATE);
+				//EGL_Fixed factor = 
+				//	InterpolationCoefficient(current->m_ClipCoords.COORDINATE, CLIP_VALUE(previous), previous->m_ClipCoords.COORDINATE);
+				
+				EGL_Fixed c_x = current->m_ClipCoords.COORDINATE;
+				EGL_Fixed c_w = CLIP_VALUE(current);
+				EGL_Fixed p_x = previous->m_ClipCoords.COORDINATE;
+				EGL_Fixed p_w = CLIP_VALUE(previous);
+				
+				EGL_Fixed factor = EGL_Div(p_w - p_x, (p_w - p_x) - (c_w - c_x)); 
 				Interpolate(newVertex, *current, *previous, factor);
 
-				previous = current;
+				//previous = current;
 			}
 		}
+
+		previous = current;
 	}
 
 	return resultCount;

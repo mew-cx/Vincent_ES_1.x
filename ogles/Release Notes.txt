@@ -16,6 +16,7 @@ In addition, the following issues are addressed:
 
 864042 - Automatic Mipmap Generation
 863653 - Specialized rasterization functions (replace by runtime compiler)
+921405 - Clipping Broken
 
 
 Version 0.2
