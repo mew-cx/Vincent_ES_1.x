@@ -41,6 +41,9 @@ private:
     TBool iShowTest;
     TCallBack* iCallBack;
     CPeriodic* iTimer;
+#ifdef __MARM__
+	RLibrary iDll;
+#endif
 };
 
 #endif

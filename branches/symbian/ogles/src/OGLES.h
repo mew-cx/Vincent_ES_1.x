@@ -57,7 +57,7 @@
 #endif
 
 
-#if (defined(ARM) || defined(_ARM_)) && !defined(EGL_NO_COMPILE)
+#if (defined(ARM) || defined(_ARM_) || defined(__MARM__)) && !defined(EGL_NO_COMPILE)
 #	define EGL_USE_JIT	1
 #else
 #	define EGL_USE_JIT  0
