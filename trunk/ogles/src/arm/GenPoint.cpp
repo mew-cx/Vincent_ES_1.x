@@ -238,7 +238,7 @@ void CodeGenerator :: GenerateRasterPoint() {
 
 		FCMP		(flagsYLimit, regYLoopExit, regYMax);
 		BLE			(flagsYLimit, loopYBegin);
-		BRA			(blockEndProc);
+		//BRA			(blockEndProc);
 		//	}
 	} else {
 
