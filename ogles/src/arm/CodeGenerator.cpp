@@ -2951,7 +2951,7 @@ void CodeGenerator :: CompileRasterScanLine() {
 
 	ARMDis dis;
 	armdis_init(&dis);
-	armdis_dump(&dis, "dump5.s", cg_codegen_segment(codegen));
+	armdis_dump(&dis, "dump5.txt", cg_codegen_segment(codegen));
 
 #ifdef WINCE
 	// flush data cache and clear instruction cache to make new code visible to execution unit

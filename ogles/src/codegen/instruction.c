@@ -1978,7 +1978,7 @@ static void block_interferences(cg_block_t * block)
 	//	for each use, remove current use from use list; if # uses = 0 and not in live out, remove variable from live register set
 
 	cg_bitset_t * live = cg_bitset_create(heap, block->live_in->elements);
-	int * uses = (int *) _alloca(sizeof(int) * block->live_in->elements);
+	int * uses = (int *) malloc(sizeof(int) * block->live_in->elements);
 
 	count_uses(uses, block);
 	cg_bitset_assign(live, block->live_in);
@@ -2053,6 +2053,8 @@ static void block_interferences(cg_block_t * block)
 			representative->use_cost += block->weight;
 		}
 	}
+
+	free(uses);
 }
 
 

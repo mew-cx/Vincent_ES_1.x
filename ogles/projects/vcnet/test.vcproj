@@ -72,7 +72,6 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="&lt;?ICLPrjArgs?&gt; /Qvc7.1 /Qlocation,link,&quot;$(VCInstallDir)bin&quot; /c  /I &quot;c:\src\ogl-es\projects\vcnet\..\..\src&quot; /Zi /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WIN32_WINNT=0x0500&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /ML /GS /Gy /Yu&quot;StdAfx.h&quot; /Fp&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/test.pch&quot; /Fo&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/&quot; /Fd&quot;c:\src\ogl-es\projects\vcnet\..\..\obj\Test\x86\Release/vc70.pdb&quot; /Gd /TP &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseNonIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnPrjArgs?&gt;"
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)..\..\src&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_WIN32_WINNT=0x0500"
 				RuntimeLibrary="4"
@@ -84,7 +83,6 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="&lt;?ICLPrjArgs?&gt; /NOLOGO /OUT:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/test.exe&quot; /INCREMENTAL:NO /LIBPATH:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release&quot; GLES_CL.lib GdiPlus.lib /DEBUG /PDB:&quot;c:\src\ogl-es\projects\vcnet\..\..\bin\x86\Release/test.pdb&quot; /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /TLBID:1 /MACHINE:IX86  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseNonIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnPrjArgs?&gt;"
 				AdditionalDependencies="GLES_CL.lib GdiPlus.lib"
 				OutputFile="$(OutDir)/test.exe"
 				LinkIncremental="1"
