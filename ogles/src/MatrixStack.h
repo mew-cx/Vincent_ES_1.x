@@ -68,11 +68,15 @@ namespace EGL {
 			return m_Stack[m_StackPointer];
 		}
 
+		inline I32 GetStackSize() const {
+			return m_StackSize;
+		}
+
 	private:
 
 		Matrix4x4	*m_Stack;
-		I32				m_StackPointer;
-		I32				m_StackSize;
+		I32			m_StackPointer;
+		I32			m_StackSize;
 	};
 }
 
