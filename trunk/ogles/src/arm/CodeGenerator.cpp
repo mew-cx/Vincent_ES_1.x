@@ -2941,6 +2941,7 @@ void CodeGenerator :: CompileRasterScanLine() {
 
 	cg_codegen_t * codegen = cg_codegen_create(heap, &runtime);
 	cg_codegen_emit_module(codegen, m_Module);
+	cg_codegen_fix_refs(codegen);
 
 	ARMDis dis;
 	armdis_init(&dis);

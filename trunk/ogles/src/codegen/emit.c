@@ -394,7 +394,7 @@ static void branch_cond(cg_codegen_t * gen, cg_label_t * target, ARMCond cond)
 	/* insert a conditional branch to the specified target label */
 	cg_codegen_reference(gen, target, cg_reference_branch24);
 	/* compensate for PC pointing 2 instruction words ahead */
-	ARM_B_COND(gen->cseg, cond, -8);
+	ARM_B_COND(gen->cseg, cond, -2 & 0xFFFFFF);
 }
 
 
@@ -574,7 +574,7 @@ static void call(cg_codegen_t * gen, cg_label_t * target,
 	call_store_additional_args(gen, args, inst);
 	call_load_register_args(gen, args, inst);
 	cg_codegen_reference(gen, target, cg_reference_branch24);
-	ARM_BL(gen->cseg, -8);
+	ARM_BL(gen->cseg, -2);
 }
 
 
@@ -1348,7 +1348,11 @@ static void emit_ret(cg_codegen_t * gen, cg_inst_ret_t * inst)
 		}
 	}
 	
-	branch(gen, inst->base.block->proc->epilogue);
+	if (inst->base.next || inst->base.block->next) 
+	{
+		/* if this is not the last instruction in its block, and it's not the last block of the procedure */
+		branch(gen, inst->base.block->proc->epilogue);
+	}
 }
 
 
@@ -2268,7 +2272,10 @@ static void fix_ref(cg_segment_t * seg, size_t source, size_t target,
 			U32 offset = instruction & 0x00FFFFFFu;
 			U32 opcode = instruction & 0xFF000000u;
 			
-			offset = offset + source - target;
+			if (offset & 0x800000) 
+				offset |= 0xFF000000u;
+
+			offset = offset + ((source - target) >> 2);
 			instruction = opcode | (0x00FFFFFFu & offset);
 			
 			cg_segment_set_u32(seg, target, instruction);
@@ -2326,6 +2333,8 @@ void cg_codegen_reference(cg_codegen_t * gen, cg_label_t * label,
 	ref->offset = cg_segment_size(gen->cseg);
 	ref->next = label->refs;
 	ref->ref_type = ref_type;
+
+	label->refs = ref;
 }
 									 
 
