@@ -324,10 +324,11 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 	}
 
 	//Color color = baseColor;
-	I32 colorR;
-	I32 colorG;
-	I32 colorB;
-	I32 colorA;
+	I32 regColorR;
+	I32 regColorG;
+	I32 regColorB;
+	I32 regColorA;
+	I32 regColor565;
 
 	Block * block = &currentBlock;
 
@@ -708,12 +709,6 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 				break;
 		}
 
-		I32 regColorR;
-		I32 regColorG;
-		I32 regColorB;
-		I32 regColorA;
-		I32 regColor565;
-
 		switch (m_Texture->GetInternalFormat()) {
 			default:
 			case Texture::TextureFormatAlpha:
@@ -721,6 +716,41 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 					case RasterizerState::TextureModeReplace:
 						{
 						//color = Color(color.r, color.g, color.b, texColor.a);
+						regColorR = nextRegister++;
+						regColorG = nextRegister++;
+						regColorB = nextRegister++;
+						I32 regConstant31 = nextRegister++;
+						I32 regConstant63 = nextRegister++;
+						I32 regConstant16 = nextRegister++;
+						I32 regScaledR = nextRegister++;
+						I32 regScaledG = nextRegister++;
+						I32 regScaledB = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant31, Constant::createInt(0x1f));
+						*block +=	IMMEDIATE	(ldi,	regConstant63, Constant::createInt(0x3f));
+						*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(0x10));
+
+						*block +=	BINARY		(mul,	regScaledR, fragmentInfo.regR, regConstant31);
+						*block +=	BINARY		(lsr,	regColorR, regScaledR, regConstant16);
+						*block +=	BINARY		(mul,	regScaledG, fragmentInfo.regG, regConstant63);
+						*block +=	BINARY		(lsr,	regColorG, regScaledG, regConstant16);
+						*block +=	BINARY		(mul,	regScaledB, fragmentInfo.regB, regConstant31);
+						*block +=	BINARY		(lsr,	regColorB, regScaledB, regConstant16);
+
+						I32 regConstant5 = nextRegister++;
+						I32 regConstant11 = nextRegister++;
+						I32 regShiftedB = nextRegister++;
+						I32 regShiftedG = nextRegister++;
+						I32 regRG = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+						*block +=	BINARY		(lsl,	regShiftedB, regTexColorB, regConstant11);
+						*block +=	BINARY		(lsl,	regShiftedG, regTexColorG, regConstant5);
+						*block +=	BINARY		(or,	regRG, regTexColorR, regShiftedG);
+						*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+
+						regColorA = regTexColorA;
 						}
 
 						break;
@@ -730,6 +760,45 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 					case RasterizerState::TextureModeAdd:
 						{
 						//color = Color(color.r, color.g, color.b, MulU8(color.a, texColor.a));
+						regColorR = nextRegister++;
+						regColorG = nextRegister++;
+						regColorB = nextRegister++;
+						I32 regConstant31 = nextRegister++;
+						I32 regConstant63 = nextRegister++;
+						I32 regConstant16 = nextRegister++;
+						I32 regScaledR = nextRegister++;
+						I32 regScaledG = nextRegister++;
+						I32 regScaledB = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant31, Constant::createInt(0x1f));
+						*block +=	IMMEDIATE	(ldi,	regConstant63, Constant::createInt(0x3f));
+						*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(0x10));
+
+						*block +=	BINARY		(mul,	regScaledR, fragmentInfo.regR, regConstant31);
+						*block +=	BINARY		(lsr,	regColorR, regScaledR, regConstant16);
+						*block +=	BINARY		(mul,	regScaledG, fragmentInfo.regG, regConstant63);
+						*block +=	BINARY		(lsr,	regColorG, regScaledG, regConstant16);
+						*block +=	BINARY		(mul,	regScaledB, fragmentInfo.regB, regConstant31);
+						*block +=	BINARY		(lsr,	regColorB, regScaledB, regConstant16);
+
+						I32 regConstant5 = nextRegister++;
+						I32 regConstant11 = nextRegister++;
+						I32 regShiftedB = nextRegister++;
+						I32 regShiftedG = nextRegister++;
+						I32 regRG = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+						*block +=	BINARY		(lsl,	regShiftedB, regTexColorB, regConstant11);
+						*block +=	BINARY		(lsl,	regShiftedG, regTexColorG, regConstant5);
+						*block +=	BINARY		(or,	regRG, regTexColorR, regShiftedG);
+						*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+
+						I32 regAlphaProduct = nextRegister++;
+						regColorA = nextRegister++;
+
+						*block +=	BINARY		(mul,	regAlphaProduct, fragmentInfo.regA, regTexColorA);
+						*block +=	BINARY		(lsr,	regColorA, regAlphaProduct, regConstant16);
 						}
 
 						break;
@@ -743,6 +812,15 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 					case RasterizerState::TextureModeReplace:
 						{
 						//color = Color(texColor.r, texColor.g, texColor.b, color.a);
+						regColorR = regTexColorR;
+						regColorG = regTexColorG;
+						regColorB = regTexColorB;
+						regColorA = nextRegister++;
+						regColor565 = regTexColor565;
+						I32 regConstant8 = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
+						*block +=	BINARY		(lsr,	regColorA, fragmentInfo.regA, regConstant8);
 						}
 
 						break;
@@ -751,6 +829,40 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 						{
 						//color = Color(MulU8(color.r, texColor.r), 
 						//	MulU8(color.g, texColor.g), MulU8(color.b, texColor.b), color.a);
+						regColorR = nextRegister++;
+						regColorG = nextRegister++;
+						regColorB = nextRegister++;
+						regColorA = nextRegister++;
+						I32 regConstant8 = nextRegister++;
+						I32 regConstant16 = nextRegister++;
+						I32 regScaledR = nextRegister++;
+						I32 regScaledG = nextRegister++;
+						I32 regScaledB = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
+						*block +=	BINARY		(lsr,	regColorA, fragmentInfo.regA, regConstant8);
+
+						*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(16));
+						*block +=	BINARY		(mul,	regScaledR, regTexColorR, fragmentInfo.regR);
+						*block +=	BINARY		(lsr,	regColorR, regScaledR, regConstant16);
+						*block +=	BINARY		(mul,	regScaledG, regTexColorG, fragmentInfo.regG);
+						*block +=	BINARY		(lsr,	regColorG, regScaledG, regConstant16);
+						*block +=	BINARY		(mul,	regScaledB, regTexColorB, fragmentInfo.regB);
+						*block +=	BINARY		(lsr,	regColorB, regScaledB, regConstant16);
+
+						I32 regConstant5 = nextRegister++;
+						I32 regConstant11 = nextRegister++;
+						I32 regShiftedB = nextRegister++;
+						I32 regShiftedG = nextRegister++;
+						I32 regRG = nextRegister++;
+						regColor565 = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+						*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
+						*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
+						*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
+						*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
 						}
 
 						break;
@@ -763,6 +875,109 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 						//		MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
 						//		MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
 						//		color.a);
+						regColorA = nextRegister++;
+						I32 regConstant2 = nextRegister++;
+						I32 regConstant3 = nextRegister++;
+						I32 regConstant8 = nextRegister++;
+						I32 regConstant15 = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant2, Constant::createInt(2));
+						*block +=	IMMEDIATE	(ldi,	regConstant3, Constant::createInt(3));
+						*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
+						*block +=	BINARY		(lsr,	regColorA, fragmentInfo.regA, regConstant8);
+						*block +=	IMMEDIATE	(ldi,	regConstant15, Constant::createInt(15));
+
+						// red component
+						{
+							regColorR = nextRegister++;
+							I32 regShifted = nextRegister++;
+							I32 regAdjusted = nextRegister++;
+							I32 regColorAdjusted = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regR, regConstant15);
+							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regR, regShifted);
+							*block +=	BINARY		(lsr,	regColorAdjusted, regAdjusted, regConstant3);
+
+							I32 regShiftedAdjusted = nextRegister++;
+							I32	regDiff = nextRegister++;
+							I32 regTexEnv = nextRegister++;
+							I32 regProduct = nextRegister++;
+							I32 regDifference = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
+							*block +=	IMMEDIATE	(ldi,	regTexEnv, Constant::createInt(m_State->m_TexEnvColor.r));
+							*block +=	BINARY		(sub,	regDiff, regShiftedAdjusted, regTexEnv);
+							*block +=	BINARY		(mul,	regProduct, regDiff, regTexColorR);
+							*block +=	BINARY		(sub,	regDifference, regColorAdjusted, regProduct);
+							*block +=	BINARY		(lsr,	regColorR, regDifference, regConstant8);
+						}
+
+						// green component
+						{
+							regColorG = nextRegister++;
+							I32 regShifted = nextRegister++;
+							I32 regAdjusted = nextRegister++;
+							I32 regColorAdjusted = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regG, regConstant15);
+							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regG, regShifted);
+							*block +=	BINARY		(lsr,	regColorAdjusted, regAdjusted, regConstant2);
+
+							I32 regShiftedAdjusted = nextRegister++;
+							I32	regDiff = nextRegister++;
+							I32 regTexEnv = nextRegister++;
+							I32 regProduct = nextRegister++;
+							I32 regDifference = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
+							*block +=	IMMEDIATE	(ldi,	regTexEnv, Constant::createInt(m_State->m_TexEnvColor.g));
+							*block +=	BINARY		(sub,	regDiff, regShiftedAdjusted, regTexEnv);
+							*block +=	BINARY		(mul,	regProduct, regDiff, regTexColorG);
+							*block +=	BINARY		(sub,	regDifference, regColorAdjusted, regProduct);
+							*block +=	BINARY		(lsr,	regColorG, regDifference, regConstant8);
+						}
+
+						// blue component
+						{
+							regColorB = nextRegister++;
+							I32 regShifted = nextRegister++;
+							I32 regAdjusted = nextRegister++;
+							I32 regColorAdjusted = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regB, regConstant15);
+							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regB, regShifted);
+							*block +=	BINARY		(lsr,	regColorAdjusted, regAdjusted, regConstant3);
+
+							I32 regShiftedAdjusted = nextRegister++;
+							I32	regDiff = nextRegister++;
+							I32 regTexEnv = nextRegister++;
+							I32 regProduct = nextRegister++;
+							I32 regDifference = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
+							*block +=	IMMEDIATE	(ldi,	regTexEnv, Constant::createInt(m_State->m_TexEnvColor.b));
+							*block +=	BINARY		(sub,	regDiff, regShiftedAdjusted, regTexEnv);
+							*block +=	BINARY		(mul,	regProduct, regDiff, regTexColorB);
+							*block +=	BINARY		(sub,	regDifference, regColorAdjusted, regProduct);
+							*block +=	BINARY		(lsr,	regColorB, regDifference, regConstant8);
+						}
+
+						// create RGB 565 representation
+						{
+							I32 regConstant5 = nextRegister++;
+							I32 regConstant11 = nextRegister++;
+							I32 regShiftedB = nextRegister++;
+							I32 regShiftedG = nextRegister++;
+							I32 regRG = nextRegister++;
+							regColor565 = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+							*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+							*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
+							*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
+							*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
+							*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+						}
 						}
 
 						break;
@@ -775,6 +990,114 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 						//		ClampU8(color.g + texColor.g),
 						//		ClampU8(color.b + texColor.b),
 						//		color.a);
+						regColorA = nextRegister++;
+						I32 regConstant10 = nextRegister++;
+						I32 regConstant11 = nextRegister++;
+						I32 regConstant8 = nextRegister++;
+						I32 regConstant255 = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant10, Constant::createInt(10));
+						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+						*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
+						*block +=	BINARY		(lsr,	regColorA, fragmentInfo.regA, regConstant8);
+
+						// R channel
+						{
+							regColorR = nextRegister++;
+							I32 regScaledR = nextRegister++;
+							I32 regShiftedR = nextRegister++;
+							I32 regSumR = nextRegister++;
+							I32 regNeedsClampingR = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant255, Constant::createInt(0x1f));
+							*block +=	BINARY		(lsr,	regShiftedR, fragmentInfo.regR, regConstant11);
+							*block +=	BINARY		(add,	regSumR, regShiftedR, regTexColorR);
+							*block +=	COMPARE		(cmp,	regNeedsClampingR, regSumR, regConstant255);
+
+							Label * noClampingR = Label::create("noClampingR", LabelBlock);
+							I32 regClampedR = nextRegister++;
+
+							*block +=	BCOND		(ble,	regNeedsClampingR, noClampingR);
+							*block +=	IMMEDIATE	(ldi,	regClampedR, Constant::createInt(0x1f));
+
+							Block& blockClampingR = *new Block(procedure);
+							procedure->blocks.push_back(&blockClampingR);
+							noClampingR->block.block = &blockClampingR;
+							blockClampingR.labels.push_back(noClampingR);
+							block = &blockClampingR;
+
+							*block +=	PHI			(phi,	regColorR, REG_LIST(regClampedR, regSumR));
+						}
+						// G channel
+						{
+							regColorG = nextRegister++;
+							I32 regScaledG = nextRegister++;
+							I32 regShiftedG = nextRegister++;
+							I32 regSumG = nextRegister++;
+							I32 regNeedsClampingG = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant255, Constant::createInt(0x3f));
+							*block +=	BINARY		(lsr,	regShiftedG, fragmentInfo.regG, regConstant10);
+							*block +=	BINARY		(add,	regSumG, regShiftedG, regTexColorR);
+							*block +=	COMPARE		(cmp,	regNeedsClampingG, regSumG, regConstant255);
+
+							Label * noClampingG = Label::create("noClampingG", LabelBlock);
+							I32 regClampedG = nextRegister++;
+
+							*block +=	BCOND		(ble,	regNeedsClampingG, noClampingG);
+							*block +=	IMMEDIATE	(ldi,	regClampedG, Constant::createInt(0x3f));
+
+							Block& blockClampingG = *new Block(procedure);
+							procedure->blocks.push_back(&blockClampingG);
+							noClampingG->block.block = &blockClampingG;
+							blockClampingG.labels.push_back(noClampingG);
+							block = &blockClampingG;
+
+							*block +=	PHI			(phi,	regColorG, REG_LIST(regClampedG, regSumG));
+						}
+						// B channel
+						{
+							regColorB = nextRegister++;
+							I32 regScaledB = nextRegister++;
+							I32 regShiftedB = nextRegister++;
+							I32 regSumB = nextRegister++;
+							I32 regNeedsClampingB = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant255, Constant::createInt(0x1f));
+							*block +=	BINARY		(lsr,	regShiftedB, fragmentInfo.regB, regConstant10);
+							*block +=	BINARY		(add,	regSumB, regShiftedB, regTexColorR);
+							*block +=	COMPARE		(cmp,	regNeedsClampingB, regSumB, regConstant255);
+
+							Label * noClampingB = Label::create("noClampingB", LabelBlock);
+							I32 regClampedB = nextRegister++;
+
+							*block +=	BCOND		(ble,	regNeedsClampingB, noClampingB);
+							*block +=	IMMEDIATE	(ldi,	regClampedB, Constant::createInt(0x1f));
+
+							Block& blockClampingB = *new Block(procedure);
+							procedure->blocks.push_back(&blockClampingB);
+							noClampingB->block.block = &blockClampingB;
+							blockClampingB.labels.push_back(noClampingB);
+							block = &blockClampingB;
+
+							*block +=	PHI			(phi,	regColorB, REG_LIST(regClampedB, regSumB));
+						}
+						// create RGB 565 representation
+						{
+							I32 regConstant5 = nextRegister++;
+							I32 regConstant11 = nextRegister++;
+							I32 regShiftedB = nextRegister++;
+							I32 regShiftedG = nextRegister++;
+							I32 regRG = nextRegister++;
+							regColor565 = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+							*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+							*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
+							*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
+							*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
+							*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+						}
 						}
 
 						break;
@@ -799,6 +1122,42 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 					case RasterizerState::TextureModeModulate:
 						{
 						//color = color * texColor;
+						regColorR = nextRegister++;
+						regColorG = nextRegister++;
+						regColorB = nextRegister++;
+						regColorA = nextRegister++;
+						I32 regConstant8 = nextRegister++;
+						I32 regConstant16 = nextRegister++;
+						I32 regScaledR = nextRegister++;
+						I32 regScaledG = nextRegister++;
+						I32 regScaledB = nextRegister++;
+						I32 regAlphaProduct = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(16));
+						*block +=	BINARY		(mul,	regAlphaProduct, fragmentInfo.regA, regTexColorA);
+						*block +=	BINARY		(lsr,	regColorA, regAlphaProduct, regConstant16);
+
+						*block +=	BINARY		(mul,	regScaledR, regTexColorR, fragmentInfo.regR);
+						*block +=	BINARY		(lsr,	regColorR, regScaledR, regConstant16);
+						*block +=	BINARY		(mul,	regScaledG, regTexColorG, fragmentInfo.regG);
+						*block +=	BINARY		(lsr,	regColorG, regScaledG, regConstant16);
+						*block +=	BINARY		(mul,	regScaledB, regTexColorB, fragmentInfo.regB);
+						*block +=	BINARY		(lsr,	regColorB, regScaledB, regConstant16);
+
+						I32 regConstant5 = nextRegister++;
+						I32 regConstant11 = nextRegister++;
+						I32 regShiftedB = nextRegister++;
+						I32 regShiftedG = nextRegister++;
+						I32 regRG = nextRegister++;
+						regColor565 = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+						*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
+						*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
+						*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
+						*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+
 						}
 
 						break;
@@ -811,6 +1170,101 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 						//		MulU8(color.g, 0xff - texColor.a) + MulU8(texColor.g, texColor.a),
 						//		MulU8(color.b, 0xff - texColor.a) + MulU8(texColor.b, texColor.a),
 						//		color.a);
+
+						regColorA = nextRegister++;
+						I32 regConstant2 = nextRegister++;
+						I32 regConstant3 = nextRegister++;
+						I32 regConstant8 = nextRegister++;
+						I32 regConstant10 = nextRegister++;
+						I32 regConstant11 = nextRegister++;
+						I32 regConstant15 = nextRegister++;
+						I32 regShiftedA = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant2, Constant::createInt(2));
+						*block +=	IMMEDIATE	(ldi,	regConstant3, Constant::createInt(3));
+						*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
+						*block +=	IMMEDIATE	(ldi,	regConstant10, Constant::createInt(10));
+						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+						*block +=	IMMEDIATE	(ldi,	regConstant15, Constant::createInt(15));
+						*block +=	BINARY		(lsr,	regShiftedA, fragmentInfo.regA, regConstant15);
+						*block +=	BINARY		(sub,	regColorA, fragmentInfo.regA, regShiftedA);
+
+						// red component
+						{
+							I32 regShifted = nextRegister++;
+							I32 regAdjusted = nextRegister++;
+							I32 regToColor = nextRegister++;
+							I32 regDeltaColor = nextRegister++;
+							I32 regProduct = nextRegister++;
+							I32 regColorShift = nextRegister++;
+							I32 regDelta = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regR, regConstant15);
+							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regR, regShifted);
+							*block +=	BINARY		(lsr,	regToColor, regAdjusted, regConstant11);
+							*block +=	BINARY		(sub,	regDeltaColor, regTexColorR, regToColor);
+							*block +=	BINARY		(mul,	regProduct, regDeltaColor, regTexColorA);	
+							*block +=	BINARY		(lsr,	regColorShift, regAdjusted, regConstant3);
+							*block +=	BINARY		(add,	regDelta, regColorShift, regProduct);
+							*block +=	BINARY		(asr,	regColorR, regDelta, regConstant8);
+						}
+
+						// green component
+						{
+							I32 regShifted = nextRegister++;
+							I32 regAdjusted = nextRegister++;
+							I32 regToColor = nextRegister++;
+							I32 regDeltaColor = nextRegister++;
+							I32 regProduct = nextRegister++;
+							I32 regColorShift = nextRegister++;
+							I32 regDelta = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regG, regConstant15);
+							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regG, regShifted);
+							*block +=	BINARY		(lsr,	regToColor, regAdjusted, regConstant10);
+							*block +=	BINARY		(sub,	regDeltaColor, regTexColorG, regToColor);
+							*block +=	BINARY		(mul,	regProduct, regDeltaColor, regTexColorA);	
+							*block +=	BINARY		(lsr,	regColorShift, regAdjusted, regConstant2);
+							*block +=	BINARY		(add,	regDelta, regColorShift, regProduct);
+							*block +=	BINARY		(asr,	regColorG, regDelta, regConstant8);
+						}
+
+						// blue component
+						{
+							I32 regShifted = nextRegister++;
+							I32 regAdjusted = nextRegister++;
+							I32 regToColor = nextRegister++;
+							I32 regDeltaColor = nextRegister++;
+							I32 regProduct = nextRegister++;
+							I32 regColorShift = nextRegister++;
+							I32 regDelta = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regB, regConstant15);
+							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regB, regShifted);
+							*block +=	BINARY		(lsr,	regToColor, regAdjusted, regConstant11);
+							*block +=	BINARY		(sub,	regDeltaColor, regTexColorB, regToColor);
+							*block +=	BINARY		(mul,	regProduct, regDeltaColor, regTexColorA);	
+							*block +=	BINARY		(lsr,	regColorShift, regAdjusted, regConstant3);
+							*block +=	BINARY		(add,	regDelta, regColorShift, regProduct);
+							*block +=	BINARY		(asr,	regColorB, regDelta, regConstant8);
+						}
+
+						// create RGB 565 representation
+						{
+							I32 regConstant5 = nextRegister++;
+							I32 regConstant11 = nextRegister++;
+							I32 regShiftedB = nextRegister++;
+							I32 regShiftedG = nextRegister++;
+							I32 regRG = nextRegister++;
+							regColor565 = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+							*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+							*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
+							*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
+							*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
+							*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+						}
 						}
 
 						break;
@@ -823,6 +1277,113 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 						//		MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
 						//		MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
 						//		MulU8(color.a, texColor.a));
+						regColorA = nextRegister++;
+						I32 regConstant2 = nextRegister++;
+						I32 regConstant3 = nextRegister++;
+						I32 regConstant8 = nextRegister++;
+						I32 regConstant15 = nextRegister++;
+						I32 regConstant16 = nextRegister++;
+						I32 regAlphaProduct = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant2, Constant::createInt(2));
+						*block +=	IMMEDIATE	(ldi,	regConstant3, Constant::createInt(3));
+						*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
+						*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(16));
+						*block +=	BINARY		(mul,	regAlphaProduct, fragmentInfo.regA, regTexColorA);
+						*block +=	BINARY		(lsr,	regColorA, regAlphaProduct, regConstant16);
+						*block +=	IMMEDIATE	(ldi,	regConstant15, Constant::createInt(15));
+
+						// red component
+						{
+							regColorR = nextRegister++;
+							I32 regShifted = nextRegister++;
+							I32 regAdjusted = nextRegister++;
+							I32 regColorAdjusted = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regR, regConstant15);
+							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regR, regShifted);
+							*block +=	BINARY		(lsr,	regColorAdjusted, regAdjusted, regConstant3);
+
+							I32 regShiftedAdjusted = nextRegister++;
+							I32	regDiff = nextRegister++;
+							I32 regTexEnv = nextRegister++;
+							I32 regProduct = nextRegister++;
+							I32 regDifference = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
+							*block +=	IMMEDIATE	(ldi,	regTexEnv, Constant::createInt(m_State->m_TexEnvColor.r));
+							*block +=	BINARY		(sub,	regDiff, regShiftedAdjusted, regTexEnv);
+							*block +=	BINARY		(mul,	regProduct, regDiff, regTexColorR);
+							*block +=	BINARY		(sub,	regDifference, regColorAdjusted, regProduct);
+							*block +=	BINARY		(lsr,	regColorR, regDifference, regConstant8);
+						}
+
+						// green component
+						{
+							regColorG = nextRegister++;
+							I32 regShifted = nextRegister++;
+							I32 regAdjusted = nextRegister++;
+							I32 regColorAdjusted = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regG, regConstant15);
+							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regG, regShifted);
+							*block +=	BINARY		(lsr,	regColorAdjusted, regAdjusted, regConstant2);
+
+							I32 regShiftedAdjusted = nextRegister++;
+							I32	regDiff = nextRegister++;
+							I32 regTexEnv = nextRegister++;
+							I32 regProduct = nextRegister++;
+							I32 regDifference = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
+							*block +=	IMMEDIATE	(ldi,	regTexEnv, Constant::createInt(m_State->m_TexEnvColor.g));
+							*block +=	BINARY		(sub,	regDiff, regShiftedAdjusted, regTexEnv);
+							*block +=	BINARY		(mul,	regProduct, regDiff, regTexColorG);
+							*block +=	BINARY		(sub,	regDifference, regColorAdjusted, regProduct);
+							*block +=	BINARY		(lsr,	regColorG, regDifference, regConstant8);
+						}
+
+						// blue component
+						{
+							regColorB = nextRegister++;
+							I32 regShifted = nextRegister++;
+							I32 regAdjusted = nextRegister++;
+							I32 regColorAdjusted = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShifted, fragmentInfo.regB, regConstant15);
+							*block +=	BINARY		(sub,	regAdjusted, fragmentInfo.regB, regShifted);
+							*block +=	BINARY		(lsr,	regColorAdjusted, regAdjusted, regConstant3);
+
+							I32 regShiftedAdjusted = nextRegister++;
+							I32	regDiff = nextRegister++;
+							I32 regTexEnv = nextRegister++;
+							I32 regProduct = nextRegister++;
+							I32 regDifference = nextRegister++;
+
+							*block +=	BINARY		(lsr,	regShiftedAdjusted, regAdjusted, regConstant8);
+							*block +=	IMMEDIATE	(ldi,	regTexEnv, Constant::createInt(m_State->m_TexEnvColor.b));
+							*block +=	BINARY		(sub,	regDiff, regShiftedAdjusted, regTexEnv);
+							*block +=	BINARY		(mul,	regProduct, regDiff, regTexColorB);
+							*block +=	BINARY		(sub,	regDifference, regColorAdjusted, regProduct);
+							*block +=	BINARY		(lsr,	regColorB, regDifference, regConstant8);
+						}
+
+						// create RGB 565 representation
+						{
+							I32 regConstant5 = nextRegister++;
+							I32 regConstant11 = nextRegister++;
+							I32 regShiftedB = nextRegister++;
+							I32 regShiftedG = nextRegister++;
+							I32 regRG = nextRegister++;
+							regColor565 = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+							*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+							*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
+							*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
+							*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
+							*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+						}
 						}
 
 						break;
@@ -835,6 +1396,119 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 						//		ClampU8(color.g + texColor.g),
 						//		ClampU8(color.b + texColor.b),
 						//		MulU8(color.a, texColor.a));
+						regColorA = nextRegister++;
+						I32 regConstant10 = nextRegister++;
+						I32 regConstant11 = nextRegister++;
+						I32 regConstant16 = nextRegister++;
+						I32 regConstant8 = nextRegister++;
+						I32 regConstant255 = nextRegister++;
+						I32 regAlphaProduct = nextRegister++;
+
+						*block +=	IMMEDIATE	(ldi,	regConstant10, Constant::createInt(10));
+						*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+						*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
+
+						*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(16));
+						*block +=	BINARY		(mul,	regAlphaProduct, fragmentInfo.regA, regTexColorA);
+						*block +=	BINARY		(lsr,	regColorA, regAlphaProduct, regConstant16);
+
+						// R channel
+						{
+							regColorR = nextRegister++;
+							I32 regScaledR = nextRegister++;
+							I32 regShiftedR = nextRegister++;
+							I32 regSumR = nextRegister++;
+							I32 regNeedsClampingR = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant255, Constant::createInt(0x1f));
+							*block +=	BINARY		(lsr,	regShiftedR, fragmentInfo.regR, regConstant11);
+							*block +=	BINARY		(add,	regSumR, regShiftedR, regTexColorR);
+							*block +=	COMPARE		(cmp,	regNeedsClampingR, regSumR, regConstant255);
+
+							Label * noClampingR = Label::create("noClampingR", LabelBlock);
+							I32 regClampedR = nextRegister++;
+
+							*block +=	BCOND		(ble,	regNeedsClampingR, noClampingR);
+							*block +=	IMMEDIATE	(ldi,	regClampedR, Constant::createInt(0x1f));
+
+							Block& blockClampingR = *new Block(procedure);
+							procedure->blocks.push_back(&blockClampingR);
+							noClampingR->block.block = &blockClampingR;
+							blockClampingR.labels.push_back(noClampingR);
+							block = &blockClampingR;
+
+							*block +=	PHI			(phi,	regColorR, REG_LIST(regClampedR, regSumR));
+						}
+						// G channel
+						{
+							regColorG = nextRegister++;
+							I32 regScaledG = nextRegister++;
+							I32 regShiftedG = nextRegister++;
+							I32 regSumG = nextRegister++;
+							I32 regNeedsClampingG = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant255, Constant::createInt(0x3f));
+							*block +=	BINARY		(lsr,	regShiftedG, fragmentInfo.regG, regConstant10);
+							*block +=	BINARY		(add,	regSumG, regShiftedG, regTexColorR);
+							*block +=	COMPARE		(cmp,	regNeedsClampingG, regSumG, regConstant255);
+
+							Label * noClampingG = Label::create("noClampingG", LabelBlock);
+							I32 regClampedG = nextRegister++;
+
+							*block +=	BCOND		(ble,	regNeedsClampingG, noClampingG);
+							*block +=	IMMEDIATE	(ldi,	regClampedG, Constant::createInt(0x3f));
+
+							Block& blockClampingG = *new Block(procedure);
+							procedure->blocks.push_back(&blockClampingG);
+							noClampingG->block.block = &blockClampingG;
+							blockClampingG.labels.push_back(noClampingG);
+							block = &blockClampingG;
+
+							*block +=	PHI			(phi,	regColorG, REG_LIST(regClampedG, regSumG));
+						}
+						// B channel
+						{
+							regColorB = nextRegister++;
+							I32 regScaledB = nextRegister++;
+							I32 regShiftedB = nextRegister++;
+							I32 regSumB = nextRegister++;
+							I32 regNeedsClampingB = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant255, Constant::createInt(0x1f));
+							*block +=	BINARY		(lsr,	regShiftedB, fragmentInfo.regB, regConstant10);
+							*block +=	BINARY		(add,	regSumB, regShiftedB, regTexColorR);
+							*block +=	COMPARE		(cmp,	regNeedsClampingB, regSumB, regConstant255);
+
+							Label * noClampingB = Label::create("noClampingB", LabelBlock);
+							I32 regClampedB = nextRegister++;
+
+							*block +=	BCOND		(ble,	regNeedsClampingB, noClampingB);
+							*block +=	IMMEDIATE	(ldi,	regClampedB, Constant::createInt(0x1f));
+
+							Block& blockClampingB = *new Block(procedure);
+							procedure->blocks.push_back(&blockClampingB);
+							noClampingB->block.block = &blockClampingB;
+							blockClampingB.labels.push_back(noClampingB);
+							block = &blockClampingB;
+
+							*block +=	PHI			(phi,	regColorB, REG_LIST(regClampedB, regSumB));
+						}
+						// create RGB 565 representation
+						{
+							I32 regConstant5 = nextRegister++;
+							I32 regConstant11 = nextRegister++;
+							I32 regShiftedB = nextRegister++;
+							I32 regShiftedG = nextRegister++;
+							I32 regRG = nextRegister++;
+							regColor565 = nextRegister++;
+
+							*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+							*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+							*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
+							*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
+							*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
+							*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
+						}
 						}
 
 						break;
@@ -843,62 +1517,180 @@ void Rasterizer :: GenerateFragment(Procedure * procedure, Block & currentBlock,
 		}
 	} else {
 		// color = baseColor
+		I32 regConstant16 = nextRegister++;
+		I32 regConstant11 = nextRegister++;
+		I32 regConstant10 = nextRegister++;
+		I32 regConstant8 = nextRegister++;
 
-		// TO DO: needs to be converted to 565 format, alpha to 8 bits
-		colorR = fragmentInfo.regR;
-		colorG = fragmentInfo.regG;
-		colorB = fragmentInfo.regB;
-		colorA = fragmentInfo.regA;
+		*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(16));
+		*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+		*block +=	IMMEDIATE	(ldi,	regConstant10, Constant::createInt(10));
+		*block +=	IMMEDIATE	(ldi,	regConstant8, Constant::createInt(8));
+
+		//  needs to be converted to 565 format, alpha to 8 bits
+		{
+			regColorR = nextRegister++;
+			I32 regShifted = nextRegister++;
+			I32 regAdjusted = nextRegister++;
+
+			*block +=	BINARY	(lsr,	regShifted, fragmentInfo.regR, regConstant16);
+			*block +=	BINARY	(sub,	regAdjusted, fragmentInfo.regR, regShifted);
+			*block +=	BINARY	(lsr,	regColorR, regAdjusted, regConstant11);
+		}
+
+		{
+			regColorG = nextRegister++;
+			I32 regShifted = nextRegister++;
+			I32 regAdjusted = nextRegister++;
+
+			*block +=	BINARY	(lsr,	regShifted, fragmentInfo.regG, regConstant16);
+			*block +=	BINARY	(sub,	regAdjusted, fragmentInfo.regG, regShifted);
+			*block +=	BINARY	(lsr,	regColorG, regAdjusted, regConstant10);
+		}
+
+		{
+			regColorB = nextRegister++;
+			I32 regShifted = nextRegister++;
+			I32 regAdjusted = nextRegister++;
+
+			*block +=	BINARY	(lsr,	regShifted, fragmentInfo.regB, regConstant16);
+			*block +=	BINARY	(sub,	regAdjusted, fragmentInfo.regB, regShifted);
+			*block +=	BINARY	(lsr,	regColorB, regAdjusted, regConstant11);
+		}
+		{
+			regColorA = nextRegister++;
+			*block +=	BINARY	(lsr,	regColorA, fragmentInfo.regA, regConstant8);
+		}
+		// create RGB 565 representation
+		I32 regConstant5 = nextRegister++;
+		I32 regShiftedB = nextRegister++;
+		I32 regShiftedG = nextRegister++;
+		I32 regRG = nextRegister++;
+		regColor565 = nextRegister++;
+
+		*block +=	IMMEDIATE	(ldi,	regConstant5, Constant::createInt(5));
+		*block +=	IMMEDIATE	(ldi,	regConstant11, Constant::createInt(11));
+		*block +=	BINARY		(lsl,	regShiftedB, regColorB, regConstant11);
+		*block +=	BINARY		(lsl,	regShiftedG, regColorG, regConstant5);
+		*block +=	BINARY		(or,	regRG, regColorR, regShiftedG);
+		*block +=	BINARY		(or,	regColor565, regRG, regShiftedB);
 	}
 
 	// fog
 	if (m_State->m_FogEnabled) {
 		//color = Color::Blend(color, m_State->m_FogColor, fogDensity);
+		I32 regFogColorR = nextRegister++;
+		I32 regFogColorG = nextRegister++;
+		I32 regFogColorB = nextRegister++;
+
+		*block +=	IMMEDIATE	(ldi,	regFogColorR, Constant::createInt(m_State->m_FogColor.r >> 3));
+		*block +=	IMMEDIATE	(ldi,	regFogColorG, Constant::createInt(m_State->m_FogColor.g >> 2));
+		*block +=	IMMEDIATE	(ldi,	regFogColorB, Constant::createInt(m_State->m_FogColor.b >> 3));
+
+		I32 regDeltaR = nextRegister++;
+		I32 regDeltaG = nextRegister++;
+		I32 regDeltaB = nextRegister++;
+
+		*block +=	BINARY		(sub,	regDeltaR, regColorR, regFogColorR);
+		*block +=	BINARY		(sub,	regDeltaG, regColorG, regFogColorG);
+		*block +=	BINARY		(sub,	regDeltaB, regColorB, regFogColorB);
+
+		I32 regProductR = nextRegister++;
+		I32 regProductG = nextRegister++;
+		I32 regProductB = nextRegister++;
+
+		*block +=	BINARY		(mul,	regProductR, regDeltaR, fragmentInfo.regFog);
+		*block +=	BINARY		(mul,	regProductG, regDeltaG, fragmentInfo.regFog);
+		*block +=	BINARY		(mul,	regProductB, regDeltaB, fragmentInfo.regFog);
+
+		I32 regConstant16 = nextRegister++;
+		I32 regShiftedProductR = nextRegister++;
+		I32 regShiftedProductG = nextRegister++;
+		I32 regShiftedProductB = nextRegister++;
+
+		*block +=	IMMEDIATE	(ldi,	regConstant16, Constant::createInt(16));
+		*block +=	BINARY		(asr,	regShiftedProductR, regProductR, regConstant16);
+		*block +=	BINARY		(asr,	regShiftedProductG, regProductG, regConstant16);
+		*block +=	BINARY		(asr,	regShiftedProductB, regProductB, regConstant16);
+
+		I32 regNewColorR = nextRegister++;
+		I32 regNewColorG = nextRegister++;
+		I32 regNewColorB = nextRegister++;
+
+		*block +=	BINARY		(add,	regNewColorR, regShiftedProductR, regFogColorR);
+		*block +=	BINARY		(add,	regNewColorG, regShiftedProductG, regFogColorG);
+		*block +=	BINARY		(add,	regNewColorB, regShiftedProductB, regFogColorB);
+
+		regColorR = regNewColorR;
+		regColorG = regNewColorG;
+		regColorB = regNewColorB;
 	}
 
 	if (m_State->m_AlphaTestEnabled) {
 		//bool alphaTest;
 		//U8 alpha = color.A();
-		U8 alphaRef = EGL_IntFromFixed(m_State->m_AlphaReference * 255);
+		//U8 alphaRef = EGL_IntFromFixed(m_State->m_AlphaReference * 255);
+		I32 regAlphaRef = nextRegister++;
+		I32 regAlphaTest = nextRegister++;
 
+		*block +=	IMMEDIATE		(ldi,	regAlphaRef, Constant::createInt(m_State->m_AlphaReference >> 8));
+		*block +=	COMPARE			(cmp,	regAlphaTest, regColorA, regAlphaRef);
+
+		Opcode failedTest;
+		
 		switch (m_State->m_AlphaFunc) {
 			default:
 			case RasterizerState::CompFuncNever:	
 				//alphaTest = false;					
+				failedTest = bra;
 				break;
 
 			case RasterizerState::CompFuncLess:		
 				//alphaTest = alpha < alphaRef;		
+				failedTest = bge;
 				break;
 
 			case RasterizerState::CompFuncEqual:	
 				//alphaTest = alpha == alphaRef;		
+				failedTest = bne;
 				break;
 
 			case RasterizerState::CompFuncLEqual:	
 				//alphaTest = alpha <= alphaRef;		
+				failedTest = bgt;
 				break;
 
 			case RasterizerState::CompFuncGreater:	
 				//alphaTest = alpha > alphaRef;		
+				failedTest = ble;
 				break;
 
 			case RasterizerState::CompFuncNotEqual:	
 				//alphaTest = alpha != alphaRef;		
+				failedTest = beq;
 				break;
 
 			case RasterizerState::CompFuncGEqual:	
 				//alphaTest = alpha >= alphaRef;		
+				failedTest = blt;
 				break;
 
 			case RasterizerState::CompFuncAlways:	
 				//alphaTest = true;					
+				failedTest = nop;
 				break;
 		}
 
 		//if (!alphaTest) {
 		//	return;
 		//}
+		if (failedTest != nop) {
+			if (failedTest == bra) {
+				*block +=		BLABEL	(bra,	continuation);
+			} else {
+				*block +=		BCOND	(failedTest, regAlphaTest, continuation);
+			}
+		}
 	}
 
 	if (m_State->m_StencilTestEnabled) {
@@ -1644,7 +2436,6 @@ void Rasterizer :: GenerateRasterScanLine() {
 	I32 regLoop1B = nextRegister++;
 	I32 regLoop1AEntry = nextRegister++;
 	I32 regLoop1A = nextRegister++;
-
 
 	block2 +=		PHI			(phi,	regLoop1CountEntry, REG_LIST(regLoop1Count, regLinearSpan));
 	block2 +=		PHI			(phi,	regLoop1XEntry, REG_LIST(regLoop1X, regX));
