@@ -311,7 +311,9 @@ void Context :: DrawArrays(GLenum mode, GLint first, GLsizei count) {
 		return;
 	}
 
-	if (!m_VertexArrayEnabled) {
+	if (!m_VertexArrayEnabled ||
+		(m_MatrixPaletteEnabled && (!m_MatrixIndexArrayEnabled || !m_WeightArrayEnabled))) {
+		RecordError(GL_INVALID_OPERATION);
 		return;
 	}
 
@@ -360,7 +362,9 @@ void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
 		return;
 	}
 
-	if (!m_VertexArrayEnabled) {
+	if (!m_VertexArrayEnabled ||
+		(m_MatrixPaletteEnabled && (!m_MatrixIndexArrayEnabled || !m_WeightArrayEnabled))) {
+		RecordError(GL_INVALID_OPERATION);
 		return;
 	}
 
@@ -460,7 +464,6 @@ void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
 		}
 
 		break;
-
 
 	default:
 		RecordError(GL_INVALID_ENUM);

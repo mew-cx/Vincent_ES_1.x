@@ -129,7 +129,7 @@ void Context :: MultMatrixx(const GLfixed *m) {
 void Context :: PopMatrix(void) { 
 
 	if (m_MatrixModePaletteEnabled) {
-		RecordError(GL_INVALID_OPERATION);
+		RecordError(GL_STACK_UNDERFLOW);
 		return;
 	}
 
@@ -143,7 +143,7 @@ void Context :: PopMatrix(void) {
 
 void Context :: PushMatrix(void) { 
 	if (m_MatrixModePaletteEnabled) {
-		RecordError(GL_INVALID_OPERATION);
+		RecordError(GL_STACK_OVERFLOW);
 		return;
 	}
 
