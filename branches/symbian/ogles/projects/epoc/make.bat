@@ -66,7 +66,7 @@ echo ;Auto generated PKG files. Do not edit > gles_cl.pkg
 echo #{"gles_cl"},(0x10202D9E),1,0,0,TYPE=SISSYSTEM >> gles_cl.pkg
 if "%1"=="s60" echo (0x101F6F88), 0, 0, 0, {"Series60ProductID"} >> gles_cl.pkg
 if "%1"=="uiq" echo (0x101F617B), 2, 0, 0, {"UIQ20ProductID"} >> gles_cl.pkg
-echo "\EPOC32\RELEASE\ARMI\UREL\GLES_CL.DLL"-"!:\system\libs\gles_cl.dll" >> gles_cl.pkg
+echo "EPOC32\RELEASE\ARMI\UREL\GLES_CL.DLL"-"!:\system\libs\gles_cl.dll" >> gles_cl.pkg
 
 rem TEST.PKG
 echo ;Auto generated PKG files. Do not edit > test.pkg
@@ -74,14 +74,14 @@ echo #{"test"},(0x10202DA0),1,0,0 >> test.pkg
 if "%1"=="s60" echo (0x101F6F88), 0, 0, 0, {"Series60ProductID"} >> test.pkg
 if "%1"=="uiq" echo (0x101F617B), 2, 0, 0, {"UIQ20ProductID"} >> test.pkg
 
-echo "\EPOC32\RELEASE\ARMI\UREL\TEST.APP"-"!:\system\apps\test\test.app" >> test.pkg
-echo "\EPOC32\DATA\Z\SYSTEM\APPS\TEST\TEST.RSC"-"!:\system\apps\test\test.rsc" >> test.pkg
-echo "\EPOC32\DATA\Z\SYSTEM\APPS\TEST\DODGE.MBM"-"!:\system\apps\test\dodge.mbm" >> test.pkg
+echo "EPOC32\RELEASE\ARMI\UREL\TEST.APP"-"!:\system\apps\test\test.app" >> test.pkg
+echo "EPOC32\DATA\Z\SYSTEM\APPS\TEST\TEST.RSC"-"!:\system\apps\test\test.rsc" >> test.pkg
+echo "EPOC32\DATA\Z\SYSTEM\APPS\TEST\DODGE.MBM"-"!:\system\apps\test\dodge.mbm" >> test.pkg
 echo @"gles_cl.sis",(0x10202D9E) >> test.pkg
 
 rem build SIS files
 rem --------------------------------------------------------------
-call makesis gles_cl.pkg
-call makesis test.pkg
+call makesis -d%EPOCROOT% gles_cl.pkg
+call makesis -d%EPOCROOT% test.pkg
 
 :end
