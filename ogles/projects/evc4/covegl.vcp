@@ -28,7 +28,7 @@ CFG=covegl - Win32 (WCE ARMV4) Release ARM
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 # PROP ATL_Project 2
-CPP=clarm.exe
+CPP="C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xicle42"
 MTL=midl.exe
 RSC=rc.exe
 
@@ -58,7 +58,7 @@ RSC=rc.exe
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LINK32=link.exe
+LINK32="C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xilinke42"
 # ADD BASE LINK32 commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 # ADD LINK32 platform.lib fixed.lib ctk.lib aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /nodefaultlib:"$(CENoDefaultLib)" /libpath:"..\..\bin\arm\Release" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 
@@ -88,7 +88,7 @@ LINK32=link.exe
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LINK32=link.exe
+LINK32="C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xilinke42"
 # ADD BASE LINK32 commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 # ADD LINK32 platform.lib fixed.lib ctk.lib aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /libpath:"..\..\bin\arm\Debug" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 
@@ -118,7 +118,7 @@ LINK32=link.exe
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LINK32=link.exe
+LINK32="C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xilinke42"
 # ADD BASE LINK32 platform.lib fixed.lib ctk.lib aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 # ADD LINK32 platform.lib fixed.lib ctk.lib aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /nodefaultlib:"$(CENoDefaultLib)" /libpath:"..\..\bin\xscale\Release" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 
@@ -149,7 +149,7 @@ LINK32=link.exe
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LINK32=link.exe
+LINK32="C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xilinke42"
 # ADD BASE LINK32 platform.lib fixed.lib ctk.lib aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /debug /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 # ADD LINK32 platform.lib fixed.lib ctk.lib aygshell.lib commctrl.lib coredll.lib /nologo /base:"0x00010000" /stack:0x10000,0x1000 /entry:"WinMainCRTStartup" /map /debug /nodefaultlib:"$(CENoDefaultLib)" /libpath:"..\..\bin\xscale\Debug" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 
@@ -167,11 +167,6 @@ LINK32=link.exe
 # Begin Source File
 
 SOURCE=..\..\conform\covegl\enum.c
-DEP_CPP_ENUM_=\
-	"..\..\src\GLES\egl.h"\
-	"..\..\src\GLES\egltypes.h"\
-	"..\..\src\GLES\gl.h"\
-	
 NODEP_CPP_ENUM_=\
 	"..\..\conform\covegl\shell.h"\
 	"..\..\fixed\fixed.h"\
@@ -184,6 +179,9 @@ NODEP_CPP_ENUM_=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
+	"..\..\src\GLES\egl.h"\
+	"..\..\src\GLES\egltypes.h"\
+	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # Begin Source File
@@ -193,11 +191,6 @@ SOURCE=..\..\conform\covegl\native_w32.c
 # Begin Source File
 
 SOURCE=..\..\conform\covegl\shell.c
-DEP_CPP_SHELL=\
-	"..\..\src\GLES\egl.h"\
-	"..\..\src\GLES\egltypes.h"\
-	"..\..\src\GLES\gl.h"\
-	
 NODEP_CPP_SHELL=\
 	"..\..\conform\covegl\shell.h"\
 	"..\..\fixed\fixed.h"\
@@ -210,16 +203,14 @@ NODEP_CPP_SHELL=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
+	"..\..\src\GLES\egl.h"\
+	"..\..\src\GLES\egltypes.h"\
+	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\conform\covegl\test.c
-DEP_CPP_TEST_=\
-	"..\..\src\GLES\egl.h"\
-	"..\..\src\GLES\egltypes.h"\
-	"..\..\src\GLES\gl.h"\
-	
 NODEP_CPP_TEST_=\
 	"..\..\conform\covegl\shell.h"\
 	"..\..\fixed\fixed.h"\
@@ -232,6 +223,9 @@ NODEP_CPP_TEST_=\
 	"..\..\platform\printf_fixed.h"\
 	"..\..\platform\printf_float.h"\
 	"..\..\platform\stdlib_ansi.h"\
+	"..\..\src\GLES\egl.h"\
+	"..\..\src\GLES\egltypes.h"\
+	"..\..\src\GLES\gl.h"\
 	
 # End Source File
 # End Group
