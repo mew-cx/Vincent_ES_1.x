@@ -1214,6 +1214,18 @@ typedef struct {
 #define ARM_CLZ_MASK ((0xFFF << 16) | (0xFF < 4))
 #define ARM_CLZ_TAG ((ARM_CLZ_ID << 16) | (ARM_CLZ_ID2 << 4))
 
+#define ARM_DEF_CLZ_COND(rd, rm, cond) \
+	ARM_CLZ_TAG				| \
+	ARM_DEF_COND(cond)		| \
+	(((rm) & 0xf))			| \
+	((rd) & 0xf) << 12
+
+#define ARM_CLZ_COND(p, rd, rm, cond) \
+	ARM_EMIT(p, ARM_DEF_CLZ_COND(rd, rm, cond))
+
+#define ARM_CLZ(p, rd, rm) \
+	ARM_EMIT(p, ARM_DEF_CLZ_COND(rd, rm, ARMCOND_AL))
+
 /*
  *              TAG     p         b   wb  ls
  * ARMCOND_NV | 0-1-0 | 0 | +/- | 1 | 0 | 1 | rn -|- 0xF | imm12
