@@ -18,7 +18,8 @@ This version addresses the following issues:
 1010824 - Provide utility function to save screenshots
 1011519 - Improve rasterizer state comparisons
 1014020 - Fog Linear test failed.
-1014019 -  Blend test failed.
+1014019 - Blend test failed.
+1014018 - LogicOp Function test failed.
 
 
 Version 0.81
