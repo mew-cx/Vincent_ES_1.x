@@ -129,11 +129,75 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, 
 
 	if (m_State->m_TextureEnabled) {
 
-		EGL_Fixed tu0 = m_Texture->GetWrappedS(tu);
-		EGL_Fixed tv0 = m_Texture->GetWrappedT(tv);
+		EGL_Fixed tu0;
+		EGL_Fixed tv0;
 
-		Color texColor = 
-			m_Texture->GetTexture(m_MipMapLevel)->GetPixel(tu0, tv0);
+		switch (m_Texture->GetWrappingModeS()) {
+			case MultiTexture::WrappingModeClampToEdge:
+				tu0 = EGL_CLAMP(tu, 0, EGL_ONE);
+				break;
+
+			default:
+			case MultiTexture::WrappingModeRepeat:
+				tu0 = tu & 0xffff;
+				break;
+		}
+
+		switch (m_Texture->GetWrappingModeT()) {
+			case MultiTexture::WrappingModeClampToEdge:
+				tv0 = EGL_CLAMP(tv, 0, EGL_ONE);
+				break;
+
+			default:
+			case MultiTexture::WrappingModeRepeat:
+				tv0 = tv & 0xffff;
+				break;
+		}
+
+
+		// get the pixel color
+		Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
+		Color texColor; 
+
+		I32 texX = EGL_IntFromFixed(texture->GetWidth() * tu0);
+		I32 texY = EGL_IntFromFixed(texture->GetHeight() * tv0);
+
+		// do wrapping mode here
+		I32 texOffset = texX + (texY << texture->GetExponent());
+		void * data = texture->GetData();
+
+		switch (m_Texture->GetInternalFormat()) {
+			case Texture::TextureFormatAlpha:				// 8
+				texColor = Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
+				break;
+
+			case Texture::TextureFormatLuminance:			// 8
+				{
+				U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset];
+				texColor = Color (luminance, luminance, luminance, 0xff);
+				}
+				break;
+
+			case Texture::TextureFormatLuminanceAlpha:		// 8-8
+				{
+				U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset * 2];
+				U8 alpha = reinterpret_cast<const U8 *>(data)[texOffset * 2 + 1];
+				texColor = Color (luminance, luminance, luminance, alpha);
+				}
+				break;
+
+			case Texture::TextureFormatRGB:					// 5-6-5
+				texColor = Color::From565(reinterpret_cast<const U16 *>(data)[texOffset]);
+				break;
+
+			case Texture::TextureFormatRGBA:					// 5-5-5-1
+				texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
+				break;
+
+			default:
+				texColor = Color(0xff, 0xff, 0xff, 0xff);
+				break;
+		}
 
 		switch (m_Texture->GetInternalFormat()) {
 			default:
