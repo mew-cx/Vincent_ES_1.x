@@ -680,7 +680,7 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_MAX_TEXTURE_UNITS:
-		params[0] = 1;
+		params[0] = EGL_NUM_TEXTURE_UNITS;
 		break;
 
 	case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:

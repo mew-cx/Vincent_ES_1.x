@@ -225,23 +225,38 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 
 	const FractionalColor& colorIncrement = delta.m_Color;
 
-	EGL_Fixed deltaInvZ = delta.m_WindowCoords.invZ;
-	EGL_Fixed deltaInvU = delta.m_TextureCoords[TODO].tu;
-	EGL_Fixed deltaInvV = delta.m_TextureCoords[TODO].tv;
-
-	EGL_Fixed deltaInvDu = delta.m_TextureCoords[TODO].dtudy;
-	EGL_Fixed deltaInvDv = delta.m_TextureCoords[TODO].dtvdy;
-
 	EGL_Fixed deltaFog = delta.m_FogDensity;
 	EGL_Fixed deltaDepth = delta.m_WindowCoords.depth;
 
-	EGL_Fixed invTu = start.m_TextureCoords[TODO].tu;
-	EGL_Fixed dTuDxOverInvZ2 = start.m_TextureCoords[TODO].dtudx;
-	EGL_Fixed dTuDyOverInvZ2 = start.m_TextureCoords[TODO].dtudy;
+	EGL_Fixed deltaInvZ = delta.m_WindowCoords.invZ;
 
-	EGL_Fixed invTv = start.m_TextureCoords[TODO].tv;
-	EGL_Fixed dTvDxOverInvZ2 = start.m_TextureCoords[TODO].dtvdx;
-	EGL_Fixed dTvDyOverInvZ2 = start.m_TextureCoords[TODO].dtvdy;
+	size_t unit;
+	EGL_Fixed deltaInvU[EGL_NUM_TEXTURE_UNITS],
+		deltaInvV[EGL_NUM_TEXTURE_UNITS],
+		deltaInvDu[EGL_NUM_TEXTURE_UNITS],
+		deltaInvDv[EGL_NUM_TEXTURE_UNITS],
+		invTu[EGL_NUM_TEXTURE_UNITS],
+		dTuDxOverInvZ2[EGL_NUM_TEXTURE_UNITS],
+		dTuDyOverInvZ2[EGL_NUM_TEXTURE_UNITS],
+		invTv[EGL_NUM_TEXTURE_UNITS],
+		dTvDxOverInvZ2[EGL_NUM_TEXTURE_UNITS],
+		dTvDyOverInvZ2[EGL_NUM_TEXTURE_UNITS];
+
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		deltaInvU[unit] = delta.m_TextureCoords[unit].tu;
+		deltaInvV[unit] = delta.m_TextureCoords[unit].tv;
+
+		deltaInvDu[unit] = delta.m_TextureCoords[unit].dtudy;
+		deltaInvDv[unit] = delta.m_TextureCoords[unit].dtvdy;
+
+		invTu[unit] = start.m_TextureCoords[unit].tu;
+		dTuDxOverInvZ2[unit] = start.m_TextureCoords[unit].dtudx;
+		dTuDyOverInvZ2[unit] = start.m_TextureCoords[unit].dtudy;
+
+		invTv[unit] = start.m_TextureCoords[unit].tv;
+		dTvDxOverInvZ2[unit] = start.m_TextureCoords[unit].dtvdx;
+		dTvDyOverInvZ2[unit] = start.m_TextureCoords[unit].dtvdy;
+	}
 
 	EGL_Fixed invZ = start.m_WindowCoords.invZ;
 
@@ -251,43 +266,57 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 	I32 xLinEnd = x + ((xEnd - x) & ~(LINEAR_SPAN - 1));
 
 	EGL_Fixed z = EGL_Inverse(invZ);
-	EGL_Fixed tu = EGL_Mul(invTu, z);
-	EGL_Fixed tv = EGL_Mul(invTv, z);
+	EGL_Fixed tu[EGL_NUM_TEXTURE_UNITS], tv[EGL_NUM_TEXTURE_UNITS];
+
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		tu[unit] = EGL_Mul(invTu[unit], z);
+		tv[unit] = EGL_Mul(invTv[unit], z);
+	}
+
 	EGL_Fixed depth = start.m_WindowCoords.depth;
 
 	for (; x < xLinEnd;) {
 
 		// to get started, do mipmap selection at beginning of span
 
-		if (m_UseMipmap[TODO]) {
-			EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
-			EGL_Fixed maxDu = EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)) >> (16 - m_Texture[TODO]->GetTexture(0)->GetLogWidth());
-			EGL_Fixed maxDv = EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)) >> (16 - m_Texture[TODO]->GetTexture(0)->GetLogHeight());
+		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+			if (m_UseMipmap[unit]) {
+				EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
+				EGL_Fixed maxDu = EGL_Max(EGL_Abs(dTuDxOverInvZ2[unit]), EGL_Abs(dTuDyOverInvZ2[unit])) >> (16 - m_Texture[unit]->GetTexture(0)->GetLogWidth());
+				EGL_Fixed maxDv = EGL_Max(EGL_Abs(dTvDxOverInvZ2[unit]), EGL_Abs(dTvDyOverInvZ2[unit])) >> (16 - m_Texture[unit]->GetTexture(0)->GetLogHeight());
 
-			//EGL_Fixed maxD = EGL_Max(maxDu, maxDv);
-			EGL_Fixed maxD = maxDu + maxDv;
-			//I64 rho64 = ((I64) EGL_Mul(z2, EGL_FixedFromFloat(1/sqrt(2.0f)) + 1)) * ((I64) maxD);
-			EGL_Fixed rho = EGL_Mul(z2, maxD);
+				//EGL_Fixed maxD = EGL_Max(maxDu, maxDv);
+				EGL_Fixed maxD = maxDu + maxDv;
+				//I64 rho64 = ((I64) EGL_Mul(z2, EGL_FixedFromFloat(1/sqrt(2.0f)) + 1)) * ((I64) maxD);
+				EGL_Fixed rho = EGL_Mul(z2, maxD);
 
-			// we start with nearest/minification only selection; will add LINEAR later
+				// we start with nearest/minification only selection; will add LINEAR later
 
-			rasterInfo.MipmapLevel[TODO] = EGL_Min(Log2(rho), rasterInfo.MaxMipmapLevel[TODO]);
+				rasterInfo.MipmapLevel[unit] = EGL_Min(Log2(rho), rasterInfo.MaxMipmapLevel[unit]);
 
-			dTuDyOverInvZ2 += deltaInvDu << LOG_LINEAR_SPAN;
-			dTvDyOverInvZ2 += deltaInvDv << LOG_LINEAR_SPAN;
+				dTuDyOverInvZ2[unit] += deltaInvDu[unit] << LOG_LINEAR_SPAN;
+				dTvDyOverInvZ2[unit] += deltaInvDv[unit] << LOG_LINEAR_SPAN;
+			}
 		}
 
 		invZ += deltaInvZ << LOG_LINEAR_SPAN;
-		invTu += deltaInvU << LOG_LINEAR_SPAN;
-		invTv += deltaInvV << LOG_LINEAR_SPAN;
-
 		EGL_Fixed endZ = EGL_Inverse(invZ);
-		EGL_Fixed endTu = EGL_Mul(invTu, endZ);
-		EGL_Fixed endTv = EGL_Mul(invTv, endZ);
-
 		EGL_Fixed deltaZ = (endZ - z) >> LOG_LINEAR_SPAN;
-		EGL_Fixed deltaTu = (endTu - tu) >> LOG_LINEAR_SPAN; 
-		EGL_Fixed deltaTv = (endTv - tv) >> LOG_LINEAR_SPAN;
+
+		EGL_Fixed endTu[EGL_NUM_TEXTURE_UNITS];
+		EGL_Fixed endTv[EGL_NUM_TEXTURE_UNITS];
+		EGL_Fixed deltaTu[EGL_NUM_TEXTURE_UNITS];
+		EGL_Fixed deltaTv[EGL_NUM_TEXTURE_UNITS];
+
+		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+			invTu[unit] += deltaInvU[unit] << LOG_LINEAR_SPAN;
+			invTv[unit] += deltaInvV[unit] << LOG_LINEAR_SPAN;
+
+			endTu[unit] = EGL_Mul(invTu[unit], endZ);
+			endTv[unit] = EGL_Mul(invTv[unit], endZ);
+			deltaTu[unit] = (endTu[unit] - tu[unit]) >> LOG_LINEAR_SPAN; 
+			deltaTv[unit] = (endTv[unit] - tv[unit]) >> LOG_LINEAR_SPAN;
+		}
 
 		int count = LINEAR_SPAN; 
 
@@ -298,8 +327,12 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 			depth += deltaDepth;
 			fogDensity += deltaFog;
 			z += deltaZ;
-			tu += deltaTu;
-			tv += deltaTv;
+
+			for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+				tu[unit] += deltaTu[unit];
+				tv[unit] += deltaTv[unit];
+			}
+
 			++x;
 		} while (--count);
 	}
@@ -308,30 +341,41 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 
 		I32 deltaX = xEnd - x;
 
-		if (m_UseMipmap[TODO]) {
-			EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
-			EGL_Fixed maxDu = EGL_Max(EGL_Abs(dTuDxOverInvZ2), EGL_Abs(dTuDyOverInvZ2)) >> (16 - m_Texture[TODO]->GetTexture(0)->GetLogWidth());
-			EGL_Fixed maxDv = EGL_Max(EGL_Abs(dTvDxOverInvZ2), EGL_Abs(dTvDyOverInvZ2)) >> (16 - m_Texture[TODO]->GetTexture(0)->GetLogHeight());
+		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+			if (m_UseMipmap[unit]) {
+				EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
+				EGL_Fixed maxDu = EGL_Max(EGL_Abs(dTuDxOverInvZ2[unit]), EGL_Abs(dTuDyOverInvZ2[unit])) >> (16 - m_Texture[unit]->GetTexture(0)->GetLogWidth());
+				EGL_Fixed maxDv = EGL_Max(EGL_Abs(dTvDxOverInvZ2[unit]), EGL_Abs(dTvDyOverInvZ2[unit])) >> (16 - m_Texture[unit]->GetTexture(0)->GetLogHeight());
 
-			//EGL_Fixed maxD = EGL_Max(maxDu, maxDv);
-			EGL_Fixed maxD = maxDu + maxDv;
-			//I64 rho64 = ((I64) EGL_Mul(z2, EGL_FixedFromFloat(1/sqrt(2.0f)) + 1)) * ((I64) maxD);
-			EGL_Fixed rho = EGL_Mul(z2, maxD);
+				//EGL_Fixed maxD = EGL_Max(maxDu, maxDv);
+				EGL_Fixed maxD = maxDu + maxDv;
+				//I64 rho64 = ((I64) EGL_Mul(z2, EGL_FixedFromFloat(1/sqrt(2.0f)) + 1)) * ((I64) maxD);
+				EGL_Fixed rho = EGL_Mul(z2, maxD);
 
-			// we start with nearest/minification only selection; will add LINEAR later
+				// we start with nearest/minification only selection; will add LINEAR later
 
-			rasterInfo.MipmapLevel[TODO] = EGL_Min(Log2(rho), rasterInfo.MaxMipmapLevel[TODO]);
+				rasterInfo.MipmapLevel[unit] = EGL_Min(Log2(rho), rasterInfo.MaxMipmapLevel[unit]);
+
+				dTuDyOverInvZ2[unit] += deltaInvDu[unit] << LOG_LINEAR_SPAN;
+				dTvDyOverInvZ2[unit] += deltaInvDv[unit] << LOG_LINEAR_SPAN;
+			}
 		}
 
 		EGL_Fixed endZ = EGL_Inverse(invZ + deltaX * deltaInvZ);
-		EGL_Fixed endTu = EGL_Mul(invTu + deltaX * deltaInvU, endZ);
-		EGL_Fixed endTv = EGL_Mul(invTv + deltaX * deltaInvV, endZ);
-
 		EGL_Fixed invSpan = EGL_Inverse(EGL_FixedFromInt(xEnd - x));
-
 		EGL_Fixed deltaZ = EGL_Mul(endZ - z, invSpan);
-		EGL_Fixed deltaTu = EGL_Mul(endTu - tu, invSpan);
-		EGL_Fixed deltaTv = EGL_Mul(endTv - tv, invSpan);
+
+		EGL_Fixed endTu[EGL_NUM_TEXTURE_UNITS];
+		EGL_Fixed endTv[EGL_NUM_TEXTURE_UNITS];
+		EGL_Fixed deltaTu[EGL_NUM_TEXTURE_UNITS];
+		EGL_Fixed deltaTv[EGL_NUM_TEXTURE_UNITS];
+
+		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+			endTu[unit] = EGL_Mul(invTu[unit] + deltaX * deltaInvU[unit], endZ);
+			endTv[unit] = EGL_Mul(invTv[unit] + deltaX * deltaInvV[unit], endZ);
+			deltaTu[unit] = EGL_Mul(endTu[unit] - tu[unit], invSpan);
+			deltaTv[unit] = EGL_Mul(endTv[unit] - tv[unit], invSpan);
+		}
 
 		for (; x < xEnd; ++x) {
 
@@ -339,8 +383,12 @@ inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos 
 
 			baseColor += colorIncrement;
 			depth += deltaDepth;
-			tu += deltaTu;
-			tv += deltaTv;
+
+			for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+				tu[unit] += deltaTu[unit];
+				tv[unit] += deltaTv[unit];
+			}
+
 			fogDensity += deltaFog;
 		}
 	}

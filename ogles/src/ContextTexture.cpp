@@ -1573,16 +1573,20 @@ void Context :: TexEnvxv(GLenum target, GLenum pname, const GLfixed *params) {
 // --------------------------------------------------------------------------
 
 void Context :: ActiveTexture(GLenum texture) { 
-	if (texture != GL_TEXTURE0) {
+	if (texture < GL_TEXTURE0 || texture >= GL_TEXTURE0 + EGL_NUM_TEXTURE_UNITS) {
 		RecordError(GL_INVALID_ENUM);
 	}
+
+	m_ActiveTexture = texture - GL_TEXTURE0;
 }
 
 
 void Context :: ClientActiveTexture(GLenum texture) { 
-	if (texture != GL_TEXTURE0) {
+	if (texture < GL_TEXTURE0 || texture >= GL_TEXTURE0 + EGL_NUM_TEXTURE_UNITS) {
 		RecordError(GL_INVALID_ENUM);
 	}
+
+	m_ClientActiveTexture = texture - GL_TEXTURE0;
 }
 
 // --------------------------------------------------------------------------
