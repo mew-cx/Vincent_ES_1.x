@@ -5,11 +5,11 @@
 <!-- Sitemap 1.0 -->
 </HEAD><BODY>
 <OBJECT type="text/site properties">
-	<param name="Auto Generated" value="No">
+	<param name="Auto Generated" value="Yes">
 </OBJECT>
 <UL>
 	<LI> <OBJECT type="text/sitemap">
-		<param name="Name" value="Alphabetic Index">
+		<param name="Name" value="Alphabetical Index">
 		<param name="Local" value="index.html">
 		</OBJECT>
 	<LI> <OBJECT type="text/sitemap">

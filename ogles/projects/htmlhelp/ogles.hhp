@@ -110,6 +110,34 @@ Title=Open GL (R) ES 1.0 API Reference
 ..\..\doc\html\glViewport.html
 ..\..\doc\html\index.html
 ..\..\doc\html\index-thematic.html
+..\..\doc\html\eglBindTexImage.html
+..\..\doc\html\eglReleaseTexImage.html
+..\..\doc\html\eglSurfaceAttrib.html
+..\..\doc\html\eglSwapInterval.html
+..\..\doc\html\glBindBuffer.html
+..\..\doc\html\glBufferData.html
+..\..\doc\html\glBufferSubData.html
+..\..\doc\html\glClipPlane.html
+..\..\doc\html\glCurrentPaletteMatrix.html
+..\..\doc\html\glDeleteBuffers.html
+..\..\doc\html\glDrawTex.html
+..\..\doc\html\glGenBuffers.html
+..\..\doc\html\glGet.html
+..\..\doc\html\glGetBufferParameter.html
+..\..\doc\html\glGetClipPlane.html
+..\..\doc\html\glGetLight.html
+..\..\doc\html\glGetMaterial.html
+..\..\doc\html\glGetPointer.html
+..\..\doc\html\glGetTexEnv.html
+..\..\doc\html\glGetTexParameter.html
+..\..\doc\html\glIsBuffer.html
+..\..\doc\html\glIsEnabled.html
+..\..\doc\html\glistexture.html
+..\..\doc\html\glLoadPaletteFromModelViewMatrix.html
+..\..\doc\html\glMatrixIndexPointer.html
+..\..\doc\html\glPointParameter.html
+..\..\doc\html\glPointSizePointer.html
+..\..\doc\html\glWeightPointer.html
 
 [INFOTYPES]
 

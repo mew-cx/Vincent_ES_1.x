@@ -3,13 +3,14 @@
     <title>OpenGL ES Reference Manual</title>
     <link rel="stylesheet" href="man.css" type="text/css"/>
     <meta http-equiv="content-type" content="text/html" charset="UTF-8" />
-    <meta name="author" content="Claude Knaus"/>
+    <meta name="author" content="Claude Knaus, Gary Pallett"/>
     <meta name="keywords" content="OpenGL ES, EGL, man, reference"/>
     <meta name="description" content="Reference manual for OpenGL ES and EGL"/>
   </head>
 
   <body>
-    <h1>OpenGL<sup>&reg;</sup> ES Reference Manual</h1>
+
+<h1>OpenGL<sup>&reg;</sup> ES 1.1 Reference Manual</h1>
 
     <p class="center">
       <a href="index.html">Alphabetical Index</a> &nbsp; | &nbsp;
@@ -68,7 +69,22 @@
       <li><a href="glDrawArrays.html">glDrawArrays</a></li>
       <li><a href="glDrawElements.html">glDrawElements</a></li>
     </ul>
-
+    <h3>Buffer Objects</h3>
+    <p>
+    Create a named buffer:
+    </p>
+    <ul>
+      <li><a href="glBindBuffer.html">glBindBuffer</a></li>
+      <li><a href="glDeleteBuffers.html">glDeleteBuffers</a></li>
+      <li><a href="glGenBuffers.html">glGenBuffers</a></li>
+    </ul>
+    <p>
+    Modify buffer data:
+    </p>
+    <ul>
+      <li><a href="glBufferData.html">glBufferData</a></li>
+      <li><a href="glBufferSubData.html">glBufferSubData</a></li>
+    </ul>
     <h3>Coordinate Transformation</h3>
 
     <p>
@@ -108,6 +124,7 @@
     </p>
 
     <ul>
+      <li><a href="glClipPlane.html">glClipPlane</a></li>
       <li><a href="glDepthRange.html">glDepthRange</a></li>
       <li><a href="glViewport.html">glViewport</a></li>
     </ul>
@@ -157,6 +174,7 @@
 
     <ul>
       <li><a href="glPointSize.html">glPointSize</a></li>
+      <li><a href="glPointParameter.html">glPointParameter</a></li>
       <li><a href="glLineWidth.html">glLineWidth</a></li>
     </ul>
 
@@ -363,19 +381,34 @@
     </p>
 
     <ul>
-      <li><a href="glGetInteger.html">glGetInteger</a></li>
+      <li><a href="glGet.html">glGet</a></li>
+      <li><a href="glGetBufferParameter.html">glGetBufferParameter</a></li>
+      <li><a href="glGetClipPlane.html">glGetClipPlane</a></li>
+      <li><a href="glGetLight.html">glGetLight</a></li>
+      <li><a href="glGetMaterial.html">glGetMaterial</a></li>
+      <li><a href="glGetPointer.html">glGetPointer</a></li>
+      <li><a href="glGetTexEnv.html">glGetTexEnv</a></li>
+      <li><a href="glGetTexParameter.html">glGetTexParameter</a></li>
+      <li><a href="glIsBuffer.html">glIsBuffer</a></li>
+      <li><a href="glIsEnabled.html">glIsEnabled</a></li>
+      <li><a href="glIsTexture.html">glIsTexture</a></li>
     </ul>
 
     <h2>OES Extensions</h2>
-
-    <h3>Query Matrix</h3>
-
-    <p>
-      Query the current matrix:
-    </p>
-
+    <h3>Matrix Palette</h3>
     <ul>
-      <li><a href="glQueryMatrix.html">glQueryMatrix</a></li>
+      <li><a href="glCurrentPaletteMatrix.html">glCurrentPaletteMatrix</a></li>
+      <li><a href="glLoadPaletteFromModelViewMatrix.html">glLoadPaletteFromModelViewMatrix</a></li>
+      <li><a href="glMatrixIndexPointer.html">glMatrixIndexPointer</a></li>
+      <li><a href="glWeightPointer.html">glWeightPointer</a></li>
+    </ul>
+    <h3>Point Size Array</h3>
+    <ul>
+      <li><a href="glPointSizePointer.html">glPointSizePointer</a></li>
+    </ul>
+    <h3>Draw Texture</h3>
+    <ul>
+      <li><a href="glDrawTex.html">glDrawTex</a></li>
     </ul>
 
     </div>
@@ -475,7 +508,7 @@
 
     <div class="footer">
     <p>
-      Copyright &copy; 2003 Silicon Graphics, Inc.
+      Copyright &copy; 2003-2004 Silicon Graphics, Inc.
     </p>
 
     <p>
