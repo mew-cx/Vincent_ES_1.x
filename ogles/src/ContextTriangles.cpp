@@ -485,6 +485,14 @@ namespace {
 		result.m_FogDensity = Interpolate(dst.m_FogDensity, src.m_FogDensity, num, denom);
 	}
 
+	inline void InterpolateWithEye(RasterPos& result, const RasterPos& dst, const RasterPos& src, EGL_Fixed num, EGL_Fixed denom) {
+		result.m_EyeCoords.setX(Interpolate(dst.m_EyeCoords.x(), src.m_EyeCoords.x(), num, denom));
+		result.m_EyeCoords.setY(Interpolate(dst.m_EyeCoords.y(), src.m_EyeCoords.y(), num, denom));
+		result.m_EyeCoords.setZ(Interpolate(dst.m_EyeCoords.z(), src.m_EyeCoords.z(), num, denom));
+		result.m_EyeCoords.setW(Interpolate(dst.m_EyeCoords.w(), src.m_EyeCoords.w(), num, denom));
+		Interpolate(result, dst, src, num, denom);
+	}
+
 	inline size_t ClipXLow(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 
 #		define SET_COORDINATE setX
@@ -559,8 +567,8 @@ namespace {
 
 			current = input[index];
 
-			EGL_Fixed c = current->m_ClipCoords * plane;
-			EGL_Fixed p = previous->m_ClipCoords * plane;
+			EGL_Fixed c = current->m_EyeCoords * plane;
+			EGL_Fixed p = previous->m_EyeCoords * plane;
 
 			if (c >= 0) {
 				if (p >= 0) {
@@ -572,7 +580,7 @@ namespace {
 					RasterPos & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 										
-					Interpolate(newVertex, *current, *previous, p, p - c); 
+					InterpolateWithEye(newVertex, *current, *previous, p, p - c); 
 					output[resultCount++] = current;
 				}
 			} else {
@@ -582,7 +590,7 @@ namespace {
 					RasterPos & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 					
-					Interpolate(newVertex, *current, *previous, p, p - c); 
+					InterpolateWithEye(newVertex, *current, *previous, p, p - c); 
 				}
 			}
 

@@ -553,7 +553,7 @@ EGL_Fixed Context :: FogDensity(EGL_Fixed eyeDistance) const {
 }
 
 
-void Context :: PrepareArray(VertexArray & array, bool enabled) {
+void Context :: PrepareArray(VertexArray & array, bool enabled, bool isColor) {
 
 	array.effectivePointer = 0;
 
@@ -575,7 +575,7 @@ void Context :: PrepareArray(VertexArray & array, bool enabled) {
 		}
 	}
 
-	array.PrepareFetchValues();
+	array.PrepareFetchValues(isColor);
 }
 
 
@@ -601,7 +601,7 @@ void Context :: PrepareRendering() {
 
 	PrepareArray(m_VertexArray,   m_VertexArrayEnabled);
 	PrepareArray(m_NormalArray,	  m_NormalArrayEnabled);
-	PrepareArray(m_ColorArray,    m_ColorArrayEnabled);
+	PrepareArray(m_ColorArray,    m_ColorArrayEnabled, true);
 	PrepareArray(m_TexCoordArray, m_TexCoordArrayEnabled);
 	PrepareArray(m_PointSizeArray,m_PointSizeArrayEnabled);
 }
@@ -623,22 +623,15 @@ void Context :: CurrentValuesToRasterPosNoLight(RasterPos * rasterPos) {
 	FractionalColor backColor;
 
 	// apply projection matrix to eye coordinates 
-	rasterPos->m_ClipCoords = m_VertexTransformation * m_CurrentVertex;
+	rasterPos->m_EyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
+	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
-	//if (rasterPos->m_ClipCoords.w() < 0) {
-		//rasterPos->m_ClipCoords = -rasterPos->m_ClipCoords;
-	//}
-	
 	//	copy current colors to raster pos
 	rasterPos->m_FrontColor = rasterPos->m_BackColor = m_CurrentRGBA;
 
 	if (m_RasterizerState.IsEnabledFog()) {
 		// populate fog density here...
-		rasterPos->m_EyeDistance = EGL_Abs(m_ModelViewMatrixStack.CurrentMatrix().GetTransformedZ(m_CurrentVertex));
-		rasterPos->m_FogDensity = FogDensity(rasterPos->m_EyeDistance);
-	} else if (m_PointSizeAttenuate) {
-		rasterPos->m_EyeDistance = EGL_Abs(m_ModelViewMatrixStack.CurrentMatrix().GetTransformedZ(m_CurrentVertex));
-		rasterPos->m_FogDensity = 0;
+		rasterPos->m_FogDensity = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
 	} else {
 		rasterPos->m_FogDensity = 0;
 	}
@@ -664,19 +657,11 @@ void Context :: CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos) {
 	FractionalColor backColor;
 
 	// apply projection matrix to eye coordinates 
-	rasterPos->m_ClipCoords = m_VertexTransformation * m_CurrentVertex;
-
-	//if (rasterPos->m_ClipCoords.w() < 0) {
-		//rasterPos->m_ClipCoords = -rasterPos->m_ClipCoords;
-	//}
-	
-	// apply model view matrix to vertex coordinate -> eye coordinates vertex
-	Vec4D eyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
-
-	rasterPos->m_EyeDistance = EGL_Abs(eyeCoords.z());
+	rasterPos->m_EyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
+	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
-	rasterPos->m_FogDensity = FogDensity(rasterPos->m_EyeDistance);
+	rasterPos->m_FogDensity = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
@@ -694,7 +679,7 @@ void Context :: CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos) {
 
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight(eyeCoords, eyeNormal, 
+			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, eyeNormal, 
 				m_FrontMaterial, color);
 		}
 	}
@@ -722,19 +707,11 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos) {
 	FractionalColor backColor;
 
 	// apply projection matrix to eye coordinates 
-	rasterPos->m_ClipCoords = m_VertexTransformation * m_CurrentVertex;
-
-	//if (rasterPos->m_ClipCoords.w() < 0) {
-		//rasterPos->m_ClipCoords = -rasterPos->m_ClipCoords;
-	//}
-	
-	// apply model view matrix to vertex coordinate -> eye coordinates vertex
-	Vec4D eyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
-
-	rasterPos->m_EyeDistance = EGL_Abs(eyeCoords.z());
+	rasterPos->m_EyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
+	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
-	rasterPos->m_FogDensity = FogDensity(rasterPos->m_EyeDistance);
+	rasterPos->m_FogDensity = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
@@ -742,7 +719,6 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos) {
 	if (m_NormalizeEnabled) {
 		eyeNormal.Normalize();
 	}
-
 
 	// for each light that is turned on, call into calculation
 	int mask = 1;
@@ -752,7 +728,7 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos) {
 
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight(eyeCoords, eyeNormal, 
+			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, eyeNormal, 
 				m_FrontMaterial, m_CurrentRGBA, color);
 		}
 	}
@@ -780,19 +756,11 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos) {
 	FractionalColor backColor;
 
 	// apply projection matrix to eye coordinates 
-	rasterPos->m_ClipCoords = m_VertexTransformation * m_CurrentVertex;
-
-	//if (rasterPos->m_ClipCoords.w() < 0) {
-		//rasterPos->m_ClipCoords = -rasterPos->m_ClipCoords;
-	//}
-	
-	// apply model view matrix to vertex coordinate -> eye coordinates vertex
-	Vec4D eyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
-
-	rasterPos->m_EyeDistance = EGL_Abs(eyeCoords.z());
+	rasterPos->m_EyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
+	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
-	rasterPos->m_FogDensity = FogDensity(rasterPos->m_EyeDistance);
+	rasterPos->m_FogDensity = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
@@ -800,7 +768,6 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos) {
 	if (m_NormalizeEnabled) {
 		eyeNormal.Normalize();
 	}
-
 
 	// for each light that is turned on, call into calculation
 	int mask = 1;
@@ -813,7 +780,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos) {
 
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight(eyeCoords, eyeNormal, 
+			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, eyeNormal, 
 				m_FrontMaterial, color, backColor);
 		}
 	}
@@ -844,16 +811,11 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 	FractionalColor backColor;
 
 	// apply projection matrix to eye coordinates 
-	rasterPos->m_ClipCoords = m_VertexTransformation * m_CurrentVertex;
+	rasterPos->m_EyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
+	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
-	//if (rasterPos->m_ClipCoords.w() < 0) {
-		//rasterPos->m_ClipCoords = -rasterPos->m_ClipCoords;
-	//}
-
-	// apply model view matrix to vertex coordinate -> eye coordinates vertex
-	Vec4D eyeCoords = m_ModelViewMatrixStack.CurrentMatrix() * m_CurrentVertex;
-
-	rasterPos->m_EyeDistance = EGL_Abs(eyeCoords.z());
+	// populate fog density here...
+	rasterPos->m_FogDensity = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
@@ -861,7 +823,6 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 	if (m_NormalizeEnabled) {
 		eyeNormal.Normalize();
 	}
-
 
 	// for each light that is turned on, call into calculation
 	int mask = 1;
@@ -873,7 +834,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight(eyeCoords, eyeNormal, 
+			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, eyeNormal, 
 				m_FrontMaterial, m_CurrentRGBA, color, backColor);
 		}
 	}
@@ -883,9 +844,6 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 	
 	rasterPos->m_FrontColor = color;
 	rasterPos->m_BackColor = backColor;
-
-	// populate fog density here...
-	rasterPos->m_FogDensity = FogDensity(rasterPos->m_EyeDistance);
 
 	// apply texture transform to texture coordinates
 	// really should have a transformation primitive of the correct dimensionality
@@ -957,8 +915,17 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 	}
 }
 
-void Context :: GetClipPlanex(GLenum pname, GLfixed eqn[4]) {
-	assert(0);
+void Context :: GetClipPlanex(GLenum plane, GLfixed eqn[4]) {
+	if (plane < GL_CLIP_PLANE0 || plane >= GL_CLIP_PLANE0 + NUM_CLIP_PLANES) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	size_t index = plane - GL_CLIP_PLANE0;
+	eqn[0] = m_ClipPlanes[index].x();
+	eqn[1] = m_ClipPlanes[index].y();
+	eqn[2] = m_ClipPlanes[index].z();
+	eqn[3] = m_ClipPlanes[index].w();
 }
 
 void Context :: ClipPlanex(GLenum plane, const GLfixed *equation) {
@@ -969,5 +936,5 @@ void Context :: ClipPlanex(GLenum plane, const GLfixed *equation) {
 	}
 
 	size_t index = plane - GL_CLIP_PLANE0;
-	m_ClipPlanes[index] = Vec4D(equation);
+	m_ClipPlanes[index] = m_FullInverseModelViewMatrix * Vec4D(equation);
 }

@@ -302,7 +302,6 @@ namespace EGL {
 		}
 
 		void UpdateInverseModelViewMatrix(void);
-		void UpdateVertexTransformation(void);
 		void RebuildMatrices(void);
 
 		// SGIS_generate_mipmap extension
@@ -360,7 +359,7 @@ private:
 		typedef void (Context::*GeometryFunction)(RasterPos * rasterPos);
 
 		void PrepareRendering();
-		void PrepareArray(VertexArray & array, bool enabled);
+		void PrepareArray(VertexArray & array, bool enabled, bool isColor = false);
 
 		void CurrentValuesToRasterPosNoLight(RasterPos * rasterPos);
 		void CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos);
@@ -399,7 +398,7 @@ private:
 
 		MatrixStack *		m_CurrentMatrixStack;
 		Matrix4x4			m_InverseModelViewMatrix;
-		Matrix4x4			m_VertexTransformation;
+		Matrix4x4			m_FullInverseModelViewMatrix;
 
 		// ----------------------------------------------------------------------
 		// Viewport configuration

@@ -263,7 +263,7 @@ EGL_Fixed EGL_InvSqrt(EGL_Fixed value);
 //	value		-	the number whose square root should be calculated
 // --------------------------------------------------------------------------
 inline EGL_Fixed EGL_FastSqrt(EGL_Fixed value) {
-	return EGL_Inverse(EGL_InvSqrt(value));
+	return value <= 0 ? 0 : EGL_Inverse(EGL_InvSqrt(value));
 }
 
 

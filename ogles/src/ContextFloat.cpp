@@ -368,8 +368,17 @@ void Context :: DrawTexfv(GLfloat *coords) {
 	assert(0);
 }
 
-void Context :: GetClipPlanef(GLenum pname, GLfloat eqn[4]) {
-	assert(0);
+void Context :: GetClipPlanef(GLenum plane, GLfloat eqn[4]) {
+	if (plane < GL_CLIP_PLANE0 || plane >= GL_CLIP_PLANE0 + NUM_CLIP_PLANES) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	size_t index = plane - GL_CLIP_PLANE0;
+	eqn[0] = EGL_FloatFromFixed(m_ClipPlanes[index].x());
+	eqn[1] = EGL_FloatFromFixed(m_ClipPlanes[index].y());
+	eqn[2] = EGL_FloatFromFixed(m_ClipPlanes[index].z());
+	eqn[3] = EGL_FloatFromFixed(m_ClipPlanes[index].w());
 }
 
 void Context :: GetFloatv(GLenum pname, GLfloat *params) {

@@ -123,7 +123,7 @@ void Context :: RenderPoint(RasterPos& point, EGL_Fixed size) {
 	if (m_ClipPlaneEnabled) {
 		for (size_t index = 0, mask = 1; index < NUM_CLIP_PLANES; ++index, mask <<= 1) {
 			if (m_ClipPlaneEnabled & mask) {
-				if (point.m_ClipCoords * m_ClipPlanes[index] < 0) {
+				if (point.m_EyeCoords * m_ClipPlanes[index] < 0) {
 					return;
 				}
 			}
@@ -143,7 +143,7 @@ void Context :: RenderPoint(RasterPos& point, EGL_Fixed size) {
 	point.m_Color = point.m_FrontColor;
 
 	if (m_PointSizeAttenuate) {
-		EGL_Fixed eyeDistance = point.m_EyeDistance;
+		EGL_Fixed eyeDistance = EGL_Abs(point.m_EyeCoords.z());
 
 		EGL_Fixed factor =
 			EGL_InvSqrt(m_PointDistanceAttenuation[0] +

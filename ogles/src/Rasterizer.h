@@ -84,6 +84,7 @@ namespace EGL {
 	// ----------------------------------------------------------------------
 
 	struct RasterPos {
+		Vec4D				m_EyeCoords;
 		Vec4D				m_ClipCoords;
 		ScreenCoord			m_WindowCoords;		
 		FractionalColor		m_Color;
@@ -91,7 +92,6 @@ namespace EGL {
 		FractionalColor		m_BackColor;		
 		TexCoord			m_TextureCoords;	// texture coords 0..1
 		EGL_Fixed			m_FogDensity;		// fog density at this vertex
-		EGL_Fixed			m_EyeDistance;		// eye distance at this vertex
 	};
 
 	// ----------------------------------------------------------------------
