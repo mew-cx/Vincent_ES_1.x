@@ -184,25 +184,25 @@ namespace EGL {
 		// Primitive rendering state
 		// ----------------------------------------------------------------------
 
-		void SetTexEnvColor(const Color& color);
-		Color GetTexEnvColor() const;
+		void SetTexEnvColor(size_t unit, const Color& color);
+		Color GetTexEnvColor(size_t unit) const;
 
-		void SetTextureMode(TextureMode mode);
-		TextureMode GetTextureMode() const;
+		void SetTextureMode(size_t unit, TextureMode mode);
+		TextureMode GetTextureMode(size_t unit) const;
 
-		void SetMinFilterMode(FilterMode mode);
-		void SetMagFilterMode(FilterMode mode);
-		void SetMipmapFilterMode(FilterMode mode);
-		void SetWrappingModeS(WrappingMode mode);
-		void SetWrappingModeT(WrappingMode mode);
+		void SetMinFilterMode(size_t unit, FilterMode mode);
+		void SetMagFilterMode(size_t unit, FilterMode mode);
+		void SetMipmapFilterMode(size_t unit, FilterMode mode);
+		void SetWrappingModeS(size_t unit, WrappingMode mode);
+		void SetWrappingModeT(size_t unit, WrappingMode mode);
 
-		FilterMode GetMinFilterMode() const			{ return m_Texture.MinFilterMode; }
-		FilterMode GetMagFilterMode() const			{ return m_Texture.MagFilterMode; }
-		FilterMode GetMipmapFilterMode() const		{ return m_Texture.MipmapFilterMode; }
-		WrappingMode GetWrappingModeS() const		{ return m_Texture.WrappingModeS; }
-		WrappingMode GetWrappingModeT() const		{ return m_Texture.WrappingModeT; }
+		FilterMode GetMinFilterMode(size_t unit) const			{ return m_Texture[unit].MinFilterMode; }
+		FilterMode GetMagFilterMode(size_t unit) const			{ return m_Texture[unit].MagFilterMode; }
+		FilterMode GetMipmapFilterMode(size_t unit) const		{ return m_Texture[unit].MipmapFilterMode; }
+		WrappingMode GetWrappingModeS(size_t unit) const		{ return m_Texture[unit].WrappingModeS; }
+		WrappingMode GetWrappingModeT(size_t unit) const		{ return m_Texture[unit].WrappingModeT; }
 
-		void SetInternalFormat(TextureFormat format);
+		void SetInternalFormat(size_t unit, TextureFormat format);
 
 		void SetDepthRange(EGL_Fixed zNear, EGL_Fixed zFar);
 
@@ -221,15 +221,15 @@ namespace EGL {
 		void SetShadeModel(ShadingModel mode);
 		ShadingModel GetShadeModel() const;
 
-		void EnableTexture(bool enabled);
-		bool IsEnabledTexture() const;
+		void EnableTexture(size_t unit, bool enabled);
+		bool IsEnabledTexture(size_t unit) const;
 
 		void SetPointSmoothEnabled(bool enabled);
 		bool IsPointSmoothEnabled() const;
 		void SetPointSpriteEnabled(bool enabled);
 		bool IsPointSpriteEnabled() const;
-		void SetPointCoordReplaceEnabled(bool enabled);
-		bool IsPointCoordReplaceEnabled() const;
+		void SetPointCoordReplaceEnabled(size_t unit, bool enabled);
+		bool IsPointCoordReplaceEnabled(size_t unit) const;
 
 		void EnablePolygonOffsetFill(bool enabled);
 		bool IsEnabledPolygonOffsetFill() const;
@@ -478,7 +478,7 @@ namespace EGL {
 			WrappingMode		WrappingModeT;
 			TextureFormat		InternalFormat;
 		}
-								m_Texture;
+								m_Texture[EGL_NUM_TEXTURE_UNITS];
 
 		struct ScissorTestState {
 			ScissorTestState() {
@@ -750,44 +750,44 @@ namespace EGL {
 	// ----------------------------------------------------------------------
 
 
-	inline void RasterizerState :: SetTexEnvColor(const Color& color) {
-		m_Texture.EnvColor = color;
+	inline void RasterizerState :: SetTexEnvColor(size_t unit, const Color& color) {
+		m_Texture[unit].EnvColor = color;
 	}
 
-	inline Color RasterizerState :: GetTexEnvColor() const {
-		return m_Texture.EnvColor;
+	inline Color RasterizerState :: GetTexEnvColor(size_t unit) const {
+		return m_Texture[unit].EnvColor;
 	}
 
-	inline void RasterizerState :: SetTextureMode(TextureMode mode) {
-		m_Texture.Mode = mode;
+	inline void RasterizerState :: SetTextureMode(size_t unit, TextureMode mode) {
+		m_Texture[unit].Mode = mode;
 	}
 
-	inline RasterizerState::TextureMode RasterizerState :: GetTextureMode() const {
-		return m_Texture.Mode;
+	inline RasterizerState::TextureMode RasterizerState :: GetTextureMode(size_t unit) const {
+		return m_Texture[unit].Mode;
 	}
 
-	inline void RasterizerState :: SetMinFilterMode(FilterMode mode) {
-		m_Texture.MinFilterMode = mode;
+	inline void RasterizerState :: SetMinFilterMode(size_t unit, FilterMode mode) {
+		m_Texture[unit].MinFilterMode = mode;
 	}
 
-	inline void RasterizerState :: SetMagFilterMode(FilterMode mode) {
-		m_Texture.MagFilterMode = mode;
+	inline void RasterizerState :: SetMagFilterMode(size_t unit, FilterMode mode) {
+		m_Texture[unit].MagFilterMode = mode;
 	}
 
-	inline void RasterizerState :: SetMipmapFilterMode(FilterMode mode) {
-		m_Texture.MipmapFilterMode = mode;
+	inline void RasterizerState :: SetMipmapFilterMode(size_t unit, FilterMode mode) {
+		m_Texture[unit].MipmapFilterMode = mode;
 	}
 
-	inline void RasterizerState :: SetWrappingModeS(WrappingMode mode) {
-		m_Texture.WrappingModeS = mode;
+	inline void RasterizerState :: SetWrappingModeS(size_t unit, WrappingMode mode) {
+		m_Texture[unit].WrappingModeS = mode;
 	}
 
-	inline void RasterizerState :: SetWrappingModeT(WrappingMode mode) {
-		m_Texture.WrappingModeT = mode;
+	inline void RasterizerState :: SetWrappingModeT(size_t unit, WrappingMode mode) {
+		m_Texture[unit].WrappingModeT = mode;
 	}
 
-	inline void RasterizerState :: SetInternalFormat(TextureFormat format) {
-		m_Texture.InternalFormat = format;
+	inline void RasterizerState :: SetInternalFormat(size_t unit, TextureFormat format) {
+		m_Texture[unit].InternalFormat = format;
 	}
 
 	inline void RasterizerState :: SetFogColor(const Color& color) {
@@ -814,8 +814,8 @@ namespace EGL {
 		return m_ShadingModel;
 	}
 
-	inline void RasterizerState :: EnableTexture(bool enabled) {
-		m_Texture.Enabled = enabled;
+	inline void RasterizerState :: EnableTexture(size_t unit, bool enabled) {
+		m_Texture[unit].Enabled = enabled;
 	}
 
 	inline void RasterizerState :: EnablePolygonOffsetFill(bool enabled) {
@@ -939,11 +939,11 @@ namespace EGL {
 		m_Point.SpriteEnabled = enabled;
 	}
 
-	inline void RasterizerState :: SetPointCoordReplaceEnabled(bool enabled) {
+	inline void RasterizerState :: SetPointCoordReplaceEnabled(size_t unit, bool enabled) {
 		m_Point.CoordReplaceEnabled = enabled;
 	}
 
-	inline bool RasterizerState :: IsPointCoordReplaceEnabled() const {
+	inline bool RasterizerState :: IsPointCoordReplaceEnabled(size_t unit) const {
 		return m_Point.CoordReplaceEnabled;
 	}
 
@@ -1003,8 +1003,8 @@ namespace EGL {
 		return m_Stencil.Enabled;
 	}
 
-	inline bool RasterizerState :: IsEnabledTexture() const {
-		return m_Texture.Enabled;
+	inline bool RasterizerState :: IsEnabledTexture(size_t unit) const {
+		return m_Texture[unit].Enabled;
 	}
 
 	inline bool RasterizerState :: IsPointSpriteEnabled() const {

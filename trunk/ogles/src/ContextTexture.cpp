@@ -1232,7 +1232,7 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat,
 	}
 
 	if (!level) {
-		GetRasterizerState()->SetInternalFormat(internalFormat);
+		GetRasterizerState()->SetInternalFormat(m_ActiveTexture, internalFormat);
 	}
 
 	if (pixels != 0) {
@@ -1421,11 +1421,8 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 				if (mode != RasterizerState::FilterModeInvalid) {
 					multiTexture->SetMinFilterMode(mode);
-					GetRasterizerState()->SetMinFilterMode(mode);
-
 					RasterizerState::FilterMode mipmapMode = MipmapFilterModeFromEnum(param);
 					multiTexture->SetMipmapFilterMode(mipmapMode);
-					GetRasterizerState()->SetMipmapFilterMode(mipmapMode);
 				} else {
 					RecordError(GL_INVALID_ENUM);
 				}
@@ -1438,7 +1435,6 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 				if (mode != RasterizerState::FilterModeInvalid) {
 					multiTexture->SetMagFilterMode(mode);
-					GetRasterizerState()->SetMagFilterMode(mode);
 				} else {
 					RecordError(GL_INVALID_ENUM);
 				}
@@ -1451,7 +1447,6 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 				if (mode != RasterizerState::WrappingModeInvalid) {
 					multiTexture->SetWrappingModeS(mode);
-					GetRasterizerState()->SetWrappingModeS(mode);
 				} else {
 					RecordError(GL_INVALID_ENUM);
 				}
@@ -1464,7 +1459,6 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 				if (mode != RasterizerState::WrappingModeInvalid) {
 					multiTexture->SetWrappingModeT(mode);
-					GetRasterizerState()->SetWrappingModeT(mode);
 				} else {
 					RecordError(GL_INVALID_ENUM);
 				}
@@ -1495,23 +1489,23 @@ void Context :: TexEnvx(GLenum target, GLenum pname, GLfixed param) {
 			case GL_TEXTURE_ENV_MODE:
 				switch (param) {
 					case GL_MODULATE:
-						GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeModulate);
+						GetRasterizerState()->SetTextureMode(m_ActiveTexture, RasterizerState::TextureModeModulate);
 						break;
 
 					case GL_REPLACE:
-						GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeReplace);
+						GetRasterizerState()->SetTextureMode(m_ActiveTexture, RasterizerState::TextureModeReplace);
 						break;
 
 					case GL_DECAL:
-						GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeDecal);
+						GetRasterizerState()->SetTextureMode(m_ActiveTexture, RasterizerState::TextureModeDecal);
 						break;
 
 					case GL_BLEND:
-						GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeBlend);
+						GetRasterizerState()->SetTextureMode(m_ActiveTexture, RasterizerState::TextureModeBlend);
 						break;
 
 					case GL_ADD:
-						GetRasterizerState()->SetTextureMode(RasterizerState::TextureModeAdd);
+						GetRasterizerState()->SetTextureMode(m_ActiveTexture, RasterizerState::TextureModeAdd);
 						break;
 
 					default:
@@ -1531,7 +1525,7 @@ void Context :: TexEnvx(GLenum target, GLenum pname, GLfixed param) {
 	case GL_POINT_SPRITE_OES:
 		switch (pname) {
 		case GL_COORD_REPLACE_OES:
-			GetRasterizerState()->SetPointCoordReplaceEnabled(param != 0);
+			GetRasterizerState()->SetPointCoordReplaceEnabled(m_ActiveTexture, param != 0);
 			break;
 
 		default:
@@ -1552,7 +1546,7 @@ void Context :: TexEnvxv(GLenum target, GLenum pname, const GLfixed *params) {
 	case GL_TEXTURE_ENV:
 		switch (pname) {
 			case GL_TEXTURE_ENV_COLOR:
-				GetRasterizerState()->SetTexEnvColor(FractionalColor(params));
+				GetRasterizerState()->SetTexEnvColor(m_ActiveTexture, FractionalColor(params));
 				break;
 
 			default:
@@ -2091,7 +2085,7 @@ void Context :: GetTexEnviv(GLenum env, GLenum pname, GLint *params) {
 	switch (pname) {
 	case GL_TEXTURE_ENV_MODE:
 		{
-			switch (m_RasterizerState.GetTextureMode()) {
+			switch (m_RasterizerState.GetTextureMode(m_ActiveTexture)) {
 			case RasterizerState::TextureModeModulate:	params[0] = GL_MODULATE;	break;
 			case RasterizerState::TextureModeReplace:	params[0] = GL_REPLACE;		break;
 			case RasterizerState::TextureModeDecal:		params[0] = GL_DECAL;		break;
@@ -2134,7 +2128,7 @@ bool Context :: GetTexEnvxv(GLenum env, GLenum pname, GLfixed *params) {
 
 	switch (pname) {
 	case GL_TEXTURE_ENV_COLOR:
-		CopyColor(m_RasterizerState.GetTexEnvColor(), params);
+		CopyColor(m_RasterizerState.GetTexEnvColor(m_ActiveTexture), params);
 		break;
 
 	default:

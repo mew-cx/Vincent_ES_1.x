@@ -237,10 +237,10 @@ void CodeGenerator :: GenerateRasterPoint() {
 		FINV		(regDelta0, regSize);
 		OR			(regDelta, regDelta0, regDelta0);
 
-		if (m_State->m_Texture.MipmapFilterMode != RasterizerState::FilterModeNone) {
+		if (m_State->m_Texture[TODO].MipmapFilterMode != RasterizerState::FilterModeNone) {
 
-			if (m_State->m_Texture.MipmapFilterMode == RasterizerState::FilterModeNearest ||
-				/* remove this */ m_State->m_Texture.MipmapFilterMode == RasterizerState::FilterModeLinear) {
+			if (m_State->m_Texture[TODO].MipmapFilterMode == RasterizerState::FilterModeNearest ||
+				/* remove this */ m_State->m_Texture[TODO].MipmapFilterMode == RasterizerState::FilterModeLinear) {
 				//EGL_Fixed maxDu = delta >> (16 - m_Texture->GetTexture(0)->GetLogWidth());
 				//EGL_Fixed maxDv = delta >> (16 - m_Texture->GetTexture(0)->GetLogHeight());
 

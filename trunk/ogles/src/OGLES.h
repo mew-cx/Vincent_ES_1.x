@@ -93,6 +93,8 @@
 #define EGL_VERSION_NUMBER			EGL_RELEASE " " EGL_CONFIG_RENDERER EGL_JIT_VERSION
 
 #define EGL_NUM_TEXTURE_UNITS		1
+#define TODO 0
+
 
 
 // --------------------------------------------------------------------------

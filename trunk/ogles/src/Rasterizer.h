@@ -131,8 +131,8 @@ namespace EGL {
 
 		// texture info
 		Texture *	Textures[EGL_NUM_TEXTURE_UNITS];
-		U32			MipmapLevel;
-		U32			MaxMipmapLevel;
+		U32			MipmapLevel[EGL_NUM_TEXTURE_UNITS];
+		U32			MaxMipmapLevel[EGL_NUM_TEXTURE_UNITS];
 
 
 		void Init(Surface * surface, I32 y) {

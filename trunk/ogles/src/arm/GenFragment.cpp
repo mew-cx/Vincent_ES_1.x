@@ -132,7 +132,7 @@ void CodeGenerator :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentB
 
 	cg_block_t * block = currentBlock;
 
-	switch (m_State->m_Texture.InternalFormat) {
+	switch (m_State->m_Texture[TODO].InternalFormat) {
 		case RasterizerState::TextureFormatAlpha:				// 8
 			{
 			//texColor = Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
@@ -617,7 +617,7 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 	//EGL_Fixed tu0;
 	//EGL_Fixed tv0;
 
-	if (m_State->GetMinFilterMode() == RasterizerState::FilterModeNearest) {
+	if (m_State->GetMinFilterMode(TODO) == RasterizerState::FilterModeNearest) {
 		DECL_REG	(regU0);
 		DECL_REG	(regV0);
 
@@ -625,8 +625,8 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 
 		LDI		(regMask, 0xffff);
 
-		WrapOrClamp(procedure, block, regU, regU0, regMask, m_State->m_Texture.WrappingModeS);
-		WrapOrClamp(procedure, block, regV, regV0, regMask, m_State->m_Texture.WrappingModeT);
+		WrapOrClamp(procedure, block, regU, regU0, regMask, m_State->m_Texture[TODO].WrappingModeS);
+		WrapOrClamp(procedure, block, regV, regV0, regMask, m_State->m_Texture[TODO].WrappingModeT);
 
 		// get the pixel color
 		//Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
@@ -657,7 +657,7 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 		FetchTexColor(procedure, block, regTextureData, regTexOffset,
 					  regTexColorR, regTexColorG, regTexColorB, regTexColorA, regTexColor565);
 	} else {
-		assert(m_State->GetMinFilterMode() == RasterizerState::FilterModeLinear);
+		assert(m_State->GetMinFilterMode(TODO) == RasterizerState::FilterModeLinear);
 
 		cg_virtual_reg_t * regTextureLogWidth =		LOAD_DATA(block, fragmentInfo.regTexture, OFFSET_TEXTURE_LOG_WIDTH);
 
@@ -722,10 +722,10 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 		ADD			(regTexX1, regTexX, regConstant1);
 		ADD			(regTexY1, regTexY, regConstant1);
 
-		WrapOrClamp(procedure, block, regTexX, regI0, regIntMaskU, m_State->m_Texture.WrappingModeS);
-		WrapOrClamp(procedure, block, regTexX1, regI1, regIntMaskU, m_State->m_Texture.WrappingModeS);
-		WrapOrClamp(procedure, block, regTexY, regJ0, regIntMaskV, m_State->m_Texture.WrappingModeT);
-		WrapOrClamp(procedure, block, regTexY1, regJ1, regIntMaskV, m_State->m_Texture.WrappingModeT);
+		WrapOrClamp(procedure, block, regTexX, regI0, regIntMaskU, m_State->m_Texture[TODO].WrappingModeS);
+		WrapOrClamp(procedure, block, regTexX1, regI1, regIntMaskU, m_State->m_Texture[TODO].WrappingModeS);
+		WrapOrClamp(procedure, block, regTexY, regJ0, regIntMaskV, m_State->m_Texture[TODO].WrappingModeT);
+		WrapOrClamp(procedure, block, regTexY1, regJ1, regIntMaskV, m_State->m_Texture[TODO].WrappingModeT);
 
 		DECL_REG	(regScaledJ0);
 		DECL_REG	(regScaledJ1);
@@ -977,7 +977,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	cg_virtual_reg_t * regColorA;
 	cg_virtual_reg_t * regColor565;
 
-	if (m_State->m_Texture.Enabled) {
+	if (m_State->m_Texture[TODO].Enabled) {
 
 		//Color texColor; 
 		cg_virtual_reg_t * regTexColorR;			
@@ -989,10 +989,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		GenerateFetchTexColor(procedure, block, fragmentInfo, 
 							  regTexColorR, regTexColorG, regTexColorB, regTexColorA, regTexColor565);
 
-		switch (m_State->m_Texture.InternalFormat) {
+		switch (m_State->m_Texture[TODO].InternalFormat) {
 			default:
 			case RasterizerState::TextureFormatAlpha:
-				switch (m_State->m_Texture.Mode) {
+				switch (m_State->m_Texture[TODO].Mode) {
 					case RasterizerState::TextureModeReplace:
 						{
 						//color = Color(color.r, color.g, color.b, texColor.a);
@@ -1072,7 +1072,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			case RasterizerState::TextureFormatLuminance:
 			case RasterizerState::TextureFormatRGB565:
 			case RasterizerState::TextureFormatRGB8:
-				switch (m_State->m_Texture.Mode) {
+				switch (m_State->m_Texture[TODO].Mode) {
 					case RasterizerState::TextureModeDecal:
 					case RasterizerState::TextureModeReplace:
 						{
@@ -1164,7 +1164,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
-							LDI		(regTexEnv, m_State->m_Texture.EnvColor.r);
+							LDI		(regTexEnv, m_State->m_Texture[TODO].EnvColor.r);
 							SUB		(regDiff, regShiftedAdjusted, regTexEnv);
 							MUL		(regProduct, regDiff, regTexColorR);
 							SUB		(regDifference, regColorAdjusted, regProduct);
@@ -1190,7 +1190,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
-							LDI		(regTexEnv, m_State->m_Texture.EnvColor.g);
+							LDI		(regTexEnv, m_State->m_Texture[TODO].EnvColor.g);
 							SUB		(regDiff, regShiftedAdjusted, regTexEnv);
 							MUL		(regProduct, regDiff, regTexColorG);
 							SUB		(regDifference, regColorAdjusted, regProduct);
@@ -1216,7 +1216,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
-							LDI		(regTexEnv, m_State->m_Texture.EnvColor.b);
+							LDI		(regTexEnv, m_State->m_Texture[TODO].EnvColor.b);
 							SUB		(regDiff, regShiftedAdjusted, regTexEnv);
 							MUL		(regProduct, regDiff, regTexColorB);
 							SUB		(regDifference, regColorAdjusted, regProduct);
@@ -1348,7 +1348,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			case RasterizerState::TextureFormatRGBA5551:
 			case RasterizerState::TextureFormatRGBA4444:
 			case RasterizerState::TextureFormatRGBA8:
-				switch (m_State->m_Texture.Mode) {
+				switch (m_State->m_Texture[TODO].Mode) {
 					case RasterizerState::TextureModeReplace:
 						{
 						//color = texColor;
@@ -1544,7 +1544,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
-							LDI		(regTexEnv, m_State->m_Texture.EnvColor.r);
+							LDI		(regTexEnv, m_State->m_Texture[TODO].EnvColor.r);
 							SUB		(regDiff, regShiftedAdjusted, regTexEnv);
 							MUL		(regProduct, regDiff, regTexColorR);
 							SUB		(regDifference, regColorAdjusted, regProduct);
@@ -1570,7 +1570,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
-							LDI		(regTexEnv, m_State->m_Texture.EnvColor.g);
+							LDI		(regTexEnv, m_State->m_Texture[TODO].EnvColor.g);
 							SUB		(regDiff, regShiftedAdjusted, regTexEnv);
 							MUL		(regProduct, regDiff, regTexColorG);
 							SUB		(regDifference, regColorAdjusted, regProduct);
@@ -1596,7 +1596,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 							DECL_REG	(regDifference);
 
 							LSR		(regShiftedAdjusted, regAdjusted, regConstant8);
-							LDI		(regTexEnv, m_State->m_Texture.EnvColor.b);
+							LDI		(regTexEnv, m_State->m_Texture[TODO].EnvColor.b);
 							SUB		(regDiff, regShiftedAdjusted, regTexEnv);
 							MUL		(regProduct, regDiff, regTexColorB);
 							SUB		(regDifference, regColorAdjusted, regProduct);

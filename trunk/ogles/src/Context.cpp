@@ -330,7 +330,7 @@ void Context :: Toggle(GLenum cap, bool value) {
 		break;
 
 	case GL_TEXTURE_2D:
-		GetRasterizerState()->EnableTexture(value);
+		GetRasterizerState()->EnableTexture(m_ActiveTexture, value);
 		break;
 
 	case GL_CULL_FACE:
@@ -959,7 +959,7 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_COORD_REPLACE_OES:
-		params[0] = m_RasterizerState.IsPointCoordReplaceEnabled();
+		params[0] = m_RasterizerState.IsPointCoordReplaceEnabled(m_ActiveTexture);
 		break;
 
 	case GL_CURRENT_COLOR:
@@ -1294,7 +1294,7 @@ GLboolean Context :: IsEnabled(GLenum cap) {
 		return m_RasterizerState.IsEnabledLogicOp();
 
 	case GL_TEXTURE_2D:
-		return m_RasterizerState.IsEnabledTexture();
+		return m_RasterizerState.IsEnabledTexture(m_ActiveTexture);
 
 	case GL_MATRIX_PALETTE_OES:
 		return m_MatrixPaletteEnabled;
