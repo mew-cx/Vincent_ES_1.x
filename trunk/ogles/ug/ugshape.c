@@ -386,7 +386,7 @@ ugSolidConef(GLfloat base, GLfloat height, GLint slices, GLint stacks)
 void APIENTRY
 ugSolidCubef(GLfloat size) 
 {
-    static GLfloat v[108];	   // 108 =  3*12*3
+    static GLfloat v[108];	   // 108 =  6*18
 
     static const GLfloat cubev[108] = 
 	{
