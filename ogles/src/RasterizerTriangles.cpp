@@ -158,35 +158,13 @@ void Rasterizer :: PrepareTriangle() {
 //#define NO_COMPILE
 #if !defined(NO_COMPILE) && (defined(ARM) || defined(_ARM_))
 
-inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& end, U32 y) {
-	RasterInfo rasterInfo;
-
-	rasterInfo.SurfaceWidth = m_Surface->GetWidth();
-	rasterInfo.SurfaceHeight = m_Surface->GetHeight();
-	size_t offset = y * m_Surface->GetWidth();
-	rasterInfo.DepthBuffer = m_Surface->GetDepthBuffer() + offset;
-	rasterInfo.ColorBuffer = m_Surface->GetColorBuffer() + offset;
-	rasterInfo.StencilBuffer = m_Surface->GetStencilBuffer() + offset;
-	rasterInfo.AlphaBuffer = m_Surface->GetAlphaBuffer() + offset;
-
-	// texture info
-	Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
-
-	if (texture)
-	{
-		rasterInfo.TextureLogWidth = texture->GetLogWidth();
-		rasterInfo.TextureLogHeight = texture->GetLogHeight();
-		rasterInfo.TextureLogBytesPerPixel = texture->GetLogBytesPerPixel();
-		rasterInfo.TextureExponent = texture->GetExponent();
-		rasterInfo.TextureData = texture->GetData();
-	}
-
+inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const EdgePos & start, const EdgePos & end) {
 	m_ScanlineFunction(&rasterInfo, &start, &end);
 }
 
 #else 
 
-inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& end, U32 y) {
+inline void Rasterizer :: RasterScanLine(const RasterInfo & rasterInfo, const EdgePos & start, const EdgePos & end) {
 
 	// In the edge buffer, z, tu and tv are actually divided by w
 
@@ -241,7 +219,7 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 		tv += deltaTv >> 1;
 
 		do {
-			Fragment(x, y, depth, tu, tv, EGL_ONE - fogDensity, baseColor);
+			Fragment(&rasterInfo, x, depth, tu, tv, baseColor, EGL_ONE - fogDensity);
 
 			baseColor += colorIncrement;
 			depth += deltaDepth;
@@ -272,7 +250,7 @@ inline void Rasterizer :: RasterScanLine(const EdgePos& start, const EdgePos& en
 
 		for (; x < xEnd; ++x) {
 
-			Fragment(x, y, depth, tu, tv, EGL_ONE - fogDensity, baseColor);
+			Fragment(&rasterInfo, x, depth, tu, tv, baseColor, EGL_ONE - fogDensity);
 
 			baseColor += colorIncrement;
 			depth += deltaDepth;
@@ -582,6 +560,28 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 	y = yStart;
 
+	RasterInfo rasterInfo;
+
+	rasterInfo.SurfaceWidth = m_Surface->GetWidth();
+	rasterInfo.SurfaceHeight = m_Surface->GetHeight();
+	size_t offset = y * m_Surface->GetWidth();
+	rasterInfo.DepthBuffer = m_Surface->GetDepthBuffer() + offset;
+	rasterInfo.ColorBuffer = m_Surface->GetColorBuffer() + offset;
+	rasterInfo.StencilBuffer = m_Surface->GetStencilBuffer() + offset;
+	rasterInfo.AlphaBuffer = m_Surface->GetAlphaBuffer() + offset;
+
+	// texture info
+	Texture * texture = m_Texture->GetTexture(m_MipMapLevel);
+
+	if (texture)
+	{
+		rasterInfo.TextureLogWidth = texture->GetLogWidth();
+		rasterInfo.TextureLogHeight = texture->GetLogHeight();
+		rasterInfo.TextureLogBytesPerPixel = texture->GetLogBytesPerPixel();
+		rasterInfo.TextureExponent = texture->GetExponent();
+		rasterInfo.TextureData = texture->GetData();
+	}
+
 	if (m_State->m_ScissorTestEnabled) {
 
 		// TO DO: This can be optimized, but we'll address it when we convert the whole
@@ -595,7 +595,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			for (; y < yEnd; ++y) {
 
 				if (y >= yScissorStart && y < yScissorEnd) 
-					RasterScanLine(start, end, y);
+					RasterScanLine(rasterInfo, start, end);
 
 				// update start
 				start.m_WindowCoords.x += incX2;
@@ -625,6 +625,10 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 				end.m_FogDensity += incFog3;
 				end.m_WindowCoords.depth += incDepth3;
 
+				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
 			}
 
 			yEnd = EGL_Round(pos3.m_WindowCoords.y);
@@ -640,7 +644,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			for (; y < yEnd; ++y) {
 
 				if (y >= yScissorStart && y < yScissorEnd) 
-					RasterScanLine(start, end, y);
+					RasterScanLine(rasterInfo, start, end);
 
 				// update start
 				start.m_WindowCoords.x += incX23;
@@ -669,12 +673,17 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 				end.m_FogDensity += incFog3;
 				end.m_WindowCoords.depth += incDepth3;
+
+				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
 			}
 		} else {
 			for (; y < yEnd; ++y) {
 
 				if (y >= yScissorStart && y < yScissorEnd) 
-					RasterScanLine(start, end, y);
+					RasterScanLine(rasterInfo, start, end);
 
 				// update start
 				start.m_WindowCoords.x += incX3;
@@ -704,6 +713,10 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 				end.m_FogDensity += incFog2;
 				end.m_WindowCoords.depth += incDepth2;
 
+				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
 			}
 
 			yEnd = EGL_Round(pos3.m_WindowCoords.y);
@@ -719,7 +732,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			for (; y < yEnd; ++y) {
 
 				if (y >= yScissorStart && y < yScissorEnd) 
-					RasterScanLine(start, end, y);
+					RasterScanLine(rasterInfo, start, end);
 
 				// update start
 				start.m_WindowCoords.x += incX3;
@@ -748,6 +761,11 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 				end.m_FogDensity += incFog23;
 				end.m_WindowCoords.depth += incDepth23;
+
+				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
 			}
 		}
 	} else {
@@ -755,7 +773,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 			for (; y < yEnd; ++y) {
 
-				RasterScanLine(start, end, y);
+				RasterScanLine(rasterInfo, start, end);
 
 				// update start
 				start.m_WindowCoords.x += incX2;
@@ -785,6 +803,10 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 				end.m_FogDensity += incFog3;
 				end.m_WindowCoords.depth += incDepth3;
 
+				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
 			}
 
 			yEnd = EGL_Round(pos3.m_WindowCoords.y);
@@ -799,7 +821,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 			for (; y < yEnd; ++y) {
 				
-				RasterScanLine(start, end, y);
+				RasterScanLine(rasterInfo, start, end);
 
 				// update start
 				start.m_WindowCoords.x += incX23;
@@ -828,11 +850,16 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 				end.m_FogDensity += incFog3;
 				end.m_WindowCoords.depth += incDepth3;
+
+				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
 			}
 		} else {
 			for (; y < yEnd; ++y) {
 
-				RasterScanLine(start, end, y);
+				RasterScanLine(rasterInfo, start, end);
 
 				// update start
 				start.m_WindowCoords.x += incX3;
@@ -862,6 +889,10 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 				end.m_FogDensity += incFog2;
 				end.m_WindowCoords.depth += incDepth2;
 
+				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
 			}
 
 			yEnd = EGL_Round(pos3.m_WindowCoords.y);
@@ -875,7 +906,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 			end.m_FogDensity = EGL_ONE - pos2.m_FogDensity;
 
 			for (; y < yEnd; ++y) {
-				RasterScanLine(start, end, y);
+				RasterScanLine(rasterInfo, start, end);
 				// update start
 				start.m_WindowCoords.x += incX3;
 				start.m_Color.r += incR3;
@@ -903,6 +934,11 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 
 				end.m_FogDensity += incFog23;
 				end.m_WindowCoords.depth += incDepth23;
+
+				rasterInfo.DepthBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.ColorBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.StencilBuffer += rasterInfo.SurfaceWidth;
+				rasterInfo.AlphaBuffer += rasterInfo.SurfaceWidth;
 			}
 		}
 	}
