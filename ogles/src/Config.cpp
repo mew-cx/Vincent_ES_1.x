@@ -1,7 +1,7 @@
 // ==========================================================================
 //
 // Config.cpp		Configuration Management Class
-//					for Embedded OpenGL Implementation
+//					for OpenGL (R) ES Implementation
 //
 // --------------------------------------------------------------------------
 //

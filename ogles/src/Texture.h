@@ -5,7 +5,7 @@
 
 // ==========================================================================
 //
-// Texture.h		Texture Class for Embedded OpenGL Implementation
+// Texture.h		Texture Class for OpenGL (R) ES Implementation
 //
 // --------------------------------------------------------------------------
 //

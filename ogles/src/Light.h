@@ -5,7 +5,7 @@
 
 // ==========================================================================
 //
-// Light.h			Light Class for Embedded OpenGL Implementation
+// Light.h			Light Class for OpenGL (R) ES Implementation
 //
 // --------------------------------------------------------------------------
 //

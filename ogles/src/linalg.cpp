@@ -124,7 +124,7 @@ Matrix4x4 Matrix4x4 :: CreateScale(EGL_Fixed x, EGL_Fixed y, EGL_Fixed z) {
 
 
 Matrix4x4 Matrix4x4 :: CreateRotate(EGL_Fixed angle, EGL_Fixed x, 
-											EGL_Fixed y, EGL_Fixed z) {
+									EGL_Fixed y, EGL_Fixed z) {
 
 	Matrix4x4 matrix;
 	Vec3D axis(x, y, z);
@@ -168,7 +168,7 @@ Matrix4x4 Matrix4x4 :: CreateTranslate(EGL_Fixed x, EGL_Fixed y, EGL_Fixed z) {
 
 
 Matrix4x4 Matrix4x4 :: CreateFrustrum(EGL_Fixed l, EGL_Fixed r, 
-											  EGL_Fixed b, EGL_Fixed t, EGL_Fixed n, EGL_Fixed f) {
+									  EGL_Fixed b, EGL_Fixed t, EGL_Fixed n, EGL_Fixed f) {
 	Matrix4x4 matrix;
 
 	EGL_Fixed inv_width = EGL_Inverse(r - l);
@@ -193,7 +193,7 @@ Matrix4x4 Matrix4x4 :: CreateFrustrum(EGL_Fixed l, EGL_Fixed r,
 }
 
 Matrix4x4 Matrix4x4 :: CreateOrtho(EGL_Fixed l, EGL_Fixed r, 
-										   EGL_Fixed b, EGL_Fixed t, EGL_Fixed n, EGL_Fixed f) {
+								   EGL_Fixed b, EGL_Fixed t, EGL_Fixed n, EGL_Fixed f) {
 	Matrix4x4 matrix;
 
 	EGL_Fixed inv_width = EGL_Inverse(r - l);

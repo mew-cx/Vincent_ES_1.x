@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// stdafx.h			Precompiled headers for Embedded OpenGL Implementation
+// stdafx.h			Precompiled headers for OpenGL (R) ES Implementation
 //
 // --------------------------------------------------------------------------
 //
@@ -41,6 +41,7 @@
 // --------------------------------------------------------------------------
 // Windows Header Files:
 // --------------------------------------------------------------------------
+
 
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 

@@ -1,6 +1,6 @@
 // ==========================================================================
 //
-// Rasterizer.cpp	Rasterizer Class for Embedded OpenGL Implementation
+// Rasterizer.cpp	Rasterizer Class for OpenGL (R) ES Implementation
 //
 //					The rasterizer converts transformed and lit 
 //					primitives and creates a raster image in the
