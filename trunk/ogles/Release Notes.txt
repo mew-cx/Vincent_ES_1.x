@@ -10,6 +10,9 @@ Version 0.77
 
 This version addresses the following issues:
 
+970902 - Stencil Plane Clear test failed.
+970903 - Stencil Plane Corners test failed.
+970905 - Stencil Plane Operation test failed.
 970908 - Point Rasterization test failed.
 970909 - Horizontal and Vertical Line test failed.
 970906 - Depth Buffer Clear test failed.
