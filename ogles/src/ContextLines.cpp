@@ -346,8 +346,12 @@ namespace {
 		result.m_Color.g = Interpolate(dst.m_Color.g, src.m_Color.g, num, denom);
 		result.m_Color.b = Interpolate(dst.m_Color.b, src.m_Color.b, num, denom);
 		result.m_Color.a = Interpolate(dst.m_Color.a, src.m_Color.a, num, denom);
-		result.m_TextureCoords.tu = Interpolate(dst.m_TextureCoords.tu, src.m_TextureCoords.tu, num, denom);
-		result.m_TextureCoords.tv = Interpolate(dst.m_TextureCoords.tv, src.m_TextureCoords.tv, num, denom);
+
+		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
+			result.m_TextureCoords[index].tu = Interpolate(dst.m_TextureCoords[index].tu, src.m_TextureCoords[index].tu, num, denom);
+			result.m_TextureCoords[index].tv = Interpolate(dst.m_TextureCoords[index].tv, src.m_TextureCoords[index].tv, num, denom);
+		}
+
 		result.m_FogDensity = Interpolate(dst.m_FogDensity, src.m_FogDensity, num, denom);
 	}
 

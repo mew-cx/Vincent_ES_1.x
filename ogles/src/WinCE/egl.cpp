@@ -193,9 +193,19 @@ GLAPI EGLSurface APIENTRY eglCreateWindowSurface (EGLDisplay dpy, EGLConfig conf
 	surfaceConfig.SetConfigAttrib(EGL_SURFACE_TYPE, EGL_WINDOW_BIT);
 	surfaceConfig.SetConfigAttrib(EGL_WIDTH, rect.right - rect.left);
 	surfaceConfig.SetConfigAttrib(EGL_HEIGHT, rect.bottom - rect.top);
+	
+	HDC dc = GetWindowDC(window);
+	if (!dc) {
+		eglRecordError(EGL_BAD_NATIVE_WINDOW);
+		return EGL_NO_SURFACE;
+	}
 
+	EGLSurface new_surface = new EGL::Surface(surfaceConfig, dc);
+	ReleaseDC(window, dc);
+	
 	eglRecordError(EGL_SUCCESS);
-	return new EGL::Surface(surfaceConfig, GetWindowDC(window));
+
+	return (new_surface); 
 }
 
 GLAPI EGLSurface APIENTRY eglCreatePixmapSurface (EGLDisplay dpy, EGLConfig config, NativePixmapType pixmap, const EGLint *attrib_list) {
