@@ -2049,11 +2049,38 @@ void Context :: UpdateMipmaps(void) {
 
 
 void Context :: GetTexEnviv(GLenum env, GLenum pname, GLint *params) {
-	assert(0);
+	
+	if (env != GL_POINT_SPRITE_OES) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	switch (pname) {
+	case GL_COORD_REPLACE_OES:
+		GetRasterizerState()->SetPointCoordReplaceEnabled(*params != 0);
+		break;
+
+	default:
+		RecordError(GL_INVALID_VALUE);
+	}
 }
 
+
 void Context :: GetTexEnvxv(GLenum env, GLenum pname, GLfixed *params) {
-	assert(0);
+
+	if (env != GL_POINT_SPRITE_OES) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	switch (pname) {
+	case GL_COORD_REPLACE_OES:
+		GetRasterizerState()->SetPointCoordReplaceEnabled(*params != 0);
+		break;
+
+	default:
+		RecordError(GL_INVALID_VALUE);
+	}
 }
 
 void Context :: GetTexParameteriv(GLenum target, GLenum pname, GLint *params) {

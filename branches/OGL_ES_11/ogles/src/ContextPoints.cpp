@@ -50,7 +50,20 @@ void Context :: PointSizex(GLfixed size) {
 	if (size <= 0) {
 		RecordError(GL_INVALID_VALUE);
 	} else {
-		GetRasterizerState()->SetPointSize(size);
+		m_PointSize = size;
+	}
+}
+
+
+inline EGL_Fixed Context :: SelectPointSizeArrayElement(int index) {
+
+	if (!m_PointSizeArray.effectivePointer) {
+		return m_PointSize;
+	} else {
+		EGL_Fixed coords[1];
+
+		m_PointSizeArray.FetchValues(index, coords);
+		return coords[0];
 	}
 }
 
@@ -63,9 +76,10 @@ void Context :: RenderPoints(GLint first, GLsizei count) {
 		count -= 1;
 
 		RasterPos pos0;
+		EGL_Fixed size = SelectPointSizeArrayElement(first);
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos0);
-		RenderPoint(pos0);
+		RenderPoint(pos0, size);
 	}
 }
 
@@ -78,9 +92,10 @@ void Context :: RenderPoints(GLsizei count, const GLubyte * indices) {
 		count -= 1;
 
 		RasterPos pos0;
+		EGL_Fixed size = SelectPointSizeArrayElement(*indices);
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
-		RenderPoint(pos0);
+		RenderPoint(pos0, size);
 	}
 }
 
@@ -93,14 +108,15 @@ void Context :: RenderPoints(GLsizei count, const GLushort * indices) {
 		count -= 1;
 
 		RasterPos pos0;
+		EGL_Fixed size = SelectPointSizeArrayElement(*indices);
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
-		RenderPoint(pos0);
+		RenderPoint(pos0, size);
 	}
 }
 
 
-void Context :: RenderPoint(RasterPos& point) {
+void Context :: RenderPoint(RasterPos& point, EGL_Fixed size) {
 
 	// clip at frustrum
 	// in principle, the scissor test can be included in here
@@ -114,12 +130,50 @@ void Context :: RenderPoint(RasterPos& point) {
 
 	ClipCoordsToWindowCoords(point);
 	point.m_Color = point.m_FrontColor;
-	m_Rasterizer->RasterPoint(point);
+	m_Rasterizer->RasterPoint(point, m_PointSize);
 }
 
 
 void Context :: PointSizePointer(GLenum type, GLsizei stride, const GLvoid *pointer) {
-	assert(0);
+
+	if (type != GL_FIXED && type != GL_FLOAT) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	const size_t size = 1;
+
+	if (stride < 0) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	if (stride == 0) {
+		switch (type) {
+		case GL_BYTE:
+			stride = sizeof (GLbyte) * size;
+			break;
+
+		case GL_SHORT:
+			stride = sizeof (GLshort) * size;
+			break;
+
+		case GL_FIXED:
+			stride = sizeof (GLfixed) * size;
+			break;
+
+		case GL_FLOAT:
+			stride = sizeof (GLfloat) * size;
+			break;
+
+		}
+	}
+
+	m_PointSizeArray.pointer = pointer;
+	m_PointSizeArray.stride = stride;
+	m_PointSizeArray.type = type;
+	m_PointSizeArray.size = size;
+	m_PointSizeArray.boundBuffer = m_CurrentArrayBuffer;
 }
 
 void Context :: PointParameterx(GLenum pname, GLfixed param) {

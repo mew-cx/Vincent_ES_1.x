@@ -1187,6 +1187,40 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 	}
 }
 
+void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
+
+	EGL_Fixed halfSize = size / 2;
+
+	I32 xmin = EGL_IntFromFixed(point.m_WindowCoords.x - halfSize + EGL_HALF);
+	I32 xmax = EGL_IntFromFixed(point.m_WindowCoords.x + halfSize + (EGL_HALF - 1));
+	I32 ymin = EGL_IntFromFixed(point.m_WindowCoords.y - halfSize + EGL_HALF);
+	I32 ymax = EGL_IntFromFixed(point.m_WindowCoords.y + halfSize + (EGL_HALF - 1));
+
+	EGL_Fixed depth = point.m_WindowCoords.depth;
+	FractionalColor baseColor = point.m_Color;
+	EGL_Fixed fogDensity = point.m_FogDensity;
+
+
+	if (!m_State->m_Point.SpriteEnabled && !m_State->m_Point.CoordReplaceEnabled) {
+		EGL_Fixed tu = point.m_TextureCoords.tu;
+		EGL_Fixed tv = point.m_TextureCoords.tv;
+
+		for (I32 y = ymin; y <= ymax; y++) {
+			for (I32 x = xmin; x <= xmax; x++) {
+				Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
+			}
+		}
+	} else {
+		EGL_Fixed delta = EGL_Inverse(size);
+
+		for (I32 y = ymin, tv = delta / 2; y <= ymax; y++, tv += delta) {
+			for (I32 x = xmin, tu = delta / 2; x <= xmax; x++, tu += delta) {
+				Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
+			}
+		}
+	}
+}
+
 #endif // !EGL_USE_JIT
 
 

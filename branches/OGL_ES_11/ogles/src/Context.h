@@ -351,6 +351,7 @@ namespace EGL {
 
 private:
 		void SelectArrayElement(int index);
+		EGL_Fixed SelectPointSizeArrayElement(int index);
 
 		void CurrentValuesToRasterPos(RasterPos * rasterPos);
 
@@ -371,7 +372,7 @@ private:
 		// ----------------------------------------------------------------------
 		// Perform clipping, depth division & actual call into rasterizer
 		// ----------------------------------------------------------------------
-		void RenderPoint(RasterPos& point);
+		void RenderPoint(RasterPos& point, EGL_Fixed size);
 		void RenderLine(RasterPos& from, RasterPos& to);
 		void RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c);
 		bool IsCulled(RasterPos& a, RasterPos& b, RasterPos& c);
@@ -420,11 +421,13 @@ private:
 		bool				m_NormalArrayEnabled;
 		bool				m_ColorArrayEnabled;
 		bool				m_TexCoordArrayEnabled;
+		bool				m_PointSizeArrayEnabled;
 
 		VertexArray			m_VertexArray;
 		VertexArray			m_NormalArray;
 		VertexArray			m_ColorArray;
 		VertexArray			m_TexCoordArray;
+		VertexArray			m_PointSizeArray;
 
 
 		// ----------------------------------------------------------------------
@@ -463,6 +466,8 @@ private:
 		U8					m_FogGradientShift;
 
 		EGL_Fixed			m_DepthRangeBase, m_DepthRangeFactor;
+
+		EGL_Fixed			m_PointSize;
 
 		bool				m_LightingEnabled;		// is lightning enabled?
 		bool				m_TwoSidedLightning;	// do we have two-sided lightning
