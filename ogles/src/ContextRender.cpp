@@ -467,61 +467,55 @@ void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
 // --------------------------------------------------------------------------
 void Context :: SelectArrayElement(int index) {
 
-	// TO DO: this whole method should be redesigned for efficient pipelining
 	if (!m_VertexArray.effectivePointer) {
 		m_CurrentVertex = Vec4D(0, 0, 0, EGL_ONE);
 	} else {
+		EGL_Fixed coords[4];
+
+		m_VertexArray.FetchValues(index, coords);
+
 		if (m_VertexArray.size == 3) {
-			m_CurrentVertex = 
-				Vec4D(m_VertexArray.GetValue(index, 0),
-					  m_VertexArray.GetValue(index, 1),
-					  m_VertexArray.GetValue(index, 2),
-					  EGL_ONE);
+			m_CurrentVertex = Vec4D(coords[0], coords[1], coords[2]);
 		} else if (m_VertexArray.size == 2) {
-			m_CurrentVertex = 
-				Vec4D(m_VertexArray.GetValue(index, 0),
-					  m_VertexArray.GetValue(index, 1),
-					  0,
-					  EGL_ONE);
+			m_CurrentVertex = Vec4D(coords[0], coords[1], 0);
 		} else {
-			m_CurrentVertex = 
-				Vec4D(m_VertexArray.GetValue(index, 0),
-					  m_VertexArray.GetValue(index, 1),
-					  m_VertexArray.GetValue(index, 2),
-					  m_VertexArray.GetValue(index, 3));
+			m_CurrentVertex = Vec4D(coords);
 		}
 	}
 
 	if (!m_NormalArray.effectivePointer) {
 		m_CurrentNormal = m_DefaultNormal;
 	} else {
-		m_CurrentNormal = 
-			Vec3D(m_NormalArray.GetValue(index, 0),
-				  m_NormalArray.GetValue(index, 1),
-				  m_NormalArray.GetValue(index, 2));
+		EGL_Fixed coords[3];
+
+		m_NormalArray.FetchValues(index, coords);
+		m_CurrentNormal = Vec3D(coords);
 	}
 
 	if (!m_ColorArray.effectivePointer) {
 		m_CurrentRGBA = m_DefaultRGBA;
 	} else {
-		m_CurrentRGBA =
-			FractionalColor(m_ColorArray.GetValue(index, 0),
-							m_ColorArray.GetValue(index, 1),
-							m_ColorArray.GetValue(index, 2),
-							m_ColorArray.GetValue(index, 3));
+		EGL_Fixed coords[4];
+
+		m_ColorArray.FetchValues(index, coords);
+		m_CurrentRGBA = FractionalColor(coords);
 	}
 
 	if (!m_TexCoordArray.effectivePointer) {
 		m_CurrentTextureCoords.tu = m_DefaultTextureCoords.tu;
 		m_CurrentTextureCoords.tv = m_DefaultTextureCoords.tv;
 	} else {
+		EGL_Fixed coords[4];
+
+		m_TexCoordArray.FetchValues(index, coords);
+
 		if (m_TexCoordArray.size < 4) {
-			m_CurrentTextureCoords.tu = m_TexCoordArray.GetValue(index, 0);
-			m_CurrentTextureCoords.tv = m_TexCoordArray.GetValue(index, 1);
+			m_CurrentTextureCoords.tu = coords[0];
+			m_CurrentTextureCoords.tv = coords[1];
 		} else {
-			I32 factor = EGL_Inverse(m_TexCoordArray.GetValue(index, 3));
-			m_CurrentTextureCoords.tu = EGL_Mul(m_TexCoordArray.GetValue(index, 0), factor);
-			m_CurrentTextureCoords.tv = EGL_Mul(m_TexCoordArray.GetValue(index, 1), factor);
+			I32 factor = EGL_Inverse(coords[3]);
+			m_CurrentTextureCoords.tu = EGL_Mul(coords[0], factor);
+			m_CurrentTextureCoords.tv = EGL_Mul(coords[1], factor);
 		}
 	}
 }
@@ -580,10 +574,13 @@ void Context :: PrepareArray(VertexArray & array, bool enabled) {
 			array.effectivePointer = array.pointer;
 		}
 	}
+
+	array.PrepareFetchValues();
 }
 
 
 void Context :: PrepareRendering() {
+
 	if (m_LightingEnabled) {
 		if (m_ColorMaterialEnabled) {
 			if (m_TwoSidedLightning) {
