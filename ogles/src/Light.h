@@ -46,79 +46,130 @@
 
 namespace EGL {
 
-class Material;
+	class Material;
 
 
-class Light {
+	class Light {
 
-public:
-	Light();
+	public:
+		Light();
 
-	void SetAmbientColor(const FractionalColor & color);
+		void SetAmbientColor(const FractionalColor & color);
+		FractionalColor GetAmbientColor() const;
 
-	void SetDiffuseColor(const FractionalColor & color);
+		void SetDiffuseColor(const FractionalColor & color);
+		FractionalColor GetDiffuseColor() const;
 
-	void SetSpecularColor(const FractionalColor & color);
+		void SetSpecularColor(const FractionalColor & color);
+		FractionalColor GetSpecularColor() const;
 
-	void SetPosition(const Vec4D & position);
+		void SetPosition(const Vec4D & position);
+		Vec4D GetPosition() const;
 
-	void SetDirection(const Vec3D & direction);
+		void SetDirection(const Vec3D & direction);
+		Vec3D GetDirection() const;
 
-	void SetConstantAttenuation(EGL_Fixed attenuation);
+		void SetConstantAttenuation(EGL_Fixed attenuation);
+		EGL_Fixed GetConstantAttenuation() const;
 
-	void SetLinearAttenuation(EGL_Fixed attenuation);
+		void SetLinearAttenuation(EGL_Fixed attenuation);
+		EGL_Fixed GetLinearAttenuation() const;
 
-	void SetQuadraticAttenuation(EGL_Fixed attenuation);
+		void SetQuadraticAttenuation(EGL_Fixed attenuation);
+		EGL_Fixed GetQuadraticAttenuation() const;
 
-	void SetSpotExponent(EGL_Fixed exponent);
+		void SetSpotExponent(EGL_Fixed exponent);
+		EGL_Fixed GetSpotExponent() const;
 
-	void SetSpotCutoff(EGL_Fixed cutoff);
+		void SetSpotCutoff(EGL_Fixed cutoff);
+		EGL_Fixed GetSpotCutoff() const;
 
-	void InitWithMaterial(const Material& material);
+		void InitWithMaterial(const Material& material);
 
-	// one-sided lightning
-	// TO DO:
-	// create version for: light at infinity or light at location
-	// spot light vs. point light
-	// color material vs. material color
-	void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
-		const Material& currMaterial, FractionalColor& result);
+		// one-sided lightning
+		// TO DO:
+		// create version for: light at infinity or light at location
+		// spot light vs. point light
+		// color material vs. material color
+		void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
+			const Material& currMaterial, FractionalColor& result);
 
-	void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
-		const Material& currMaterial, const FractionalColor& currentColor, FractionalColor& result);
+		void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
+			const Material& currMaterial, const FractionalColor& currentColor, FractionalColor& result);
 
 
-	// two-sided lightning
-	// TO DO:
-	// create version for: light at infinity or light at location
-	// spot light vs. point light
-	// color material vs. material color
-	void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
-		const Material& currMaterial, FractionalColor& result, 
-		FractionalColor& result2);
+		// two-sided lightning
+		// TO DO:
+		// create version for: light at infinity or light at location
+		// spot light vs. point light
+		// color material vs. material color
+		void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
+			const Material& currMaterial, FractionalColor& result, 
+			FractionalColor& result2);
 
-	void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
-		const Material& currMaterial, const FractionalColor& currentColor, FractionalColor& result, 
-		FractionalColor& result2);
+		void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
+			const Material& currMaterial, const FractionalColor& currentColor, FractionalColor& result, 
+			FractionalColor& result2);
 
-private:
-	FractionalColor			m_AmbientColor;
-	FractionalColor			m_DiffuseColor;
-	FractionalColor			m_SpecularColor;
-	Vec4D					m_Position;
-	Vec3D					m_SpotDirection;
-	EGL_Fixed				m_ConstantAttenuation;
-	EGL_Fixed				m_LinearAttenuation;
-	EGL_Fixed				m_QuadraticAttenuation;
-	EGL_Fixed				m_SpotExponent;
-	EGL_Fixed				m_SpotCutoff;
-	EGL_Fixed				m_CosineSpotCutoff;
+	private:
+		FractionalColor			m_AmbientColor;
+		FractionalColor			m_DiffuseColor;
+		FractionalColor			m_SpecularColor;
+		Vec4D					m_Position;
+		Vec3D					m_SpotDirection;
+		EGL_Fixed				m_ConstantAttenuation;
+		EGL_Fixed				m_LinearAttenuation;
+		EGL_Fixed				m_QuadraticAttenuation;
+		EGL_Fixed				m_SpotExponent;
+		EGL_Fixed				m_SpotCutoff;
+		EGL_Fixed				m_CosineSpotCutoff;
 
-	// effective color contributions for current material settings
-	FractionalColor			m_EffectiveAmbientColor;
-	FractionalColor			m_EffectiveDiffuseColor;
-	FractionalColor			m_EffectiveSpecularColor;
-};
+		// effective color contributions for current material settings
+		FractionalColor			m_EffectiveAmbientColor;
+		FractionalColor			m_EffectiveDiffuseColor;
+		FractionalColor			m_EffectiveSpecularColor;
+	};
+
+
+	inline FractionalColor Light :: GetAmbientColor() const {
+		return m_AmbientColor;
+	}
+
+	inline FractionalColor Light :: GetDiffuseColor() const {
+		return m_DiffuseColor;
+	}
+
+	inline FractionalColor Light :: GetSpecularColor() const {
+		return m_SpecularColor;
+	}
+
+	inline Vec4D Light :: GetPosition() const {
+		return m_Position;
+	}
+
+	inline Vec3D Light :: GetDirection() const {
+		return m_SpotDirection;
+	}
+
+	inline EGL_Fixed Light :: GetConstantAttenuation() const {
+		return m_ConstantAttenuation;
+	}
+
+	inline EGL_Fixed Light :: GetLinearAttenuation() const {
+		return m_LinearAttenuation;
+	}
+
+	inline EGL_Fixed Light :: GetQuadraticAttenuation() const {
+		return m_QuadraticAttenuation;
+	}
+
+	inline EGL_Fixed Light :: GetSpotExponent() const {
+		return m_SpotExponent;
+	}
+
+	inline EGL_Fixed Light :: GetSpotCutoff() const {
+		return m_SpotCutoff;
+	}
 
 }
 

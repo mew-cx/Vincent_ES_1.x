@@ -735,7 +735,7 @@ void Context :: CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos) {
 
 	color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
 	color.a = m_FrontMaterial.GetDiffuseColor().a;
-	color += m_FrontMaterial.GetEmisiveColor();
+	color += m_FrontMaterial.GetEmissiveColor();
 
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
@@ -803,7 +803,7 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos) {
 	int mask = 1;
 
 	color = m_CurrentRGBA * m_LightModelAmbient;
-	color += m_FrontMaterial.GetEmisiveColor();
+	color += m_FrontMaterial.GetEmissiveColor();
 
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
@@ -872,7 +872,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos) {
 
 	color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
 	color.a = m_FrontMaterial.GetDiffuseColor().a;
-	color += m_FrontMaterial.GetEmisiveColor();
+	color += m_FrontMaterial.GetEmissiveColor();
 
 	backColor = color;		
 
@@ -945,7 +945,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 	int mask = 1;
 
 	color = m_CurrentRGBA * m_LightModelAmbient;
-	color += m_FrontMaterial.GetEmisiveColor();
+	color += m_FrontMaterial.GetEmissiveColor();
 
 	backColor = color;		
 

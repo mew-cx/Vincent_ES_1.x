@@ -56,10 +56,10 @@ namespace EGL {
 		}
 
 		FractionalColor(const Color & color) {
-			r = color.R() << 8;
-			g = color.G() << 8;
-			b = color.B() << 8;
-			a = color.A() << 8;
+			r = (color.R() << 8 | color.R()) + (color.R() >> 7);
+			g = (color.G() << 8 | color.G()) + (color.G() >> 7);
+			b = (color.B() << 8 | color.B()) + (color.B() >> 7);
+			a = (color.A() << 8 | color.A()) + (color.A() >> 7);
 		}
 
 		FractionalColor(EGL_Fixed R, EGL_Fixed G, EGL_Fixed B, EGL_Fixed A) {

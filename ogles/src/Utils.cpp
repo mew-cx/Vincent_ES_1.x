@@ -1,13 +1,10 @@
-#ifndef EGL_MATERIAL_H
-#define EGL_MATERIAL_H 1
-
 // ==========================================================================
 //
-// Material.h		Material Class for 3D Rendering Library
+// Utils.cpp		Helper functions for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //
-// 09-14-2003		Hans-Martin Will	initial version
+// 09-14-2004	Hans-Martin Will	initial version
 //
 // --------------------------------------------------------------------------
 //
@@ -38,70 +35,36 @@
 // ==========================================================================
 
 
-
-#include "OGLES.h"
-#include "FractionalColor.h"
+#include "stdafx.h"
+#include "Utils.h"
 
 
 namespace EGL {
-
-	class Material {
-
-	public:
-		Material();
-
-		void SetAmbientColor(const FractionalColor & color);
-		inline const FractionalColor& GetAmbientColor() const;
-
-		void SetDiffuseColor(const FractionalColor & color);
-		inline const FractionalColor& GetDiffuseColor() const;
-
-		void SetSpecularColor(const FractionalColor & color);
-		inline const FractionalColor& GetSpecularColor() const;
-
-		void SetEmissiveColor(const FractionalColor & color);
-		inline const FractionalColor& GetEmissiveColor() const;
-
-		void SetSpecularExponent(EGL_Fixed exponent);
-		inline EGL_Fixed GetSpecularExponent() const;
-
-	private:
-		FractionalColor			m_AmbientColor;
-		FractionalColor			m_DiffuseColor;
-		FractionalColor			m_SpecularColor;
-		FractionalColor			m_EmissiveColor;
-		EGL_Fixed				m_SpecularExponent;
-	};
-
-
-	// --------------------------------------------------------------------------
-	// Inline Functions
-	// --------------------------------------------------------------------------
-
-
-	inline const FractionalColor& Material :: GetAmbientColor() const {
-		return m_AmbientColor;
+	void CopyVector(const Vec3D & vector, GLfixed *params) {
+		params[0] = vector.x();
+		params[1] = vector.y();
+		params[2] = vector.z();
 	}
 
-
-	inline const FractionalColor& Material :: GetDiffuseColor() const {
-		return m_DiffuseColor;
+	void CopyVector(const Vec4D & vector, GLfixed *params) {
+		params[0] = vector.x();
+		params[1] = vector.y();
+		params[2] = vector.z();
+		params[3] = vector.w();
 	}
 
-
-	inline const FractionalColor& Material :: GetSpecularColor() const {
-		return m_SpecularColor;
+	void CopyMatrix(const Matrix4x4& matrix, GLfixed *params) {
+		for (size_t index = 0; index < 16; ++index) {
+			params[index] = matrix.Element(index);
+		}
 	}
 
-
-	inline const FractionalColor& Material :: GetEmissiveColor() const {
-		return m_EmissiveColor;
-	}
-
-
-	inline EGL_Fixed Material :: GetSpecularExponent() const {
-		return m_SpecularExponent;
+	void CopyColor(const FractionalColor & color, GLfixed *params) {
+		params[0] = color.r;
+		params[1] = color.g;
+		params[2] = color.b;
+		params[3] = color.a;
 	}
 }
 
-#endif //ndef EGL_MATERIAL_H
+

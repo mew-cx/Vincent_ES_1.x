@@ -185,7 +185,10 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 
 		void SetTexEnvColor(const Color& color);
+		Color GetTexEnvColor() const;
+
 		void SetTextureMode(TextureMode mode);
+		TextureMode GetTextureMode() const;
 
 		void SetMinFilterMode(FilterMode mode);
 		void SetMagFilterMode(FilterMode mode);
@@ -204,37 +207,54 @@ namespace EGL {
 		void SetDepthRange(EGL_Fixed zNear, EGL_Fixed zFar);
 
 		void SetFogColor(const Color& color);
+		Color GetFogColor() const;
 		void EnableFog(bool enabled);
 		bool IsEnabledFog() const;
 
 		void SetLineWidth(EGL_Fixed width);
 		void SetLineSmoothEnabled(bool enabled);
+		bool IsLineSmoothEnabled() const;
 
 		void SetLogicOp(LogicOp opcode);
+		LogicOp GetLogicOp() const;
 
 		void SetShadeModel(ShadingModel mode);
 		ShadingModel GetShadeModel() const;
 
 		void EnableTexture(bool enabled);
+		bool IsEnabledTexture() const;
 
 		void SetPointSmoothEnabled(bool enabled);
+		bool IsPointSmoothEnabled() const;
 		void SetPointSpriteEnabled(bool enabled);
+		bool IsPointSpriteEnabled() const;
 		void SetPointCoordReplaceEnabled(bool enabled);
+		bool IsPointCoordReplaceEnabled() const;
 
 		void EnablePolygonOffsetFill(bool enabled);
+		bool IsEnabledPolygonOffsetFill() const;
 		void SetPolygonOffset(EGL_Fixed factor, EGL_Fixed units);
 		void SetSampleCoverage(EGL_Fixed value, bool invert);
+		EGL_Fixed GetPolygonOffsetFactor() const;
+		EGL_Fixed GetPolygonOffsetUnits() const;
+		EGL_Fixed GetSampleCoverage() const;
+		bool GetSampleCoverageInvert() const;
 
 		// ----------------------------------------------------------------------
 		// Fragment rendering state
 		// ----------------------------------------------------------------------
 
 		void SetAlphaFunc(ComparisonFunc func, EGL_Fixed ref);
+		ComparisonFunc GetAlphaFunc() const;
+		EGL_Fixed GetAlphaRef() const;
 		void SetBlendFunc(BlendFuncSrc sfactor, BlendFuncDst dfactor);
+		BlendFuncSrc GetBlendFuncSrc() const;
+		BlendFuncDst GetBlendFuncDst() const;
 		void SetColorMask(bool red, bool green, bool blue, bool alpha);
 		Color GetColorMask() const;
 
 		void SetDepthFunc(ComparisonFunc func);
+		ComparisonFunc GetDepthFunc() const;
 		void SetDepthMask(bool flag);
 		bool GetDepthMask() const;
 
@@ -245,13 +265,26 @@ namespace EGL {
 		void EnableLogicOp(bool enabled);
 		void EnableScissorTest(bool enabled);
 		void EnableBlending(bool enabled);
+		void EnableStencilTest(bool enabled);
+
+		bool IsEnabledAlphaTest() const;
+		bool IsEnabledDepthTest() const;
+		bool IsEnabledLogicOp() const;
+		bool IsEnabledScissorTest() const;
+		bool IsEnabledBlending() const;
+		bool IsEnabledStencilTest() const;
 
 		void SetStencilFunc(ComparisonFunc func, I32 ref, U32 mask);
+		ComparisonFunc GetStencilFunc() const;
+		I32 GetStencilRef() const;
+		I32 GetStencilComparisonMask() const;
 		void SetStencilMask(U32 mask);
 		U32 GetStencilMask() const;
 
 		void SetStencilOp(StencilOp fail, StencilOp zfail, StencilOp zpass);
-		void EnableStencilTest(bool enabled);
+		StencilOp GetStencilOpFail() const;
+		StencilOp GetStencilOpFailZFail() const;
+		StencilOp GetStencilOpFailZPass() const;
 
 	private:
 		// ----------------------------------------------------------------------
@@ -721,8 +754,16 @@ namespace EGL {
 		m_Texture.EnvColor = color;
 	}
 
+	inline Color RasterizerState :: GetTexEnvColor() const {
+		return m_Texture.EnvColor;
+	}
+
 	inline void RasterizerState :: SetTextureMode(TextureMode mode) {
 		m_Texture.Mode = mode;
+	}
+
+	inline RasterizerState::TextureMode RasterizerState :: GetTextureMode() const {
+		return m_Texture.Mode;
 	}
 
 	inline void RasterizerState :: SetMinFilterMode(FilterMode mode) {
@@ -779,6 +820,10 @@ namespace EGL {
 
 	inline void RasterizerState :: EnablePolygonOffsetFill(bool enabled) {
 		m_Polygon.OffsetFillEnabled = enabled;
+	}
+
+	inline bool RasterizerState :: IsEnabledPolygonOffsetFill() const {
+		return m_Polygon.OffsetFillEnabled;
 	}
 
 	inline void RasterizerState :: SetPolygonOffset(EGL_Fixed factor, EGL_Fixed units) {
@@ -898,10 +943,121 @@ namespace EGL {
 		m_Point.CoordReplaceEnabled = enabled;
 	}
 
+	inline bool RasterizerState :: IsPointCoordReplaceEnabled() const {
+		return m_Point.CoordReplaceEnabled;
+	}
+
 	inline bool RasterizerState :: IsEnabledFog() const {
 		return m_Fog.Enabled;
 	}
 
+	inline Color RasterizerState :: GetFogColor() const {
+		return m_Fog.Color;
+	}
+
+	inline EGL_Fixed RasterizerState :: GetPolygonOffsetFactor() const {
+		return m_Polygon.OffsetFactor;
+	}
+
+	inline EGL_Fixed RasterizerState :: GetPolygonOffsetUnits() const {
+		return m_Polygon.OffsetUnits;
+	}
+
+	inline EGL_Fixed RasterizerState :: GetSampleCoverage() const {
+		return m_SampleCoverage;
+	}
+
+	inline bool RasterizerState :: GetSampleCoverageInvert() const {
+		return m_InvertSampleCoverage;
+	}
+
+	inline bool RasterizerState :: IsPointSmoothEnabled() const {
+		return m_Point.SmoothEnabled;
+	}
+
+	inline bool RasterizerState :: IsLineSmoothEnabled() const {
+		return m_Line.SmoothEnabled;
+	}
+
+	inline bool RasterizerState :: IsEnabledAlphaTest() const {
+		return m_Alpha.Enabled;
+	}
+
+	inline bool RasterizerState :: IsEnabledDepthTest() const {
+		return m_DepthTest.Enabled;
+	}
+
+	inline bool RasterizerState :: IsEnabledLogicOp() const {
+		return m_LogicOp.Enabled;
+	}
+
+	inline bool RasterizerState :: IsEnabledScissorTest() const {
+		return m_ScissorTest.Enabled;
+	}
+
+	inline bool RasterizerState :: IsEnabledBlending() const {
+		return m_Blend.Enabled;
+	}
+
+	inline bool RasterizerState :: IsEnabledStencilTest() const {
+		return m_Stencil.Enabled;
+	}
+
+	inline bool RasterizerState :: IsEnabledTexture() const {
+		return m_Texture.Enabled;
+	}
+
+	inline bool RasterizerState :: IsPointSpriteEnabled() const {
+		return m_Point.SpriteEnabled;
+	}
+
+	inline RasterizerState::LogicOp RasterizerState :: GetLogicOp() const {
+		return m_LogicOp.Opcode;
+	}
+
+	inline RasterizerState::ComparisonFunc RasterizerState :: GetAlphaFunc() const {
+		return m_Alpha.Func;
+	}
+
+	inline EGL_Fixed RasterizerState :: GetAlphaRef() const {
+		return m_Alpha.Reference;
+	}
+
+	inline RasterizerState::BlendFuncSrc RasterizerState :: GetBlendFuncSrc() const {
+		return m_Blend.FuncSrc;
+	}
+
+	inline RasterizerState::BlendFuncDst RasterizerState :: GetBlendFuncDst() const {
+		return m_Blend.FuncDst;
+	}
+
+	inline RasterizerState::ComparisonFunc RasterizerState :: GetDepthFunc() const {
+		return m_DepthTest.Func;
+	}
+
+	inline RasterizerState::ComparisonFunc RasterizerState :: GetStencilFunc() const {
+		return m_Stencil.Func;
+	}
+
+	inline I32 RasterizerState :: GetStencilRef() const {
+		return m_Stencil.Reference;
+	}
+
+	inline I32 RasterizerState :: GetStencilComparisonMask() const {
+		return m_Stencil.ComparisonMask;
+	}
+
+	inline RasterizerState::StencilOp RasterizerState :: GetStencilOpFail() const {
+		return m_Stencil.Fail;
+	}
+
+	inline RasterizerState::StencilOp RasterizerState :: GetStencilOpFailZFail() const {
+		return m_Stencil.ZFail;
+	}
+
+	inline RasterizerState::StencilOp RasterizerState :: GetStencilOpFailZPass() const {
+		return m_Stencil.ZPass;
+	}
 }
 
 #endif //ndef EGL_RASTERIZER_STATE_H

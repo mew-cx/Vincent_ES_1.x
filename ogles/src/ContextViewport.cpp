@@ -80,11 +80,11 @@ void Context :: Scissor(GLint x, GLint y, GLsizei width, GLsizei height) {
 
 void Context :: DepthRangex(GLclampx zNear, GLclampx zFar) { 
 
-	zNear = EGL_CLAMP(zNear, 0, EGL_ONE);
-	zFar = EGL_CLAMP(zFar, 0, EGL_ONE);
+	m_DepthRangeNear = EGL_CLAMP(zNear, 0, EGL_ONE);
+	m_DepthRangeFar = EGL_CLAMP(zFar, 0, EGL_ONE);
 
-	m_DepthRangeBase = (zNear + zFar) / 2;
-	m_DepthRangeFactor = (zFar - zNear) / 2 - 1;
+	m_DepthRangeBase = (m_DepthRangeNear + m_DepthRangeFar) / 2;
+	m_DepthRangeFactor = (m_DepthRangeFar - m_DepthRangeNear) / 2 - 1;
 }
 
 

@@ -143,13 +143,13 @@ namespace EGL {
 		void GenBuffers(GLsizei n, GLuint *buffers);
 		void GenTextures(GLsizei n, GLuint *textures);
 		GLenum GetError(void);
-		void GetFixedv(GLenum pname, GLfixed *params);
+		bool GetFixedv(GLenum pname, GLfixed *params);
 		void GetIntegerv(GLenum pname, GLint *params);
-		void GetLightxv(GLenum light, GLenum pname, GLfixed *params);
-		void GetMaterialxv(GLenum face, GLenum pname, GLfixed *params);
+		bool GetLightxv(GLenum light, GLenum pname, GLfixed *params);
+		bool GetMaterialxv(GLenum face, GLenum pname, GLfixed *params);
 		void GetPointerv(GLenum pname, void **params);
 		void GetTexEnviv(GLenum env, GLenum pname, GLint *params);
-		void GetTexEnvxv(GLenum env, GLenum pname, GLfixed *params);
+		bool GetTexEnvxv(GLenum env, GLenum pname, GLfixed *params);
 		void GetTexParameteriv(GLenum target, GLenum pname, GLint *params);
 		void GetTexParameterxv(GLenum target, GLenum pname, GLfixed *params);
 		const GLubyte * GetString(GLenum name);
@@ -412,6 +412,7 @@ private:
 		I32					m_CurrentPaletteMatrix;
 		EGL_Fixed			m_CurrentWeights[MATRIX_PALETTE_SIZE];
 		U8					m_PaletteMatrixIndex[MATRIX_PALETTE_SIZE];
+		GLenum				m_MatrixMode;
 
 		// ----------------------------------------------------------------------
 		// Viewport configuration
@@ -465,6 +466,16 @@ private:
 		TexCoord			m_CurrentTextureCoords;
 
 		// ----------------------------------------------------------------------
+		// Hints
+		// ----------------------------------------------------------------------
+
+		GLenum				m_PerspectiveCorrectionHint;
+		GLenum				m_PointSmoothHint;
+		GLenum				m_LineSmoothHint;
+		GLenum				m_FogHint;
+		GLenum				m_GenerateMipmapHint;
+
+		// ----------------------------------------------------------------------
 		// Rendering State
 		// ----------------------------------------------------------------------
 
@@ -484,6 +495,7 @@ private:
 		EGL_Fixed			m_FogGradient;
 		U8					m_FogGradientShift;
 
+		EGL_Fixed			m_DepthRangeNear, m_DepthRangeFar;
 		EGL_Fixed			m_DepthRangeBase, m_DepthRangeFactor;
 
 		EGL_Fixed			m_PointSize;
