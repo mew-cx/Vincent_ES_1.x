@@ -270,10 +270,44 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, const Color & 
 
 	}
 
-	// TODO: Masking of color and depth
+	// Masking and write to framebuffer
+	if (m_State->m_MaskDepth) {
+		m_Surface->GetDepthBuffer()[offset] = depth;
+	}
 
-	m_Surface->GetDepthBuffer()[offset] = depth;
-	m_Surface->GetColorBuffer()[offset] = color.ConvertTo565();
+	Color maskedColor = color.Mask(m_State->m_MaskRed, m_State->m_MaskGreen, m_State->m_MaskBlue, m_State->m_MaskAlpha);
+
+	if (m_State->m_LogicOpEnabled) {
+
+		U16 newValue = maskedColor.ConvertTo565();
+		U16 oldValue = m_Surface->GetColorBuffer()[offset];
+		U16 value;
+
+		switch (m_State->m_LogicOpcode) {
+			default:
+			case RasterizerState:: LogicOpClear:		value = 0;						break;
+			case RasterizerState:: LogicOpAnd:			value = newValue & oldValue;	break;
+			case RasterizerState:: LogicOpAndReverse:	value = newValue & ~oldValue;	break;
+			case RasterizerState:: LogicOpCopy:			value = newValue;				break;
+			case RasterizerState:: LogicOpAndInverted:	value = ~newValue & oldValue;	break;
+			case RasterizerState:: LogicOpNoop:			value = oldValue;				break;
+			case RasterizerState:: LogicOpXor:			value = newValue ^ oldValue;	break;
+			case RasterizerState:: LogicOpOr:			value = newValue | oldValue;	break;
+			case RasterizerState:: LogicOpNor:			value = ~(newValue | oldValue); break;
+			case RasterizerState:: LogicOpEquiv:		value = ~(newValue ^ oldValue); break;
+			case RasterizerState:: LogicOpInvert:		value = ~oldValue;				break;
+			case RasterizerState:: LogicOpOrReverse:	value = newValue | ~oldValue;	break;
+			case RasterizerState:: LogicOpCopyInverted:	value = ~newValue;				break;
+			case RasterizerState:: LogicOpOrInverted:	value = ~newValue | oldValue;	break;
+			case RasterizerState:: LogicOpNand:			value = ~(newValue & oldValue); break;
+			case RasterizerState:: LogicOpSet:			value = 0xFFFF;					break;
+		}
+
+		m_Surface->GetColorBuffer()[offset] = value;
+
+	} else {
+		m_Surface->GetColorBuffer()[offset] = maskedColor.ConvertTo565();
+	}
 }
 
 
