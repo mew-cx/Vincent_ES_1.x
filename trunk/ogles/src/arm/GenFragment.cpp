@@ -1703,6 +1703,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		}
 	} else {
 		// color = baseColor
+
+		DECL_CONST_REG	(regConstant0, 0);
+		DECL_CONST_REG	(regConstantOne, 0x10000);
+
 		DECL_REG	(regConstant16);
 		DECL_REG	(regConstant11);
 		DECL_REG	(regConstant10);
@@ -1717,39 +1721,56 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		{
 			regColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
+			DECL_REG	(regClamped0);
+			DECL_REG	(regClamped1);
 			DECL_REG	(regShifted);
 			DECL_REG	(regAdjusted);
 
-			LSR		(regShifted, fragmentInfo.regR, regConstant16);
-			SUB		(regAdjusted, fragmentInfo.regR, regShifted);
+			MAX		(regClamped0, fragmentInfo.regR, regConstant0);
+			MIN		(regClamped1, regClamped0, regConstantOne);
+			LSR		(regShifted, regClamped1, regConstant16);
+			SUB		(regAdjusted, regClamped1, regShifted);
 			LSR		(regColorR, regAdjusted, regConstant11);
 		}
 
 		{
 			regColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
+			DECL_REG	(regClamped0);
+			DECL_REG	(regClamped1);
 			DECL_REG	(regShifted);
 			DECL_REG	(regAdjusted);
 
-			LSR		(regShifted, fragmentInfo.regG, regConstant16);
-			SUB		(regAdjusted, fragmentInfo.regG, regShifted);
+			MAX		(regClamped0, fragmentInfo.regG, regConstant0);
+			MIN		(regClamped1, regClamped0, regConstantOne);
+			LSR		(regShifted, regClamped1, regConstant16);
+			SUB		(regAdjusted, regClamped1, regShifted);
 			LSR		(regColorG, regAdjusted, regConstant10);
 		}
 
 		{
 			regColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
+			DECL_REG	(regClamped0);
+			DECL_REG	(regClamped1);
 			DECL_REG	(regShifted);
 			DECL_REG	(regAdjusted);
 
-			LSR		(regShifted, fragmentInfo.regB, regConstant16);
-			SUB		(regAdjusted, fragmentInfo.regB, regShifted);
+			MAX		(regClamped0, fragmentInfo.regB, regConstant0);
+			MIN		(regClamped1, regClamped0, regConstantOne);
+			LSR		(regShifted, regClamped1, regConstant16);
+			SUB		(regAdjusted, regClamped1, regShifted);
 			LSR		(regColorB, regAdjusted, regConstant11);
 		}
 		{
 			regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-			LSR		(regColorA, fragmentInfo.regA, regConstant8);
+			DECL_REG	(regClamped0);
+			DECL_REG	(regClamped1);
+
+			MAX		(regClamped0, fragmentInfo.regA, regConstant0);
+			MIN		(regClamped1, regClamped0, regConstantOne);
+			LSR		(regColorA, regClamped1, regConstant8);
 		}
 		{
 			// create RGB 565 representation

@@ -109,7 +109,7 @@ namespace EGL {
 		}
 
 		inline U16 ConvertTo565() const {
-			return b >> 3 | (g & 0xFC) << 3 | (r & 0xF8) << 8;
+			return (b & 0xF8) >> 3 | (g & 0xFC) << 3 | (r & 0xF8) << 8;
 		}
 
 		inline U32 ConvertToRGBA() const {
