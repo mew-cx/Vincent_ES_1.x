@@ -2484,6 +2484,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		DECL_REG	(regShiftedG);
 		DECL_REG	(regRG);
 		DECL_REG	(regNewColor565);
+		DECL_REG	(regNewColorA);
 
 		LDI		(regConstant8, 8);
 		LDI		(regConstant3, 3);
@@ -2492,6 +2493,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		LSR		(regShiftedG, regColorG, regConstant3);
 		OR		(regRG, regShiftedR, regShiftedG);
 		OR		(regNewColor565, regRG, regShiftedB);
+		LSR		(regNewColorA, regColorA, regConstant8);
 
 		regColor565 = regNewColor565;
 	}
