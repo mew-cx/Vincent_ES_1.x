@@ -18,7 +18,7 @@ This version addresses the following issues:
 970915 - Matrix Stack test failed
 980874 - Texture Edge Clamp test failed.
 970910 - Triangle Tile test failed.
-980882 - Copy Texture test failed.
+980879 - Packed Pixels test failed.
 
 
 Version 0.78
