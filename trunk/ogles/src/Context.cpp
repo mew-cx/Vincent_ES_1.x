@@ -86,6 +86,8 @@ Context :: Context(const Config & config)
 	m_ScissorTestEnabled(false),
 	m_MatrixPaletteEnabled(false),
 	m_MatrixModePaletteEnabled(false),
+	m_ActiveTexture(0),
+	m_ClientActiveTexture(0),
 
 	// point parameters
 	m_PointSize(EGL_ONE),
@@ -106,7 +108,6 @@ Context :: Context(const Config & config)
 	m_VertexArrayEnabled(false),
 	m_NormalArrayEnabled(false),
 	m_ColorArrayEnabled(false),
-	m_TexCoordArrayEnabled(false),
 	m_PointSizeArrayEnabled(false),
 
 	// buffers
@@ -151,6 +152,8 @@ Context :: Context(const Config & config)
 	m_PointDistanceAttenuation[0] = EGL_ONE;
 	m_PointDistanceAttenuation[1] = 0;
 	m_PointDistanceAttenuation[2] = 0;
+
+	m_TexCoordArrayEnabled[0] = m_TexCoordArrayEnabled[1] = false;
 
 	memset(&m_ClipPlanes, 0, sizeof(m_ClipPlanes));
 }
@@ -728,15 +731,15 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_TEXTURE_COORD_ARRAY_SIZE:
-		params[0] = m_TexCoordArray.size;
+		params[0] = m_TexCoordArray[m_ClientActiveTexture].size;
 		break;
 
 	case GL_TEXTURE_COORD_ARRAY_STRIDE:
-		params[0] = m_TexCoordArray.stride;
+		params[0] = m_TexCoordArray[m_ClientActiveTexture].stride;
 		break;
 
 	case GL_TEXTURE_COORD_ARRAY_TYPE:
-		params[0] = m_TexCoordArray.type;
+		params[0] = m_TexCoordArray[m_ClientActiveTexture].type;
 		break;
 
 	case GL_MATRIX_INDEX_ARRAY_SIZE_OES:
@@ -784,7 +787,7 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING:
-		params[0] = m_TexCoordArray.boundBuffer;
+		params[0] = m_TexCoordArray[m_ClientActiveTexture].boundBuffer;
 		break;
 
 	case GL_ELEMENT_ARRAY_BUFFER_BINDING:
@@ -950,14 +953,13 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_MAX_VERTEX_UNITS_OES:
-		params[0] = 1;
+		params[0] = EGL_NUM_TEXTURE_UNITS;
 		break;
 
 	case GL_COORD_REPLACE_OES:
 		params[0] = m_RasterizerState.IsPointCoordReplaceEnabled();
 		break;
 
-	// TO DO: These state queries are still not implemented yet
 	case GL_CURRENT_COLOR:
 		{
 			params[0] = EGL_Mul(0x7fffffff, m_CurrentRGBA.r);
@@ -1057,8 +1059,8 @@ bool Context :: GetFixedv(GLenum pname, GLfixed *params) {
 		break;
 
 	case GL_CURRENT_TEXTURE_COORDS:
-		params[0] = m_DefaultTextureCoords.tu;
-		params[1] = m_DefaultTextureCoords.tv;
+		params[0] = m_DefaultTextureCoords[m_ActiveTexture].tu;
+		params[1] = m_DefaultTextureCoords[m_ActiveTexture].tv;
 		params[2] = 0;
 		params[3] = EGL_ONE;
 		break;
@@ -1173,7 +1175,7 @@ void Context :: GetPointerv(GLenum pname, void **params) {
 		break;
 
 	case GL_TEXTURE_COORD_ARRAY_POINTER:
-		params[0] = const_cast<void *>(m_TexCoordArray.pointer);
+		params[0] = const_cast<void *>(m_TexCoordArray[m_ClientActiveTexture].pointer);
 		break;
 
 	case GL_MATRIX_INDEX_ARRAY_POINTER_OES:
@@ -1207,7 +1209,7 @@ GLboolean Context :: IsEnabled(GLenum cap) {
 		return m_ColorArrayEnabled;
 
 	case GL_TEXTURE_COORD_ARRAY:
-		return m_TexCoordArrayEnabled;
+		return m_TexCoordArrayEnabled[m_ClientActiveTexture];
 
 	case GL_MATRIX_INDEX_ARRAY_OES:
 		return m_MatrixIndexArrayEnabled;

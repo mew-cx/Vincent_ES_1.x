@@ -90,7 +90,7 @@ namespace EGL {
 		FractionalColor		m_Color;
 		FractionalColor		m_FrontColor;		// color in range 0..255
 		FractionalColor		m_BackColor;		
-		TexCoord			m_TextureCoords;	// texture coords 0..1
+		TexCoord			m_TextureCoords[EGL_NUM_TEXTURE_UNITS];	// texture coords 0..1
 		EGL_Fixed			m_FogDensity;		// fog density at this vertex
 	};
 
@@ -99,10 +99,10 @@ namespace EGL {
 	// ----------------------------------------------------------------------
 
 	struct EdgePos {
-		EdgeCoord			m_WindowCoords;		// z over w
-		FractionalColor		m_Color;			// color in range 0..255
-		TexCoord			m_TextureCoords;	// texture coords 0..1 over w
-		EGL_Fixed			m_FogDensity;		// fog density at this vertex
+		EdgeCoord			m_WindowCoords;								// z over w
+		FractionalColor		m_Color;									// color in range 0..255
+		TexCoord			m_TextureCoords[EGL_NUM_TEXTURE_UNITS];		// texture coords 0..1 over w
+		EGL_Fixed			m_FogDensity;								// fog density at this vertex
 	};
 
 	// ----------------------------------------------------------------------
@@ -130,7 +130,7 @@ namespace EGL {
 		// TODO: 
 
 		// texture info
-		Texture *	Textures;
+		Texture *	Textures[EGL_NUM_TEXTURE_UNITS];
 		U32			MipmapLevel;
 		U32			MaxMipmapLevel;
 

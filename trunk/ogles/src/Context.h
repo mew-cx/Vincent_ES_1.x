@@ -435,7 +435,7 @@ private:
 		bool				m_VertexArrayEnabled;
 		bool				m_NormalArrayEnabled;
 		bool				m_ColorArrayEnabled;
-		bool				m_TexCoordArrayEnabled;
+		bool				m_TexCoordArrayEnabled[EGL_NUM_TEXTURE_UNITS];
 		bool				m_PointSizeArrayEnabled;
 		bool				m_WeightArrayEnabled;
 		bool				m_MatrixIndexArrayEnabled;
@@ -443,7 +443,7 @@ private:
 		VertexArray			m_VertexArray;
 		VertexArray			m_NormalArray;
 		VertexArray			m_ColorArray;
-		VertexArray			m_TexCoordArray;
+		VertexArray			m_TexCoordArray[EGL_NUM_TEXTURE_UNITS];
 		VertexArray			m_PointSizeArray;
 		VertexArray			m_WeightArray;
 		VertexArray			m_MatrixIndexArray;
@@ -454,7 +454,9 @@ private:
 
 		Vec3D				m_DefaultNormal;
 		FractionalColor		m_DefaultRGBA;
-		TexCoord			m_DefaultTextureCoords;
+		TexCoord			m_DefaultTextureCoords[EGL_NUM_TEXTURE_UNITS];
+		size_t				m_ActiveTexture;
+		size_t				m_ClientActiveTexture;
 
 		// ----------------------------------------------------------------------
 		// Current values for setup
@@ -463,7 +465,7 @@ private:
 		Vec4D				m_CurrentVertex;	
 		Vec3D				m_CurrentNormal;
 		FractionalColor		m_CurrentRGBA;
-		TexCoord			m_CurrentTextureCoords;
+		TexCoord			m_CurrentTextureCoords[EGL_NUM_TEXTURE_UNITS];
 
 		// ----------------------------------------------------------------------
 		// Hints
