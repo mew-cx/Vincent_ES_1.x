@@ -14,6 +14,7 @@
 #include "stdafx.h"
 #include "Context.h"
 #include "Color.h"
+#include "Surface.h"
 #include "fixed.h"
 
 
@@ -28,6 +29,13 @@ void Context :: BindTexture(GLenum target, GLuint texture) {
 	if (target != GL_TEXTURE_2D) {
 		return;
 	}
+
+	if (texture >= m_Textures.size() || m_Textures[texture] == 0) {
+		// allocate a new texture
+	}
+
+	m_CurrentTexture = m_Textures[texture];
+	GetRasterizerState()->SetTexture(m_CurrentTexture);
 }
 
 void Context :: DeleteTextures(GLsizei n, const GLuint *textures) { 
@@ -39,30 +47,6 @@ void Context :: GenTextures(GLsizei n, GLuint *textures) {
 // --------------------------------------------------------------------------
 // Texture specification methods
 // --------------------------------------------------------------------------
-
-void Context :: CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data) { 
-	if (target != GL_TEXTURE_2D) {
-		return;
-	}
-}
-
-void Context :: CompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data) { 
-	if (target != GL_TEXTURE_2D) {
-		return;
-	}
-}
-
-void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border) { 
-	if (target != GL_TEXTURE_2D) {
-		return;
-	}
-}
-
-void Context :: CopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height) { 
-	if (target != GL_TEXTURE_2D) {
-		return;
-	}
-}
 
 namespace {
 	Texture::TextureFormat TextureFormatFromEnum(GLenum format) {
@@ -118,10 +102,336 @@ namespace {
 			default:				return MultiTexture::MagFilterModeInvalid;
 		}
 	}
+
+	// -------------------------------------------------------------------------
+	// Given two bitmaps src and dst, where src has dimensions 
+	// (srcWidth * srcHeight) and dst has dimensions (dstWidth * dstHeight),
+	// copy the rectangle (srcX, srcY, copyWidth, copyHeight) into
+	// dst at location (dstX, dstY).
+	//
+	// It is assumed that the copy rectangle is non-empty and has been clipped
+	// against the src and target rectangles
+	// -------------------------------------------------------------------------
+	template<class PixelType> 
+	void CopyPixels(const void * src, U32 srcWidth, U32 srcHeight, 
+					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
+					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY) {
+
+		U32 srcGap = srcWidth - copyWidth;	// how many pixels to skip for next line
+		U32 dstGap = dstWidth - copyWidth;	// how many pixels to skip for next line
+
+		const PixelType * srcPtr = reinterpret_cast<const PixelType *>(src) + srcX;
+		PixelType * dstPtr = reinterpret_cast<PixelType *>(dst) + dstX;
+
+		do {
+			U32 span = copyWidth;
+
+			do {
+				*dstPtr++ = *srcPtr++;
+			} while (--span);
+
+			srcPtr += srcGap;
+			dstPtr += dstGap;
+		} while (--copyHeight);
+	}
+
+	struct RGB2Color {
+		enum {
+			baseIncr = 3
+		};
+
+		typedef U8 BaseType;
+
+		Color operator()(const BaseType * &ptr) {
+			return Color(*ptr++, *ptr++, *ptr++, 0);
+		}
+	};
+
+	struct RGBA2Color {
+		enum {
+			baseIncr = 4
+		};
+
+		typedef U8 BaseType;
+
+		Color operator()(const BaseType * &ptr) {
+			return Color(*ptr++, *ptr++, *ptr++, *ptr++);
+		}
+	};
+
+	struct RGBA44442Color {
+		enum {
+			baseIncr = 2
+		};
+
+		typedef U8 BaseType;
+
+		Color operator()(const BaseType * &ptr) {
+			U8 r = *ptr & 0xF0;
+			U8 g = (*ptr++ & 0xF) << 4;
+			U8 b = *ptr & 0xF0;
+			U8 a = (*ptr++ & 0xF) << 4;
+			return Color(r, g, b, a);
+		}
+	};
+
+	struct Color2RGB565 {
+		enum {
+			baseIncr = 1
+		};
+
+		typedef U16 BaseType;
+
+		void operator()(BaseType * &ptr, const Color value) {
+			*ptr++ = value.ConvertTo565();
+		}
+	};
+
+	struct Color2RGBA5551 {
+		enum {
+			baseIncr = 1
+		};
+
+		typedef U16 BaseType;
+
+		void operator()(BaseType * &ptr, const Color value) {
+			*ptr++ = value.ConvertTo5551();
+		}
+	};
+
+	// -------------------------------------------------------------------------
+	// Given two bitmaps src and dst, where src has dimensions 
+	// (srcWidth * srcHeight) and dst has dimensions (dstWidth * dstHeight),
+	// copy the rectangle (srcX, srcY, copyWidth, copyHeight) into
+	// dst at location (dstX, dstY).
+	//
+	// It is assumed that the copy rectangle is non-empty and has been clipped
+	// against the src and target rectangles
+	// -------------------------------------------------------------------------
+	template<class SrcAccessor, class DstAccessor> 
+	void CopyPixelsA(const void * src, U32 srcWidth, U32 srcHeight, 
+					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
+					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY) {
+
+		typedef typename SrcAccessor::BaseType SrcBaseType;
+		typedef typename DstAccessor::BaseType DstBaseType;
+
+		SrcAccessor srcAccessor;
+		DstAccessor dstAccessor;
+
+		U32 srcGap = srcWidth - copyWidth;	// how many pixels to skip for next line
+		U32 dstGap = dstWidth - copyWidth;	// how many pixels to skip for next line
+
+		const SrcBaseType * srcPtr = reinterpret_cast<const SrcBaseType *>(src) + srcX;
+		DstBaseType * dstPtr = reinterpret_cast<DstBaseType *>(dst) + dstX;
+
+		do {
+			U32 span = copyWidth;
+
+			do {
+				dstAccessor(dstPtr, srcAccessor(srcPtr));
+			} while (--span);
+
+			srcPtr += srcGap * SrcAccessor::baseIncr;
+			dstPtr += dstGap * DstAccessor::baseIncr;
+		} while (--copyHeight);
+	}
+
+	// -------------------------------------------------------------------------
+	// Given two bitmaps src and dst, where src has dimensions 
+	// (srcWidth * srcHeight) and dst has dimensions (dstWidth * dstHeight),
+	// copy the rectangle (srcX, srcY, copyWidth, copyHeight) into
+	// dst at location (dstX, dstY).
+	//
+	// The texture format and the type of the source format a given as
+	// parameters.
+	// -------------------------------------------------------------------------
+	void CopyPixels(const void * src, U32 srcWidth, U32 srcHeight, 
+					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
+					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
+					Texture::TextureFormat format, GLenum type) {
+
+		// ---------------------------------------------------------------------
+		// clip lower left corner
+		// ---------------------------------------------------------------------
+
+		if (srcX >= srcWidth || srcY >= srcHeight ||
+			dstX >= dstWidth || dstY >= dstHeight ||
+			copyWidth == 0 || copyHeight == 0) {
+			return;
+		}
+
+		// ---------------------------------------------------------------------
+		// clip the copy rectangle to the valid size
+		// ---------------------------------------------------------------------
+
+		if (srcX + copyWidth > dstX + dstWidth) {
+			copyWidth = dstX + dstWidth - srcX;
+		}
+
+		if (srcX + copyWidth > srcX + srcWidth) {
+			copyWidth = srcWidth - srcX;
+		}
+
+		if (srcY + copyHeight > dstY + dstHeight) {
+			copyHeight = dstY + dstHeight - srcY;
+		}
+
+		if (srcY + copyHeight > srcY + srcHeight) {
+			copyHeight = srcHeight - srcY;
+		}
+
+		// ---------------------------------------------------------------------
+		// at this point we know that the copy rectangle is valid and non-empty
+		// ---------------------------------------------------------------------
+
+			
+		switch (format) {
+			case Texture::TextureFormatAlpha:
+			case Texture::TextureFormatLuminance:
+				CopyPixels<U8>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+					dst, dstWidth, dstHeight, dstX, dstY);
+				break;
+
+			case Texture::TextureFormatLuminanceAlpha:
+				CopyPixels<U16>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+					dst, dstWidth, dstHeight, dstX, dstY);
+				break;
+
+			case Texture::TextureFormatRGB:
+				switch (type) {
+					case GL_UNSIGNED_BYTE:
+						CopyPixelsA<RGB2Color, Color2RGB565>(src, srcWidth, srcHeight, srcX, srcY, 
+							copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+						break;
+
+					case GL_UNSIGNED_SHORT_5_6_5:
+						CopyPixels<U16>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+							dst, dstWidth, dstHeight, dstX, dstY);
+						break;
+				}
+
+				break;
+
+			case Texture::TextureFormatRGBA:
+				switch (type) {
+					case GL_UNSIGNED_BYTE:
+						CopyPixelsA<RGBA2Color, Color2RGBA5551>(src, srcWidth, srcHeight, srcX, srcY, 
+							copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+						break;
+
+					case GL_UNSIGNED_SHORT_5_5_5_1:
+						CopyPixels<U16>(src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+							dst, dstWidth, dstHeight, dstX, dstY);
+						break;
+
+					case GL_UNSIGNED_SHORT_4_4_4_4:
+						CopyPixelsA<RGBA44442Color, Color2RGBA5551>(src, srcWidth, srcHeight, srcX, srcY, 
+							copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY);
+						break;
+				}
+
+				break;
+
+		}
+	}
+
+	// -------------------------------------------------------------------------
+	// Ensure that the two formats (internalFormat) and
+	// (externalFormat, type) are assignment compatible
+	//
+	// Parameters:
+	//	internalFormat	-	the format of the target texture
+	//	externalFormat	-	the external bitmap format
+	//	type			-	the external bitmap type
+	// -------------------------------------------------------------------------
+	bool ValidateFormats(Texture::TextureFormat internalFormat,
+		Texture::TextureFormat externalFormat, GLenum type) {
+		if (internalFormat == Texture::TextureFormatInvalid || 
+			externalFormat == Texture::TextureFormatInvalid || 
+			internalFormat != externalFormat) {
+			return false;
+		}
+
+		switch (internalFormat) {
+			case Texture::TextureFormatAlpha:
+			case Texture::TextureFormatLuminance:
+			case Texture::TextureFormatLuminanceAlpha:
+				if (type != GL_UNSIGNED_BYTE) {
+					return false;
+				}
+
+				break;
+
+			case Texture::TextureFormatRGB:
+				if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT_5_6_5) {
+					return false;
+				}
+
+				break;
+
+			case Texture::TextureFormatRGBA:
+				if (type != GL_UNSIGNED_BYTE &&
+					type != GL_UNSIGNED_SHORT_4_4_4_4 &&
+					type != GL_UNSIGNED_SHORT_5_5_5_1) {
+					return false;
+				}
+
+				break;
+
+		}
+
+		return true;
+	}
+
+	GLenum TypeForInternalFormat(Texture::TextureFormat format) {
+		switch (format) {
+			default:
+			case Texture::TextureFormatAlpha:
+			case Texture::TextureFormatLuminance:
+			case Texture::TextureFormatLuminanceAlpha:
+				return GL_UNSIGNED_BYTE;
+
+			case Texture::TextureFormatRGB:
+				return GL_UNSIGNED_SHORT_5_6_5;
+
+			case Texture::TextureFormatRGBA:
+				return GL_UNSIGNED_SHORT_5_5_5_1;
+		}
+	}
+}
+
+void Context :: CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data) { 
+
+	Texture::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
+	TexImage2D(target, level, internalformat, width, height, border, 
+		internalformat, TypeForInternalFormat(internalFormat), data);
+}
+
+void Context :: CompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data) { 
+
+	if (target != GL_TEXTURE_2D) {
+		return;
+	}
+
+	if (level < 0 || level >= MultiTexture::MAX_LEVELS) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	MultiTexture * multiTexture = GetCurrentTexture();
+	Texture * texture = multiTexture->GetTexture(level);
+
+	Texture::TextureFormat internalFormat = texture->GetInternalFormat();
+	TexSubImage2D(target, level, xoffset, yoffset, width, height, 
+		internalFormat, TypeForInternalFormat(internalFormat), data);
 }
 
 
-void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels) { 
+void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat, 
+						   GLsizei width, GLsizei height, GLint border, 
+						   GLenum format, GLenum type, const GLvoid *pixels) { 
+
 	if (target != GL_TEXTURE_2D) {
 		return;
 	}
@@ -134,127 +444,114 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat, GLs
 	Texture::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
 	Texture::TextureFormat externalFormat = TextureFormatFromEnum(format);
 
-	if (internalFormat == Texture::TextureFormatInvalid || 
-		externalFormat == Texture::TextureFormatInvalid || 
-		internalFormat != externalFormat) {
+	if (!ValidateFormats(internalFormat, externalFormat, type)) {
 		RecordError(GL_INVALID_VALUE);
 		return;
 	}
-
-	switch (internalFormat) {
-		case Texture::TextureFormatAlpha:
-		case Texture::TextureFormatLuminance:
-		case Texture::TextureFormatLuminanceAlpha:
-			if (type != GL_UNSIGNED_BYTE) {
-				RecordError(GL_INVALID_VALUE);
-				return;
-			}
-
-			break;
-
-		case Texture::TextureFormatRGB:
-			if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT_5_6_5) {
-				RecordError(GL_INVALID_VALUE);
-				return;
-			}
-
-			break;
-
-		case Texture::TextureFormatRGBA:
-			if (type != GL_UNSIGNED_BYTE &&
-				type != GL_UNSIGNED_SHORT_4_4_4_4 &&
-				type != GL_UNSIGNED_SHORT_5_5_5_1) {
-				RecordError(GL_INVALID_VALUE);
-				return;
-			}
-
-			break;
-
-	}
-	// check that width and height and border are of valid size
-	// check for validity of format
 
 	MultiTexture * multiTexture = GetCurrentTexture();
 	Texture * texture = multiTexture->GetTexture(level);
 	texture->Initialize(width, height, internalFormat);
 
-	switch (internalFormat) {
-		case Texture::TextureFormatAlpha:
-		case Texture::TextureFormatLuminance:
-		case Texture::TextureFormatLuminanceAlpha:
-			memcpy(texture->GetData(), pixels, width * height * texture->GetBytesPerPixel());
-			break;
-
-		case Texture::TextureFormatRGB:
-			switch (type) {
-				case GL_UNSIGNED_BYTE:
-					{
-						U32 count = width * height;
-						const U8 * src = reinterpret_cast<const U8 *>(pixels);
-						U16 * dst = reinterpret_cast<U16 *>(texture->GetData());
-
-						while (count != 0) {
-							--count;
-							Color color = Color(*src++, *src++, *src++, 0);
-							*dst++ = color.ConvertTo565();
-						}
-					}
-					break;
-				case GL_UNSIGNED_SHORT_5_6_5:
-					memcpy(texture->GetData(), pixels, width * height * texture->GetBytesPerPixel());
-					break;
-			}
-
-			break;
-
-		case Texture::TextureFormatRGBA:
-			switch (type) {
-				case GL_UNSIGNED_BYTE:
-					{
-						U32 count = width * height;
-						const U8 * src = reinterpret_cast<const U8 *>(pixels);
-						U16 * dst = reinterpret_cast<U16 *>(texture->GetData());
-
-						while (count != 0) {
-							--count;
-							Color color = Color(*src++, *src++, *src++, *src++);
-							*dst++ = color.ConvertTo5551();
-						}
-					}
-					break;
-
-				case GL_UNSIGNED_SHORT_5_5_5_1:
-					memcpy(texture->GetData(), pixels, width * height * texture->GetBytesPerPixel());
-					break;
-
-				case GL_UNSIGNED_SHORT_4_4_4_4:
-					{
-						U32 count = width * height;
-						const U8 * src = reinterpret_cast<const U8 *>(pixels);
-						U16 * dst = reinterpret_cast<U16 *>(texture->GetData());
-
-						while (count != 0) {
-							--count;
-							U8 r = *src & 0xF0;
-							U8 g = (*src++ & 0xF) << 4;
-							U8 b = *src & 0xF0;
-							U8 a = (*src++ & 0xF) << 4;
-							Color color = Color(r, g, b, a);
-							*dst++ = color.ConvertTo5551();
-						}
-					}
-					break;
-			}
-
-			break;
-
-	}
+	CopyPixels(const_cast<const void *>(pixels), width, height, 0, 0, width, height,
+		texture->GetData(), width, height, 0, 0, internalFormat, type);
 }
 
-void Context :: TexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels) { 
+void Context :: TexSubImage2D(GLenum target, GLint level, 
+							  GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, 
+							  GLenum format, GLenum type, const GLvoid *pixels) { 
+
 	if (target != GL_TEXTURE_2D) {
 		return;
 	}
+
+	if (level < 0 || level >= MultiTexture::MAX_LEVELS) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	MultiTexture * multiTexture = GetCurrentTexture();
+	Texture * texture = multiTexture->GetTexture(level);
+
+	Texture::TextureFormat internalFormat = texture->GetInternalFormat();
+	Texture::TextureFormat externalFormat = TextureFormatFromEnum(format);
+
+	if (!ValidateFormats(internalFormat, externalFormat, type)) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	CopyPixels(const_cast<const void *>(pixels), width, height, 0, 0, width, height,
+		texture->GetData(), texture->GetWidth(), texture->GetHeight(),
+		xoffset, yoffset, internalFormat, type);
+}
+
+void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat, 
+							   GLint x, GLint y, GLsizei width, GLsizei height, GLint border) { 
+	if (target != GL_TEXTURE_2D) {
+		return;
+	}
+
+	Surface * drawSurface = GetDrawSurface();
+
+	if (level < 0 || level >= MultiTexture::MAX_LEVELS) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	Texture::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
+
+	// These parameters really depend on the actual drawing surface, and should
+	// be determined from there
+	Texture::TextureFormat externalFormat = Texture::TextureFormatRGB;
+	GLenum type = GL_UNSIGNED_SHORT_5_6_5;
+
+	if (!ValidateFormats(internalFormat, externalFormat, type)) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	MultiTexture * multiTexture = GetCurrentTexture();
+	Texture * texture = multiTexture->GetTexture(level);
+	texture->Initialize(width, height, internalFormat);
+
+	CopyPixels(drawSurface->GetColorBuffer(), drawSurface->GetWidth(), drawSurface->GetHeight(), 
+				0, 0, width, height,
+				texture->GetData(), width, height, 0, 0, internalFormat, type);
+}
+
+void Context :: CopyTexSubImage2D(GLenum target, GLint level, 
+								  GLint xoffset, GLint yoffset, 
+								  GLint x, GLint y, GLsizei width, GLsizei height) { 
+	if (target != GL_TEXTURE_2D) {
+		return;
+	}
+
+	Surface * drawSurface = GetDrawSurface();
+
+	if (level < 0 || level >= MultiTexture::MAX_LEVELS) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	MultiTexture * multiTexture = GetCurrentTexture();
+	Texture * texture = multiTexture->GetTexture(level);
+	Texture::TextureFormat internalFormat = texture->GetInternalFormat();
+
+	// These parameters really depend on the actual drawing surface, and should
+	// be determined from there
+	Texture::TextureFormat externalFormat = Texture::TextureFormatRGB;
+	GLenum type = GL_UNSIGNED_SHORT_5_6_5;
+
+	if (!ValidateFormats(internalFormat, externalFormat, type)) {
+		RecordError(GL_INVALID_VALUE);
+		return;
+	}
+
+	CopyPixels(drawSurface->GetColorBuffer(), drawSurface->GetWidth(), drawSurface->GetHeight(), 
+				0, 0, width, height,
+				texture->GetData(), texture->GetWidth(), texture->GetHeight(), 0, 0, 
+				internalFormat, type);
 }
 
 // --------------------------------------------------------------------------

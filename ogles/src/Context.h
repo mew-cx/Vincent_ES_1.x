@@ -25,7 +25,7 @@
 #include "Rasterizer.h"
 #include "MatrixStack.h"
 #include "Texture.h"
-#include <list>
+#include <vector>
 
 namespace EGL {
 
@@ -395,11 +395,10 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		// texturing related state
 		// ----------------------------------------------------------------------
-		typedef std::list<MultiTexture *> TextureVector;
+		typedef std::vector<MultiTexture *> TextureVector;
 
-		MultiTexture		m_DefaultTexture;
 		TextureVector		m_Textures;
-		U32					m_CurrentTexture;
+		MultiTexture *		m_CurrentTexture;
 
 		// ----------------------------------------------------------------------
 		// Object-Life Cycle State

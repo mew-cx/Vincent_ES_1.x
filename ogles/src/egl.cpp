@@ -202,10 +202,10 @@ GLAPI EGLBoolean APIENTRY eglSwapBuffers (EGLDisplay dpy, EGLSurface draw) {
 
 	// TO DO: Make this more efficient, either using hardware accelaration or
 	// by using optimized memory copy code
-	HBITMAP tempBitMap = CreateBitmap(draw->Width(), draw->Height(), 1,	16, draw->GetColorBuffer());
+	HBITMAP tempBitMap = CreateBitmap(draw->GetWidth(), draw->GetHeight(), 1,	16, draw->GetColorBuffer());
 	SelectObject(memoryDC, tempBitMap);
 
-	BitBlt(nativeDisplay, 0, 0, draw->Width(), draw->Height(), memoryDC, 0, 0, SRCCOPY);
+	BitBlt(nativeDisplay, 0, 0, draw->GetWidth(), draw->GetHeight(), memoryDC, 0, 0, SRCCOPY);
 	DeleteObject(tempBitMap);
 
 	if (memoryDC != draw->GetMemoryDC()) {

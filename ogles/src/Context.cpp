@@ -63,6 +63,9 @@ Context :: Context(const Config & config)
 	m_ViewportInitialized(false)
 {
 	DepthRangex(VIEWPORT_NEAR, VIEWPORT_FAR);
+	m_CurrentTexture = new MultiTexture();
+	m_Textures.push_back(m_CurrentTexture);
+	GetRasterizerState()->SetTexture(m_CurrentTexture);
 
 	m_LightModelAmbient.r = m_LightModelAmbient.g = m_LightModelAmbient.b = F(0.2f);
 	m_LightModelAmbient.a = F(1.0);
@@ -107,8 +110,8 @@ void Context :: SetDrawSurface(EGL::Surface * surface) {
 	}
 
 	if (surface != 0 && !m_ViewportInitialized) {
-		U16 width = surface->Width();
-		U16 height = surface->Height();
+		U16 width = surface->GetWidth();
+		U16 height = surface->GetHeight();
 
 		Viewport(0, 0, width, height);
 		Scissor(0, 0, width, height);

@@ -92,7 +92,7 @@ void Surface :: SetCurrentContext(Context * context) {
 void Surface :: ClearDepthBuffer(GLclampx depth) {
 	I32 depthValue = depth;//DepthBitsFromDepth(depth);
 
-	int count = Pixels();
+	int count = GetPixels();
 	I32 * ptr = m_DepthBuffer;
 
 	while (--count > 0) {
@@ -102,7 +102,7 @@ void Surface :: ClearDepthBuffer(GLclampx depth) {
 
 
 void Surface :: ClearStencilBuffer(U32 value) {
-	int count = Pixels();
+	int count = GetPixels();
 	U32 * ptr = m_StencilBuffer;
 
 	while (--count > 0) {
@@ -121,7 +121,7 @@ I32 Surface :: DepthBitsFromDepth(GLclampx depth) {
 void Surface :: ClearColorBuffer(const FractionalColor & rgba) {
 	U16 color = rgba.ConvertTo565();
 
-	int count = Pixels();
+	int count = GetPixels();
 	U16 * ptr = m_ColorBuffer;
 
 	while (--count > 0) {
