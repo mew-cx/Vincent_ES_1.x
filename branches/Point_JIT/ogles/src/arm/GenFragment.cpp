@@ -1939,9 +1939,9 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	if (m_State->m_Stencil.Enabled) {
 
 		//bool stencilTest;
-		//U32 stencilRef = m_State->m_StencilReference & m_State->m_StencilMask;
+		//U32 stencilRef = m_State->m_Stencil.Reference & m_State->ComparisonMask;
 		//U32 stencilValue = m_Surface->GetStencilBuffer()[offset];
-		//U32 stencil = stencilValue & m_State->m_StencilMask;
+		//U32 stencil = stencilValue & m_State->m_Stencil.ComparisonMask;
 		DECL_REG	(regStencilRef);
 		DECL_REG	(regStencilMask);
 		DECL_REG	(regStencilAddr);
@@ -1951,8 +1951,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 		cg_virtual_reg_t * regStencilBuffer =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_STENCIL_BUFFER);
 
-		LDI		(regStencilRef, m_State->m_Stencil.Reference & m_State->m_Stencil.Mask);
-		LDI		(regStencilMask, m_State->m_Stencil.Mask);
+		LDI		(regStencilRef, m_State->m_Stencil.Reference & m_State->m_Stencil.ComparisonMask);
+		LDI		(regStencilMask, m_State->m_Stencil.ComparisonMask);
 		ADD		(regStencilAddr, regStencilBuffer, regOffset4);
 		LDW		(regStencilValue, regStencilAddr);
 		AND		(regStencil, regStencilValue, regStencilMask);
@@ -2018,8 +2018,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			switch (m_State->m_Stencil.Fail) {
 				default:
 				case RasterizerState::StencilOpKeep: 
-					regNewStencilValue = regStencilValue;
-					break;
+					goto no_write;
 
 				case RasterizerState::StencilOpZero: 
 					//stencilValue = 0; 
@@ -2078,7 +2077,24 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					break;
 			}
 
-			STW		(regNewStencilValue, regStencilAddr);
+			if (m_State->m_Stencil.Mask == ~0) {
+				STW		(regNewStencilValue, regStencilAddr);
+			} else {
+				DECL_REG	(regMaskedOriginal);
+				DECL_REG	(regMaskedNewValue);
+				DECL_REG	(regWriteValue);
+
+				DECL_CONST_REG	(regStencilWriteMask, m_State->m_Stencil.Mask);
+				DECL_REG	(regInverseWriteMask);
+
+				AND			(regMaskedNewValue, regNewStencilValue, regStencilWriteMask);
+				NOT			(regInverseWriteMask, regStencilWriteMask);
+				AND			(regMaskedOriginal, regStencilValue, regInverseWriteMask);
+				OR			(regWriteValue, regMaskedOriginal, regMaskedNewValue);
+				STW			(regWriteValue, regStencilAddr);
+			}
+
+no_write:
 			BRA		(continuation);
 		//}
 		}
@@ -2181,6 +2197,22 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				//m_Surface->GetStencilBuffer()[offset] = stencilValue;
 				//STW		(regNewStencilValue, regStencilAddr);
 			//}
+				if (m_State->m_Stencil.Mask == ~0) {
+					STW		(regNewStencilValue, regStencilAddr);
+				} else {
+					DECL_REG	(regMaskedOriginal);
+					DECL_REG	(regMaskedNewValue);
+					DECL_REG	(regWriteValue);
+
+					DECL_CONST_REG	(regStencilWriteMask, m_State->m_Stencil.Mask);
+					DECL_REG	(regInverseWriteMask);
+
+					AND			(regMaskedNewValue, regNewStencilValue, regStencilWriteMask);
+					NOT			(regInverseWriteMask, regStencilWriteMask);
+					AND			(regMaskedOriginal, regStencilValue, regInverseWriteMask);
+					OR			(regWriteValue, regMaskedOriginal, regMaskedNewValue);
+					STW			(regWriteValue, regStencilAddr);
+				}
 			}
 
 			if (m_State->m_DepthTest.Enabled) {
@@ -2261,6 +2293,22 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				//m_Surface->GetStencilBuffer()[offset] = stencilValue;
 				//STW		(regNewStencilValue, regStencilAddr);
 			//}
+				if (m_State->m_Stencil.Mask == ~0) {
+					STW		(regNewStencilValue, regStencilAddr);
+				} else {
+					DECL_REG	(regMaskedOriginal);
+					DECL_REG	(regMaskedNewValue);
+					DECL_REG	(regWriteValue);
+
+					DECL_CONST_REG	(regStencilWriteMask, m_State->m_Stencil.Mask);
+					DECL_REG	(regInverseWriteMask);
+
+					AND			(regMaskedNewValue, regNewStencilValue, regStencilWriteMask);
+					NOT			(regInverseWriteMask, regStencilWriteMask);
+					AND			(regMaskedOriginal, regStencilValue, regInverseWriteMask);
+					OR			(regWriteValue, regMaskedOriginal, regMaskedNewValue);
+					STW			(regWriteValue, regStencilAddr);
+				}
 			}
 
 		// stencil test bypassed

@@ -585,9 +585,9 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 	if (m_State->m_Stencil.Enabled) {
 
 		bool stencilTest;
-		U32 stencilRef = m_State->m_Stencil.Reference & m_State->m_Stencil.Mask;
+		U32 stencilRef = m_State->m_Stencil.Reference & m_State->m_Stencil.ComparisonMask;
 		U32 stencilValue = rasterInfo->StencilBuffer[offset];
-		U32 stencil = stencilValue & m_State->m_Stencil.Mask;
+		U32 stencil = stencilValue & m_State->m_Stencil.ComparisonMask;
 
 		switch (m_State->m_Stencil.Func) {
 			default:
@@ -635,7 +635,10 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					break;
 			}
 
-			rasterInfo->StencilBuffer[offset] = stencilValue;
+			rasterInfo->StencilBuffer[offset] = 
+				rasterInfo->StencilBuffer[offset] & m_State->m_Stencil.Mask |
+				stencilValue & m_State->m_Stencil.Mask;
+
 			return;
 		}
 
@@ -672,7 +675,9 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					break;
 			}
 
-			rasterInfo->StencilBuffer[offset] = stencilValue;
+			rasterInfo->StencilBuffer[offset] = 
+				rasterInfo->StencilBuffer[offset] & m_State->m_Stencil.Mask |
+				stencilValue & m_State->m_Stencil.Mask;
 		} else {
 			switch (m_State->m_Stencil.ZFail) {
 				default:
@@ -706,7 +711,9 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 					break;
 			}
 
-			rasterInfo->StencilBuffer[offset] = stencilValue;
+			rasterInfo->StencilBuffer[offset] = 
+				rasterInfo->StencilBuffer[offset] & m_State->m_Stencil.Mask |
+				stencilValue & m_State->m_Stencil.Mask;
 		}
 	}
 
