@@ -1,1 +1,0 @@
-Visual Studio.NET Projects go here
