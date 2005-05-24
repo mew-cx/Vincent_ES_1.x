@@ -40,11 +40,15 @@
 
 
 #ifdef EGL_ON_WINCE
-#	ifdef OGLES_EXPORTS
-#		define OGLES_API __declspec(dllexport)
-#	else
-#		define OGLES_API __declspec(dllimport)
-#	endif
+	#ifndef STATIC_GLES
+		#	ifdef OGLES_EXPORTS
+		#		define OGLES_API __declspec(dllexport)
+		#	else
+		#		define OGLES_API __declspec(dllimport)
+		#	endif
+	#else
+		#define OGLES_API 
+	#endif
 #endif
 
 #ifdef EGL_ON_SYMBIAN

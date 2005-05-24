@@ -65,11 +65,15 @@ extern "C" {
 #endif
 
 #ifndef GLAPI
-#ifdef OGLES_EXPORTS
-#define GLAPI __declspec(dllexport)
-#else
-#define GLAPI __declspec(dllimport)
-#endif
+	#ifndef STATIC_GLES
+		#ifdef OGLES_EXPORTS
+			#define GLAPI __declspec(dllexport)
+		#else
+			#define GLAPI __declspec(dllimport)
+		#endif
+	#else
+		#define GLAPI 
+	#endif
 #endif
 
 typedef unsigned int GLenum;
