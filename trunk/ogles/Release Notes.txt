@@ -5,6 +5,19 @@ This document collects changes on a release to release base. For open known issu
 the bug database on SourceForge. 
 
 
+Version 0.84
+------------
+
+This is a build to address the pointer problem listed below. I.t has *not* been fully regression tested 
+against the conformance test suite, even though it is expected to be mostly stable. If you have any problems,
+please revert to version 0.83.
+
+This version addresses the following issues:
+
+1207580 - Freeing invalid pointer
+1209681 - Derivatives for mipmap selection swapped
+
+
 Version 0.83
 ------------
 
