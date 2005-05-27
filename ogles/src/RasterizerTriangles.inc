@@ -154,11 +154,12 @@ namespace {
 				Det2x2(grad.dx.m_TextureCoords[index].tu, tuOverZ[index], grad.dx.m_WindowCoords.invZ, invZ) 
 					+ EGL_Mul(grad.dy.m_TextureCoords[index].dtudx, yPreStep);
 
-			start.m_TextureCoords[index].dtudy = 
+			// Swap the following two assignments as reported by user
+			start.m_TextureCoords[index].dtvdx = 
 				Det2x2(grad.dx.m_TextureCoords[index].tv, tvOverZ[index], grad.dx.m_WindowCoords.invZ, invZ)
 					+ EGL_Mul(grad.dx.m_TextureCoords[index].dtudy, xPreStep);
 
-			start.m_TextureCoords[index].dtvdx = 
+			start.m_TextureCoords[index].dtudy = 
 				Det2x2(grad.dy.m_TextureCoords[index].tu, tuOverZ[index], grad.dy.m_WindowCoords.invZ, invZ)
 					+ EGL_Mul(grad.dy.m_TextureCoords[index].dtvdx, yPreStep);
 
