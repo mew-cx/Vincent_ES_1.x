@@ -4,6 +4,7 @@
 //
 // ------------------------------------------------------------------------------------
 //
+// 12-18-2004   Iwan Junianto       remove writable static data to TAppGlobal
 // 11-05-2004   Iwan Junianto       port to Symbian
 // 10-15-2003	Hans-Martin Will	initial version
 //
@@ -18,11 +19,17 @@
 #include "Color.h"
 #include "appview.h"
 #include "epoc/surface.h"
+#include "appglobal.h"
 
 #define USE_BUFFERS 1
 //#define DEBUG_OUTPUT    // define this to debug drawing output (saved as c\system\data\image.mbm)
 
+#ifdef __MARM__
+_LIT(KBitmapFile, "c:\\system\\apps\\test\\dodge.mbm");
+#else
 _LIT(KBitmapFile, "z:\\system\\apps\\test\\dodge.mbm");
+#endif
+
 GLAPI EGLBoolean APIENTRY eglSaveSurfaceHM(EGLSurface surface, const TDesC& filename)
 {
     // debug return code
@@ -117,9 +124,9 @@ namespace
 }
 
 // OpenGL variables
-EGLDisplay			g_display;				// EGL display
-EGLSurface			g_surface;				// EGL rendering surface
-EGLContext			g_context;				// EGL rendering context
+//EGLDisplay			g_display;				// EGL display
+//EGLSurface			g_surface;				// EGL rendering surface
+//EGLContext			g_context;				// EGL rendering context
 
 
 // --------- BEGIN OF INCLUDED SNIPPET
@@ -138,11 +145,11 @@ struct sample_TEXTURE{
  GLint  id;
 };
 
-static sample_MATERIAL materials [1] = {
+const sample_MATERIAL materials [1] = {
  {{1.0f,1.0f,1.0f},	{1.0f,1.0f,1.0f},	{1.0f,1.0f,1.0f},	{1.0f,1.0f,1.0f},	1.0f,11.3137f,0} //Material #1
 };
 
-static sample_TEXTURE texture_maps [1] = {
+const sample_TEXTURE texture_maps [1] = {
 {"dodge.bmp_0.bmp",0}
 };
 
@@ -151,7 +158,7 @@ static sample_TEXTURE texture_maps [1] = {
 // 516 Normals
 // 732 Triangles
 
-static short face_indicies[732][9] = {
+const short face_indicies[732][9] = {
 // Object #-1
 	{29,30,27 ,0,1,2 ,0,1,2 }, {28,29,27 ,3,0,2 ,3,0,2 }, {31,32,30 ,4,5,1 ,4,5,1 },
 	{21,34,35 ,6,7,8 ,6,7,8 }, {35,4,21 ,8,9,6 ,8,9,6 }, {34,26,25 ,7,10,11 ,7,10,11 },
@@ -515,7 +522,7 @@ static short face_indicies[732][9] = {
 	{365,366,364 ,512,512,512 ,810,811,812 }, {368,367,364 ,513,513,513 ,813,814,815 },
 	{364,366,368 ,514,514,514 ,816,817,818 }, {368,369,367 ,515,515,515 ,819,820,821 }
 };
-static GLfloat vertices [376][3] = {
+const GLfloat vertices [376][3] = {
 {0.165186f,0.474791f,-0.0481281f},{6.82545e-010f,0.495885f,-0.0290175f},{6.82545e-010f,0.5f,-0.0142633f},
 {6.82545e-010f,0.475376f,-0.00424912f},{6.82545e-010f,0.460813f,0.0499119f},{0.173658f,0.457315f,-0.00424912f},
 {0.169163f,0.447628f,0.0467705f},{0.172021f,0.47651f,-0.0142633f},{0.0979164f,0.492249f,-0.0303752f},
@@ -643,7 +650,7 @@ static GLfloat vertices [376][3] = {
 {-0.20859f,-0.00854663f,0.0537659f},{-0.182168f,-0.0163105f,0.0528405f},{-0.213542f,-0.00371702f,0.0583728f},
 {-0.176852f,-0.0150878f,0.0505329f}
 };
-static GLfloat normals [516][3] = {
+const GLfloat normals [516][3] = {
 {-0.123882f,0.915146f,0.383615f},{-0.0853064f,0.882605f,-0.46231f},{-0.226851f,0.965755f,-0.125917f},
 {-0.161105f,0.70889f,0.686673f},{0.0f,0.712992f,-0.701172f},{-0.117065f,0.892986f,-0.434595f},
 {-9.56645e-010f,0.962469f,0.271391f},{-0.114523f,0.961435f,0.250055f},{-0.0963279f,0.995241f,0.0147253f},
@@ -817,7 +824,7 @@ static GLfloat normals [516][3] = {
 {-0.307772f,0.951441f,-0.00600781f},{-0.0967574f,0.995296f,-0.00494027f},{0.208913f,0.977926f,-0.00407805f},
 {0.313271f,0.949583f,-0.0123751f},{0.307772f,0.951441f,-0.00600781f},{0.0967574f,0.995296f,-0.00494027f}
 };
-static GLfloat textures [822][2] = {
+const GLfloat textures [822][2] = {
 {0.298301f,0.0429086f},{0.298301f,0.0263816f},{0.371478f,0.0223928f},
 {0.374629f,0.0429086f},{0.298301f,0.00817141f},{0.367588f,0.00817141f},
 {0.197447f,0.0862799f},{0.298301f,0.0862799f},{0.298301f,0.107596f},
@@ -1095,7 +1102,7 @@ static GLfloat textures [822][2] = {
 };
 /*Material indicies*/
 /*{material index,face count}*/
-static int material_ref [1][2] = {
+const int material_ref [1][2] = {
 {0,732}
 };
 
@@ -1104,9 +1111,9 @@ static int material_ref [1][2] = {
 #define TEXTURE_BUFFER 2
 
 
-GLuint buffers[3];
+//GLuint buffers[3];
 
-void SetArrays(GLfixed vertexArray[][3], GLfixed normalArray[][3], GLfixed textureArray[][2]) {
+void SetArrays(GLfixed vertexArray[][3], GLfixed normalArray[][3], GLfixed textureArray[][2], GLuint buffers[3]) {
 	int index = 0;
 
 	for(int i=sizeof(face_indicies)/sizeof(face_indicies[0]);i--;)
@@ -1158,26 +1165,26 @@ void SetArrays(GLfixed vertexArray[][3], GLfixed normalArray[][3], GLfixed textu
 
 // --------- END OF INCLUDED SNIPPET
 
-float angle = 30.0f;
-float x = 0, minX = -100, maxX = 100;
-float y = 0, minY = -150, maxY = 150;
-float z = 0, minZ = -200, maxZ = 200;
+//float angle = 30.0f;
+//float x = 0, minX = -100, maxX = 100;
+//float y = 0, minY = -150, maxY = 150;
+//float z = 0, minZ = -200, maxZ = 200;
 
 #define SIZE (3 * sizeof(face_indicies)/sizeof(face_indicies[0]))
 
-GLfixed egl_vertices[SIZE][3];
-GLfixed egl_normals[SIZE][3];
-GLfixed egl_textures[SIZE][2];
+//GLfixed egl_vertices[SIZE][3];
+//GLfixed egl_normals[SIZE][3];
+//GLfixed egl_textures[SIZE][2];
 
 
-TBool InitOpenGL(CWindowGc* hdc, RWindow* hWnd) 
+TBool InitOpenGL(CWindowGc* hdc, RWindow* hWnd, TAppGlobal* data) 
 {
 	// Initialize OGL
-	g_display = eglGetDisplay(hdc);
+	data->g_display = eglGetDisplay(hdc);
 	
 	EGLint major, minor;
 
-	if (!eglInitialize(g_display, &major, &minor)) {
+	if (!eglInitialize(data->g_display, &major, &minor)) {
 		return EFalse;
 	}
 
@@ -1185,7 +1192,7 @@ TBool InitOpenGL(CWindowGc* hdc, RWindow* hWnd)
 	EGLint matchingConfigs;
 	EGLint attribList[] = { 0 };	// extend this
 
-	if (!eglChooseConfig(g_display, attribList, &configs[0], 10, &matchingConfigs)) {
+	if (!eglChooseConfig(data->g_display, attribList, &configs[0], 10, &matchingConfigs)) {
 		return EFalse;
 	}
 
@@ -1195,12 +1202,12 @@ TBool InitOpenGL(CWindowGc* hdc, RWindow* hWnd)
 
 	EGLConfig config = configs[0];	// pick any
 
-	g_surface = eglCreateWindowSurface(g_display, config, hWnd, attribList);
+	data->g_surface = eglCreateWindowSurface(data->g_display, config, hWnd, attribList);
 	
 	// test for error 
 
-	g_context = eglCreateContext(g_display, config, 0, attribList);
-	eglMakeCurrent(g_display, g_surface, g_surface, g_context);
+	data->g_context = eglCreateContext(data->g_display, config, 0, attribList);
+	eglMakeCurrent(data->g_display, data->g_surface, data->g_surface, data->g_context);
 	
 	// TO DO: test for error
 	TRAPD(err,LoadTextureL(KBitmapFile));
@@ -1214,20 +1221,20 @@ TBool InitOpenGL(CWindowGc* hdc, RWindow* hWnd)
 	}
 
 	// Initialize the car data
-	SetArrays(egl_vertices, egl_normals, egl_textures);
+	SetArrays(data->egl_vertices, data->egl_normals, data->egl_textures, data->buffers);
 
 	return ETrue;
 }
 
-TAny ShutdownOpenGL()
+TAny ShutdownOpenGL(TAppGlobal* data)
 {
     eglMakeCurrent(EGL_NO_DISPLAY, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    eglDestroyContext(g_display, g_context);
-    eglDestroySurface(g_display, g_surface);
-    eglTerminate(g_display);
+    eglDestroyContext(data->g_display, data->g_context);
+    eglDestroySurface(data->g_display, data->g_surface);
+    eglTerminate(data->g_display);
 }
 
-TAny PaintProc(CWindowGc* hdc, const TRect& aRect) 
+TAny PaintProc(CWindowGc* hdc, const TRect& aRect, TAppGlobal* data) 
 {
 	// the actual painting code will go here
     TTime startTicks;
@@ -1238,7 +1245,7 @@ TAny PaintProc(CWindowGc* hdc, const TRect& aRect)
 	// rendering preamble
 	EGLDisplay display = eglGetDisplay(hdc);
 	
-	eglMakeCurrent(display, g_surface, g_surface, g_context);
+	eglMakeCurrent(display, data->g_surface, data->g_surface, data->g_context);
 
 	glViewport(aRect.iTl.iX, aRect.iTl.iY, width, height);
 	glDepthRangex(EGL_FixedFromInt(0), EGL_FixedFromInt(1));
@@ -1252,9 +1259,10 @@ TAny PaintProc(CWindowGc* hdc, const TRect& aRect)
 		EGL_FixedFromInt(1000));
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+    float x=0,y=0;
 	glTranslatex(EGL_FixedFromFloat(x), EGL_FixedFromFloat(y), EGL_FixedFromFloat(x - 600));
-	glScalex(EGL_FixedFromInt(220), EGL_FixedFromInt(-220), EGL_FixedFromInt(220));
-	glRotatex(EGL_FixedFromFloat(angle), 0, EGL_FixedFromInt(1), 0);
+	glScalex(EGL_FixedFromInt(220), EGL_FixedFromInt(220), EGL_FixedFromInt(220));
+	glRotatex(EGL_FixedFromFloat(data->angle), 0, EGL_FixedFromInt(1), 0);
 	glRotatex(EGL_FixedFromFloat(280.0f), EGL_FixedFromInt(1), 0, 0);
 
 	// actual GL rendering goes here
@@ -1313,16 +1321,16 @@ TAny PaintProc(CWindowGc* hdc, const TRect& aRect)
 
 	// Test Code until we have full OpenGL pipeline
 #ifdef USE_BUFFERS
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[VERTEX_BUFFER]);
+	glBindBuffer(GL_ARRAY_BUFFER, data->buffers[VERTEX_BUFFER]);
 	glVertexPointer(3, GL_FIXED, 0, 0);
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[NORMAL_BUFFER]);
+	glBindBuffer(GL_ARRAY_BUFFER, data->buffers[NORMAL_BUFFER]);
 	glNormalPointer(GL_FIXED, 0, 0);
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[TEXTURE_BUFFER]);
+	glBindBuffer(GL_ARRAY_BUFFER, data->buffers[TEXTURE_BUFFER]);
 	glTexCoordPointer(2, GL_FIXED, 0, 0);
 #else
-	glVertexPointer(3, GL_FIXED, 0, egl_vertices);
-	glNormalPointer(GL_FIXED, 0, egl_normals);
-	glTexCoordPointer(2, GL_FIXED, 0, egl_textures);
+	glVertexPointer(3, GL_FIXED, 0, data->egl_vertices);
+	glNormalPointer(GL_FIXED, 0, data->egl_normals);
+	glTexCoordPointer(2, GL_FIXED, 0, data->egl_textures);
 #endif
 
 	//glScissor(30, 30, 100, 100);
@@ -1338,9 +1346,9 @@ TAny PaintProc(CWindowGc* hdc, const TRect& aRect)
     endRaster.HomeTime();
 #ifdef DEBUG_OUTPUT
     _LIT(KDebugImage, "c:\\system\\data\\image.mbm");
-    eglSaveSurfaceHM(g_surface, KDebugImage);
+    eglSaveSurfaceHM(data->g_surface, KDebugImage);
 #endif
-    eglSwapBuffers(display, g_surface);
+    eglSwapBuffers(display, data->g_surface);
     TTime endSwap;
     endSwap.HomeTime();
 

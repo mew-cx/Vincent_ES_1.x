@@ -37,8 +37,11 @@
 extern "C" {
 #endif
 
-
+#if defined(__GCC32__) && defined(__cplusplus)
+struct cg_segment_t;
+#else
 typedef struct cg_segment_t cg_segment_t;
+#endif
 	/************************************************************************/
 	/* Code segment data structure											*/
 	/************************************************************************/

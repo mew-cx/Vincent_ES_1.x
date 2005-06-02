@@ -465,7 +465,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 	pos[1] = &b;
 	pos[2] = &c;
 
-	I8 * permutation = SortPermutation(a.m_WindowCoords.y, b.m_WindowCoords.y, c.m_WindowCoords.y);
+	const I8 * permutation = SortPermutation(a.m_WindowCoords.y, b.m_WindowCoords.y, c.m_WindowCoords.y);
 	const RasterPos &pos1 = *pos[permutation[0]];
 	const RasterPos &pos2 = *pos[permutation[1]];
 	const RasterPos &pos3 = *pos[permutation[2]];

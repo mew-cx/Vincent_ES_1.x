@@ -1,7 +1,7 @@
 TARGET gles_cl.dll
 TARGETTYPE dll
+UID 0x1000008D 0x10202D9E
 SOURCEPATH ..\..\src
-SOURCE Config.cpp
 SOURCE Context.cpp
 SOURCE ContextBuffer.cpp
 SOURCE ContextFloat.cpp
@@ -36,6 +36,7 @@ SOURCE GenLline.cpp
 SOURCE GenTriangle.cpp
 SOURCE GenScanline.cpp
 SOURCEPATH ..\..\src\Epoc
+SOURCE ConfigEpoc.cpp
 SOURCE ContextEpoc.cpp
 SOURCE egl.cpp
 SOURCE OGLES.cpp
@@ -48,6 +49,6 @@ USERINCLUDE ..\..\src
 SYSTEMINCLUDE ..\..\include
 SYSTEMINCLUDE \epoc32\include\libc
 SYSTEMINCLUDE \epoc32\include
-LIBRARY codegen.lib ws32.lib fbscli.lib 
+LIBRARY 	ws32.lib fbscli.lib 
 LIBRARY		estlib.lib euser.lib
-LIBRARY	int64x.lib
+STATICLIBRARY	codegen.lib

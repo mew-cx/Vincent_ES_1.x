@@ -51,7 +51,7 @@ using namespace EGL;
 
 
 namespace {
-	I8 Permutation[8][3] = {
+	const I8 Permutation[8][3] = {
 		{ 0, 1, 2 },
 		{ 0, 2, 1 },
 		{ 0, 0, 0 },	// impossible
@@ -62,12 +62,12 @@ namespace {
 		{ 2, 1, 0 },
 	};
 
-	inline I8 * SortPermutation(I32 x0, I32 x1, I32 x2) {
+	inline const I8 * SortPermutation(I32 x0, I32 x1, I32 x2) {
 		U32 y0 = static_cast<U32>(x0);
 		U32 y1 = static_cast<U32>(x1);
 		U32 y2 = static_cast<U32>(x2);
 
-		I8 * result = Permutation[
+		const I8 * result = Permutation[
 			(((y1 - y0) >> 29) & 4) |
 			(((y2 - y0) >> 30) & 2) |
 			(((y2 - y1) >> 31) & 1)];
@@ -197,7 +197,7 @@ void Rasterizer :: PrepareTriangle() {
 	m_RasterTriangleFunction = m_RasterTriangleFunctions[selector];
 
 	if (m_RasterTriangleFunction == 0)
-		m_RasterTriangleFunction = RasterTriangleAll;
+        m_RasterTriangleFunction = &Rasterizer::RasterTriangleAll;
 
 	memset(m_RasterInfo.MipmapLevel, 0, sizeof(m_RasterInfo.MipmapLevel));
 }

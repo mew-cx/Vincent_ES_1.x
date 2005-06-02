@@ -39,19 +39,14 @@
 #include "stdafx.h"
 #include "Config.h"
 
-
 using namespace EGL;
 
-// --------------------------------------------------------------------------
-// Table of Supported Configurations
-// --------------------------------------------------------------------------
-namespace {
-    const EGL::Config s_AllConfigurations[] = {
-   	    // ----------------------------------------------------------------------
-	    // Initial default configuration 
-	    // RGB 565, as PBuffer or Windows surface
-	    // ----------------------------------------------------------------------
-	    Config(
+    const int s_NumConfigurations=1;
+
+    TlsInfo::TlsInfo(): m_Context(0), m_LastError(0)
+    {
+        m_AllConfigurations = new Config[s_NumConfigurations];
+        m_AllConfigurations[0] = Config(
 		    32,				//	EGLint	bufferSize,
 		    5,				//	EGLint	redSize,
 		    6,				//	EGLint	greenSize,
@@ -77,12 +72,13 @@ namespace {
 		    0,				//	EGLint	transparentBlueValue,
 		    240,			//  EGLint	width,
 		    320				//  EGLint	height
-	    )
-    };
+	    );
+    }
 
-    // total number of supported configurations
-    const int s_NumConfigurations = 1;
-};
+    TlsInfo::~TlsInfo()
+    {
+        delete[] m_AllConfigurations;
+    }
 
 Config :: Config(
 	EGLint	bufferSize,
@@ -414,7 +410,6 @@ bool Config :: IsValidAttribute(const EGLint * validAttributes, EGLint attribute
 	return false;
 }
 
-
 EGLBoolean Config :: GetConfigs(EGLConfig * result, EGLint configSize, EGLint * numConfig) {
 
 	if (result == 0) {
@@ -427,14 +422,17 @@ EGLBoolean Config :: GetConfigs(EGLConfig * result, EGLint configSize, EGLint * 
 		configSize = s_NumConfigurations;
 	}
 
+    TlsInfo * info = reinterpret_cast<TlsInfo *>(Dll::Tls());
+    if (!info)
+        return EGL_FALSE;
+
 	for (int index = 0; index < configSize; ++index) {
-		result[index] = &s_AllConfigurations[index];
+		result[index] = &info->m_AllConfigurations[index];
 	}
 
 	*numConfig = configSize;
 	return EGL_TRUE;
 }
-
 
 EGLBoolean Config :: ChooseConfig(const EGLint * attribList, EGLConfig * result, EGLint configSize, EGLint * numConfig) {
 	// for now, as we only have one configuration available, just return that.

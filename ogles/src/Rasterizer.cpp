@@ -65,9 +65,37 @@ namespace {
 		return (value > 0xff) ? (U8) 0xff : (U8) value;
 	}
 
-
+    const I32 InversionTable[32] = {
+	    0,
+	    EGL_FixedFromFloat(1.0f / 1.0f),
+	    EGL_FixedFromFloat(1.0f / 2.0f),
+	    EGL_FixedFromFloat(1.0f / 3.0f),
+	    EGL_FixedFromFloat(1.0f / 4.0f),
+	    EGL_FixedFromFloat(1.0f / 5.0f),
+	    EGL_FixedFromFloat(1.0f / 6.0f),
+	    EGL_FixedFromFloat(1.0f / 7.0f),
+	    EGL_FixedFromFloat(1.0f / 8.0f),
+	    EGL_FixedFromFloat(1.0f / 9.0f),
+	    EGL_FixedFromFloat(1.0f / 10.0f),
+	    EGL_FixedFromFloat(1.0f / 11.0f),
+	    EGL_FixedFromFloat(1.0f / 12.0f),
+	    EGL_FixedFromFloat(1.0f / 13.0f),
+	    EGL_FixedFromFloat(1.0f / 14.0f),
+	    EGL_FixedFromFloat(1.0f / 15.0f),
+    };
 }
 
+void RasterInfo::Init(Surface * surface, I32 y) {
+	size_t offset = y * surface->GetWidth();
+	
+	SurfaceWidth = surface->GetWidth();
+	SurfaceHeight = surface->GetHeight();
+	DepthBuffer = surface->GetDepthBuffer() + offset;
+	ColorBuffer = surface->GetColorBuffer() + offset;
+	StencilBuffer = surface->GetStencilBuffer() + offset;
+	AlphaBuffer = surface->GetAlphaBuffer() + offset;
+	InversionTablePtr = InversionTable;
+}
 
 // --------------------------------------------------------------------------
 // Class Rasterizer
@@ -81,79 +109,79 @@ Rasterizer :: Rasterizer(RasterizerState * state):
 
 	memset(m_RasterTriangleFunctions, 0, sizeof m_RasterTriangleFunctions);
 
-	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)	] = RasterTriangle_cTdfs;
+    m_RasterTriangleFunctions[(1 << RasterTriangleTexture)	] = &Rasterizer::RasterTriangle_cTdfs;
 	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  |
-							  (1 << RasterTriangleFog)		] = RasterTriangle_cTdFs;
+							  (1 << RasterTriangleFog)		] = &Rasterizer::RasterTriangle_cTdFs;
 	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  |
-							  (1 << RasterTriangleDepth)	] = RasterTriangle_cTDfs;
+							  (1 << RasterTriangleDepth)	] = &Rasterizer::RasterTriangle_cTDfs;
 	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  |
 							  (1 << RasterTriangleDepth)	|
-							  (1 << RasterTriangleFog)		] = RasterTriangle_cTDFs;
+							  (1 << RasterTriangleFog)		] = &Rasterizer::RasterTriangle_cTDFs;
 
-	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	] = RasterTriangle_Ctdfs;
+	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	] = &Rasterizer::RasterTriangle_Ctdfs;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
-							  (1 << RasterTriangleFog)		] = RasterTriangle_CtdFs;
+							  (1 << RasterTriangleFog)		] = &Rasterizer::RasterTriangle_CtdFs;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
-							  (1 << RasterTriangleDepth)	] = RasterTriangle_CtDfs;
+							  (1 << RasterTriangleDepth)	] = &Rasterizer::RasterTriangle_CtDfs;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleDepth)	|
-							  (1 << RasterTriangleFog)		] = RasterTriangle_CtDFs;
+							  (1 << RasterTriangleFog)		] = &Rasterizer::RasterTriangle_CtDFs;
 
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
-							  (1 << RasterTriangleTexture)	] = RasterTriangle_CTdfs;
+							  (1 << RasterTriangleTexture)	] = &Rasterizer::RasterTriangle_CTdfs;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleTexture)	|
-							  (1 << RasterTriangleFog)		] = RasterTriangle_CTdFs;
+							  (1 << RasterTriangleFog)		] = &Rasterizer::RasterTriangle_CTdFs;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleTexture)	|
-							  (1 << RasterTriangleDepth)	] = RasterTriangle_CTDfs;
+							  (1 << RasterTriangleDepth)	] = &Rasterizer::RasterTriangle_CTDfs;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleTexture)	|
 							  (1 << RasterTriangleDepth)	|
-							  (1 << RasterTriangleFog)		] = RasterTriangle_CTDFs;
+							  (1 << RasterTriangleFog)		] = &Rasterizer::RasterTriangle_CTDFs;
 
 	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)	|
-							  (1 << RasterTriangleScissor)	] = RasterTriangle_cTdfS;
+							  (1 << RasterTriangleScissor)	] = &Rasterizer::RasterTriangle_cTdfS;
 	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  |
 							  (1 << RasterTriangleFog)		|
-							  (1 << RasterTriangleScissor)	] = RasterTriangle_cTdFS;
+							  (1 << RasterTriangleScissor)	] = &Rasterizer::RasterTriangle_cTdFS;
 	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  |
 							  (1 << RasterTriangleDepth)	|
-							  (1 << RasterTriangleScissor)	] = RasterTriangle_cTDfS;
+							  (1 << RasterTriangleScissor)	] = &Rasterizer::RasterTriangle_cTDfS;
 	m_RasterTriangleFunctions[(1 << RasterTriangleTexture)  |
 							  (1 << RasterTriangleDepth)	|
 							  (1 << RasterTriangleFog)		|
-							  (1 << RasterTriangleScissor)	] = RasterTriangle_cTDFS;
+							  (1 << RasterTriangleScissor)	] = &Rasterizer::RasterTriangle_cTDFS;
 
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
-							  (1 << RasterTriangleScissor)	] = RasterTriangle_CtdfS;
+							  (1 << RasterTriangleScissor)	] = &Rasterizer::RasterTriangle_CtdfS;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleFog)		|
-							  (1 << RasterTriangleScissor)	] = RasterTriangle_CtdFS;
+							  (1 << RasterTriangleScissor)	] = &Rasterizer::RasterTriangle_CtdFS;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleDepth)	|
-							  (1 << RasterTriangleScissor)	] = RasterTriangle_CtDfS;
+							  (1 << RasterTriangleScissor)	] = &Rasterizer::RasterTriangle_CtDfS;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleDepth)	|
 							  (1 << RasterTriangleFog)		|
-							  (1 << RasterTriangleScissor)	] = RasterTriangle_CtDFS;
+							  (1 << RasterTriangleScissor)	] = &Rasterizer::RasterTriangle_CtDFS;
 
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleTexture)	|
-							  (1 << RasterTriangleScissor)	] = RasterTriangle_CTdfS;
+							  (1 << RasterTriangleScissor)	] = &Rasterizer::RasterTriangle_CTdfS;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleTexture)	|
 							  (1 << RasterTriangleFog)		|
-							  (1 << RasterTriangleScissor)	] = RasterTriangle_CTdFS;
+							  (1 << RasterTriangleScissor)	] = &Rasterizer::RasterTriangle_CTdFS;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleTexture)	|
 							  (1 << RasterTriangleDepth)	|
-							  (1 << RasterTriangleScissor)	] = RasterTriangle_CTDfS;
+							  (1 << RasterTriangleScissor)	] = &Rasterizer::RasterTriangle_CTDfS;
 	m_RasterTriangleFunctions[(1 << RasterTriangleColor)	|
 							  (1 << RasterTriangleTexture)	|
 							  (1 << RasterTriangleDepth)	|
 							  (1 << RasterTriangleFog)		|
-							  (1 << RasterTriangleScissor)	] = RasterTriangle_CTDFS;
+							  (1 << RasterTriangleScissor)	] = &Rasterizer::RasterTriangle_CTDFS;
 }
 
 
@@ -1322,23 +1350,3 @@ void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
 }
 
 #endif // !EGL_USE_JIT
-
-
-const I32 RasterInfo::InversionTable[32] = {
-	0,
-	EGL_FixedFromFloat(1.0f / 1.0f),
-	EGL_FixedFromFloat(1.0f / 2.0f),
-	EGL_FixedFromFloat(1.0f / 3.0f),
-	EGL_FixedFromFloat(1.0f / 4.0f),
-	EGL_FixedFromFloat(1.0f / 5.0f),
-	EGL_FixedFromFloat(1.0f / 6.0f),
-	EGL_FixedFromFloat(1.0f / 7.0f),
-	EGL_FixedFromFloat(1.0f / 8.0f),
-	EGL_FixedFromFloat(1.0f / 9.0f),
-	EGL_FixedFromFloat(1.0f / 10.0f),
-	EGL_FixedFromFloat(1.0f / 11.0f),
-	EGL_FixedFromFloat(1.0f / 12.0f),
-	EGL_FixedFromFloat(1.0f / 13.0f),
-	EGL_FixedFromFloat(1.0f / 14.0f),
-	EGL_FixedFromFloat(1.0f / 15.0f),
-};
