@@ -175,10 +175,10 @@ inline EGL_Fixed EGL_NearestInt(EGL_Fixed value) {
 // Parameters:
 //	value		-	Floatin point value to be converted to fixed point number
 // --------------------------------------------------------------------------
-inline I32 EGL_FixedFromFloat(float value) {
-	return static_cast<EGL_Fixed>(value * static_cast<float>(EGL_ONE));
-}
-
+//inline I32 EGL_FixedFromFloat(float value) {
+//	return static_cast<EGL_Fixed>(value * static_cast<float>(EGL_ONE));
+//}
+#define EGL_FixedFromFloat(f)   static_cast<EGL_Fixed>((f)*static_cast<float>(EGL_ONE))
 
 // --------------------------------------------------------------------------
 // Convert fixed point number to floating point value

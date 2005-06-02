@@ -7,6 +7,7 @@
 #include <aygshell.h>
 #include <sipapi.h>
 
+
 extern "C" BOOL InitOpenGL(HWND hwnd);
 extern "C" void PaintProc(HWND hwnd);
 

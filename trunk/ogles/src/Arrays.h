@@ -184,29 +184,29 @@ namespace EGL {
 		void PrepareFetchValues(bool colorMode) {
 			switch (type) {
 			case GL_BYTE:
-				fetchFunction = FetchByteValues;
+				fetchFunction = &VertexArray::FetchByteValues;
 				
 				break;
 
 			case GL_UNSIGNED_BYTE:
 				if (colorMode) {
-					fetchFunction = FetchByteColorValues;
+                    fetchFunction = &VertexArray::FetchByteColorValues;
 				} else {
-					fetchFunction = FetchUnsignedByteValues;
+                    fetchFunction = &VertexArray::FetchUnsignedByteValues;
 				}
 
 				break;
 
 			case GL_SHORT:
-				fetchFunction = FetchShortValues;
+				fetchFunction = &VertexArray::FetchShortValues;
 				break;
 
 			case GL_FIXED:
-				fetchFunction = FetchFixedValues;
+				fetchFunction = &VertexArray::FetchFixedValues;
 				break;
 
 			case GL_FLOAT:
-				fetchFunction = FetchFloatValues;
+				fetchFunction = &VertexArray::FetchFloatValues;
 				break;
 
 			default:

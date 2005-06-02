@@ -4,7 +4,6 @@ prj_exports
 
 // Project files
 prj_mmpfiles
-int64x.mmp
 codegen.mmp
 ogles.mmp
 

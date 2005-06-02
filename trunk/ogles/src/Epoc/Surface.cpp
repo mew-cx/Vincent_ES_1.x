@@ -83,7 +83,7 @@ void Surface :: ConstructL(const Config & config) {
     User::LeaveIfError(m_Bitmap->Create(TSize(width, height), EColor64K));
     CleanupStack::Pop(m_Bitmap);
 
-	m_ColorBuffer = reinterpret_cast<U16 *>(m_Bitmap->DataAddress());
+//	m_ColorBuffer = reinterpret_cast<U16 *>(m_Bitmap->DataAddress());
 }
 
 
@@ -137,7 +137,7 @@ void Surface :: SetCurrentContext(Context * context) {
 
 namespace {
 
-	template <class T> FillRect(T * base, const Rect & bufferRect, const Rect & fillRect,
+	template <class T> void FillRect(T * base, const Rect & bufferRect, const Rect & fillRect,
 		const T& value, const T& mask) {
 		Rect rect = Rect::Intersect(fillRect, bufferRect);
 
@@ -158,7 +158,7 @@ namespace {
 		}
 	}
 
-	template <class T> FillRect(T * base, const Rect & bufferRect, const Rect & fillRect,
+	template <class T> void FillRect(T * base, const Rect & bufferRect, const Rect & fillRect,
 		const T& value) {
 		Rect rect = Rect::Intersect(fillRect, bufferRect);
 
@@ -213,9 +213,9 @@ void Surface :: ClearColorBuffer(const Color & rgba, const Color & mask, const R
 	U16 colorMask = mask.ConvertTo565();
 
 	if (colorMask == 0xffff) {
-		FillRect(m_ColorBuffer, GetRect(), scissor, color);
+		FillRect(GetColorBuffer(), GetRect(), scissor, color);
 	} else {
-		FillRect(m_ColorBuffer, GetRect(), scissor, color, colorMask);
+		FillRect(GetColorBuffer(), GetRect(), scissor, color, colorMask);
 	}
 
 	if (mask.A() && m_AlphaBuffer)
