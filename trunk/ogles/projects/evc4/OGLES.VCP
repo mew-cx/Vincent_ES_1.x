@@ -54,7 +54,7 @@ RSC=rc.exe
 # ADD RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "UNICODE" /d "_UNICODE" /d "NDEBUG" /d "$(CePlatform)" /d "_X86_" /d "x86" /d "_i386_" /r
 CPP=cl.exe
 # ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "_i386_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_X86_" /D "x86" /D "NDEBUG" /D "OGLES_EXPORTS" /YX /Gs8192 /GF /O2 /c
-# ADD CPP /nologo /W3 /GX /I "..\..\include" /I "..\..\src" /I "..\..\src\codegen" /I "..\..\src\WinCE" /D "_i386_" /D "_X86_" /D "x86" /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "OGLES_EXPORTS" /Yu"stdafx.h" /Gs8192 /GF /O2 /D EGL_RELEASE="\"0.84\"" /c
+# ADD CPP /nologo /W3 /I "..\..\include" /I "..\..\src" /I "..\..\src\codegen" /I "..\..\src\WinCE" /D "_i386_" /D "_X86_" /D "x86" /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "OGLES_EXPORTS" /Yu"stdafx.h" /Gs8192 /GF /O2 /D EGL_RELEASE="\"0.84\"" /c
 MTL=midl.exe
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
@@ -186,7 +186,7 @@ RSC=rc.exe
 # ADD BASE RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "DEBUG" /d "UNICODE" /d "_UNICODE" /d "$(CePlatform)" /d "ARM" /d "_ARM_" /d "ARMV4" /r
 # ADD RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "DEBUG" /d "UNICODE" /d "_UNICODE" /d "$(CePlatform)" /d "ARM" /d "_ARM_" /d "ARMV4" /r
 CPP="C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xicle42"
-# ADD BASE CPP /nologo /W3 /GX /Zi /Od /D "DEBUG" /D "ARM" /D "_ARM_" /D "ARMV4" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "OGLES_EXPORTS" /D "EGL_USE_GPP" /Yu"stdafx.h" /M$(CECrtMTDebug) /c
+# ADD BASE CPP /nologo /W3  /Zi /Od /D "DEBUG" /D "ARM" /D "_ARM_" /D "ARMV4" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "OGLES_EXPORTS" /D "EGL_USE_GPP" /Yu"stdafx.h" /M$(CECrtMTDebug) /c
 # ADD CPP /W3 /Zi /Od /I "..\..\include" /I "..\..\src" /I "..\..\src\codegen" /I "..\..\src\WinCE" /D "DEBUG" /D "ARM" /D "_ARM_" /D "ARMV4" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "OGLES_EXPORTS" /D EGL_RELEASE=0.83 /FR /Yu"stdafx.h" /M$(CECrtMTDebug) /D EGL_RELEASE="\"0.84\"" /c
 MTL=midl.exe
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
@@ -221,7 +221,7 @@ RSC=rc.exe
 # ADD BASE RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "NDEBUG" /d "UNICODE" /d "_UNICODE" /d "$(CePlatform)" /d "ARM" /d "_ARM_" /d "ARMV4" /r
 # ADD RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "NDEBUG" /d "UNICODE" /d "_UNICODE" /d "$(CePlatform)" /d "ARM" /d "_ARM_" /d "ARMV4" /r
 CPP="C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\WCE420\bin\xicle42"
-# ADD BASE CPP /nologo /W3 /GX /Zi /Oxt /Ob2 /D "ARM" /D "_ARM_" /D "ARMV4" /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "OGLES_EXPORTS" /D "EGL_USE_GPP" /Yu"stdafx.h" /M$(CECrtMT) /c
+# ADD BASE CPP /nologo /W3  /Zi /Oxt /Ob2 /D "ARM" /D "_ARM_" /D "ARMV4" /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "OGLES_EXPORTS" /D "EGL_USE_GPP" /Yu"stdafx.h" /M$(CECrtMT) /c
 # ADD CPP /nologo /W3 /Zi /Oxt /Ob2 /I "..\..\include" /I "..\..\src" /I "..\..\src\codegen" /I "..\..\src\WinCE" /D "ARM" /D "_ARM_" /D "ARMV4" /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "OGLES_EXPORTS" /Yu"stdafx.h" /M$(CECrtMT) /D EGL_RELEASE="\"0.84\"" /c
 MTL=midl.exe
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
