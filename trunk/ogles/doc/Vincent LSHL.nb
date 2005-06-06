@@ -41,9 +41,9 @@ Wolfram Research.
 
 (*NotebookFileLineBreakTest
 NotebookFileLineBreakTest*)
-(*NotebookOptionsPosition[    779240,      13381]*)
-(*NotebookOutlinePosition[   1107417,      25335]*)
-(*  CellTagsIndexPosition[   1107103,      25323]*)
+(*NotebookOptionsPosition[    779986,      13397]*)
+(*NotebookOutlinePosition[   1108165,      25351]*)
+(*  CellTagsIndexPosition[   1107851,      25339]*)
 (*WindowFrame->Normal*)
 
 
@@ -53,18 +53,30 @@ Notebook[{
 Cell[CellGroupData[{
 Cell["The Vincent Low Level Shader Language", "Title"],
 
+Cell["Revision 0.2", "Subtitle"],
+
+Cell["5 June, 2005", "Subsubtitle"],
+
 Cell[CellGroupData[{
 
 Cell["Hans-Martin Will", "Author"],
+
+Cell["The Vincent Project", "Institution"],
 
 Cell[TextData[ButtonBox["hwill@acm.org"]], "AuthorEmail"]
 }, Open  ]],
 
 Cell["\<\
-This document defines a low level shading language used by the Vincent 3D \
-Rendering Library. This low level shading language is used as internal \
-representation of shader programs for the purpose of compiling, loading and \
-linking of vertex and fragment shaders.\
+The Vincent Project is an open source project that develops a compliant \
+implementation of the OpenGL \[RegisteredTrademark] ES API for mobile \
+devices. The upcoming version 2.0 of the OpenGL ES API specification \
+introduces the concept or programmable shaders, very similar to the OpenGL \
+API specification 2.0 for the desktop. 
+In order to support the implementation of programmable shaders within the \
+Vincent 3D Rendering Library, this document defines a low level shading \
+language. This low level shading language is used as internal representation \
+of shader programs for the purpose of compiling, loading and linking of \
+vertex and fragment shaders.\
 \>", "Abstract"],
 
 Cell[CellGroupData[{
@@ -12118,7 +12130,11 @@ Cell[BoxData[
                         TextAlignment->Right]},
                     {Cell["Local Data", "TableText",
                         TextAlignment->Left], Cell["5", "TableText",
-                        TextAlignment->Right]}
+                        TextAlignment->Right]},
+                    {Cell["Texture Data", "TableText"], Cell[
+                      "6", "TableText"]},
+                    {Cell["Code (not allowed in instructions)", "TableText"], 
+                      Cell["7", "TableText"]}
                     }],
                 "TableSubGrid",
                 GridBoxOptions->{ColumnWidths->0.3,
@@ -13240,7 +13256,7 @@ Component-wise inverse cosine computation, x/y as input, result in radians\
                       Cell["Component-wise 1 over square root computation", 
                         "TableText"]},
                     {Cell["abs", "TableText"], Cell["Data", "TableText"], 
-                      Cell[" Component-wise absolute value", "TableText"]},
+                      Cell["Component-wise absolute value", "TableText"]},
                     {Cell["sign", "TableText"], Cell["Data", "TableText"], 
                       Cell["Component-wise signum", "TableText"]},
                     {Cell["floor", "TableText"], Cell["Data", "TableText"], 
@@ -13384,7 +13400,7 @@ ScreenRectangle->{{0, 1440}, {0, 847}},
 Editable->True,
 Selectable->True,
 WindowSize->{837, 808},
-WindowMargins->{{7, Automatic}, {Automatic, 0}},
+WindowMargins->{{-2, Automatic}, {Automatic, -2}},
 PrintingCopies->1,
 PrintingPageRange->{Automatic, Automatic},
 PrintingOptions->{"PrintingMargins"->{{54, 54}, {72, 72}},
@@ -25295,40 +25311,40 @@ you save this file from within Mathematica.
 (*CellTagsOutline
 CellTagsIndex->{
   ":bib:OGLES_CM"->{
-    Cell[2312, 73, 739, 17, 65, "Text",
+    Cell[2829, 85, 739, 17, 65, "Text",
       CellTags->{":bib:OGLES_CM", ":bib:OGLES_SL"}]},
   ":bib:OGLES_SL"->{
-    Cell[2312, 73, 739, 17, 65, "Text",
+    Cell[2829, 85, 739, 17, 65, "Text",
       CellTags->{":bib:OGLES_CM", ":bib:OGLES_SL"}]},
   "XRef-Section-6517285"->{
-    Cell[723038, 12047, 74, 1, 39, "Subsection",
+    Cell[723555, 12059, 74, 1, 39, "Subsection",
       CellTags->"XRef-Section-6517285"]},
   "XRef-Table-65174347"->{
-    Cell[723701, 12070, 243, 10, 25, "TableTitle",
+    Cell[724218, 12082, 243, 10, 25, "TableTitle",
       CellTags->"XRef-Table-65174347"]},
   "XRef-Table-64143135"->{
-    Cell[727113, 12177, 246, 10, 25, "TableTitle",
+    Cell[727860, 12193, 246, 10, 25, "TableTitle",
       CellTags->"XRef-Table-64143135"],
-    Cell[735071, 12352, 246, 10, 25, "TableTitle",
+    Cell[735818, 12368, 246, 10, 25, "TableTitle",
       CellTags->"XRef-Table-64143135"]},
   "OGLES_CM"->{
-    Cell[778181, 13338, 513, 18, 23, "Reference",
+    Cell[778927, 13354, 513, 18, 23, "Reference",
       CellTags->"OGLES_CM"]},
   "OGLES_SL"->{
-    Cell[778697, 13358, 503, 18, 23, "Reference",
+    Cell[779443, 13374, 503, 18, 23, "Reference",
       CellTags->"OGLES_SL"]}
   }
 *)
 
 (*CellTagsIndex
 CellTagsIndex->{
-  {":bib:OGLES_CM", 1106229, 25296},
-  {":bib:OGLES_SL", 1106344, 25299},
-  {"XRef-Section-6517285", 1106466, 25302},
-  {"XRef-Table-65174347", 1106584, 25305},
-  {"XRef-Table-64143135", 1106703, 25308},
-  {"OGLES_CM", 1106902, 25313},
-  {"OGLES_SL", 1106998, 25316}
+  {":bib:OGLES_CM", 1106977, 25312},
+  {":bib:OGLES_SL", 1107092, 25315},
+  {"XRef-Section-6517285", 1107214, 25318},
+  {"XRef-Table-65174347", 1107332, 25321},
+  {"XRef-Table-64143135", 1107451, 25324},
+  {"OGLES_CM", 1107650, 25329},
+  {"OGLES_SL", 1107746, 25332}
   }
 *)
 
@@ -25337,247 +25353,250 @@ Notebook[{
 
 Cell[CellGroupData[{
 Cell[1775, 53, 54, 0, 77, "Title"],
+Cell[1832, 55, 32, 0, 32, "Subtitle"],
+Cell[1867, 57, 35, 0, 29, "Subsubtitle"],
 
 Cell[CellGroupData[{
-Cell[1854, 57, 34, 0, 43, "Author"],
-Cell[1891, 59, 57, 0, 19, "AuthorEmail"]
+Cell[1927, 61, 34, 0, 43, "Author"],
+Cell[1964, 63, 42, 0, 19, "Institution"],
+Cell[2009, 65, 57, 0, 19, "AuthorEmail"]
 }, Open  ]],
-Cell[1963, 62, 294, 5, 83, "Abstract"],
+Cell[2081, 68, 693, 11, 134, "Abstract"],
 
 Cell[CellGroupData[{
-Cell[2282, 71, 27, 0, 54, "Section"],
-Cell[2312, 73, 739, 17, 65, "Text",
+Cell[2799, 83, 27, 0, 54, "Section"],
+Cell[2829, 85, 739, 17, 65, "Text",
   CellTags->{":bib:OGLES_CM", ":bib:OGLES_SL"}],
 
 Cell[CellGroupData[{
-Cell[3076, 94, 145, 3, 22, "Item1"],
-Cell[3224, 99, 250, 6, 41, "Item1"],
-Cell[3477, 107, 152, 3, 22, "Item1"]
+Cell[3593, 106, 145, 3, 22, "Item1"],
+Cell[3741, 111, 250, 6, 41, "Item1"],
+Cell[3994, 119, 152, 3, 22, "Item1"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[3678, 116, 34, 0, 54, "Section"],
+Cell[4195, 128, 34, 0, 54, "Section"],
 
 Cell[CellGroupData[{
-Cell[3737, 120, 31, 0, 39, "Subsection"],
-Cell[3771, 122, 544, 14, 65, "Text"],
-Cell[4318, 138, 646, 23, 65, "Text"]
+Cell[4254, 132, 31, 0, 39, "Subsection"],
+Cell[4288, 134, 544, 14, 65, "Text"],
+Cell[4835, 150, 646, 23, 65, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[5001, 166, 34, 0, 39, "Subsection"],
-Cell[5038, 168, 328, 5, 46, "Text"],
+Cell[5518, 178, 34, 0, 39, "Subsection"],
+Cell[5555, 180, 328, 5, 46, "Text"],
 
 Cell[CellGroupData[{
-Cell[5391, 177, 38, 0, 31, "Subsubsection"],
-Cell[5432, 179, 93, 2, 27, "Text"]
+Cell[5908, 189, 38, 0, 31, "Subsubsection"],
+Cell[5949, 191, 93, 2, 27, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[5562, 186, 37, 0, 31, "Subsubsection"],
-Cell[5602, 188, 291, 5, 46, "Text"]
+Cell[6079, 198, 37, 0, 31, "Subsubsection"],
+Cell[6119, 200, 291, 5, 46, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[5930, 198, 39, 0, 31, "Subsubsection"],
-Cell[5972, 200, 332, 5, 46, "Text"]
+Cell[6447, 210, 39, 0, 31, "Subsubsection"],
+Cell[6489, 212, 332, 5, 46, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[6341, 210, 37, 0, 31, "Subsubsection"],
-Cell[6381, 212, 523, 9, 84, "Text"],
-Cell[6907, 223, 605, 10, 84, "Text"]
+Cell[6858, 222, 37, 0, 31, "Subsubsection"],
+Cell[6898, 224, 523, 9, 84, "Text"],
+Cell[7424, 235, 605, 10, 84, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[7549, 238, 36, 0, 31, "Subsubsection"],
-Cell[7588, 240, 132, 3, 27, "Text"]
+Cell[8066, 250, 36, 0, 31, "Subsubsection"],
+Cell[8105, 252, 132, 3, 27, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[7757, 248, 35, 0, 31, "Subsubsection"],
-Cell[7795, 250, 542, 15, 27, "Text"]
+Cell[8274, 260, 35, 0, 31, "Subsubsection"],
+Cell[8312, 262, 542, 15, 27, "Text"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[8386, 271, 58, 0, 39, "Subsection"],
-Cell[8447, 273, 185, 4, 27, "Text"],
+Cell[8903, 283, 58, 0, 39, "Subsection"],
+Cell[8964, 285, 185, 4, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[8657, 281, 712155, 11678, 332, "Figure"],
-Cell[720815, 11961, 242, 9, 24, "FigureCaption"]
+Cell[9174, 293, 712155, 11678, 332, "Figure"],
+Cell[721332, 11973, 242, 9, 24, "FigureCaption"]
 }, Open  ]]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[721118, 11977, 37, 0, 54, "Section"],
-Cell[721158, 11979, 708, 17, 84, "Text"],
-Cell[721869, 11998, 770, 28, 28, "Text"],
-Cell[722642, 12028, 371, 15, 27, "Text"],
+Cell[721635, 11989, 37, 0, 54, "Section"],
+Cell[721675, 11991, 708, 17, 84, "Text"],
+Cell[722386, 12010, 770, 28, 28, "Text"],
+Cell[723159, 12040, 371, 15, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[723038, 12047, 74, 1, 39, "Subsection",
+Cell[723555, 12059, 74, 1, 39, "Subsection",
   CellTags->"XRef-Section-6517285"],
 
 Cell[CellGroupData[{
-Cell[723137, 12052, 31, 0, 31, "Subsubsection"],
-Cell[723171, 12054, 505, 12, 46, "Text"],
+Cell[723654, 12064, 31, 0, 31, "Subsubsection"],
+Cell[723688, 12066, 505, 12, 46, "Text"],
 
 Cell[CellGroupData[{
-Cell[723701, 12070, 243, 10, 25, "TableTitle",
+Cell[724218, 12082, 243, 10, 25, "TableTitle",
   CellTags->"XRef-Table-65174347"],
-Cell[723947, 12082, 2035, 45, 178, "Table"],
-Cell[725985, 12129, 34, 0, 18, "TableNote"]
+Cell[724464, 12094, 2265, 49, 222, "Table"],
+Cell[726732, 12145, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[726068, 12135, 33, 0, 31, "Subsubsection"],
-Cell[726104, 12137, 213, 6, 27, "Text"]
+Cell[726815, 12151, 33, 0, 31, "Subsubsection"],
+Cell[726851, 12153, 213, 6, 27, "Text"]
 }, Open  ]]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[726378, 12150, 34, 0, 54, "Section"],
+Cell[727125, 12166, 34, 0, 54, "Section"],
 
 Cell[CellGroupData[{
-Cell[726437, 12154, 52, 0, 39, "Subsection"],
-Cell[726492, 12156, 209, 4, 46, "Text"],
-Cell[726704, 12162, 87, 1, 27, "Text"],
-Cell[726794, 12165, 294, 8, 27, "Text"],
+Cell[727184, 12170, 52, 0, 39, "Subsection"],
+Cell[727239, 12172, 209, 4, 46, "Text"],
+Cell[727451, 12178, 87, 1, 27, "Text"],
+Cell[727541, 12181, 294, 8, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[727113, 12177, 246, 10, 25, "TableTitle",
+Cell[727860, 12193, 246, 10, 25, "TableTitle",
   CellTags->"XRef-Table-64143135"],
-Cell[727362, 12189, 7111, 141, 222, "Table"]
+Cell[728109, 12205, 7111, 141, 222, "Table"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[734522, 12336, 53, 0, 39, "Subsection"],
-Cell[734578, 12338, 468, 10, 46, "Text"],
+Cell[735269, 12352, 53, 0, 39, "Subsection"],
+Cell[735325, 12354, 468, 10, 46, "Text"],
 
 Cell[CellGroupData[{
-Cell[735071, 12352, 246, 10, 25, "TableTitle",
+Cell[735818, 12368, 246, 10, 25, "TableTitle",
   CellTags->"XRef-Table-64143135"],
-Cell[735320, 12364, 4856, 100, 156, "Table"]
+Cell[736067, 12380, 4856, 100, 156, "Table"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[740225, 12470, 45, 0, 39, "Subsection"],
-Cell[740273, 12472, 303, 5, 46, "Text"],
+Cell[740972, 12486, 45, 0, 39, "Subsection"],
+Cell[741020, 12488, 303, 5, 46, "Text"],
 
 Cell[CellGroupData[{
-Cell[740601, 12481, 204, 9, 25, "TableTitle"],
-Cell[740808, 12492, 16636, 297, 310, "Table"],
-Cell[757447, 12791, 34, 0, 18, "TableNote"]
+Cell[741348, 12497, 204, 9, 25, "TableTitle"],
+Cell[741555, 12508, 16636, 297, 310, "Table"],
+Cell[758194, 12807, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[757530, 12797, 42, 0, 39, "Subsection"],
+Cell[758277, 12813, 42, 0, 39, "Subsection"],
 
 Cell[CellGroupData[{
-Cell[757597, 12801, 201, 9, 25, "TableTitle"],
-Cell[757801, 12812, 4641, 98, 178, "Table"],
-Cell[762445, 12912, 34, 0, 18, "TableNote"]
+Cell[758344, 12817, 201, 9, 25, "TableTitle"],
+Cell[758548, 12828, 4641, 98, 178, "Table"],
+Cell[763192, 12928, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[762528, 12918, 60, 0, 39, "Subsection"],
-Cell[762591, 12920, 20, 0, 27, "Text"],
+Cell[763275, 12934, 60, 0, 39, "Subsection"],
+Cell[763338, 12936, 20, 0, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[762636, 12924, 219, 9, 25, "TableTitle"],
-Cell[762858, 12935, 1934, 43, 112, "Table"],
-Cell[764795, 12980, 34, 0, 18, "TableNote"]
+Cell[763383, 12940, 219, 9, 25, "TableTitle"],
+Cell[763605, 12951, 1934, 43, 112, "Table"],
+Cell[765542, 12996, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[764878, 12986, 47, 0, 39, "Subsection"],
-Cell[764928, 12988, 20, 0, 27, "Text"],
+Cell[765625, 13002, 47, 0, 39, "Subsection"],
+Cell[765675, 13004, 20, 0, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[764973, 12992, 206, 9, 25, "TableTitle"],
-Cell[765182, 13003, 2191, 47, 156, "Table"],
-Cell[767376, 13052, 34, 0, 18, "TableNote"]
+Cell[765720, 13008, 206, 9, 25, "TableTitle"],
+Cell[765929, 13019, 2191, 47, 156, "Table"],
+Cell[768123, 13068, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[767459, 13058, 49, 0, 39, "Subsection"],
-Cell[767511, 13060, 481, 8, 65, "Text"],
-Cell[767995, 13070, 16, 0, 27, "Text"],
+Cell[768206, 13074, 49, 0, 39, "Subsection"],
+Cell[768258, 13076, 481, 8, 65, "Text"],
+Cell[768742, 13086, 16, 0, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[768036, 13074, 208, 9, 25, "TableTitle"],
-Cell[768247, 13085, 2915, 61, 178, "Table"],
-Cell[771165, 13148, 34, 0, 18, "TableNote"]
+Cell[768783, 13090, 208, 9, 25, "TableTitle"],
+Cell[768994, 13101, 2915, 61, 178, "Table"],
+Cell[771912, 13164, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[771248, 13154, 47, 0, 39, "Subsection"],
-Cell[771298, 13156, 20, 0, 27, "Text"],
+Cell[771995, 13170, 47, 0, 39, "Subsection"],
+Cell[772045, 13172, 20, 0, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[771343, 13160, 206, 9, 25, "TableTitle"],
-Cell[771552, 13171, 5578, 101, 530, "Table"],
-Cell[777133, 13274, 34, 0, 18, "TableNote"]
+Cell[772090, 13176, 206, 9, 25, "TableTitle"],
+Cell[772299, 13187, 5577, 101, 530, "Table"],
+Cell[777879, 13290, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[777228, 13281, 30, 0, 54, "Section"],
+Cell[777974, 13297, 30, 0, 54, "Section"],
 
 Cell[CellGroupData[{
-Cell[777283, 13285, 72, 0, 39, "Subsection"],
-Cell[777358, 13287, 20, 0, 27, "Text"]
+Cell[778029, 13301, 72, 0, 39, "Subsection"],
+Cell[778104, 13303, 20, 0, 27, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[777415, 13292, 44, 0, 39, "Subsection"],
-Cell[777462, 13294, 20, 0, 27, "Text"]
+Cell[778161, 13308, 44, 0, 39, "Subsection"],
+Cell[778208, 13310, 20, 0, 27, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[777519, 13299, 53, 0, 39, "Subsection"],
-Cell[777575, 13301, 20, 0, 27, "Text"]
+Cell[778265, 13315, 53, 0, 39, "Subsection"],
+Cell[778321, 13317, 20, 0, 27, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[777632, 13306, 37, 0, 39, "Subsection"],
-Cell[777672, 13308, 20, 0, 27, "Text"]
+Cell[778378, 13322, 37, 0, 39, "Subsection"],
+Cell[778418, 13324, 20, 0, 27, "Text"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[777741, 13314, 30, 0, 54, "Section"],
-Cell[777774, 13316, 90, 2, 27, "Text"],
+Cell[778487, 13330, 30, 0, 54, "Section"],
+Cell[778520, 13332, 90, 2, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[777889, 13322, 40, 0, 22, "Item1"],
-Cell[777932, 13324, 38, 0, 22, "Item1"],
-Cell[777973, 13326, 46, 0, 22, "Item1"],
-Cell[778022, 13328, 47, 0, 22, "Item1"]
+Cell[778635, 13338, 40, 0, 22, "Item1"],
+Cell[778678, 13340, 38, 0, 22, "Item1"],
+Cell[778719, 13342, 46, 0, 22, "Item1"],
+Cell[778768, 13344, 47, 0, 22, "Item1"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[778118, 13334, 38, 0, 54, "ReferenceSection"],
+Cell[778864, 13350, 38, 0, 54, "ReferenceSection"],
 
 Cell[CellGroupData[{
-Cell[778181, 13338, 513, 18, 23, "Reference",
+Cell[778927, 13354, 513, 18, 23, "Reference",
   CellTags->"OGLES_CM"],
-Cell[778697, 13358, 503, 18, 23, "Reference",
+Cell[779443, 13374, 503, 18, 23, "Reference",
   CellTags->"OGLES_SL"]
 }, Open  ]]
 }, Open  ]]
