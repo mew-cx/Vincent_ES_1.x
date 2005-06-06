@@ -41,9 +41,9 @@ Wolfram Research.
 
 (*NotebookFileLineBreakTest
 NotebookFileLineBreakTest*)
-(*NotebookOptionsPosition[    779986,      13397]*)
-(*NotebookOutlinePosition[   1108165,      25351]*)
-(*  CellTagsIndexPosition[   1107851,      25339]*)
+(*NotebookOptionsPosition[    789077,      13708]*)
+(*NotebookOutlinePosition[   1117917,      25678]*)
+(*  CellTagsIndexPosition[   1117441,      25662]*)
 (*WindowFrame->Normal*)
 
 
@@ -111,11 +111,25 @@ OpenGL ES Shading Language into Vincent LSHL.\
 
 Cell[TextData[{
   "The Vincent 3D Rendering Library expects Vincent LSHL as the format for \
-binary shaders loaded using the API call ",
+binary shaders",
+  Cell[BoxData[
+      FormBox[
+        SuperscriptBox["", 
+          ButtonBox[
+            CounterBox["Endnote", "BINARY_ONLY"],
+            
+            ButtonData:>Cell[ 
+              "For the initial release it is planned to keep the shader \
+compiler outside of the runtime library, and to support only loading of \
+pre-compiled shaders.", "Endnote", CellTags -> "BINARY_ONLY"],
+            ButtonStyle->"NoteKey",
+            ButtonNote->"BINARY_ONLY"]], TraditionalForm]], "Note"],
+  " loaded using the API call ",
   StyleBox["ShaderBinary(uint shader, const char *string, const int length)", 
     "Program"],
   "."
-}], "Item1"],
+}], "Item1",
+  CellTags->":note:BINARY_ONLY"],
 
 Cell["\<\
 The Vincent shader linker, Just-In-Time (JIT) compiler, as well as the shader \
@@ -13297,32 +13311,309 @@ Cell[CellGroupData[{
 
 Cell["File Format", "Section"],
 
+Cell["\<\
+In this section we describe the binary stream (file format) that is used to \
+represent a compiled shader. We use a notation derived from C++ declarations, \
+with the following notational extensions:\
+\>", "Text"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+Primitive data types refer to GL data types as defined by the OpenGL ES API \
+specification. We notate them without any \[OpenCurlyDoubleQuote]GL\
+\[CloseCurlyDoubleQuote] prefix.\
+\>", "Item1"],
+
+Cell["\<\
+Sequences of elements are specified using an array notation, where the number \
+of array elements may be given by a field that occurs upstream to the \
+sequence.\
+\>", "Item1"],
+
+Cell["\<\
+In the case of union types, no padding to the common size of all possible \
+specialization occurs. Rather the specific size of the chosen element is \
+used.\
+\>", "Item1"]
+}, Open  ]],
+
 Cell[CellGroupData[{
 
 Cell["Overall Structure of the Binary Shader File Format", "Subsection"],
 
-Cell["blah", "Text"]
+Cell[TextData[{
+  "The overall structure of a binary shader file is given by Program ",
+  ButtonBox[
+  CounterBox["Program", "XRef-Program-6522452"],
+    ButtonData:>{"Counter" -> "Program", "CounterTag" -> 
+      "XRef-Program-6522452"},
+    ButtonStyle->"XRef"],
+  "\[InvisibleSpace]. The meaning of individual fields is defined in Table ",
+  ButtonBox[
+  CounterBox["TableTitle", "XRef-Table-6522530"],
+    ButtonData:>{"Counter" -> "TableTitle", "CounterTag" -> 
+      "XRef-Table-6522530"},
+    ButtonStyle->"XRef"],
+  ButtonBox[".",
+    ButtonData:>{"Counter" -> "TableTitle", "CounterTag" -> 
+      "XRef-Table-6522530"},
+    ButtonStyle->"XRef"],
+  "\[InvisibleSpace]"
+}], "Text"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+struct shader_binary_file {
+\tuint\tmagic;
+\tuint\tversion;
+\tuint\ttotal_length;
+\tuint\tshader_type;
+\tuint\tnum_data_segments;
+\tuint\tnum_code_segments;
+\tdata\tdata_segments[num_data_segments];
+\tcode\tcode_segments[num_code_segments];
+\tuint\tchecksum;
+};\[LineSeparator]
+struct string {
+\tuint\tlength;
+\tchar\tcharacters[length];
+};\
+\>", "Program",
+  CellTags->"XRef-Program-6522452"],
+
+Cell[TextData[{
+  Cell[TextData[{
+    "Program ",
+    
+    CounterBox["ProgramCaption"],
+    ": "
+  }], "ProgramCaptionLabel",
+    TaggingRules:>{"CellLabel" -> True}],
+  "Overall Structure of the Binary Shader File Format"
+}], "ProgramCaption"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["Encoding of a Function", "Subsection"],
+Cell[TextData[{
+  Cell[TextData[{
+    "Table ",
+    
+    CounterBox["TableTitle"],
+    ". "
+  }], "TableTitleLabel",
+    TaggingRules:>{"CellLabel" -> True}],
+  "Fields in the top-level file definition"
+}], "TableTitle",
+  CellTags->"XRef-Table-6522530"],
 
-Cell["blah", "Text"]
+Cell[BoxData[
+    FormBox[
+      StyleBox[GridBox[{
+            {
+              StyleBox[GridBox[{
+                    {Cell["Field Name", "TableColumnHead",
+                        TextAlignment->Left], Cell["Type", "TableText",
+                        TextAlignment->Left], Cell[
+                      "Definition", "TableColumnHead",
+                        TextAlignment->Left]}
+                    }],
+                "TableSubGrid",
+                GridBoxOptions->{ColumnWidths->{0.2, 0.2, 0.6},
+                ColumnAlignments->{Left}}]},
+            {
+              StyleBox[GridBox[{
+                    {Cell["\t", "TableLineElement"]}
+                    }],
+                "TableSubGrid",
+                GridBoxOptions->{ColumnWidths->0.999999}]},
+            {
+              StyleBox[GridBox[{
+                    {Cell["magic", "TableText",
+                        TextAlignment->Left], Cell["uint", "TableText",
+                        TextAlignment->Left], Cell["\<\
+A magic number identifying the file type. The value is 0x12345678. It also \
+serves the purpose of determining the endian-ness of the file.\
+\>", "TableText",
+                        TextAlignment->Left]},
+                    {Cell["version", "TableText",
+                        TextAlignment->Left], Cell["uint", "TableText",
+                        TextAlignment->Left], Cell[
+                      "The file format version used. The current version is \
+1.", "TableText",
+                        TextAlignment->Left]},
+                    {Cell["total_length", "TableText",
+                        TextAlignment->Left], Cell["uint", "TableText",
+                        TextAlignment->Left], Cell["\<\
+The total number of bytes in this binary shader file, including the \
+check-sum.\
+\>", "TableText",
+                        TextAlignment->Left]},
+                    {Cell["shader_type", "TableText",
+                        TextAlignment->Left], Cell["uint", "TableText",
+                        TextAlignment->Left], Cell[
+                      "The type of the shader; VERTEX_SHADER or \
+FRAGMENT_SHADER", "TableText",
+                        TextAlignment->Left]},
+                    {Cell["num_data_segments", "TableText",
+                        TextAlignment->Left], Cell["uint", "TableText",
+                        TextAlignment->Left], Cell[
+                      "The number of data segments in this file.", 
+                        "TableText",
+                        TextAlignment->Left]},
+                    {Cell["num_code_segments", "TableText",
+                        TextAlignment->Left], Cell["uint", "TableText",
+                        TextAlignment->Left], Cell[
+                      "The number of code segments in this file.", 
+                        "TableText",
+                        TextAlignment->Left]},
+                    {Cell["checksum", "TableText",
+                        TextAlignment->Left], Cell["uint", "TableText",
+                        TextAlignment->Left], Cell[
+                      "The checksum for this file computed using ???.", 
+                        "TableText",
+                        TextAlignment->Left]}
+                    }],
+                "TableSubGrid",
+                GridBoxOptions->{ColumnWidths->{0.2, 0.2, 0.6},
+                RowAlignments->Top,
+                ColumnAlignments->{Left}}]}
+            }],
+        "TableMasterGrid"], TabularForm]], "Table",
+  GridBoxOptions->{ColumnWidths->{0.2, 0.2, 0.6}}],
+
+Cell["Table note...", "TableNote"]
+}, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["Encoding of External References", "Subsection"],
+Cell["Encoding of Data Segments", "Subsection"],
 
-Cell["blah", "Text"]
+Cell["blah", "Text"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+struct data {
+\tuint\tsegment_kind;
+\tuint\tnum_declarations;
+\tdecl\tdeclarations[num_declarations];
+\tuint\tnum_locations;
+\tloc\t\tdata[num_locations];
+};
+
+struct decl {
+\tstring\tname;
+\ttype\ttyp;
+\tuint\toffset;
+};\[LineSeparator]
+union loc {
+\tvec\tvector;
+\tivec\tivector;
+};\[LineSeparator]
+struct vec {
+\tfloat\tcomponents[4];
+};\[LineSeparator]
+struct ivec {
+\tint\tcomponents[4];
+};\
+\>", "Program"],
+
+Cell[TextData[{
+  Cell[TextData[{
+    "Program ",
+    
+    CounterBox["ProgramCaption"],
+    ": "
+  }], "ProgramCaptionLabel",
+    TaggingRules:>{"CellLabel" -> True}],
+  "Encoding of Data Segments"
+}], "ProgramCaption"]
+}, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["Linking Shaders", "Subsection"],
+Cell["Encoding of Type Information", "Subsection"],
 
-Cell["blah", "Text"]
+Cell["blah", "Text"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+struct type {
+\tuint\t\tkind;
+\ttype_info\tinfo;
+};\[LineSeparator]
+union type_info {
+\tprimitive_type\tprimitive;
+\tarray_type\tarray;
+\tstruct_type\tstruct;
+};\[LineSeparator]
+struct primitive_type {
+\tuint\tflags;\t\t/* precision... */
+\tuint\tsize;
+\tuint\tcomponents;
+};\[LineSeparator]
+struct array_type {
+\tuint\tsize;
+\ttype\tsub_type;
+};\[LineSeparator]
+struct struct_type {
+\tuint\tnum_fields;
+\ttype\tfields[num_fields];
+};\
+\>", "Program"],
+
+Cell[TextData[{
+  Cell[TextData[{
+    "Program ",
+    
+    CounterBox["ProgramCaption"],
+    ": "
+  }], "ProgramCaptionLabel",
+    TaggingRules:>{"CellLabel" -> True}],
+  "Encoding of Type Information"
+}], "ProgramCaption"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Encoding of Code Segments", "Subsection"],
+
+Cell["blah", "Text"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+struct code {
+\tuint\tsegment_kind;
+\tuint\tnum_functions;
+\tfunc\tfunctions[num_functions];
+};\[LineSeparator]
+struct func {
+\tstring \tname;
+\tuint\tmax_locals;
+\tuint\tnum_instructions;
+\tinst\tinstructions[num_instructions];
+};\
+\>", "Program"],
+
+Cell[TextData[{
+  Cell[TextData[{
+    "Program ",
+    
+    CounterBox["ProgramCaption"],
+    ": "
+  }], "ProgramCaptionLabel",
+    TaggingRules:>{"CellLabel" -> True}],
+  "Encoding of Code Segments"
+}], "ProgramCaption"]
+}, Open  ]]
 }, Open  ]]
 }, Open  ]],
 
@@ -13338,12 +13629,32 @@ Cell[CellGroupData[{
 
 Cell["How does swizzling work", "Item1"],
 
-Cell["Determine file format", "Item1"],
-
 Cell["Determine instruction formats", "Item1"],
 
 Cell["Determine instruction encoding", "Item1"]
 }, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Notes", "EndnoteSection"],
+
+Cell[TextData[{
+  Cell[BoxData[
+      FormBox[
+        AdjustmentBox[
+          SuperscriptBox["", 
+            ButtonBox[
+              CounterBox["Endnote", "BINARY_ONLY"],
+              ButtonData:>":note:BINARY_ONLY",
+              ButtonStyle->"EndnoteReturnLink",
+              ButtonFrame->"None"]],
+          BoxMargins->{{0, 0.1}, {0, 0}}], TraditionalForm]], 
+    "EndnoteLabel"],
+  "For the initial release it is planned to keep the shader compiler outside \
+of the runtime library, and to support only loading of pre-compiled shaders."
+}], "Endnote",
+  CellTags->"BINARY_ONLY"]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -13407,6 +13718,7 @@ PrintingOptions->{"PrintingMargins"->{{54, 54}, {72, 72}},
 "PrintCellBrackets"->False,
 "PrintRegistrationMarks"->True,
 "PrintMultipleHorizontalPages"->False},
+TaggingRules:>{"Notes" -> {"BINARY_ONLY"}, "NotesAsNotes" -> True},
 StyleDefinitions -> Notebook[{
   
   Cell[CellGroupData[{
@@ -14662,8 +14974,7 @@ The options defined for the style below will be used at the Notebook level.\
       "<p class=\"CopyrightBy\"><span class=\"DkBlue\">...by:</span> ", 
       "</p>"}},
     CellFrameLabels->{{
-      Cell[ 
-          "...by: ", FontColor -> 
+      Cell[ "...by: ", FontColor -> 
             RGBColor[ .20000000000000001, .29999999999999999, .5]], 
           Inherited}, {Inherited, Inherited}},
     CellFrameLabelMargins->False,
@@ -25316,35 +25627,51 @@ CellTagsIndex->{
   ":bib:OGLES_SL"->{
     Cell[2829, 85, 739, 17, 65, "Text",
       CellTags->{":bib:OGLES_CM", ":bib:OGLES_SL"}]},
+  ":note:BINARY_ONLY"->{
+    Cell[3741, 111, 779, 20, 41, "Item1",
+      CellTags->":note:BINARY_ONLY"]},
   "XRef-Section-6517285"->{
-    Cell[723555, 12059, 74, 1, 39, "Subsection",
+    Cell[724084, 12073, 74, 1, 39, "Subsection",
       CellTags->"XRef-Section-6517285"]},
   "XRef-Table-65174347"->{
-    Cell[724218, 12082, 243, 10, 25, "TableTitle",
+    Cell[724747, 12096, 243, 10, 25, "TableTitle",
       CellTags->"XRef-Table-65174347"]},
   "XRef-Table-64143135"->{
-    Cell[727860, 12193, 246, 10, 25, "TableTitle",
+    Cell[728389, 12207, 246, 10, 25, "TableTitle",
       CellTags->"XRef-Table-64143135"],
-    Cell[735818, 12368, 246, 10, 25, "TableTitle",
+    Cell[736347, 12382, 246, 10, 25, "TableTitle",
       CellTags->"XRef-Table-64143135"]},
+  "XRef-Program-6522452"->{
+    Cell[780186, 13366, 403, 17, 327, "Program",
+      CellTags->"XRef-Program-6522452"]},
+  "XRef-Table-6522530"->{
+    Cell[780874, 13399, 254, 10, 25, "TableTitle",
+      CellTags->"XRef-Table-6522530"]},
+  "BINARY_ONLY"->{
+    Cell[787329, 13641, 589, 15, 21, "Endnote",
+      CellTags->"BINARY_ONLY"]},
   "OGLES_CM"->{
-    Cell[778927, 13354, 513, 18, 23, "Reference",
+    Cell[788018, 13665, 513, 18, 23, "Reference",
       CellTags->"OGLES_CM"]},
   "OGLES_SL"->{
-    Cell[779443, 13374, 503, 18, 23, "Reference",
+    Cell[788534, 13685, 503, 18, 23, "Reference",
       CellTags->"OGLES_SL"]}
   }
 *)
 
 (*CellTagsIndex
 CellTagsIndex->{
-  {":bib:OGLES_CM", 1106977, 25312},
-  {":bib:OGLES_SL", 1107092, 25315},
-  {"XRef-Section-6517285", 1107214, 25318},
-  {"XRef-Table-65174347", 1107332, 25321},
-  {"XRef-Table-64143135", 1107451, 25324},
-  {"OGLES_CM", 1107650, 25329},
-  {"OGLES_SL", 1107746, 25332}
+  {":bib:OGLES_CM", 1116125, 25623},
+  {":bib:OGLES_SL", 1116240, 25626},
+  {":note:BINARY_ONLY", 1116359, 25629},
+  {"XRef-Section-6517285", 1116468, 25632},
+  {"XRef-Table-65174347", 1116586, 25635},
+  {"XRef-Table-64143135", 1116705, 25638},
+  {"XRef-Program-6522452", 1116916, 25643},
+  {"XRef-Table-6522530", 1117033, 25646},
+  {"BINARY_ONLY", 1117143, 25649},
+  {"OGLES_CM", 1117240, 25652},
+  {"OGLES_SL", 1117336, 25655}
   }
 *)
 
@@ -25370,233 +25697,274 @@ Cell[2829, 85, 739, 17, 65, "Text",
 
 Cell[CellGroupData[{
 Cell[3593, 106, 145, 3, 22, "Item1"],
-Cell[3741, 111, 250, 6, 41, "Item1"],
-Cell[3994, 119, 152, 3, 22, "Item1"]
+Cell[3741, 111, 779, 20, 41, "Item1",
+  CellTags->":note:BINARY_ONLY"],
+Cell[4523, 133, 152, 3, 22, "Item1"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[4195, 128, 34, 0, 54, "Section"],
+Cell[4724, 142, 34, 0, 54, "Section"],
 
 Cell[CellGroupData[{
-Cell[4254, 132, 31, 0, 39, "Subsection"],
-Cell[4288, 134, 544, 14, 65, "Text"],
-Cell[4835, 150, 646, 23, 65, "Text"]
+Cell[4783, 146, 31, 0, 39, "Subsection"],
+Cell[4817, 148, 544, 14, 65, "Text"],
+Cell[5364, 164, 646, 23, 65, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[5518, 178, 34, 0, 39, "Subsection"],
-Cell[5555, 180, 328, 5, 46, "Text"],
+Cell[6047, 192, 34, 0, 39, "Subsection"],
+Cell[6084, 194, 328, 5, 46, "Text"],
 
 Cell[CellGroupData[{
-Cell[5908, 189, 38, 0, 31, "Subsubsection"],
-Cell[5949, 191, 93, 2, 27, "Text"]
+Cell[6437, 203, 38, 0, 31, "Subsubsection"],
+Cell[6478, 205, 93, 2, 27, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[6079, 198, 37, 0, 31, "Subsubsection"],
-Cell[6119, 200, 291, 5, 46, "Text"]
+Cell[6608, 212, 37, 0, 31, "Subsubsection"],
+Cell[6648, 214, 291, 5, 46, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[6447, 210, 39, 0, 31, "Subsubsection"],
-Cell[6489, 212, 332, 5, 46, "Text"]
+Cell[6976, 224, 39, 0, 31, "Subsubsection"],
+Cell[7018, 226, 332, 5, 46, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[6858, 222, 37, 0, 31, "Subsubsection"],
-Cell[6898, 224, 523, 9, 84, "Text"],
-Cell[7424, 235, 605, 10, 84, "Text"]
+Cell[7387, 236, 37, 0, 31, "Subsubsection"],
+Cell[7427, 238, 523, 9, 84, "Text"],
+Cell[7953, 249, 605, 10, 84, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[8066, 250, 36, 0, 31, "Subsubsection"],
-Cell[8105, 252, 132, 3, 27, "Text"]
+Cell[8595, 264, 36, 0, 31, "Subsubsection"],
+Cell[8634, 266, 132, 3, 27, "Text"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[8274, 260, 35, 0, 31, "Subsubsection"],
-Cell[8312, 262, 542, 15, 27, "Text"]
+Cell[8803, 274, 35, 0, 31, "Subsubsection"],
+Cell[8841, 276, 542, 15, 27, "Text"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[8903, 283, 58, 0, 39, "Subsection"],
-Cell[8964, 285, 185, 4, 27, "Text"],
+Cell[9432, 297, 58, 0, 39, "Subsection"],
+Cell[9493, 299, 185, 4, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[9174, 293, 712155, 11678, 332, "Figure"],
-Cell[721332, 11973, 242, 9, 24, "FigureCaption"]
+Cell[9703, 307, 712155, 11678, 332, "Figure"],
+Cell[721861, 11987, 242, 9, 24, "FigureCaption"]
 }, Open  ]]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[721635, 11989, 37, 0, 54, "Section"],
-Cell[721675, 11991, 708, 17, 84, "Text"],
-Cell[722386, 12010, 770, 28, 28, "Text"],
-Cell[723159, 12040, 371, 15, 27, "Text"],
+Cell[722164, 12003, 37, 0, 54, "Section"],
+Cell[722204, 12005, 708, 17, 84, "Text"],
+Cell[722915, 12024, 770, 28, 28, "Text"],
+Cell[723688, 12054, 371, 15, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[723555, 12059, 74, 1, 39, "Subsection",
+Cell[724084, 12073, 74, 1, 39, "Subsection",
   CellTags->"XRef-Section-6517285"],
 
 Cell[CellGroupData[{
-Cell[723654, 12064, 31, 0, 31, "Subsubsection"],
-Cell[723688, 12066, 505, 12, 46, "Text"],
+Cell[724183, 12078, 31, 0, 31, "Subsubsection"],
+Cell[724217, 12080, 505, 12, 46, "Text"],
 
 Cell[CellGroupData[{
-Cell[724218, 12082, 243, 10, 25, "TableTitle",
+Cell[724747, 12096, 243, 10, 25, "TableTitle",
   CellTags->"XRef-Table-65174347"],
-Cell[724464, 12094, 2265, 49, 222, "Table"],
-Cell[726732, 12145, 34, 0, 18, "TableNote"]
+Cell[724993, 12108, 2265, 49, 222, "Table"],
+Cell[727261, 12159, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[726815, 12151, 33, 0, 31, "Subsubsection"],
-Cell[726851, 12153, 213, 6, 27, "Text"]
+Cell[727344, 12165, 33, 0, 31, "Subsubsection"],
+Cell[727380, 12167, 213, 6, 27, "Text"]
 }, Open  ]]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[727125, 12166, 34, 0, 54, "Section"],
+Cell[727654, 12180, 34, 0, 54, "Section"],
 
 Cell[CellGroupData[{
-Cell[727184, 12170, 52, 0, 39, "Subsection"],
-Cell[727239, 12172, 209, 4, 46, "Text"],
-Cell[727451, 12178, 87, 1, 27, "Text"],
-Cell[727541, 12181, 294, 8, 27, "Text"],
+Cell[727713, 12184, 52, 0, 39, "Subsection"],
+Cell[727768, 12186, 209, 4, 46, "Text"],
+Cell[727980, 12192, 87, 1, 27, "Text"],
+Cell[728070, 12195, 294, 8, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[727860, 12193, 246, 10, 25, "TableTitle",
+Cell[728389, 12207, 246, 10, 25, "TableTitle",
   CellTags->"XRef-Table-64143135"],
-Cell[728109, 12205, 7111, 141, 222, "Table"]
+Cell[728638, 12219, 7111, 141, 222, "Table"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[735269, 12352, 53, 0, 39, "Subsection"],
-Cell[735325, 12354, 468, 10, 46, "Text"],
+Cell[735798, 12366, 53, 0, 39, "Subsection"],
+Cell[735854, 12368, 468, 10, 46, "Text"],
 
 Cell[CellGroupData[{
-Cell[735818, 12368, 246, 10, 25, "TableTitle",
+Cell[736347, 12382, 246, 10, 25, "TableTitle",
   CellTags->"XRef-Table-64143135"],
-Cell[736067, 12380, 4856, 100, 156, "Table"]
+Cell[736596, 12394, 4856, 100, 156, "Table"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[740972, 12486, 45, 0, 39, "Subsection"],
-Cell[741020, 12488, 303, 5, 46, "Text"],
+Cell[741501, 12500, 45, 0, 39, "Subsection"],
+Cell[741549, 12502, 303, 5, 46, "Text"],
 
 Cell[CellGroupData[{
-Cell[741348, 12497, 204, 9, 25, "TableTitle"],
-Cell[741555, 12508, 16636, 297, 310, "Table"],
-Cell[758194, 12807, 34, 0, 18, "TableNote"]
+Cell[741877, 12511, 204, 9, 25, "TableTitle"],
+Cell[742084, 12522, 16636, 297, 310, "Table"],
+Cell[758723, 12821, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[758277, 12813, 42, 0, 39, "Subsection"],
+Cell[758806, 12827, 42, 0, 39, "Subsection"],
 
 Cell[CellGroupData[{
-Cell[758344, 12817, 201, 9, 25, "TableTitle"],
-Cell[758548, 12828, 4641, 98, 178, "Table"],
-Cell[763192, 12928, 34, 0, 18, "TableNote"]
+Cell[758873, 12831, 201, 9, 25, "TableTitle"],
+Cell[759077, 12842, 4641, 98, 178, "Table"],
+Cell[763721, 12942, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[763275, 12934, 60, 0, 39, "Subsection"],
-Cell[763338, 12936, 20, 0, 27, "Text"],
+Cell[763804, 12948, 60, 0, 39, "Subsection"],
+Cell[763867, 12950, 20, 0, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[763383, 12940, 219, 9, 25, "TableTitle"],
-Cell[763605, 12951, 1934, 43, 112, "Table"],
-Cell[765542, 12996, 34, 0, 18, "TableNote"]
+Cell[763912, 12954, 219, 9, 25, "TableTitle"],
+Cell[764134, 12965, 1934, 43, 112, "Table"],
+Cell[766071, 13010, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[765625, 13002, 47, 0, 39, "Subsection"],
-Cell[765675, 13004, 20, 0, 27, "Text"],
+Cell[766154, 13016, 47, 0, 39, "Subsection"],
+Cell[766204, 13018, 20, 0, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[765720, 13008, 206, 9, 25, "TableTitle"],
-Cell[765929, 13019, 2191, 47, 156, "Table"],
-Cell[768123, 13068, 34, 0, 18, "TableNote"]
+Cell[766249, 13022, 206, 9, 25, "TableTitle"],
+Cell[766458, 13033, 2191, 47, 156, "Table"],
+Cell[768652, 13082, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[768206, 13074, 49, 0, 39, "Subsection"],
-Cell[768258, 13076, 481, 8, 65, "Text"],
-Cell[768742, 13086, 16, 0, 27, "Text"],
+Cell[768735, 13088, 49, 0, 39, "Subsection"],
+Cell[768787, 13090, 481, 8, 65, "Text"],
+Cell[769271, 13100, 16, 0, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[768783, 13090, 208, 9, 25, "TableTitle"],
-Cell[768994, 13101, 2915, 61, 178, "Table"],
-Cell[771912, 13164, 34, 0, 18, "TableNote"]
+Cell[769312, 13104, 208, 9, 25, "TableTitle"],
+Cell[769523, 13115, 2915, 61, 178, "Table"],
+Cell[772441, 13178, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[771995, 13170, 47, 0, 39, "Subsection"],
-Cell[772045, 13172, 20, 0, 27, "Text"],
+Cell[772524, 13184, 47, 0, 39, "Subsection"],
+Cell[772574, 13186, 20, 0, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[772090, 13176, 206, 9, 25, "TableTitle"],
-Cell[772299, 13187, 5577, 101, 530, "Table"],
-Cell[777879, 13290, 34, 0, 18, "TableNote"]
+Cell[772619, 13190, 206, 9, 25, "TableTitle"],
+Cell[772828, 13201, 5577, 101, 530, "Table"],
+Cell[778408, 13304, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[777974, 13297, 30, 0, 54, "Section"],
+Cell[778503, 13311, 30, 0, 54, "Section"],
+Cell[778536, 13313, 223, 4, 46, "Text"],
 
 Cell[CellGroupData[{
-Cell[778029, 13301, 72, 0, 39, "Subsection"],
-Cell[778104, 13303, 20, 0, 27, "Text"]
+Cell[778784, 13321, 204, 4, 22, "Item1"],
+Cell[778991, 13327, 186, 4, 41, "Item1"],
+Cell[779180, 13333, 181, 4, 22, "Item1"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[778161, 13308, 44, 0, 39, "Subsection"],
-Cell[778208, 13310, 20, 0, 27, "Text"]
+Cell[779398, 13342, 72, 0, 39, "Subsection"],
+Cell[779473, 13344, 688, 18, 27, "Text"],
+
+Cell[CellGroupData[{
+Cell[780186, 13366, 403, 17, 327, "Program",
+  CellTags->"XRef-Program-6522452"],
+Cell[780592, 13385, 245, 9, 24, "ProgramCaption"]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[778265, 13315, 53, 0, 39, "Subsection"],
-Cell[778321, 13317, 20, 0, 27, "Text"]
-}, Open  ]],
-
-Cell[CellGroupData[{
-Cell[778378, 13322, 37, 0, 39, "Subsection"],
-Cell[778418, 13324, 20, 0, 27, "Text"]
+Cell[780874, 13399, 254, 10, 25, "TableTitle",
+  CellTags->"XRef-Table-6522530"],
+Cell[781131, 13411, 3483, 73, 216, "Table"],
+Cell[784617, 13486, 34, 0, 18, "TableNote"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[778487, 13330, 30, 0, 54, "Section"],
-Cell[778520, 13332, 90, 2, 27, "Text"],
+Cell[784700, 13492, 47, 0, 39, "Subsection"],
+Cell[784750, 13494, 20, 0, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[778635, 13338, 40, 0, 22, "Item1"],
-Cell[778678, 13340, 38, 0, 22, "Item1"],
-Cell[778719, 13342, 46, 0, 22, "Item1"],
-Cell[778768, 13344, 47, 0, 22, "Item1"]
+Cell[784795, 13498, 421, 24, 517, "Program"],
+Cell[785219, 13524, 220, 9, 24, "ProgramCaption"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
-Cell[778864, 13350, 38, 0, 54, "ReferenceSection"],
+Cell[785488, 13539, 50, 0, 39, "Subsection"],
+Cell[785541, 13541, 20, 0, 27, "Text"],
 
 Cell[CellGroupData[{
-Cell[778927, 13354, 513, 18, 23, "Reference",
+Cell[785586, 13545, 461, 23, 517, "Program"],
+Cell[786050, 13570, 223, 9, 24, "ProgramCaption"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+Cell[786322, 13585, 47, 0, 39, "Subsection"],
+Cell[786372, 13587, 20, 0, 27, "Text"],
+
+Cell[CellGroupData[{
+Cell[786417, 13591, 258, 12, 251, "Program"],
+Cell[786678, 13605, 220, 9, 24, "ProgramCaption"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+Cell[786959, 13621, 30, 0, 54, "Section"],
+Cell[786992, 13623, 90, 2, 27, "Text"],
+
+Cell[CellGroupData[{
+Cell[787107, 13629, 40, 0, 22, "Item1"],
+Cell[787150, 13631, 46, 0, 22, "Item1"],
+Cell[787199, 13633, 47, 0, 22, "Item1"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+Cell[787295, 13639, 31, 0, 54, "EndnoteSection"],
+Cell[787329, 13641, 589, 15, 21, "Endnote",
+  CellTags->"BINARY_ONLY"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+Cell[787955, 13661, 38, 0, 54, "ReferenceSection"],
+
+Cell[CellGroupData[{
+Cell[788018, 13665, 513, 18, 23, "Reference",
   CellTags->"OGLES_CM"],
-Cell[779443, 13374, 503, 18, 23, "Reference",
+Cell[788534, 13685, 503, 18, 23, "Reference",
   CellTags->"OGLES_SL"]
 }, Open  ]]
 }, Open  ]]
