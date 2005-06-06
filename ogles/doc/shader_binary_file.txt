@@ -10,18 +10,17 @@ struct shader_binary_file {
 	uint	checksum;
 };
 
+struct string {
+	uint	length;
+	char	characters[length];
+};
+
 struct data {
 	uint	segment_kind;
 	uint	num_declarations;
 	decl	declarations[num_declarations];
 	uint	num_locations;
 	loc	data[num_locations];
-};
-
-struct code {
-	uint	segment_kind;
-	uint	num_functions;
-	func	functions[num_functions];
 };
 
 struct decl {
@@ -70,6 +69,12 @@ struct struct_type {
 	type	fields[num_fields];
 };
 
+struct code {
+	uint	segment_kind;
+	uint	num_functions;
+	func	functions[num_functions];
+};
+
 struct func {
 	string 	name;
 	uint	max_locals;
@@ -80,7 +85,3 @@ struct func {
 union inst {
 };
 
-struct string {
-	uint	length;
-	char	characters[length];
-};
