@@ -142,7 +142,35 @@ namespace EGL {
 			TextureModeReplace,
 			TextureModeBlend,
 			TextureModeAdd,
-			TextureModeModulate
+			TextureModeModulate,
+			TextureModeCombine
+		};
+
+		enum TextureModeCombineFunc {
+			TextureModeCombineReplace,
+			TextureModeCombineModulate,
+			TextureModeCombineAdd,
+			TextureModeCombineAddSigned,
+			TextureModeCombineInterpolate,
+			TextureModeCombineSubtract,
+			TextureModeCombineDot3RGB,
+			TextureModeCombineDot3RGBA
+		};
+
+		enum TextureCombineSrc {
+			TextureCombineSrcTexture,
+			TextureCombineSrcConstant,
+			TextureCombineSrcPrimaryColor,
+			TextureCombineSrcPrevious,
+			TextureCombineSrcTexture0
+			/* more values as defined by available textures */
+		};
+
+		enum TextureCombineOp {
+			TextureCombineOpSrcColor,
+			TextureCombineOpOneMinusSrcColor,
+			TextureCombineOpSrcAlpha,
+			TextureCombineOpOneMinusSrcAlpha
 		};
 
 		enum WrappingMode {
@@ -189,6 +217,30 @@ namespace EGL {
 
 		void SetTextureMode(size_t unit, TextureMode mode);
 		TextureMode GetTextureMode(size_t unit) const;
+
+		void SetTextureCombineFuncRGB(size_t unit, TextureModeCombineFunc func);
+		TextureModeCombineFunc GetTextureCombineFuncRGB(size_t unit) const;
+
+		void SetTextureCombineFuncAlpha(size_t unit, TextureModeCombineFunc func);
+		TextureModeCombineFunc GetTextureCombineFuncAlpha(size_t unit) const;
+
+		void SetTextureCombineSrcRGB(size_t unit, size_t idx, TextureCombineSrc src);
+		TextureCombineSrc GetTextureCombineSrcRGB(size_t unit, size_t idx) const;
+
+		void SetTextureCombineSrcAlpha(size_t unit, size_t idx, TextureCombineSrc src);
+		TextureCombineSrc GetTextureCombineSrcAlpha(size_t unit, size_t idx) const;
+
+		void SetTextureCombineOpRGB(size_t unit, size_t idx, TextureCombineOp op);
+		TextureCombineOp GetTextureCombineOpRGB(size_t unit, size_t idx) const;
+
+		void SetTextureCombineOpAlpha(size_t unit, size_t idx, TextureCombineOp op);
+		TextureCombineOp GetTextureCombineOpAlpha(size_t unit, size_t idx) const;
+
+		void SetTextureScaleRGB(size_t unit, EGL_Fixed scale);
+		EGL_Fixed GetTextureScaleRGB(size_t unit) const;
+
+		void SetTextureScaleAlpha(size_t unit, EGL_Fixed scale);
+		EGL_Fixed GetTextureScaleAlpha(size_t unit) const;
 
 		void SetMinFilterMode(size_t unit, FilterMode mode);
 		void SetMagFilterMode(size_t unit, FilterMode mode);
@@ -427,7 +479,19 @@ namespace EGL {
 				MipmapFilterMode = FilterModeNone;
 				WrappingModeS = WrappingModeRepeat;
 				WrappingModeT = WrappingModeRepeat;
-				InternalFormat = TextureFormatLuminance;
+				InternalFormat = TextureFormatLuminance;				
+				CombineFuncRGB = TextureModeCombineModulate; 
+				CombineFuncAlpha = TextureModeCombineModulate;
+
+				CombineSrcRGB[0] = CombineSrcAlpha[0] = TextureCombineSrcTexture;
+				CombineSrcRGB[1] = CombineSrcAlpha[1] = TextureCombineSrcPrevious;
+				CombineSrcRGB[2] = CombineSrcAlpha[2] = TextureCombineSrcConstant;
+
+				CombineOpRGB[0] = CombineOpRGB[1] = TextureCombineOpSrcColor;
+				CombineOpRGB[2] = CombineOpAlpha[0] =
+				CombineOpAlpha[1] = CombineOpAlpha[2] = TextureCombineOpSrcAlpha;
+
+				ScaleRGB = ScaleAlpha = EGL_ONE;
 			}
 
 			TextureState(const TextureState& other) {
@@ -440,6 +504,18 @@ namespace EGL {
 				WrappingModeS = other.WrappingModeS;
 				WrappingModeT = other.WrappingModeT;
 				InternalFormat = other.InternalFormat;
+				CombineFuncRGB = other.CombineFuncRGB;
+				CombineFuncAlpha = other.CombineFuncAlpha;
+
+				for (int i = 0; i < 3; ++i) {
+					CombineSrcRGB[i] = other.CombineSrcRGB[i];
+					CombineSrcAlpha[i] = other.CombineSrcAlpha[i];
+					CombineOpRGB[i] = other.CombineOpRGB[i];
+					CombineOpAlpha[i] = other.CombineOpAlpha[i];
+				}
+
+				ScaleRGB = other.ScaleRGB;
+				ScaleAlpha = other.ScaleAlpha;
 			}
 
 			TextureState& operator=(const TextureState& other) {
@@ -452,31 +528,72 @@ namespace EGL {
 				WrappingModeS = other.WrappingModeS;
 				WrappingModeT = other.WrappingModeT;
 				InternalFormat = other.InternalFormat;
+				CombineFuncRGB = other.CombineFuncRGB;
+				CombineFuncAlpha = other.CombineFuncAlpha;
+
+				for (int i = 0; i < 3; ++i) {
+					CombineSrcRGB[i] = other.CombineSrcRGB[i];
+					CombineSrcAlpha[i] = other.CombineSrcAlpha[i];
+					CombineOpRGB[i] = other.CombineOpRGB[i];
+					CombineOpAlpha[i] = other.CombineOpAlpha[i];
+				}
+
+				ScaleRGB = other.ScaleRGB;
+				ScaleAlpha = other.ScaleAlpha;
+
 				return *this;
 			}
 
 			bool operator==(const TextureState& other) const {
-				return Enabled == other.Enabled &&
-					(!Enabled ||
-					 EnvColor == other.EnvColor &&
-					 Mode == other.Mode &&
-					 MinFilterMode == other.MinFilterMode &&
-					 MagFilterMode == other.MagFilterMode &&
-					 MipmapFilterMode == other.MipmapFilterMode &&
-					 WrappingModeS == other.WrappingModeS &&
-					 WrappingModeT == other.WrappingModeT &&
-					 InternalFormat == other.InternalFormat);
+				if (!(Enabled == other.Enabled))
+					return false;
+				
+				if (!Enabled)
+					return true;
+
+				if (!(EnvColor == other.EnvColor) ||
+					Mode != other.Mode ||
+					MinFilterMode != other.MinFilterMode ||
+					MagFilterMode != other.MagFilterMode ||
+					MipmapFilterMode != other.MipmapFilterMode ||
+					WrappingModeS != other.WrappingModeS ||
+					WrappingModeT != other.WrappingModeT ||
+					InternalFormat != other.InternalFormat)
+					return false;
+
+				if (Mode == TextureModeCombine) {
+
+					if (CombineFuncRGB != other.CombineFuncRGB ||
+						CombineFuncAlpha != other.CombineFuncAlpha ||
+						ScaleRGB != other.ScaleRGB ||
+						ScaleAlpha != other.ScaleAlpha)
+						return false;
+
+					for (int i = 0; i < 3; ++i) {
+						if (CombineSrcRGB[i] != other.CombineSrcRGB[i] ||
+							CombineSrcAlpha[i] != other.CombineSrcAlpha[i] ||
+							CombineOpRGB[i] != other.CombineOpRGB[i] ||
+							CombineOpAlpha[i] != other.CombineOpAlpha[i])
+							return false;
+					}
+				}
+
+				return true;
 			}
 
-			bool				Enabled;
-			Color				EnvColor;
-			TextureMode			Mode;
-			FilterMode			MinFilterMode;
-			FilterMode			MagFilterMode;
-			FilterMode			MipmapFilterMode;
-			WrappingMode		WrappingModeS;
-			WrappingMode		WrappingModeT;
-			TextureFormat		InternalFormat;
+			bool					Enabled;
+			Color					EnvColor;
+			TextureMode				Mode;
+			TextureModeCombineFunc	CombineFuncRGB, CombineFuncAlpha;
+			TextureCombineSrc		CombineSrcRGB[3], CombineSrcAlpha[3];
+			TextureCombineOp		CombineOpRGB[3], CombineOpAlpha[3];
+			EGL_Fixed				ScaleRGB, ScaleAlpha;
+			FilterMode				MinFilterMode;
+			FilterMode				MagFilterMode;
+			FilterMode				MipmapFilterMode;
+			WrappingMode			WrappingModeS;
+			WrappingMode			WrappingModeT;
+			TextureFormat			InternalFormat;
 		}
 								m_Texture[EGL_NUM_TEXTURE_UNITS];
 
@@ -1058,6 +1175,72 @@ namespace EGL {
 	inline RasterizerState::StencilOp RasterizerState :: GetStencilOpFailZPass() const {
 		return m_Stencil.ZPass;
 	}
+
+	inline void RasterizerState :: SetTextureCombineFuncRGB(size_t unit, TextureModeCombineFunc func) {
+		m_Texture[unit].CombineFuncRGB = func;
+	}
+
+	inline RasterizerState::TextureModeCombineFunc RasterizerState :: GetTextureCombineFuncRGB(size_t unit) const {
+		return m_Texture[unit].CombineFuncRGB;
+	}
+
+	inline void RasterizerState :: SetTextureCombineFuncAlpha(size_t unit, TextureModeCombineFunc func) {
+		m_Texture[unit].CombineFuncAlpha = func;
+	}
+
+	inline RasterizerState::TextureModeCombineFunc RasterizerState :: GetTextureCombineFuncAlpha(size_t unit) const {
+		return m_Texture[unit].CombineFuncAlpha;
+	}
+
+	inline void RasterizerState :: SetTextureCombineSrcRGB(size_t unit, size_t idx, TextureCombineSrc src) {
+		m_Texture[unit].CombineSrcRGB[idx] = src;
+	}
+
+	inline RasterizerState::TextureCombineSrc RasterizerState :: GetTextureCombineSrcRGB(size_t unit, size_t idx) const {
+		return m_Texture[unit].CombineSrcRGB[idx];
+	}
+
+	inline void RasterizerState :: SetTextureCombineSrcAlpha(size_t unit, size_t idx, TextureCombineSrc src) {
+		m_Texture[unit].CombineSrcAlpha[idx] = src;
+	}
+
+	inline RasterizerState::TextureCombineSrc RasterizerState :: GetTextureCombineSrcAlpha(size_t unit, size_t idx) const {
+		return m_Texture[unit].CombineSrcAlpha[idx];
+	}
+
+	inline void RasterizerState :: SetTextureCombineOpRGB(size_t unit, size_t idx, TextureCombineOp op) {
+		m_Texture[unit].CombineOpRGB[idx] = op;
+	}
+
+	inline RasterizerState::TextureCombineOp RasterizerState :: GetTextureCombineOpRGB(size_t unit, size_t idx) const {
+		return m_Texture[unit].CombineOpRGB[idx];
+	}
+
+	inline void RasterizerState :: SetTextureCombineOpAlpha(size_t unit, size_t idx, TextureCombineOp op) {
+		m_Texture[unit].CombineOpAlpha[idx] = op;
+	}
+
+	inline RasterizerState::TextureCombineOp RasterizerState :: GetTextureCombineOpAlpha(size_t unit, size_t idx) const {
+		return m_Texture[unit].CombineOpAlpha[idx];
+	}
+
+	inline void RasterizerState :: SetTextureScaleRGB(size_t unit, EGL_Fixed scale) {
+		m_Texture[unit].ScaleRGB = scale;
+	}
+
+	inline EGL_Fixed RasterizerState :: GetTextureScaleRGB(size_t unit) const {
+		return m_Texture[unit].ScaleRGB;
+	}
+
+	inline void RasterizerState :: SetTextureScaleAlpha(size_t unit, EGL_Fixed scale) {
+		m_Texture[unit].ScaleAlpha = scale;
+	}
+
+	inline EGL_Fixed RasterizerState :: GetTextureScaleAlpha(size_t unit) const {
+		return m_Texture[unit].ScaleAlpha;
+	}
+
+
 }
 
 #endif //ndef EGL_RASTERIZER_STATE_H
