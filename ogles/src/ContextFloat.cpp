@@ -300,14 +300,16 @@ void Context :: Scalef (GLfloat x, GLfloat y, GLfloat z) {
 }
 
 void Context :: TexEnvf (GLenum target, GLenum pname, GLfloat param) {
-	switch (pname) {
-		case GL_TEXTURE_ENV_MODE:
-			TexEnvx(target, pname, (GLfixed) param);
-			break;
 
-		default:
-			RecordError(GL_INVALID_ENUM);
-			break;
+	switch (pname) {
+	case GL_RGB_SCALE:
+	case GL_ALPHA_SCALE:
+		TexEnvx(target, pname, EGL_FixedFromFloat(param));
+		break;
+
+	default:
+		TexEnvx(target, pname, (GLfixed) param);
+		break;
 	}
 }
 
