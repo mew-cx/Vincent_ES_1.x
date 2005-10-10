@@ -1625,12 +1625,8 @@ void Context :: TexEnvx(GLenum target, GLenum pname, GLfixed param) {
 						break;
 
 					default:
-						if (param >= GL_TEXTURE0 && param < GL_TEXTURE0 + EGL_NUM_TEXTURE_UNITS) {
-							GetRasterizerState()->SetTextureCombineSrcRGB(m_ActiveTexture, index, 
-								RasterizerState::TextureCombineSrc(param - GL_TEXTURE0 + RasterizerState::TextureCombineSrcTexture0));
-						} else {
-							RecordError(GL_INVALID_ENUM);
-						}
+						RecordError(GL_INVALID_ENUM);
+						break;
 					}
 				}
 
@@ -1660,12 +1656,8 @@ void Context :: TexEnvx(GLenum target, GLenum pname, GLfixed param) {
 						break;
 
 					default:
-						if (param >= GL_TEXTURE0 && param < GL_TEXTURE0 + EGL_NUM_TEXTURE_UNITS) {
-							GetRasterizerState()->SetTextureCombineSrcAlpha(m_ActiveTexture, index, 
-								RasterizerState::TextureCombineSrc(param - GL_TEXTURE0 + RasterizerState::TextureCombineSrcTexture0));
-						} else {
-							RecordError(GL_INVALID_ENUM);
-						}
+						RecordError(GL_INVALID_ENUM);
+						break;
 					}
 				}
 
@@ -2358,10 +2350,6 @@ void Context :: GetTexEnviv(GLenum env, GLenum pname, GLint *params) {
 			case RasterizerState::TextureCombineSrcConstant:	params[0] = GL_CONSTANT;		break;
 			case RasterizerState::TextureCombineSrcPrimaryColor:params[0] = GL_PRIMARY_COLOR;	break;
 			case RasterizerState::TextureCombineSrcPrevious:	params[0] = GL_PREVIOUS;		break;
-
-			default:											
-				params[0] = src - RasterizerState::TextureCombineSrcTexture0 + GL_TEXTURE0;
-				break;
 			}
 		}
 
@@ -2379,10 +2367,6 @@ void Context :: GetTexEnviv(GLenum env, GLenum pname, GLint *params) {
 			case RasterizerState::TextureCombineSrcConstant:	params[0] = GL_CONSTANT;		break;
 			case RasterizerState::TextureCombineSrcPrimaryColor:params[0] = GL_PRIMARY_COLOR;	break;
 			case RasterizerState::TextureCombineSrcPrevious:	params[0] = GL_PREVIOUS;		break;
-
-			default:											
-				params[0] = src - RasterizerState::TextureCombineSrcTexture0 + GL_TEXTURE0;
-				break;
 			}
 		}
 

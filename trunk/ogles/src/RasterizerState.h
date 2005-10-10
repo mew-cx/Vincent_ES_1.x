@@ -161,9 +161,7 @@ namespace EGL {
 			TextureCombineSrcTexture,
 			TextureCombineSrcConstant,
 			TextureCombineSrcPrimaryColor,
-			TextureCombineSrcPrevious,
-			TextureCombineSrcTexture0
-			/* more values as defined by available textures */
+			TextureCombineSrcPrevious
 		};
 
 		enum TextureCombineOp {
