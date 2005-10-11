@@ -74,7 +74,9 @@ namespace {
 	inline U8 AddSignedU8(U8 arg0, U8 arg1) {
 		U16 value = arg0 + arg1;
 
-		if (value >= 0x80)
+		if (value >= 0x180)
+			return 0xff;
+		else if (value >= 0x80)
 			return value - 0x80;
 		else
 			return 0;

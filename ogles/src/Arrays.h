@@ -295,11 +295,14 @@ namespace EGL {
 			}
 		}
 
-		void Increase() {
+		void Increase(size_t minSize = 0) {
 
 			assert(m_FreeListHead == 0xffffffffu);
 
 			size_t newAllocatedObjects = m_AllocatedObjects * FACTOR;
+
+			if (newAllocatedObjects < minSize)
+				newAllocatedObjects = minSize;
 
 			ObjectRecord * newObjects = new ObjectRecord[newAllocatedObjects];
 			size_t index;
@@ -350,8 +353,27 @@ namespace EGL {
 
 		ELEMENT * GetObject(size_t index) {
 
-			if (index >= m_AllocatedObjects || !m_Objects[index].IsPointer()) 
-				return 0;
+			if (index >= m_AllocatedObjects)
+				Increase(index + 1);
+				
+			if (!m_Objects[index].IsPointer()) {
+				// allocate the requested object
+				if (m_FreeListHead = index) {
+					m_FreeListHead = m_Objects[index].IsNil() ? 0xffffffffu : m_Objects[index].GetIndex();
+				} else {
+					size_t idx = m_FreeListHead;
+
+					while (!m_Objects[idx].IsNil() && m_Objects[idx].GetIndex() != index)
+						idx = m_Objects[idx].GetIndex();
+
+					if (m_Objects[index].IsNil())
+						m_Objects[idx].SetNil();
+					else
+						m_Objects[idx].SetIndex(m_Objects[index].GetIndex());
+				}
+				
+				m_Objects[index].SetPointer(0);
+			}
 
 			if (!m_Objects[index].GetPointer()) {
 				m_Objects[index].SetPointer(new ELEMENT());
