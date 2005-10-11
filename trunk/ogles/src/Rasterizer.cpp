@@ -72,12 +72,10 @@ namespace {
 	}
 
 	inline U8 AddSignedU8(U8 arg0, U8 arg1) {
-		U16 value = arg0 + arg1;
+		U16 value = (U16) arg0 + arg1;
 
-		if (value >= 0x180)
-			return 0xff;
-		else if (value >= 0x80)
-			return value - 0x80;
+		if (value >= 0x80)
+			return ClampU8(value - 0x80);
 		else
 			return 0;
 	}
@@ -89,9 +87,9 @@ namespace {
 	// bring 0 .. 255 -> -128 .. 128
 	inline I16 SignedVal(U8 in) {
 		if (in <= 0x80)
-			return in - 0x80;
+			return (I16) in - 0x80;
 		else {
-			I16 inter = in - 0x80;
+			I16 inter = (I16) in - 0x80;
 			return inter + (inter >> 6);
 		}
 	}
