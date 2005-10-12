@@ -197,6 +197,7 @@ void Context :: GetBufferParameteriv(GLenum target, GLenum pname, GLint *params)
 	case GL_BUFFER_SIZE:
 	case GL_BUFFER_USAGE:
 	case GL_BUFFER_ACCESS:
+		break;
 
 	default:
 		RecordError(GL_INVALID_ENUM);

@@ -1488,11 +1488,6 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 
 void Context :: TexEnvx(GLenum target, GLenum pname, GLfixed param) { 
 
-	if (target != GL_TEXTURE_ENV) {
-		RecordError(GL_INVALID_ENUM);
-		return;
-	}
-
 	switch (target) {
 	case GL_TEXTURE_ENV:
 		switch (pname) {
