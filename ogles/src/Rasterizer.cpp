@@ -56,7 +56,7 @@ namespace {
 
 	inline U8 MulU8(U8 a, U8 b) {
 		U16 prod = a * b;
-		return (prod + (prod >> 7)) >> 8;
+		return ((prod + (prod >> 6)) >> 7) + 1 >> 1;
 	}
 
 	inline U8 ClampU8(U16 value) {
@@ -109,6 +109,66 @@ namespace {
 			return 0xff;
 		else
 			return (sum >> 8) - (sum >> 15);
+	}
+
+	inline U8 MulU8(U8 a, U8 b, EGL_Fixed scale) {
+		U16 prod = a * b;
+		return ClampU8((U16) EGL_Mul((prod + (prod >> 7)) >> 8, scale));
+	}
+
+	inline U8 AddU8(U8 arg0, U8 arg1, EGL_Fixed scale) {
+		return ClampU8((U16) EGL_Mul((U16) arg0 + (U16) arg1, scale));
+	}
+
+	inline U8 SubU8(U8 arg0, U8 arg1, EGL_Fixed scale) {
+		return arg0 > arg1 ? ClampU8((U16) EGL_Mul(arg0 - arg1, scale)) : 0;
+	}
+
+	inline U8 AddSignedU8(U8 arg0, U8 arg1, EGL_Fixed scale) {
+		U16 value = (U16) arg0 + arg1;
+
+		if (value >= 0x80)
+			return ClampU8((U16) EGL_Mul(value - 0x80, scale));
+		else
+			return 0;
+	}
+
+	inline U8 InterpolateU8(U8 arg0, U8 arg1, U8 arg2, EGL_Fixed scale) {
+		return ClampU8((U16) MulU8(arg0, arg2, scale) + MulU8(arg1, 0xff - arg2, scale));
+	}
+
+	inline U8 Dot3U8(const Color& arg0, const Color& arg1, EGL_Fixed scale) {
+# if 1		
+		// each product is in the range of -2^14 .. +2^14
+		I32 prodR = SignedVal(arg0.r) * SignedVal(arg1.r);
+		I32 prodG = SignedVal(arg0.g) * SignedVal(arg1.g);
+		I32 prodB = SignedVal(arg0.b) * SignedVal(arg1.b);
+
+		I32 sum = (prodR + prodG + prodB) * 4;
+		I32 scaledSum = ((sum >> 7) - (sum >> 14) + 1) >> 1;
+
+		if (sum <= 0xff)
+			return 0;
+		else
+			return ClampU8(EGL_Mul(scaledSum, scale));
+#else
+		float arg0r = (arg0.r / 255.0) - 0.5;
+		float arg0g = (arg0.g / 255.0) - 0.5;
+		float arg0b = (arg0.b / 255.0) - 0.5;
+
+		float arg1r = (arg1.r / 255.0) - 0.5;
+		float arg1g = (arg1.g / 255.0) - 0.5;
+		float arg1b = (arg1.b / 255.0) - 0.5;
+
+		float sum = (arg0r * arg1r + arg0g * arg1g + arg0b * arg1b) * 4.0 * EGL_FloatFromFixed(scale);
+
+		if (sum <= 0.0)
+			return 0;
+		else if (sum >= 1.0)
+			return 0xff;
+		else 
+			return (U8) (sum * 0xFF);
+#endif
 	}
 
     const I32 InversionTable[32] = {
@@ -548,103 +608,107 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 				}
 
 				U8 combineAlpha;
+				EGL_Fixed scaleAlpha = m_State->m_Texture[unit].ScaleAlpha;
 
 				switch (m_State->m_Texture[unit].CombineFuncAlpha) {
 				case RasterizerState::TextureModeCombineReplace:
-					combineAlpha = arg[0].a;
+					combineAlpha = MulU8(arg[0].a, 0xFF, scaleAlpha);
 					break;
 
 				case RasterizerState::TextureModeCombineModulate:
-					combineAlpha = MulU8(arg[0].a, arg[1].a);
+					combineAlpha = MulU8(arg[0].a, arg[1].a, scaleAlpha);
 					break;
 
 				case RasterizerState::TextureModeCombineAdd:
-					combineAlpha = AddU8(arg[0].a, arg[1].a);
+					combineAlpha = AddU8(arg[0].a, arg[1].a, scaleAlpha);
 					break;
 
 				case RasterizerState::TextureModeCombineAddSigned:
-					combineAlpha = AddSignedU8(arg[0].a, arg[1].a);
+					combineAlpha = AddSignedU8(arg[0].a, arg[1].a, scaleAlpha);
 					break;
 
 				case RasterizerState::TextureModeCombineInterpolate:
-					combineAlpha = InterpolateU8(arg[0].a, arg[1].a, arg[2].a);
+					combineAlpha = InterpolateU8(arg[0].a, arg[1].a, arg[2].a, scaleAlpha);
 					break;
 
 				case RasterizerState::TextureModeCombineSubtract:
-					combineAlpha = SubU8(arg[0].a, arg[1].a);
+					combineAlpha = SubU8(arg[0].a, arg[1].a, scaleAlpha);
 					break;
 				}
 
+				EGL_Fixed scaleRGB = m_State->m_Texture[unit].ScaleRGB;
+
 				switch (m_State->m_Texture[unit].CombineFuncRGB) {
 				case RasterizerState::TextureModeCombineReplace:
-					color = Color(arg[0].r, arg[0].g, arg[0].b, combineAlpha); 
+					color = Color(
+							MulU8(arg[0].r, 0xFF, scaleRGB), 
+							MulU8(arg[0].g, 0xFF, scaleRGB), 
+							MulU8(arg[0].b, 0xFF, scaleRGB), 
+							combineAlpha); 
 					break;
 
 				case RasterizerState::TextureModeCombineModulate:
 					color = 
 						Color(
-							MulU8(arg[0].r, arg[1].r), 
-							MulU8(arg[0].g, arg[1].g), 
-							MulU8(arg[0].b, arg[1].b), 
+							MulU8(arg[0].r, arg[1].r, scaleRGB), 
+							MulU8(arg[0].g, arg[1].g, scaleRGB), 
+							MulU8(arg[0].b, arg[1].b, scaleRGB), 
 							combineAlpha); 
 					break;
 
 				case RasterizerState::TextureModeCombineAdd:
 					color = 
 						Color(
-							AddU8(arg[0].r, arg[1].r), 
-							AddU8(arg[0].g, arg[1].g), 
-							AddU8(arg[0].b, arg[1].b), 
+							AddU8(arg[0].r, arg[1].r, scaleRGB), 
+							AddU8(arg[0].g, arg[1].g, scaleRGB), 
+							AddU8(arg[0].b, arg[1].b, scaleRGB), 
 							combineAlpha); 
 					break;
 
 				case RasterizerState::TextureModeCombineAddSigned:
 					color = 
 						Color(
-							AddSignedU8(arg[0].r, arg[1].r), 
-							AddSignedU8(arg[0].g, arg[1].g), 
-							AddSignedU8(arg[0].b, arg[1].b), 
+							AddSignedU8(arg[0].r, arg[1].r, scaleRGB), 
+							AddSignedU8(arg[0].g, arg[1].g, scaleRGB), 
+							AddSignedU8(arg[0].b, arg[1].b, scaleRGB), 
 							combineAlpha); 
 					break;
 
 				case RasterizerState::TextureModeCombineInterpolate:
 					color =
 						Color(
-							InterpolateU8(arg[0].r, arg[1].r, arg[2].r),
-							InterpolateU8(arg[0].g, arg[1].g, arg[2].g),
-							InterpolateU8(arg[0].b, arg[1].b, arg[2].b),
+							InterpolateU8(arg[0].r, arg[1].r, arg[2].r, scaleRGB),
+							InterpolateU8(arg[0].g, arg[1].g, arg[2].g, scaleRGB),
+							InterpolateU8(arg[0].b, arg[1].b, arg[2].b, scaleRGB),
 							combineAlpha); 
 					break;
 
 				case RasterizerState::TextureModeCombineSubtract:
 					color = 
 						Color(
-							SubU8(arg[0].r, arg[1].r), 
-							SubU8(arg[0].g, arg[1].g), 
-							SubU8(arg[0].b, arg[1].b), 
+							SubU8(arg[0].r, arg[1].r, scaleRGB), 
+							SubU8(arg[0].g, arg[1].g, scaleRGB), 
+							SubU8(arg[0].b, arg[1].b, scaleRGB), 
 							combineAlpha); 
 					break;
 
 				case RasterizerState::TextureModeCombineDot3RGB:
 					{
-						U8 dot = Dot3U8(arg[0], arg[1]);
-						color = Color(dot, dot, dot, combineAlpha);
+						U8 dotRGB = Dot3U8(arg[0], arg[1], scaleRGB);
+						color = Color(dotRGB, dotRGB, dotRGB, combineAlpha);
 					}
 
 					break;
 
 				case RasterizerState::TextureModeCombineDot3RGBA:
 					{
-						U8 dot = Dot3U8(arg[0], arg[1]);
-						color = Color(dot, dot, dot, dot);
+						U8 dotRGB = Dot3U8(arg[0], arg[1], scaleRGB);
+						U8 dotAlpha = Dot3U8(arg[0], arg[1], scaleAlpha);
+						color = Color(dotRGB, dotRGB, dotRGB, dotAlpha);
 					}
 
 					break;
 				}
-
-				U8 scaleRGB = (m_State->m_Texture[unit].ScaleRGB * 0xFF) >> 16;
-				U8 scaleAlpha = (m_State->m_Texture[unit].ScaleAlpha * 0xFF) >> 16;
-				color = color * Color(scaleRGB, scaleRGB, scaleRGB, scaleAlpha);
 			} else {
 				switch (m_Texture[unit]->GetInternalFormat()) {
 					default:
