@@ -5,10 +5,20 @@ This document collects changes on a release to release base. For open known issu
 the bug database on SourceForge. 
 
 
+Version 0.99
+------------
+
+Purpose of this release is preparation of the submission of the conformance test results for Vincent.
+
+This version addresses the following issues:
+
+1284484 - Matrix Query test failed
+
+
 Version 0.84
 ------------
 
-This is a build to address the pointer problem listed below. I.t has *not* been fully regression tested 
+This is a build to address the pointer problem listed below. It has *not* been fully regression tested 
 against the conformance test suite, even though it is expected to be mostly stable. If you have any problems,
 please revert to version 0.83.
 
