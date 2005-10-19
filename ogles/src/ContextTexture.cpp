@@ -1412,16 +1412,6 @@ void Context :: TexParameteri(GLenum target, GLenum pname, GLint param) {
 		return;
 	}
 
-	RecordError(GL_INVALID_ENUM);
-}
-
-void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) { 
-
-	if (target != GL_TEXTURE_2D) {
-		RecordError(GL_INVALID_ENUM);
-		return;
-	}
-
 	MultiTexture * multiTexture = GetCurrentTexture();
 
 	switch (pname) {
@@ -1484,6 +1474,16 @@ void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) {
 			RecordError(GL_INVALID_ENUM);
 			break;
 	}
+}
+
+void Context :: TexParameterx(GLenum target, GLenum pname, GLfixed param) { 
+
+	if (target != GL_TEXTURE_2D) {
+		RecordError(GL_INVALID_ENUM);
+		return;
+	}
+
+	TexParameteri(target, pname, param);
 }
 
 void Context :: TexEnvx(GLenum target, GLenum pname, GLfixed param) { 
