@@ -138,7 +138,6 @@ namespace {
 	}
 
 	inline U8 Dot3U8(const Color& arg0, const Color& arg1, EGL_Fixed scale) {
-# if 1		
 		// each product is in the range of -2^14 .. +2^14
 		I32 prodR = SignedVal(arg0.r) * SignedVal(arg1.r);
 		I32 prodG = SignedVal(arg0.g) * SignedVal(arg1.g);
@@ -151,24 +150,6 @@ namespace {
 			return 0;
 		else
 			return ClampU8(EGL_Mul(scaledSum, scale));
-#else
-		float arg0r = (arg0.r / 255.0) - 0.5;
-		float arg0g = (arg0.g / 255.0) - 0.5;
-		float arg0b = (arg0.b / 255.0) - 0.5;
-
-		float arg1r = (arg1.r / 255.0) - 0.5;
-		float arg1g = (arg1.g / 255.0) - 0.5;
-		float arg1b = (arg1.b / 255.0) - 0.5;
-
-		float sum = (arg0r * arg1r + arg0g * arg1g + arg0b * arg1b) * 4.0 * EGL_FloatFromFixed(scale);
-
-		if (sum <= 0.0)
-			return 0;
-		else if (sum >= 1.0)
-			return 0xff;
-		else 
-			return (U8) (sum * 0xFF);
-#endif
 	}
 
     const I32 InversionTable[32] = {
