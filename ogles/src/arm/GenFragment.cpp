@@ -727,6 +727,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 	cg_virtual_reg_t * regColorA = ClampTo255(block, fragmentInfo.regA);
 	cg_virtual_reg_t * regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
 
+	cg_virtual_reg_t * regBaseColorR = regColorR;
+	cg_virtual_reg_t * regBaseColorG = regColorG;
+	cg_virtual_reg_t * regBaseColorB = regColorB;
+	cg_virtual_reg_t * regBaseColorA = regColorA;
+	cg_virtual_reg_t * regBaseColor565 = regColor565;
+
 	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		if (m_State->m_Texture[unit].Enabled) {
 
@@ -740,175 +746,511 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 			GenerateFetchTexColor(procedure, block, unit, fragmentInfo, 
 								  regTexColorR, regTexColorG, regTexColorB, regTexColorA, regTexColor565);
 
-			switch (m_State->m_Texture[unit].InternalFormat) {
-				default:
-				case RasterizerState::TextureFormatAlpha:
-					switch (m_State->m_Texture[unit].Mode) {
-						case RasterizerState::TextureModeReplace:
-							{
-							//color = Color(color.r, color.g, color.b, texColor.a);
-							regColorA = regTexColorA;
-							}
 
-							break;
+			if (m_State->m_Texture[unit].Mode == RasterizerState::TextureModeCombine) {
 
-						case RasterizerState::TextureModeModulate:
-						case RasterizerState::TextureModeBlend:
-						case RasterizerState::TextureModeAdd:
-							{
-							//color = Color(color.r, color.g, color.b, MulU8(color.a, texColor.a));
-							regColorA = Mul255(block, regColorA, regTexColorA);
-							}
+				//Color arg[3];
+				cg_virtual_reg_t * regArgR[3];			
+				cg_virtual_reg_t * regArgG[3];			
+				cg_virtual_reg_t * regArgB[3];			
+				cg_virtual_reg_t * regArgA[3];
+				cg_virtual_reg_t * regArg565[3];
 
-							break;
+				for (size_t idx = 0; idx < 3; ++idx) {
+					//Color rgbIn;
+					cg_virtual_reg_t * regRgbInR;			
+					cg_virtual_reg_t * regRgbInG;			
+					cg_virtual_reg_t * regRgbInB;			
+					cg_virtual_reg_t * regRgbInA;			
+					cg_virtual_reg_t * regRgbIn565;
+
+					//U8 alphaIn;
+					cg_virtual_reg_t * regAlphaIn;
+
+					switch (m_State->m_Texture[unit].CombineSrcRGB[idx]) {
+					case RasterizerState::TextureCombineSrcTexture:
+						//rgbIn = texColor;
+						{
+							regRgbInR = regTexColorR;
+							regRgbInG = regTexColorG;
+							regRgbInB = regTexColorB;
+							regRgbInA = regTexColorA;
+							regRgbIn565 = regTexColor565;
+						}
+						break;
+
+					case RasterizerState::TextureCombineSrcConstant:
+						//rgbIn = m_State->m_Texture[unit].EnvColor;
+						{
+							regRgbInR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							regRgbInG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							regRgbInB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							regRgbInA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							LDI		(regRgbInR, m_State->m_Texture[unit].EnvColor.r);
+							LDI		(regRgbInG, m_State->m_Texture[unit].EnvColor.g);
+							LDI		(regRgbInB, m_State->m_Texture[unit].EnvColor.b);
+							LDI		(regRgbInA, m_State->m_Texture[unit].EnvColor.a);
+
+							regRgbIn565 = Color565FromRGB(block, regRgbInR, regRgbInG, regRgbInB);
+						}
+						break;
+
+					case RasterizerState::TextureCombineSrcPrimaryColor:
+						//rgbIn = baseColor;
+						{
+							regRgbInR = regBaseColorR;
+							regRgbInG = regBaseColorG;
+							regRgbInB = regBaseColorB;
+							regRgbInA = regBaseColorA;
+							regRgbIn565 = regBaseColor565;
+						}
+
+						break;
+
+					case RasterizerState::TextureCombineSrcPrevious:
+						//rgbIn = color;
+						{
+							regRgbInR = regColorR;
+							regRgbInG = regColorG;
+							regRgbInB = regColorB;
+							regRgbInA = regColorA;
+							regRgbIn565 = regColor565;
+						}
+						break;
 					}
+
+					switch (m_State->m_Texture[unit].CombineSrcAlpha[idx]) {
+					case RasterizerState::TextureCombineSrcTexture:
+						//alphaIn = texColor.a;
+						regAlphaIn = regTexColorA;
+						break;
+
+					case RasterizerState::TextureCombineSrcConstant:
+						//alphaIn = m_State->m_Texture[unit].EnvColor.a;
+						{
+							regAlphaIn = cg_virtual_reg_create(procedure, cg_reg_type_general);
+							LDI		(regAlphaIn, m_State->m_Texture[unit].EnvColor.a);
+						}
+
+						break;
+
+					case RasterizerState::TextureCombineSrcPrimaryColor:
+						//alphaIn = baseColor.a;
+						regAlphaIn = regBaseColorA;
+						break;
+
+					case RasterizerState::TextureCombineSrcPrevious:
+						//alphaIn = color.a;
+						regAlphaIn = regColorA;
+						break;
+					}
+
+					//U8 alphaOut;
+					cg_virtual_reg_t * regAlphaOut;
+
+					if (m_State->m_Texture[unit].CombineOpAlpha[idx] == RasterizerState::TextureCombineOpSrcAlpha) {
+						//alphaOut = alphaIn;
+						regAlphaOut = regAlphaIn;
+					} else {
+						//alphaOut = 0xFF - alphaIn;
+						DECL_CONST_REG	(constantMaxColor, 0xff);
+
+						regAlphaOut = Sub(block, constantMaxColor, regAlphaIn);
+					}
+
+					switch (m_State->m_Texture[unit].CombineOpRGB[idx]) {
+					case RasterizerState::TextureCombineOpSrcColor:
+						//arg[idx] = Color(rgbIn.r, rgbIn.g, rgbIn.b, alphaOut);
+						{
+							regArgR[idx] = regRgbInR;
+							regArgG[idx] = regRgbInG;
+							regArgB[idx] = regRgbInB;
+							regArg565[idx] = regRgbIn565;
+							regArgA[idx] = regAlphaOut;
+						}
+						break;
+
+					case RasterizerState::TextureCombineOpOneMinusSrcColor:
+						//arg[idx] = Color(0xFF - rgbIn.r, 0xFF - rgbIn.g, 0xFF - rgbIn.b, alphaOut);
+						{
+							DECL_CONST_REG	(constantMaxColor, 0xff);
+
+							regArgR[idx] = Sub(block, constantMaxColor, regRgbInR);
+							regArgG[idx] = Sub(block, constantMaxColor, regRgbInG);
+							regArgB[idx] = Sub(block, constantMaxColor, regRgbInB);
+							regArg565[idx] = Color565FromRGB(block, regArgR[idx], regArgG[idx], regArgB[idx]);
+							regArgA[idx] = regAlphaOut;
+						}
+						break;
+
+					case RasterizerState::TextureCombineOpSrcAlpha:
+						//arg[idx] = Color(rgbIn.a, rgbIn.a, rgbIn.a, alphaOut);
+						{
+							regArgR[idx] = regArgG[idx] = regArgB[idx] = regRgbInA;
+							regArg565[idx] = Color565FromRGB(block, regArgR[idx], regArgG[idx], regArgB[idx]);
+							regArgA[idx] = regAlphaOut;
+						}
+
+						break;
+
+					case RasterizerState::TextureCombineOpOneMinusSrcAlpha:
+						//arg[idx] = Color(0xFF - rgbIn.a, 0xFF - rgbIn.a, 0xFF - rgbIn.a, alphaOut);
+						{
+							DECL_CONST_REG	(constantMaxColor, 0xff);
+
+							regArgR[idx] = regArgG[idx] = regArgB[idx] = Sub(block, constantMaxColor, regRgbInA);
+							regArg565[idx] = Color565FromRGB(block, regArgR[idx], regArgG[idx], regArgB[idx]);
+							regArgA[idx] = regAlphaOut;
+						}
+
+						break;
+					}
+				}
+
+				//U8 combineAlpha;
+				cg_virtual_reg_t * regCombineAlpha;
+
+				switch (m_State->m_Texture[unit].CombineFuncAlpha) {
+				case RasterizerState::TextureModeCombineReplace:
+					{
+						//combineAlpha = MulU8(arg[0].a, 0xFF, scaleAlpha);
+						
+					}
+
 					break;
 
-				case RasterizerState::TextureFormatLuminance:
-				case RasterizerState::TextureFormatRGB565:
-				case RasterizerState::TextureFormatRGB8:
-					switch (m_State->m_Texture[unit].Mode) {
-						case RasterizerState::TextureModeDecal:
-						case RasterizerState::TextureModeReplace:
-							{
-							//color = Color(texColor.r, texColor.g, texColor.b, color.a);
-							regColorR = regTexColorR;
-							regColorG = regTexColorG;
-							regColorB = regTexColorB;
-							regColor565 = regTexColor565;
-							}
-
-							break;
-
-						case RasterizerState::TextureModeModulate:
-							{
-							//color = Color(MulU8(color.r, texColor.r), 
-							//	MulU8(color.g, texColor.g), MulU8(color.b, texColor.b), color.a);
-							regColorR = Mul255(block, regColorR, regTexColorR);
-							regColorG = Mul255(block, regColorG, regTexColorG);
-							regColorB = Mul255(block, regColorB, regTexColorB);
-							regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
-							}
-
-							break;
-
-						case RasterizerState::TextureModeBlend:
-							{
-							//color = 
-							//	Color(
-							//		MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
-							//		MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
-							//		MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
-							//		color.a);
-
-							regColorR   = Blend255(block, m_State->m_Texture[unit].EnvColor.r, regColorR, regTexColorR);
-							regColorG   = Blend255(block, m_State->m_Texture[unit].EnvColor.g, regColorG, regTexColorG);
-							regColorB   = Blend255(block, m_State->m_Texture[unit].EnvColor.b, regColorB, regTexColorB);
-							regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
-							}
-
-							break;
-
-						case RasterizerState::TextureModeAdd:
-							{
-							//color =
-							//	Color(
-							//		ClampU8(color.r + texColor.r),
-							//		ClampU8(color.g + texColor.g),
-							//		ClampU8(color.b + texColor.b),
-							//		color.a);
-
-							regColorR	= AddSaturate255(block, regColorR, regTexColorR);
-							regColorG	= AddSaturate255(block, regColorG, regTexColorG);
-							regColorB	= AddSaturate255(block, regColorB, regTexColorB);
-							regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
-							}
-
-							break;
-					}
+				case RasterizerState::TextureModeCombineModulate:
+					//combineAlpha = MulU8(arg[0].a, arg[1].a, scaleAlpha);
 					break;
 
-				case RasterizerState::TextureFormatLuminanceAlpha:
-				case RasterizerState::TextureFormatRGBA5551:
-				case RasterizerState::TextureFormatRGBA4444:
-				case RasterizerState::TextureFormatRGBA8:
-					switch (m_State->m_Texture[unit].Mode) {
-						case RasterizerState::TextureModeReplace:
-							{
-							//color = texColor;
-							regColorR = regTexColorR;
-							regColorG = regTexColorG;
-							regColorB = regTexColorB;
-							regColorA = regTexColorA;
-							regColor565 = regTexColor565;
-							}
-
-							break;
-
-						case RasterizerState::TextureModeModulate:
-							{
-							//color = color * texColor;
-							regColorR = Mul255(block, regColorR, regTexColorR);
-							regColorG = Mul255(block, regColorG, regTexColorG);
-							regColorB = Mul255(block, regColorB, regTexColorB);
-							regColorA = Mul255(block, regColorA, regTexColorA);
-							regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
-							}
-
-							break;
-
-						case RasterizerState::TextureModeDecal:
-							{
-							//color = 
-							//	Color(
-							//		MulU8(color.r, 0xff - texColor.a) + MulU8(texColor.r, texColor.a),
-							//		MulU8(color.g, 0xff - texColor.a) + MulU8(texColor.g, texColor.a),
-							//		MulU8(color.b, 0xff - texColor.a) + MulU8(texColor.b, texColor.a),
-							//		color.a);
-
-							regColorR   = Blend255(block, regColorR, regTexColorR, regTexColorA);
-							regColorG   = Blend255(block, regColorG, regTexColorG, regTexColorA);
-							regColorB   = Blend255(block, regColorB, regTexColorB, regTexColorA);
-							regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
-							}
-
-							break;
-
-						case RasterizerState::TextureModeBlend:
-							{
-							//color = 
-							//	Color(
-							//		MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
-							//		MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
-							//		MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
-							//		MulU8(color.a, texColor.a));
-							regColorR   = Blend255(block, m_State->m_Texture[unit].EnvColor.r, regColorR, regTexColorR);
-							regColorG   = Blend255(block, m_State->m_Texture[unit].EnvColor.g, regColorG, regTexColorG);
-							regColorB   = Blend255(block, m_State->m_Texture[unit].EnvColor.b, regColorB, regTexColorB);
-							regColorA	= Mul255(block, regColorA, regTexColorA);
-							regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
-							}
-
-							break;
-
-						case RasterizerState::TextureModeAdd:
-							{
-							//color =
-							//	Color(
-							//		ClampU8(color.r + texColor.r),
-							//		ClampU8(color.g + texColor.g),
-							//		ClampU8(color.b + texColor.b),
-							//		MulU8(color.a, texColor.a));
-							regColorR	= AddSaturate255(block, regColorR, regTexColorR);
-							regColorG	= AddSaturate255(block, regColorG, regTexColorG);
-							regColorB	= AddSaturate255(block, regColorB, regTexColorB);
-							regColorA	= Mul255(block, regColorA, regTexColorA);
-							regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
-							}
-
-							break;
-					}
+				case RasterizerState::TextureModeCombineAdd:
+					//combineAlpha = AddU8(arg[0].a, arg[1].a, scaleAlpha);
 					break;
+
+				case RasterizerState::TextureModeCombineAddSigned:
+					//combineAlpha = AddSignedU8(arg[0].a, arg[1].a, scaleAlpha);
+					break;
+
+				case RasterizerState::TextureModeCombineInterpolate:
+					//combineAlpha = InterpolateU8(arg[0].a, arg[1].a, arg[2].a, scaleAlpha);
+					break;
+
+				case RasterizerState::TextureModeCombineSubtract:
+					//combineAlpha = SubU8(arg[0].a, arg[1].a, scaleAlpha);
+					break;
+				}
+
+				switch (m_State->m_Texture[unit].CombineFuncRGB) {
+				case RasterizerState::TextureModeCombineReplace:
+					//color = Color(
+					//		MulU8(arg[0].r, 0xFF, scaleRGB), 
+					//		MulU8(arg[0].g, 0xFF, scaleRGB), 
+					//		MulU8(arg[0].b, 0xFF, scaleRGB), 
+					//		combineAlpha); 
+					break;
+
+				case RasterizerState::TextureModeCombineModulate:
+					//color = 
+					//	Color(
+					//		MulU8(arg[0].r, arg[1].r, scaleRGB), 
+					//		MulU8(arg[0].g, arg[1].g, scaleRGB), 
+					//		MulU8(arg[0].b, arg[1].b, scaleRGB), 
+					//		combineAlpha); 
+					break;
+
+				case RasterizerState::TextureModeCombineAdd:
+					//color = 
+					//	Color(
+					//		AddU8(arg[0].r, arg[1].r, scaleRGB), 
+					//		AddU8(arg[0].g, arg[1].g, scaleRGB), 
+					//		AddU8(arg[0].b, arg[1].b, scaleRGB), 
+					//		combineAlpha); 
+					break;
+
+				case RasterizerState::TextureModeCombineAddSigned:
+					//color = 
+					//	Color(
+					//		AddSignedU8(arg[0].r, arg[1].r, scaleRGB), 
+					//		AddSignedU8(arg[0].g, arg[1].g, scaleRGB), 
+					//		AddSignedU8(arg[0].b, arg[1].b, scaleRGB), 
+					//		combineAlpha); 
+					break;
+
+				case RasterizerState::TextureModeCombineInterpolate:
+					//color =
+					//	Color(
+					//		InterpolateU8(arg[0].r, arg[1].r, arg[2].r, scaleRGB),
+					//		InterpolateU8(arg[0].g, arg[1].g, arg[2].g, scaleRGB),
+					//		InterpolateU8(arg[0].b, arg[1].b, arg[2].b, scaleRGB),
+					//		combineAlpha); 
+					break;
+
+				case RasterizerState::TextureModeCombineSubtract:
+					//color = 
+					//	Color(
+					//		SubU8(arg[0].r, arg[1].r, scaleRGB), 
+					//		SubU8(arg[0].g, arg[1].g, scaleRGB), 
+					//		SubU8(arg[0].b, arg[1].b, scaleRGB), 
+					//		combineAlpha); 
+					break;
+
+				case RasterizerState::TextureModeCombineDot3RGB:
+					//{
+					//	U8 dotRGB = Dot3U8(arg[0], arg[1], scaleRGB);
+					//	color = Color(dotRGB, dotRGB, dotRGB, combineAlpha);
+					//}
+
+					break;
+
+				case RasterizerState::TextureModeCombineDot3RGBA:
+					//{
+					//	U8 dotRGB = Dot3U8(arg[0], arg[1], scaleRGB);
+					//	U8 dotAlpha = Dot3U8(arg[0], arg[1], scaleAlpha);
+					//	color = Color(dotRGB, dotRGB, dotRGB, dotAlpha);
+					//}
+
+					break;
+				}
+
+				EGL_Fixed scaleAlpha = m_State->m_Texture[unit].ScaleAlpha;
+
+				if (scaleAlpha != EGL_ONE) {
+					DECL_REG		(regResultA);
+					DECL_CONST_REG	(regScaleAlpha, scaleAlpha);
+
+					FMUL			(regResultA, regColorA, regScaleAlpha);
+
+					regColorA = regResultA;
+				}
+
+				// Clamp to 0 .. 0xff
+				{
+					DECL_REG		(regClampLow);
+					DECL_REG		(regClampHigh);
+					DECL_CONST_REG	(constantMaxColor, 0xff);
+					DECL_CONST_REG	(constant0, 0);
+
+					MAX		(regClampLow, regColorA, constant0);
+					MIN		(regClampHigh, regClampLow, constantMaxColor);
+
+					regColorA = regClampHigh;
+				}
+
+				EGL_Fixed scaleRGB = m_State->m_Texture[unit].ScaleRGB;
+	
+				if (scaleRGB != EGL_ONE) {
+					DECL_REG		(regResultR);
+					DECL_REG		(regResultG);
+					DECL_REG		(regResultB);
+					DECL_CONST_REG	(regScaleRGB, scaleRGB);
+
+					FMUL			(regResultR, regColorR, regScaleRGB);
+					FMUL			(regResultG, regColorG, regScaleRGB);
+					FMUL			(regResultB, regColorB, regScaleRGB);
+
+					regColorR = regResultR;
+					regColorG = regResultG;
+					regColorB = regResultB;
+					regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
+				}
+
+				// Clamp to 0 .. 0xff
+
+				{
+					DECL_REG		(regClampLowR);
+					DECL_REG		(regClampHighR);
+					DECL_REG		(regClampLowG);
+					DECL_REG		(regClampHighG);
+					DECL_REG		(regClampLowB);
+					DECL_REG		(regClampHighB);
+					DECL_CONST_REG	(constantMaxColor, 0xff);
+					DECL_CONST_REG	(constant0, 0);
+
+					MAX		(regClampLowR, regColorR, constant0);
+					MIN		(regClampHighR, regClampLowR, constantMaxColor);
+					MAX		(regClampLowG, regColorG, constant0);
+					MIN		(regClampHighG, regClampLowG, constantMaxColor);
+					MAX		(regClampLowB, regColorB, constant0);
+					MIN		(regClampHighB, regClampLowB, constantMaxColor);
+
+					regColorR = regClampHighR;
+					regColorG = regClampHighG;
+					regColorB = regClampHighB;
+					regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
+				}
+
+			} else {
+				switch (m_State->m_Texture[unit].InternalFormat) {
+					default:
+					case RasterizerState::TextureFormatAlpha:
+						switch (m_State->m_Texture[unit].Mode) {
+							case RasterizerState::TextureModeReplace:
+								{
+								//color = Color(color.r, color.g, color.b, texColor.a);
+								regColorA = regTexColorA;
+								}
+
+								break;
+
+							case RasterizerState::TextureModeModulate:
+							case RasterizerState::TextureModeBlend:
+							case RasterizerState::TextureModeAdd:
+								{
+								//color = Color(color.r, color.g, color.b, MulU8(color.a, texColor.a));
+								regColorA = Mul255(block, regColorA, regTexColorA);
+								}
+
+								break;
+						}
+						break;
+
+					case RasterizerState::TextureFormatLuminance:
+					case RasterizerState::TextureFormatRGB565:
+					case RasterizerState::TextureFormatRGB8:
+						switch (m_State->m_Texture[unit].Mode) {
+							case RasterizerState::TextureModeDecal:
+							case RasterizerState::TextureModeReplace:
+								{
+								//color = Color(texColor.r, texColor.g, texColor.b, color.a);
+								regColorR = regTexColorR;
+								regColorG = regTexColorG;
+								regColorB = regTexColorB;
+								regColor565 = regTexColor565;
+								}
+
+								break;
+
+							case RasterizerState::TextureModeModulate:
+								{
+								//color = Color(MulU8(color.r, texColor.r), 
+								//	MulU8(color.g, texColor.g), MulU8(color.b, texColor.b), color.a);
+								regColorR = Mul255(block, regColorR, regTexColorR);
+								regColorG = Mul255(block, regColorG, regTexColorG);
+								regColorB = Mul255(block, regColorB, regTexColorB);
+								regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
+								}
+
+								break;
+
+							case RasterizerState::TextureModeBlend:
+								{
+								//color = 
+								//	Color(
+								//		MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
+								//		MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
+								//		MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
+								//		color.a);
+
+								regColorR   = Blend255(block, m_State->m_Texture[unit].EnvColor.r, regColorR, regTexColorR);
+								regColorG   = Blend255(block, m_State->m_Texture[unit].EnvColor.g, regColorG, regTexColorG);
+								regColorB   = Blend255(block, m_State->m_Texture[unit].EnvColor.b, regColorB, regTexColorB);
+								regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
+								}
+
+								break;
+
+							case RasterizerState::TextureModeAdd:
+								{
+								//color =
+								//	Color(
+								//		ClampU8(color.r + texColor.r),
+								//		ClampU8(color.g + texColor.g),
+								//		ClampU8(color.b + texColor.b),
+								//		color.a);
+
+								regColorR	= AddSaturate255(block, regColorR, regTexColorR);
+								regColorG	= AddSaturate255(block, regColorG, regTexColorG);
+								regColorB	= AddSaturate255(block, regColorB, regTexColorB);
+								regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
+								}
+
+								break;
+						}
+						break;
+
+					case RasterizerState::TextureFormatLuminanceAlpha:
+					case RasterizerState::TextureFormatRGBA5551:
+					case RasterizerState::TextureFormatRGBA4444:
+					case RasterizerState::TextureFormatRGBA8:
+						switch (m_State->m_Texture[unit].Mode) {
+							case RasterizerState::TextureModeReplace:
+								{
+								//color = texColor;
+								regColorR = regTexColorR;
+								regColorG = regTexColorG;
+								regColorB = regTexColorB;
+								regColorA = regTexColorA;
+								regColor565 = regTexColor565;
+								}
+
+								break;
+
+							case RasterizerState::TextureModeModulate:
+								{
+								//color = color * texColor;
+								regColorR = Mul255(block, regColorR, regTexColorR);
+								regColorG = Mul255(block, regColorG, regTexColorG);
+								regColorB = Mul255(block, regColorB, regTexColorB);
+								regColorA = Mul255(block, regColorA, regTexColorA);
+								regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
+								}
+
+								break;
+
+							case RasterizerState::TextureModeDecal:
+								{
+								//color = 
+								//	Color(
+								//		MulU8(color.r, 0xff - texColor.a) + MulU8(texColor.r, texColor.a),
+								//		MulU8(color.g, 0xff - texColor.a) + MulU8(texColor.g, texColor.a),
+								//		MulU8(color.b, 0xff - texColor.a) + MulU8(texColor.b, texColor.a),
+								//		color.a);
+
+								regColorR   = Blend255(block, regColorR, regTexColorR, regTexColorA);
+								regColorG   = Blend255(block, regColorG, regTexColorG, regTexColorA);
+								regColorB   = Blend255(block, regColorB, regTexColorB, regTexColorA);
+								regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
+								}
+
+								break;
+
+							case RasterizerState::TextureModeBlend:
+								{
+								//color = 
+								//	Color(
+								//		MulU8(color.r, 0xff - texColor.r) + MulU8(m_State->m_TexEnvColor.r, texColor.r),
+								//		MulU8(color.g, 0xff - texColor.g) + MulU8(m_State->m_TexEnvColor.g, texColor.g),
+								//		MulU8(color.b, 0xff - texColor.b) + MulU8(m_State->m_TexEnvColor.b, texColor.b),
+								//		MulU8(color.a, texColor.a));
+								regColorR   = Blend255(block, m_State->m_Texture[unit].EnvColor.r, regColorR, regTexColorR);
+								regColorG   = Blend255(block, m_State->m_Texture[unit].EnvColor.g, regColorG, regTexColorG);
+								regColorB   = Blend255(block, m_State->m_Texture[unit].EnvColor.b, regColorB, regTexColorB);
+								regColorA	= Mul255(block, regColorA, regTexColorA);
+								regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
+								}
+
+								break;
+
+							case RasterizerState::TextureModeAdd:
+								{
+								//color =
+								//	Color(
+								//		ClampU8(color.r + texColor.r),
+								//		ClampU8(color.g + texColor.g),
+								//		ClampU8(color.b + texColor.b),
+								//		MulU8(color.a, texColor.a));
+								regColorR	= AddSaturate255(block, regColorR, regTexColorR);
+								regColorG	= AddSaturate255(block, regColorG, regTexColorG);
+								regColorB	= AddSaturate255(block, regColorB, regTexColorB);
+								regColorA	= Mul255(block, regColorA, regTexColorA);
+								regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
+								}
+
+								break;
+						}
+						break;
+				}
 			}
 		}
 	}
