@@ -56,7 +56,7 @@ namespace {
 
 	inline U8 MulU8(U8 a, U8 b) {
 		U16 prod = a * b;
-		return ((prod + (prod >> 6)) >> 7) + 1 >> 1;
+		return (((prod + (prod >> 6)) >> 7) + 1) >> 1;
 	}
 
 	inline U8 ClampU8(U16 value) {
@@ -1380,8 +1380,9 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 
 			EGL_Fixed z = EGL_Inverse(OneOverZ);
 			EGL_Fixed tu[EGL_NUM_TEXTURE_UNITS], tv[EGL_NUM_TEXTURE_UNITS];
+			size_t unit;
 
-			for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+			for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 				tu[unit] = EGL_Mul(tuOverZ[unit], z);
 				tv[unit] = EGL_Mul(tvOverZ[unit], z);
 			}
@@ -1504,8 +1505,9 @@ void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
 
 			EGL_Fixed z = EGL_Inverse(OneOverZ);
 			EGL_Fixed tu[EGL_NUM_TEXTURE_UNITS], tv[EGL_NUM_TEXTURE_UNITS];
+			size_t unit;
 
-			for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+			for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 				tu[unit] = EGL_Mul(tuOverZ[unit], z);
 				tv[unit] = EGL_Mul(tvOverZ[unit], z);
 			}
