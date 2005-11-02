@@ -915,29 +915,34 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 				case RasterizerState::TextureModeCombineReplace:
 					{
 						//combineAlpha = MulU8(arg[0].a, 0xFF, scaleAlpha);
-						
+						regCombineAlpha = regArgA[0];
 					}
 
 					break;
 
 				case RasterizerState::TextureModeCombineModulate:
 					//combineAlpha = MulU8(arg[0].a, arg[1].a, scaleAlpha);
+					regCombineAlpha = Mul255(block, regArgA[0], regArgA[1]);
 					break;
 
 				case RasterizerState::TextureModeCombineAdd:
 					//combineAlpha = AddU8(arg[0].a, arg[1].a, scaleAlpha);
+					regCombineAlpha = Add(block, regArgA[0], regArgA[1]);
 					break;
 
 				case RasterizerState::TextureModeCombineAddSigned:
 					//combineAlpha = AddSignedU8(arg[0].a, arg[1].a, scaleAlpha);
+					regCombineAlpha = AddSigned(block, regArgA[0], regArgA[1]);
 					break;
 
 				case RasterizerState::TextureModeCombineInterpolate:
 					//combineAlpha = InterpolateU8(arg[0].a, arg[1].a, arg[2].a, scaleAlpha);
+					regCombineAlpha = Blend255(block, regArgA[0], regArgA[1], regArgA[2]);
 					break;
 
 				case RasterizerState::TextureModeCombineSubtract:
 					//combineAlpha = SubU8(arg[0].a, arg[1].a, scaleAlpha);
+					regCombineAlpha = Sub(block, regArgA[0], regArgA[1]);
 					break;
 				}
 
@@ -948,6 +953,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					//		MulU8(arg[0].g, 0xFF, scaleRGB), 
 					//		MulU8(arg[0].b, 0xFF, scaleRGB), 
 					//		combineAlpha); 
+					regColorR = regArgR[0];
+					regColorG = regArgG[0];
+					regColorB = regArgB[0];
+					regColorA = regCombineAlpha;
 					break;
 
 				case RasterizerState::TextureModeCombineModulate:
@@ -957,6 +966,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					//		MulU8(arg[0].g, arg[1].g, scaleRGB), 
 					//		MulU8(arg[0].b, arg[1].b, scaleRGB), 
 					//		combineAlpha); 
+					regColorR = Mul255(block, regArgR[0], regArgR[1]);
+					regColorG = Mul255(block, regArgG[0], regArgG[1]);
+					regColorB = Mul255(block, regArgB[0], regArgB[1]);
+					regColorA = regCombineAlpha;
 					break;
 
 				case RasterizerState::TextureModeCombineAdd:
@@ -966,6 +979,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					//		AddU8(arg[0].g, arg[1].g, scaleRGB), 
 					//		AddU8(arg[0].b, arg[1].b, scaleRGB), 
 					//		combineAlpha); 
+					regColorR = Add(block, regArgR[0], regArgR[1]);
+					regColorG = Add(block, regArgG[0], regArgG[1]);
+					regColorB = Add(block, regArgB[0], regArgB[1]);
+					regColorA = regCombineAlpha;
 					break;
 
 				case RasterizerState::TextureModeCombineAddSigned:
@@ -975,6 +992,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					//		AddSignedU8(arg[0].g, arg[1].g, scaleRGB), 
 					//		AddSignedU8(arg[0].b, arg[1].b, scaleRGB), 
 					//		combineAlpha); 
+					regColorR = AddSigned(block, regArgR[0], regArgR[1]);
+					regColorG = AddSigned(block, regArgG[0], regArgG[1]);
+					regColorB = AddSigned(block, regArgB[0], regArgB[1]);
+					regColorA = regCombineAlpha;
 					break;
 
 				case RasterizerState::TextureModeCombineInterpolate:
@@ -984,6 +1005,10 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					//		InterpolateU8(arg[0].g, arg[1].g, arg[2].g, scaleRGB),
 					//		InterpolateU8(arg[0].b, arg[1].b, arg[2].b, scaleRGB),
 					//		combineAlpha); 
+					regColorR = Blend255(block, regArgR[0], regArgR[1], regArgR[2]);
+					regColorG = Blend255(block, regArgG[0], regArgG[1], regArgG[2]);
+					regColorB = Blend255(block, regArgB[0], regArgB[1], regArgB[2]);
+					regColorA = regCombineAlpha;
 					break;
 
 				case RasterizerState::TextureModeCombineSubtract:
@@ -993,22 +1018,33 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					//		SubU8(arg[0].g, arg[1].g, scaleRGB), 
 					//		SubU8(arg[0].b, arg[1].b, scaleRGB), 
 					//		combineAlpha); 
+					regColorR = Sub(block, regArgR[0], regArgR[1]);
+					regColorG = Sub(block, regArgG[0], regArgG[1]);
+					regColorB = Sub(block, regArgB[0], regArgB[1]);
+					regColorA = regCombineAlpha;
 					break;
 
 				case RasterizerState::TextureModeCombineDot3RGB:
+				case RasterizerState::TextureModeCombineDot3RGBA:
+
 					//{
 					//	U8 dotRGB = Dot3U8(arg[0], arg[1], scaleRGB);
 					//	color = Color(dotRGB, dotRGB, dotRGB, combineAlpha);
 					//}
-
-					break;
-
-				case RasterizerState::TextureModeCombineDot3RGBA:
 					//{
 					//	U8 dotRGB = Dot3U8(arg[0], arg[1], scaleRGB);
 					//	U8 dotAlpha = Dot3U8(arg[0], arg[1], scaleAlpha);
 					//	color = Color(dotRGB, dotRGB, dotRGB, dotAlpha);
 					//}
+
+					/* TO DO: Compute regColorR */
+
+					regColorG = regColorB = regColorR;
+
+					if (m_State->m_Texture[unit].CombineFuncRGB == RasterizerState::TextureModeCombineDot3RGBA)
+						regColorA = regColorR;
+					else 
+						regColorA = regCombineAlpha;
 
 					break;
 				}
