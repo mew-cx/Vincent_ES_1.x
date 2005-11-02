@@ -20,7 +20,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\src;..\..\src\codegen;..\..\src\win;..\..\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OGLES_EXPORTS"
+				PreprocessorDefinitions="OGLES_EXPORTS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -35,10 +35,11 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/libGLES_CM.dll"
 				LinkIncremental="2"
+				IgnoreAllDefaultLibraries="FALSE"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/ogles.pdb"
 				SubSystem="2"
-				ImportLibrary="$(OutDir)/ogles.lib"
+				ImportLibrary="$(OutDir)/libGLES_CM.lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -70,7 +71,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\src;..\..\src\codegen;..\..\src\win;..\..\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OGLES_EXPORTS"
+				PreprocessorDefinitions="OGLES_EXPORTS"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="3"
 				PrecompiledHeaderThrough="stdafx.h"
@@ -83,11 +84,12 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/libGLES_CM.dll"
 				LinkIncremental="1"
+				IgnoreAllDefaultLibraries="FALSE"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				ImportLibrary="$(OutDir)/ogles.lib"
+				ImportLibrary="$(OutDir)/libGLES_CM.lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
