@@ -242,10 +242,27 @@ cg_virtual_reg_t * CodeGenerator :: ClampTo255(cg_block_t * block, cg_virtual_re
 	return regResult;
 }
 
+cg_virtual_reg_t * CodeGenerator :: AddSigned(cg_block_t * block, cg_virtual_reg_t * first, cg_virtual_reg_t * second) {
+	cg_proc_t * procedure = block->proc;
+
+	DECL_REG		(regResult);
+	DECL_REG		(regSum);
+	DECL_REG		(regAdjusted);
+	DECL_CONST_REG	(constantHalf, 0x80);
+	DECL_CONST_REG	(constant0, 0);
+
+	ADD				(regSum, first, second);
+	SUB				(regAdjusted, regSum, constantHalf);
+	MAX				(regResult, regAdjusted, constant0);
+
+	return regResult;
+}
+
 cg_virtual_reg_t * CodeGenerator :: Add(cg_block_t * block, cg_virtual_reg_t * first, cg_virtual_reg_t * second) {
 	cg_proc_t * procedure = block->proc;
 
 	DECL_REG		(regResult);
+	DECL_REG		(regSum);
 
 	ADD				(regResult, first, second);
 
