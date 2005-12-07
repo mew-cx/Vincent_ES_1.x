@@ -444,3 +444,58 @@ cg_virtual_reg_t * CodeGenerator :: Blend255(cg_block_t * block, U8 constant, cg
 
 	return Blend255(block, regConst, second, alpha);
 }
+
+cg_virtual_reg_t * CodeGenerator :: SignedVal(cg_block_t * block, cg_virtual_reg_t * value) {
+	cg_proc_t * procedure = block->proc;
+
+	DECL_REG		(regShifted);
+	DECL_CONST_REG	(constantShift, 7);
+	DECL_REG		(regExpanded);
+	DECL_CONST_REG	(c128, 128);
+	DECL_REG		(regResult);
+
+	// expand 0..255 -> 0..256
+	LSR				(regShifted, value, constantShift);
+	ADD				(regExpanded, value, regShifted);
+	SUB				(regResult, regExpanded, c128);
+
+	return regResult;
+}
+
+cg_virtual_reg_t * CodeGenerator :: Dot3(cg_block_t * block, 
+										 cg_virtual_reg_t * r[], cg_virtual_reg_t * g[], cg_virtual_reg_t * b[]) {
+	cg_proc_t * procedure = block->proc;
+
+	DECL_REG		(regProdR);
+	DECL_REG		(regProdG);
+	DECL_REG		(regProdB);
+	DECL_REG		(regSumRG);
+	DECL_REG		(regSumRGB);
+
+	MUL				(regProdR, SignedVal(block, r[0]), SignedVal(block, r[1]));
+	MUL				(regProdG, SignedVal(block, g[0]), SignedVal(block, g[1]));
+	ADD				(regSumRG, regProdR, regProdG);
+	MUL				(regProdB, SignedVal(block, b[0]), SignedVal(block, b[1]));
+	ADD				(regSumRGB, regSumRG, regProdB);
+
+	DECL_CONST_REG	(constant6, 6);
+	DECL_CONST_REG	(constant7, 7);
+	DECL_REG		(regShifted6);
+	DECL_REG		(regShifted13);
+	DECL_REG		(regAdjusted);
+
+	ASR				(regShifted6, regSumRGB, constant6);
+	ASR				(regShifted13, regShifted6, constant7);
+	SUB				(regAdjusted, regShifted6, regShifted13);
+
+	DECL_REG		(regClamped0);
+	DECL_REG		(regClamped255);
+
+	DECL_CONST_REG	(constant0, 0);
+	DECL_CONST_REG	(constant255, 255);
+
+	MAX				(regClamped0, regAdjusted, constant0);
+	MIN				(regClamped255, regClamped0, constant255);
+
+	return regClamped255;
+}
