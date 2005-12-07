@@ -1037,8 +1037,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					//	color = Color(dotRGB, dotRGB, dotRGB, dotAlpha);
 					//}
 
-					/* TO DO: Compute regColorR */
-
+					regColorR = Dot3(block, regArgR, regArgG, regArgB); 
 					regColorG = regColorB = regColorR;
 
 					if (m_State->m_Texture[unit].CombineFuncRGB == RasterizerState::TextureModeCombineDot3RGBA)
