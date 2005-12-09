@@ -92,7 +92,7 @@ void CodeGenerator :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentB
 	switch (textureState->InternalFormat) {
 		case RasterizerState::TextureFormatAlpha:				// 8
 			{
-			//texColor = Color(0xff, 0xff, 0xff, reinterpret_cast<const U8 *>(data)[texOffset]);
+			//texColor = Color(0, 0, 0, reinterpret_cast<const U8 *>(data)[texOffset]);
 			regTexColorR = regTexColorG = regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 			regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 			regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
@@ -102,9 +102,9 @@ void CodeGenerator :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentB
 
 			ADD		(regTexAddr, regTexOffset, regTextureData);
 			LDB		(regTexColorA, regTexAddr);
-			LDI		(regTexColorR, 0xff);
+			LDI		(regTexColorR, 0);
 
-			LDI		(regTexColor565, 0xffff);
+			LDI		(regTexColor565, 0);
 
 			}
 			break;
@@ -937,7 +937,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 
 				case RasterizerState::TextureModeCombineInterpolate:
 					//combineAlpha = InterpolateU8(arg[0].a, arg[1].a, arg[2].a, scaleAlpha);
-					regCombineAlpha = Blend255(block, regArgA[0], regArgA[1], regArgA[2]);
+					//regCombineAlpha = Blend255(block, regArgA[0], regArgA[1], regArgA[2]);
+					regCombineAlpha = Blend255(block, regArgA[1], regArgA[0], regArgA[2]);
 					break;
 
 				case RasterizerState::TextureModeCombineSubtract:
@@ -1005,9 +1006,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 					//		InterpolateU8(arg[0].g, arg[1].g, arg[2].g, scaleRGB),
 					//		InterpolateU8(arg[0].b, arg[1].b, arg[2].b, scaleRGB),
 					//		combineAlpha); 
-					regColorR = Blend255(block, regArgR[0], regArgR[1], regArgR[2]);
-					regColorG = Blend255(block, regArgG[0], regArgG[1], regArgG[2]);
-					regColorB = Blend255(block, regArgB[0], regArgB[1], regArgB[2]);
+					//regColorR = Blend255(block, regArgR[0], regArgR[1], regArgR[2]);
+					//regColorG = Blend255(block, regArgG[0], regArgG[1], regArgG[2]);
+					//regColorB = Blend255(block, regArgB[0], regArgB[1], regArgB[2]);
+					regColorR = Blend255(block, regArgR[1], regArgR[0], regArgR[2]);
+					regColorG = Blend255(block, regArgG[1], regArgG[0], regArgG[2]);
+					regColorB = Blend255(block, regArgB[1], regArgB[0], regArgB[2]);
 					regColorA = regCombineAlpha;
 					break;
 
