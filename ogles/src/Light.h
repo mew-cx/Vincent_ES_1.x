@@ -103,11 +103,11 @@ namespace EGL {
 		// create version for: light at infinity or light at location
 		// spot light vs. point light
 		// color material vs. material color
-		void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
+		void AccumulateLight2(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
 			const Material& currMaterial, FractionalColor& result, 
 			FractionalColor& result2);
 
-		void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
+		void AccumulateLight2(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
 			const Material& currMaterial, const FractionalColor& currentColor, FractionalColor& result, 
 			FractionalColor& result2);
 
