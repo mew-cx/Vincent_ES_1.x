@@ -239,7 +239,7 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 // Two-sided lightning calculation
 // --------------------------------------------------------------------------
 
-void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
+void Light :: AccumulateLight2(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
 							  const Material& currMaterial,
 							  FractionalColor& result, 
 							  FractionalColor& result2) {
@@ -302,7 +302,7 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 }
 
 
-void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
+void Light :: AccumulateLight2(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
 							  const Material& currMaterial,
 							  const FractionalColor& currentColor,
 							  FractionalColor& result, 

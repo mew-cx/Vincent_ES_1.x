@@ -877,7 +877,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos) {
 
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, eyeNormal, 
+			m_Lights[index].AccumulateLight2(rasterPos->m_EyeCoords, eyeNormal, 
 				m_FrontMaterial, color, backColor);
 		}
 	}
@@ -939,7 +939,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, eyeNormal, 
+			m_Lights[index].AccumulateLight2(rasterPos->m_EyeCoords, eyeNormal, 
 				m_FrontMaterial, m_CurrentRGBA, color, backColor);
 		}
 	}
