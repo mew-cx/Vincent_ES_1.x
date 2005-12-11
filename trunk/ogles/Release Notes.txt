@@ -13,6 +13,7 @@ Purpose of this release is preparation of the submission of the conformance test
 This version addresses the following issues:
 
 1008789 - Enhanced texture processing according to OpenGL 1.5 spec.
+1284483 - Buffer Objects test failed
 1284484 - Matrix Query test failed
 1284485 - Must Pass test failed
 
