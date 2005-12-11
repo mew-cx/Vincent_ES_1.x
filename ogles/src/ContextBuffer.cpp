@@ -175,7 +175,7 @@ void Context :: BufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, c
 
 	Buffer * buffer = m_Buffers.GetObject(*currentBuffer);
 
-	if (size < 0 || offset < 0 || static_cast<size_t>(size + offset) >= buffer->GetSize()) {
+	if (size < 0 || offset < 0 || static_cast<size_t>(size + offset) > buffer->GetSize()) {
 		RecordError(GL_INVALID_VALUE);
 		return;
 	}
