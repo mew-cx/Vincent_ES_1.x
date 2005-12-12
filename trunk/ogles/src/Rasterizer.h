@@ -198,7 +198,7 @@ namespace EGL {
 			const RasterPos& c);
 
 		void RasterPoint(const RasterPos& point, EGL_Fixed size);
-		void RasterLine(const RasterPos& from, const RasterPos& to);
+		void RasterLine(RasterPos& from, RasterPos& to);
 		void RasterTriangle(const RasterPos& a, const RasterPos& b,
 			const RasterPos& c);
 
@@ -345,7 +345,12 @@ namespace EGL {
 		m_PointFunction(&m_RasterInfo, &point, size);
 	}
 
-	inline void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
+	inline void Rasterizer :: RasterLine(RasterPos& p_from, RasterPos& p_to) {
+		p_from.m_WindowCoords.x = ((p_from.m_WindowCoords.x + 0x800) & ~0xfff);
+		p_from.m_WindowCoords.y = ((p_from.m_WindowCoords.y + 0x800) & ~0xfff);
+		p_to.m_WindowCoords.x = ((p_to.m_WindowCoords.x + 0x800) & ~0xfff);
+		p_to.m_WindowCoords.y = ((p_to.m_WindowCoords.y + 0x800) & ~0xfff);
+
 		m_LineFunction(&m_RasterInfo, &p_from, &p_to);
 	}
 

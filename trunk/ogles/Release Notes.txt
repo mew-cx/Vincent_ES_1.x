@@ -17,6 +17,7 @@ This version addresses the following issues:
 1284483 - Buffer Objects test failed
 1284484 - Matrix Query test failed
 1284485 - Must Pass test failed
+1378544 - Horizontal and Vertical Line test failed.
 
 
 Version 0.84
