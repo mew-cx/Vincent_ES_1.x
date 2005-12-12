@@ -981,10 +981,8 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 
 		pos.m_WindowCoords.x = 
 			EGL_Mul(EGL_Mul(x >> 8, invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
-
 		pos.m_WindowCoords.y = 
 			EGL_Mul(EGL_Mul(y >> 8, invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
-
 		pos.m_WindowCoords.depth = 
 			EGL_CLAMP(EGL_Mul(z >> 8, EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase, 0, 0xffff);
 
@@ -999,14 +997,15 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 
 		pos.m_WindowCoords.x = 
 			EGL_Mul(EGL_Mul(x, invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
-		pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x800) & ~0xfff);
 		pos.m_WindowCoords.y = 
 			EGL_Mul(EGL_Mul(y, invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
-		pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x800) & ~0xfff);
 		pos.m_WindowCoords.depth = 
 			EGL_CLAMP(EGL_Mul(EGL_Mul(z, invDenominator), m_DepthRangeFactor)  + m_DepthRangeBase, 0, 0xffff);
 
 	}
+
+	pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x80) & ~0xff);
+	pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x80) & ~0xff);
 }
 
 void Context :: GetClipPlanex(GLenum plane, GLfixed eqn[4]) {
