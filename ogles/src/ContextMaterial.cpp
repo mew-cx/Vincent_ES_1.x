@@ -112,7 +112,7 @@ void Context :: Materialxv(GLenum face, GLenum pname, const GLfixed *params) {
 }
 
 bool Context :: GetMaterialxv(GLenum face, GLenum pname, GLfixed *params) {
-	if (face != GL_FRONT_AND_BACK) {
+	if (face != GL_FRONT && face != GL_BACK) {
 		RecordError(GL_INVALID_ENUM);
 		return false;
 	}
