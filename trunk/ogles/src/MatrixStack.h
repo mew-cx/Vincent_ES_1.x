@@ -70,6 +70,10 @@ namespace EGL {
 			return m_StackSize;
 		}
 
+		inline I32 GetCurrentStackSize() const {
+			return m_StackPointer + 1;
+		}
+
 	private:
 
 		Matrix4x4	*m_Stack;

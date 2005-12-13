@@ -667,12 +667,24 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		params[0] = m_ModelViewMatrixStack.GetStackSize();
 		break;
 
+	case GL_MODELVIEW_STACK_DEPTH:
+		params[0] = m_ModelViewMatrixStack.GetCurrentStackSize();
+		break;
+
 	case GL_MAX_PROJECTION_STACK_DEPTH:
 		params[0] = m_ProjectionMatrixStack.GetStackSize();
 		break;
 
+	case GL_PROJECTION_STACK_DEPTH:
+		params[0] = m_ProjectionMatrixStack.GetCurrentStackSize();
+		break;
+
 	case GL_MAX_TEXTURE_STACK_DEPTH:
 		params[0] = m_TextureMatrixStack[m_ActiveTexture].GetStackSize();
+		break;
+
+	case GL_TEXTURE_STACK_DEPTH:
+		params[0] = m_TextureMatrixStack[m_ActiveTexture].GetCurrentStackSize();
 		break;
 
 	case GL_MAX_TEXTURE_SIZE:
@@ -941,8 +953,11 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_ACTIVE_TEXTURE:
+		params[0] = GL_TEXTURE0 + m_ActiveTexture;
+		break;
+
 	case GL_CLIENT_ACTIVE_TEXTURE:
-		params[0] = GL_TEXTURE0;
+		params[0] = GL_TEXTURE0 + m_ClientActiveTexture;
 		break;
 
 	case GL_TEXTURE_BINDING_2D:
@@ -964,10 +979,10 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 
 	case GL_CURRENT_COLOR:
 		{
-			params[0] = EGL_Mul(0x7fffffff, m_CurrentRGBA.r);
-			params[1] = EGL_Mul(0x7fffffff, m_CurrentRGBA.g);
-			params[2] = EGL_Mul(0x7fffffff, m_CurrentRGBA.b);
-			params[3] = EGL_Mul(0x7fffffff, m_CurrentRGBA.a);
+			params[0] = EGL_Mul(0x7fffffff, m_DefaultRGBA.r);
+			params[1] = EGL_Mul(0x7fffffff, m_DefaultRGBA.g);
+			params[2] = EGL_Mul(0x7fffffff, m_DefaultRGBA.b);
+			params[3] = EGL_Mul(0x7fffffff, m_DefaultRGBA.a);
 		}
 
 		break;
@@ -1057,7 +1072,7 @@ void Context :: GetBooleanv(GLenum pname, GLboolean *params) {
 bool Context :: GetFixedv(GLenum pname, GLfixed *params) {
 	switch (pname) {
 	case GL_CURRENT_COLOR:
-		CopyColor(m_CurrentRGBA, params);
+		CopyColor(m_DefaultRGBA, params);
 		break;
 
 	case GL_CURRENT_TEXTURE_COORDS:

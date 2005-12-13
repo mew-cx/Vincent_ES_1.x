@@ -44,16 +44,21 @@
 
 namespace EGL {
 
+	enum BufferUsage {
+		BufferUsageStaticDraw,
+		BufferUsageDynamicDraw
+	};
+
 	class Buffer { 
 
 	public:
-		Buffer(): m_Data(0), m_Size(0) { }
+		Buffer(): m_Data(0), m_Size(0), m_Usage(BufferUsageStaticDraw) { }
 
 		~Buffer() { 
 			Deallocate();
 		}
 
-		bool Allocate(size_t size) {
+		bool Allocate(size_t size, BufferUsage usage) {
 			Deallocate();
 
 			if (size) {
@@ -63,6 +68,7 @@ namespace EGL {
 					return false;
 				} else {
 					m_Size = size;
+					m_Usage = usage;
 					return true;
 				}
 			} else {
@@ -78,17 +84,22 @@ namespace EGL {
 			}
 		}
 
-		void *	GetData() {
+		void *	GetData() const {
 			return m_Data;
 		}
 
-		size_t GetSize() {
+		size_t GetSize() const {
 			return m_Size;
 		}
 
+		BufferUsage GetUsage() const {
+			return m_Usage;
+		}
+
 	private:
-		void *	m_Data;
-		size_t	m_Size;
+		void *		m_Data;
+		size_t		m_Size;
+		BufferUsage m_Usage;
 	};
 
 }

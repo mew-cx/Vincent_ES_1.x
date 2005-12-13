@@ -138,7 +138,18 @@ void Context :: BufferData(GLenum target, GLsizeiptr size, const GLvoid *data, G
 		return;
 	}
 
-	if (usage != GL_STATIC_DRAW && usage != GL_DYNAMIC_DRAW) {
+	BufferUsage bufferUsage;
+
+	switch (usage) {
+	case GL_STATIC_DRAW:
+		bufferUsage = BufferUsageStaticDraw;
+		break;
+
+	case GL_DYNAMIC_DRAW:
+		bufferUsage = BufferUsageDynamicDraw;
+		break;
+
+	default:
 		RecordError(GL_INVALID_VALUE);
 		return;
 	}
@@ -154,7 +165,7 @@ void Context :: BufferData(GLenum target, GLsizeiptr size, const GLvoid *data, G
 
 	Buffer * buffer = m_Buffers.GetObject(*currentBuffer);
 
-	if (buffer->Allocate(size)) {
+	if (buffer->Allocate(size, bufferUsage)) {
 		memcpy(buffer->GetData(), data, size);
 	} else {
 		RecordError(GL_OUT_OF_MEMORY);
@@ -193,10 +204,19 @@ void Context :: GetBufferParameteriv(GLenum target, GLenum pname, GLint *params)
 		return;
 	}
 
+	Buffer * buffer = m_Buffers.GetObject(*currentBuffer);
+
 	switch (pname) {
 	case GL_BUFFER_SIZE:
+		params[0] = buffer->GetSize();
+		break;
+
 	case GL_BUFFER_USAGE:
+		params[0] = (buffer->GetUsage() == BufferUsageStaticDraw) ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
+		break;
+
 	case GL_BUFFER_ACCESS:
+		params[0] = GL_WRITE_ONLY;
 		break;
 
 	default:
