@@ -1781,6 +1781,11 @@ void Context :: ActiveTexture(GLenum texture) {
 	}
 
 	m_ActiveTexture = texture - GL_TEXTURE0;
+
+	if (m_MatrixMode == GL_TEXTURE)
+	{
+		m_CurrentMatrixStack = &m_TextureMatrixStack[m_ActiveTexture];
+	}
 }
 
 
