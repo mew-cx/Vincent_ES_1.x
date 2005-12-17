@@ -1274,7 +1274,7 @@ void Rasterizer :: Finish() {
 
 #if !EGL_USE_JIT
 
-void Rasterizer :: RasterLine(const RasterPos& p_from, const RasterPos& p_to) {
+void Rasterizer :: RasterLine(RasterPos& p_from, RasterPos& p_to) {
 
 	if (EGL_Round(p_from.m_WindowCoords.x) == EGL_Round(p_to.m_WindowCoords.x) &&
 		EGL_Round(p_from.m_WindowCoords.y) == EGL_Round(p_to.m_WindowCoords.y)) {
