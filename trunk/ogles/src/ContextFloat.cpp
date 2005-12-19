@@ -526,15 +526,27 @@ void Context :: GetTexEnvfv(GLenum env, GLenum pname, GLfloat *params) {
 
 	GLfixed buffer[16];
 
-	if (env != GL_TEXTURE_2D) {
-		RecordError(GL_INVALID_ENUM);
-		return;
-	}
+	switch (env) {
+	case GL_TEXTURE_ENV:
+		switch (pname) {
+		case GL_TEXTURE_ENV_COLOR:
+			if (GetTexEnvxv(env, pname, buffer)) {
+				CopyFixed(buffer, params, 4);
+			}
 
-	switch (pname) {
-	case GL_TEXTURE_ENV_COLOR:
-		if (GetTexEnvxv(env, pname, buffer)) {
-			CopyFixed(buffer, params, 4);
+			break;
+
+		case GL_RGB_SCALE:
+		case GL_ALPHA_SCALE:
+			if (GetTexEnvxv(env, pname, buffer)) {
+				params[0] = EGL_FloatFromFixed(buffer[0]);
+			}
+
+			break;
+
+		default:
+			RecordError(GL_INVALID_ENUM);
+			break;
 		}
 
 		break;
@@ -543,6 +555,7 @@ void Context :: GetTexEnvfv(GLenum env, GLenum pname, GLfloat *params) {
 		RecordError(GL_INVALID_ENUM);
 		break;
 	}
+
 }
 
 void Context :: GetTexParameterfv(GLenum target, GLenum pname, GLfloat *params) {
