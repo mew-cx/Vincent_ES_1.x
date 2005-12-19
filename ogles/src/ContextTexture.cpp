@@ -2289,117 +2289,121 @@ void Context :: UpdateMipmaps(void) {
 
 void Context :: GetTexEnviv(GLenum env, GLenum pname, GLint *params) {
 
-	if (env != GL_TEXTURE_2D) {
-		RecordError(GL_INVALID_ENUM);
-		return;
-	}
-
-	switch (pname) {
-	case GL_TEXTURE_ENV_MODE:
-		{
-			switch (m_RasterizerState.GetTextureMode(m_ActiveTexture)) {
-			case RasterizerState::TextureModeModulate:	params[0] = GL_MODULATE;	break;
-			case RasterizerState::TextureModeReplace:	params[0] = GL_REPLACE;		break;
-			case RasterizerState::TextureModeDecal:		params[0] = GL_DECAL;		break;
-			case RasterizerState::TextureModeBlend:		params[0] = GL_BLEND;		break;
-			case RasterizerState::TextureModeAdd:		params[0] = GL_ADD;			break;
+	switch (env) {
+	case GL_TEXTURE_ENV:
+		switch (pname) {
+		case GL_TEXTURE_ENV_MODE:
+			{
+				switch (m_RasterizerState.GetTextureMode(m_ActiveTexture)) {
+				case RasterizerState::TextureModeModulate:	params[0] = GL_MODULATE;	break;
+				case RasterizerState::TextureModeReplace:	params[0] = GL_REPLACE;		break;
+				case RasterizerState::TextureModeDecal:		params[0] = GL_DECAL;		break;
+				case RasterizerState::TextureModeBlend:		params[0] = GL_BLEND;		break;
+				case RasterizerState::TextureModeAdd:		params[0] = GL_ADD;			break;
+				}
 			}
-		}
 
-		break;
+			break;
 
-	case GL_COMBINE_RGB:
-		{
-			switch (m_RasterizerState.GetTextureCombineFuncRGB(m_ActiveTexture)) {
-			case RasterizerState::TextureModeCombineReplace:	params[0] = GL_REPLACE;		break;
-			case RasterizerState::TextureModeCombineModulate:	params[0] = GL_MODULATE;	break;
-			case RasterizerState::TextureModeCombineAdd:		params[0] = GL_ADD;			break;
-			case RasterizerState::TextureModeCombineAddSigned:	params[0] = GL_ADD_SIGNED;	break;
-			case RasterizerState::TextureModeCombineInterpolate:params[0] = GL_INTERPOLATE;	break;
-			case RasterizerState::TextureModeCombineSubtract:	params[0] = GL_SUBTRACT;	break;
-			case RasterizerState::TextureModeCombineDot3RGB:	params[0] = GL_DOT3_RGB;	break;
-			case RasterizerState::TextureModeCombineDot3RGBA:	params[0] = GL_DOT3_RGBA;	break;
+		case GL_COMBINE_RGB:
+			{
+				switch (m_RasterizerState.GetTextureCombineFuncRGB(m_ActiveTexture)) {
+				case RasterizerState::TextureModeCombineReplace:	params[0] = GL_REPLACE;		break;
+				case RasterizerState::TextureModeCombineModulate:	params[0] = GL_MODULATE;	break;
+				case RasterizerState::TextureModeCombineAdd:		params[0] = GL_ADD;			break;
+				case RasterizerState::TextureModeCombineAddSigned:	params[0] = GL_ADD_SIGNED;	break;
+				case RasterizerState::TextureModeCombineInterpolate:params[0] = GL_INTERPOLATE;	break;
+				case RasterizerState::TextureModeCombineSubtract:	params[0] = GL_SUBTRACT;	break;
+				case RasterizerState::TextureModeCombineDot3RGB:	params[0] = GL_DOT3_RGB;	break;
+				case RasterizerState::TextureModeCombineDot3RGBA:	params[0] = GL_DOT3_RGBA;	break;
+				}
 			}
-		}
 
-		break;
+			break;
 
-	case GL_COMBINE_ALPHA:
-		{
-			switch (m_RasterizerState.GetTextureCombineFuncAlpha(m_ActiveTexture)) {
-			case RasterizerState::TextureModeCombineReplace:	params[0] = GL_REPLACE;		break;
-			case RasterizerState::TextureModeCombineModulate:	params[0] = GL_MODULATE;	break;
-			case RasterizerState::TextureModeCombineAdd:		params[0] = GL_ADD;			break;
-			case RasterizerState::TextureModeCombineAddSigned:	params[0] = GL_ADD_SIGNED;	break;
-			case RasterizerState::TextureModeCombineInterpolate:params[0] = GL_INTERPOLATE;	break;
-			case RasterizerState::TextureModeCombineSubtract:	params[0] = GL_SUBTRACT;	break;
+		case GL_COMBINE_ALPHA:
+			{
+				switch (m_RasterizerState.GetTextureCombineFuncAlpha(m_ActiveTexture)) {
+				case RasterizerState::TextureModeCombineReplace:	params[0] = GL_REPLACE;		break;
+				case RasterizerState::TextureModeCombineModulate:	params[0] = GL_MODULATE;	break;
+				case RasterizerState::TextureModeCombineAdd:		params[0] = GL_ADD;			break;
+				case RasterizerState::TextureModeCombineAddSigned:	params[0] = GL_ADD_SIGNED;	break;
+				case RasterizerState::TextureModeCombineInterpolate:params[0] = GL_INTERPOLATE;	break;
+				case RasterizerState::TextureModeCombineSubtract:	params[0] = GL_SUBTRACT;	break;
+				}
 			}
-		}
 
-		break;
+			break;
 
-	case GL_SRC0_RGB:
-	case GL_SRC1_RGB:
-	case GL_SRC2_RGB:
-		{
-			size_t index = pname - GL_SRC0_RGB;
-			RasterizerState::TextureCombineSrc src = m_RasterizerState.GetTextureCombineSrcRGB(m_ActiveTexture, index);
+		case GL_SRC0_RGB:
+		case GL_SRC1_RGB:
+		case GL_SRC2_RGB:
+			{
+				size_t index = pname - GL_SRC0_RGB;
+				RasterizerState::TextureCombineSrc src = m_RasterizerState.GetTextureCombineSrcRGB(m_ActiveTexture, index);
 
-			switch (src) {
-			case RasterizerState::TextureCombineSrcTexture:		params[0] = GL_TEXTURE;			break;
-			case RasterizerState::TextureCombineSrcConstant:	params[0] = GL_CONSTANT;		break;
-			case RasterizerState::TextureCombineSrcPrimaryColor:params[0] = GL_PRIMARY_COLOR;	break;
-			case RasterizerState::TextureCombineSrcPrevious:	params[0] = GL_PREVIOUS;		break;
+				switch (src) {
+				case RasterizerState::TextureCombineSrcTexture:		params[0] = GL_TEXTURE;			break;
+				case RasterizerState::TextureCombineSrcConstant:	params[0] = GL_CONSTANT;		break;
+				case RasterizerState::TextureCombineSrcPrimaryColor:params[0] = GL_PRIMARY_COLOR;	break;
+				case RasterizerState::TextureCombineSrcPrevious:	params[0] = GL_PREVIOUS;		break;
+				}
 			}
-		}
 
-		break;
+			break;
 
-	case GL_SRC0_ALPHA:
-	case GL_SRC1_ALPHA:
-	case GL_SRC2_ALPHA:
-		{
-			size_t index = pname - GL_SRC0_ALPHA;
-			RasterizerState::TextureCombineSrc src = m_RasterizerState.GetTextureCombineSrcAlpha(m_ActiveTexture, index);
+		case GL_SRC0_ALPHA:
+		case GL_SRC1_ALPHA:
+		case GL_SRC2_ALPHA:
+			{
+				size_t index = pname - GL_SRC0_ALPHA;
+				RasterizerState::TextureCombineSrc src = m_RasterizerState.GetTextureCombineSrcAlpha(m_ActiveTexture, index);
 
-			switch (src) {
-			case RasterizerState::TextureCombineSrcTexture:		params[0] = GL_TEXTURE;			break;
-			case RasterizerState::TextureCombineSrcConstant:	params[0] = GL_CONSTANT;		break;
-			case RasterizerState::TextureCombineSrcPrimaryColor:params[0] = GL_PRIMARY_COLOR;	break;
-			case RasterizerState::TextureCombineSrcPrevious:	params[0] = GL_PREVIOUS;		break;
+				switch (src) {
+				case RasterizerState::TextureCombineSrcTexture:		params[0] = GL_TEXTURE;			break;
+				case RasterizerState::TextureCombineSrcConstant:	params[0] = GL_CONSTANT;		break;
+				case RasterizerState::TextureCombineSrcPrimaryColor:params[0] = GL_PRIMARY_COLOR;	break;
+				case RasterizerState::TextureCombineSrcPrevious:	params[0] = GL_PREVIOUS;		break;
+				}
 			}
-		}
 
-		break;
+			break;
 
-	case GL_OPERAND0_RGB:
-	case GL_OPERAND1_RGB:
-	case GL_OPERAND2_RGB:
-		{
-			size_t index = pname - GL_OPERAND0_RGB;
-			RasterizerState::TextureCombineOp op = m_RasterizerState.GetTextureCombineOpRGB(m_ActiveTexture, index);
+		case GL_OPERAND0_RGB:
+		case GL_OPERAND1_RGB:
+		case GL_OPERAND2_RGB:
+			{
+				size_t index = pname - GL_OPERAND0_RGB;
+				RasterizerState::TextureCombineOp op = m_RasterizerState.GetTextureCombineOpRGB(m_ActiveTexture, index);
 
-			switch (op) {
-			case RasterizerState::TextureCombineOpSrcColor:			params[0] = GL_SRC_COLOR;			break;
-			case RasterizerState::TextureCombineOpOneMinusSrcColor:	params[0] = GL_ONE_MINUS_SRC_COLOR;	break;
-			case RasterizerState::TextureCombineOpSrcAlpha:			params[0] = GL_SRC_ALPHA;			break;
-			case RasterizerState::TextureCombineOpOneMinusSrcAlpha:	params[0] = GL_ONE_MINUS_SRC_ALPHA;	break;
+				switch (op) {
+				case RasterizerState::TextureCombineOpSrcColor:			params[0] = GL_SRC_COLOR;			break;
+				case RasterizerState::TextureCombineOpOneMinusSrcColor:	params[0] = GL_ONE_MINUS_SRC_COLOR;	break;
+				case RasterizerState::TextureCombineOpSrcAlpha:			params[0] = GL_SRC_ALPHA;			break;
+				case RasterizerState::TextureCombineOpOneMinusSrcAlpha:	params[0] = GL_ONE_MINUS_SRC_ALPHA;	break;
+				}
 			}
-		}
 
-		break;
+			break;
 
-	case GL_OPERAND0_ALPHA:
-	case GL_OPERAND1_ALPHA:
-	case GL_OPERAND2_ALPHA:
-		{
-			size_t index = pname - GL_OPERAND0_ALPHA;
-			RasterizerState::TextureCombineOp op = m_RasterizerState.GetTextureCombineOpAlpha(m_ActiveTexture, index);
+		case GL_OPERAND0_ALPHA:
+		case GL_OPERAND1_ALPHA:
+		case GL_OPERAND2_ALPHA:
+			{
+				size_t index = pname - GL_OPERAND0_ALPHA;
+				RasterizerState::TextureCombineOp op = m_RasterizerState.GetTextureCombineOpAlpha(m_ActiveTexture, index);
 
-			switch (op) {
-			case RasterizerState::TextureCombineOpSrcAlpha:			params[0] = GL_SRC_ALPHA;			break;
-			case RasterizerState::TextureCombineOpOneMinusSrcAlpha:	params[0] = GL_ONE_MINUS_SRC_ALPHA;	break;
+				switch (op) {
+				case RasterizerState::TextureCombineOpSrcAlpha:			params[0] = GL_SRC_ALPHA;			break;
+				case RasterizerState::TextureCombineOpOneMinusSrcAlpha:	params[0] = GL_ONE_MINUS_SRC_ALPHA;	break;
+				}
 			}
+
+			break;
+
+		default:
+			RecordError(GL_INVALID_ENUM);
+			break;
 		}
 
 		break;
@@ -2412,22 +2416,26 @@ void Context :: GetTexEnviv(GLenum env, GLenum pname, GLint *params) {
 
 bool Context :: GetTexEnvxv(GLenum env, GLenum pname, GLfixed *params) {
 
-	if (env != GL_TEXTURE_2D) {
-		RecordError(GL_INVALID_ENUM);
-		return false;
-	}
+	switch (env) {
+	case GL_TEXTURE_ENV:
+		switch (pname) {
+		case GL_TEXTURE_ENV_COLOR:
+			CopyColor(m_RasterizerState.GetTexEnvColor(m_ActiveTexture), params);
+			break;
 
-	switch (pname) {
-	case GL_TEXTURE_ENV_COLOR:
-		CopyColor(m_RasterizerState.GetTexEnvColor(m_ActiveTexture), params);
-		break;
+		case GL_RGB_SCALE:
+			params[0] = m_RasterizerState.GetTextureScaleRGB(m_ActiveTexture);
+			break;
 
-	case GL_RGB_SCALE:
-		params[0] = m_RasterizerState.GetTextureScaleRGB(m_ActiveTexture);
-		break;
+		case GL_ALPHA_SCALE:
+			params[0] = m_RasterizerState.GetTextureScaleAlpha(m_ActiveTexture);
+			break;
 
-	case GL_ALPHA_SCALE:
-		params[0] = m_RasterizerState.GetTextureScaleAlpha(m_ActiveTexture);
+		default:
+			RecordError(GL_INVALID_ENUM);
+			return false;
+		}
+
 		break;
 
 	default:
