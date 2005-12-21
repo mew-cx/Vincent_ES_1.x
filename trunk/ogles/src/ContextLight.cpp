@@ -260,7 +260,7 @@ bool Context :: GetLightxv(GLenum light, GLenum pname, GLfixed *params) {
 		break;
 
 	case GL_SPOT_CUTOFF:
-		params[0] = pLight->GetSpotExponent();
+		params[0] = pLight->GetSpotCutoff();
 		break;
 
 	case GL_CONSTANT_ATTENUATION:
