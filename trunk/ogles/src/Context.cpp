@@ -71,6 +71,7 @@ Context :: Context(const Config & config)
 	m_TwoSidedLightning(false),
 	m_LightEnabled(0),				// no light on
 	m_CullFaceEnabled(false),
+	m_DitherEnabled(false),
 	m_ReverseFaceOrientation(false),
 	m_CullMode(CullModeBack),
 	m_ColorMaterialEnabled(false),
@@ -350,7 +351,7 @@ void Context :: Toggle(GLenum cap, bool value) {
 		break;
 
 	case GL_DITHER:
-		//GetRasterizerState()->EnableDither(value);
+		m_DitherEnabled = value;
 		break;
 
 	case GL_STENCIL_TEST:
@@ -841,7 +842,7 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_DEPTH_CLEAR_VALUE:
-		params[0] = m_DepthClearValue;
+		params[0] = EGL_Mul(0x7fffffff, m_DepthClearValue);
 		break;
 
 	case GL_SCISSOR_BOX:
@@ -873,7 +874,7 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		break;
 
 	case GL_ALPHA_TEST_REF:
-		params[0] = m_RasterizerState.GetAlphaRef();
+		params[0] = EGL_Mul(0x7fffffff, m_RasterizerState.GetAlphaRef());
 		break;
 
 	case GL_ALPHA_TEST_FUNC:
@@ -964,7 +965,7 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		{
 			size_t index = m_Textures.GetIndex(m_Rasterizer->GetTexture(m_ActiveTexture));
 
-			if (~index) {
+			if (index == ~0) {
 				params[0] = 0;
 			} else {
 				params[0] = index;
@@ -1076,10 +1077,7 @@ bool Context :: GetFixedv(GLenum pname, GLfixed *params) {
 		break;
 
 	case GL_CURRENT_TEXTURE_COORDS:
-		params[0] = m_DefaultTextureCoords[m_ActiveTexture].tu;
-		params[1] = m_DefaultTextureCoords[m_ActiveTexture].tv;
-		params[2] = 0;
-		params[3] = EGL_ONE;
+		CopyVector(m_DefaultTextureCoords[m_ActiveTexture], params);
 		break;
 
 	case GL_CURRENT_NORMAL:
@@ -1201,11 +1199,11 @@ void Context :: GetPointerv(GLenum pname, void **params) {
 		params[0] = const_cast<void *>(m_MatrixIndexArray.pointer);
 		break;
 
-	case GL_WEIGHT_ARRAY_OES:
+	case GL_WEIGHT_ARRAY_POINTER_OES:
 		params[0] = const_cast<void *>(m_WeightArray.pointer);
 		break;
 
-	case GL_POINT_SIZE_ARRAY_OES:
+	case GL_POINT_SIZE_ARRAY_POINTER_OES:
 		params[0] = const_cast<void *>(m_PointSizeArray.pointer);
 		break;
 
@@ -1332,6 +1330,7 @@ GLboolean Context :: IsEnabled(GLenum cap) {
 		return m_SampleCoverageEnabled;
 
 	case GL_DITHER:
+		return m_DitherEnabled;
 
 	default:
 		RecordError(GL_INVALID_ENUM);
