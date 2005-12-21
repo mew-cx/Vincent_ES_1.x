@@ -205,8 +205,15 @@ void Context :: PointSizePointer(GLenum type, GLsizei stride, const GLvoid *poin
 void Context :: PointParameterx(GLenum pname, GLfixed param) {
 	switch (pname) {
 	case GL_POINT_SIZE_MIN:
+		m_PointSizeMin = param;
+		break;
+
 	case GL_POINT_SIZE_MAX:
+		m_PointSizeMax = param;
+		break;
+
 	case GL_POINT_FADE_THRESHOLD_SIZE:
+		m_PointFadeThresholdSize = param;
 		break;
 
 	default:

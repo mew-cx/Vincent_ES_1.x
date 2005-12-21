@@ -89,7 +89,7 @@ Context :: Context(const Config & config)
 
 	// point parameters
 	m_PointSize(EGL_ONE),
-	m_PointSizeMin(0),
+	m_PointSizeMin(EGL_ONE),
 	m_PointSizeMax(EGL_ONE),		// what is the correct value?
 	m_PointFadeThresholdSize(EGL_ONE),
 	m_PointSizeAttenuate(false),
@@ -1166,8 +1166,10 @@ bool Context :: GetFixedv(GLenum pname, GLfixed *params) {
 		params[1] = m_DepthRangeFar;
 		break;
 
-	/*case GL_POINT_SIZE:*/
-	/*case GL_LINE_WIDTH:*/
+	case GL_POINT_SIZE:
+	case GL_LINE_WIDTH:
+		params[0] = EGL_ONE;
+		break;
 
 	default:
 		RecordError(GL_INVALID_ENUM);
