@@ -358,9 +358,10 @@ namespace EGL {
 				
 			if (!m_Objects[index].IsPointer()) {
 				// allocate the requested object
-				if (m_FreeListHead = index) {
+				if (m_FreeListHead == index) {
 					m_FreeListHead = m_Objects[index].IsNil() ? 0xffffffffu : m_Objects[index].GetIndex();
 				} else {
+					assert(m_FreeListHead != 0xffffffffu);
 					size_t idx = m_FreeListHead;
 
 					while (!m_Objects[idx].IsNil() && m_Objects[idx].GetIndex() != index)
