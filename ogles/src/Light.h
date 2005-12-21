@@ -67,6 +67,7 @@ namespace EGL {
 		Vec4D GetPosition() const;
 
 		void SetDirection(const Vec3D & direction);
+		Vec3D GetNormalizedDirection() const;
 		Vec3D GetDirection() const;
 
 		void SetConstantAttenuation(EGL_Fixed attenuation);
@@ -116,6 +117,7 @@ namespace EGL {
 		FractionalColor			m_DiffuseColor;
 		FractionalColor			m_SpecularColor;
 		Vec4D					m_Position;
+		Vec3D					m_NormalizedSpotDirection;
 		Vec3D					m_SpotDirection;
 		EGL_Fixed				m_ConstantAttenuation;
 		EGL_Fixed				m_LinearAttenuation;
@@ -145,6 +147,10 @@ namespace EGL {
 
 	inline Vec4D Light :: GetPosition() const {
 		return m_Position;
+	}
+
+	inline Vec3D Light :: GetNormalizedDirection() const {
+		return m_NormalizedSpotDirection;
 	}
 
 	inline Vec3D Light :: GetDirection() const {

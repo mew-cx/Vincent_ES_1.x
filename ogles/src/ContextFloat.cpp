@@ -398,7 +398,6 @@ void Context :: GetFloatv(GLenum pname, GLfloat *params) {
 	GLfixed buffer[16];
 
 	switch (pname) {
-	case GL_CURRENT_COLOR:
 	case GL_FOG_DENSITY:
 	case GL_FOG_START:
 	case GL_FOG_END:
@@ -433,6 +432,7 @@ void Context :: GetFloatv(GLenum pname, GLfloat *params) {
 
 		break;
 
+	case GL_CURRENT_COLOR:
 	case GL_CURRENT_TEXTURE_COORDS:
 	case GL_FOG_COLOR:
 	case GL_LIGHT_MODEL_AMBIENT:

@@ -62,6 +62,7 @@ Light :: Light()
 	m_SpecularColor(F(0.0f), F(0.0f), F(0.0f), F(1.0f)),
 	m_Position(F(0.0f), F(0.0f), F(1.0f), F(0.0f)),
 	m_SpotDirection(F(0.0f), F(0.0f), F(-1.0f)),
+	m_NormalizedSpotDirection(F(0.0f), F(0.0f), F(-1.0f)),
 	m_SpotCutoff(F(180.0f)),
 	m_ConstantAttenuation(F(1.0f)),
 	m_LinearAttenuation(0),
@@ -91,8 +92,8 @@ void Light :: SetPosition(const Vec4D & position) {
 
 
 void Light :: SetDirection(const Vec3D & direction) {
-	m_SpotDirection = direction;
-	m_SpotDirection.Normalize();
+	m_SpotDirection = m_NormalizedSpotDirection = direction;
+	m_NormalizedSpotDirection.Normalize();
 }
 
 
@@ -149,7 +150,7 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 	EGL_Fixed att = EGL_ONE;
 
 	if (m_SpotCutoff != EGL_FixedFromInt(180)) {
-		EGL_Fixed cosine = -(vp_li * m_SpotDirection);
+		EGL_Fixed cosine = -(vp_li * m_NormalizedSpotDirection);
 
 		if (cosine < m_CosineSpotCutoff) {
 			return;
@@ -198,7 +199,7 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 	EGL_Fixed att = EGL_ONE;
 
 	if (m_SpotCutoff != EGL_FixedFromInt(180)) {
-		EGL_Fixed cosine = -(vp_li * m_SpotDirection);
+		EGL_Fixed cosine = -(vp_li * m_NormalizedSpotDirection);
 
 		if (cosine < m_CosineSpotCutoff) {
 			return;
@@ -252,7 +253,7 @@ void Light :: AccumulateLight2(const Vec4D& vertexCoords, const Vec3D& vertexNor
 	EGL_Fixed att = EGL_ONE;
 
 	if (m_SpotCutoff != EGL_FixedFromInt(180)) {
-		EGL_Fixed cosine = -(vp_li * m_SpotDirection);
+		EGL_Fixed cosine = -(vp_li * m_NormalizedSpotDirection);
 
 		if (cosine < m_CosineSpotCutoff) {
 			return;
@@ -317,7 +318,7 @@ void Light :: AccumulateLight2(const Vec4D& vertexCoords, const Vec3D& vertexNor
 	EGL_Fixed att = EGL_ONE;
 
 	if (m_SpotCutoff != EGL_FixedFromInt(180)) {
-		EGL_Fixed cosine = -(vp_li * m_SpotDirection);
+		EGL_Fixed cosine = -(vp_li * m_NormalizedSpotDirection);
 
 		if (cosine < m_CosineSpotCutoff) {
 			return;
