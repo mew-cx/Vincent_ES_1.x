@@ -404,6 +404,8 @@ void Context :: GetFloatv(GLenum pname, GLfloat *params) {
 	case GL_POLYGON_OFFSET_UNITS:
 	case GL_POLYGON_OFFSET_FACTOR:
 	case GL_SAMPLE_COVERAGE_VALUE:
+	case GL_POINT_SIZE:
+	case GL_LINE_WIDTH:
 	case GL_POINT_SIZE_MIN:
 	case GL_POINT_SIZE_MAX:
 	case GL_POINT_FADE_THRESHOLD_SIZE:
