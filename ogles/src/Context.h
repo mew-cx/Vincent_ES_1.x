@@ -456,7 +456,8 @@ private:
 
 		Vec3D				m_DefaultNormal;
 		FractionalColor		m_DefaultRGBA;
-		TexCoord			m_DefaultTextureCoords[EGL_NUM_TEXTURE_UNITS];
+		Vec4D				m_DefaultTextureCoords[EGL_NUM_TEXTURE_UNITS];
+		TexCoord			m_DefaultScaledTextureCoords[EGL_NUM_TEXTURE_UNITS];
 		size_t				m_ActiveTexture;
 		size_t				m_ClientActiveTexture;
 
@@ -511,6 +512,7 @@ private:
 		bool				m_LightingEnabled;		// is lightning enabled?
 		bool				m_TwoSidedLightning;	// do we have two-sided lightning
 		bool				m_CullFaceEnabled;
+		bool				m_DitherEnabled;
 		bool				m_ReverseFaceOrientation;
 		bool				m_ColorMaterialEnabled;
 		bool				m_NormalizeEnabled;

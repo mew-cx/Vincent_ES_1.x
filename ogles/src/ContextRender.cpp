@@ -290,9 +290,11 @@ void Context :: MultiTexCoord4x(GLenum target, GLfixed s, GLfixed t, GLfixed r, 
 
 	size_t unit = target - GL_TEXTURE0;
 
+	m_DefaultTextureCoords[unit] = Vec4D(s, t, r, q);
+
 	I32 inverse = EGL_Inverse(q);
-	m_DefaultTextureCoords[unit].tu = EGL_Mul(s, inverse);
-	m_DefaultTextureCoords[unit].tv = EGL_Mul(t, inverse);
+	m_DefaultScaledTextureCoords[unit].tu = EGL_Mul(s, inverse);
+	m_DefaultScaledTextureCoords[unit].tv = EGL_Mul(t, inverse);
 }
 
 
@@ -639,8 +641,8 @@ void Context :: PrepareRendering() {
 		PrepareArray(m_TexCoordArray[unit], m_TexCoordArrayEnabled[unit]);
 
 		if (!m_TexCoordArray[unit].effectivePointer) {
-			m_CurrentTextureCoords[unit].tu = m_DefaultTextureCoords[unit].tu;
-			m_CurrentTextureCoords[unit].tv = m_DefaultTextureCoords[unit].tv;
+			m_CurrentTextureCoords[unit].tu = m_DefaultScaledTextureCoords[unit].tu;
+			m_CurrentTextureCoords[unit].tv = m_DefaultScaledTextureCoords[unit].tv;
 		}
 	}
 

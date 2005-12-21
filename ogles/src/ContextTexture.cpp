@@ -1470,6 +1470,8 @@ void Context :: TexParameteri(GLenum target, GLenum pname, GLint param) {
 				m_GenerateMipmaps = (param != 0);
 			}
 
+			break;
+
 		default:
 			RecordError(GL_INVALID_ENUM);
 			break;
@@ -2300,6 +2302,7 @@ void Context :: GetTexEnviv(GLenum env, GLenum pname, GLint *params) {
 				case RasterizerState::TextureModeDecal:		params[0] = GL_DECAL;		break;
 				case RasterizerState::TextureModeBlend:		params[0] = GL_BLEND;		break;
 				case RasterizerState::TextureModeAdd:		params[0] = GL_ADD;			break;
+				case RasterizerState::TextureModeCombine:	params[0] = GL_COMBINE;		break;
 				}
 			}
 
@@ -2399,6 +2402,19 @@ void Context :: GetTexEnviv(GLenum env, GLenum pname, GLint *params) {
 				}
 			}
 
+			break;
+
+		default:
+			RecordError(GL_INVALID_ENUM);
+			break;
+		}
+
+		break;
+
+	case GL_POINT_SPRITE_OES:
+		switch (pname) {
+		case GL_COORD_REPLACE_OES:
+			params[0] = GetRasterizerState()->IsPointCoordReplaceEnabled(m_ActiveTexture);
 			break;
 
 		default:
