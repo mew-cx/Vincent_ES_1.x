@@ -927,8 +927,8 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 	case GL_SHADE_MODEL:
 		{
 			switch (m_RasterizerState.GetShadeModel()) {
-			case RasterizerState::ShadeModelFlat:	params[0] = GL_FLAT;
-			case RasterizerState::ShadeModelSmooth:	params[0] = GL_SMOOTH;
+			case RasterizerState::ShadeModelFlat:	params[0] = GL_FLAT;   break;
+			case RasterizerState::ShadeModelSmooth:	params[0] = GL_SMOOTH; break;
 			}
 		}
 
