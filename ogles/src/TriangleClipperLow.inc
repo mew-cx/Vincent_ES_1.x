@@ -71,8 +71,10 @@
 				EGL_Fixed c_w = current->m_ClipCoords.w();
 				EGL_Fixed p_x = previous->m_ClipCoords.COORDINATE;
 				EGL_Fixed p_w = previous->m_ClipCoords.w();
-				
-				Interpolate(newVertex, *current, *previous, p_w + p_x, (p_w + p_x) - (c_w + c_x));
+				float num = EGL_FloatFromFixed(p_w + p_x); 
+				float denom = EGL_FloatFromFixed((p_w + p_x) - (c_w + c_x));
+
+				Interpolate(newVertex, *current, *previous, num / denom);
 				newVertex.m_ClipCoords.SET_COORDINATE(-newVertex.m_ClipCoords.w());
 
 				output[resultCount++] = current;
@@ -89,8 +91,10 @@
 				EGL_Fixed c_w = current->m_ClipCoords.w();
 				EGL_Fixed p_x = previous->m_ClipCoords.COORDINATE;
 				EGL_Fixed p_w = previous->m_ClipCoords.w();
+				float num = EGL_FloatFromFixed(p_w + p_x); 
+				float denom = EGL_FloatFromFixed((p_w + p_x) - (c_w + c_x));
 				
-				Interpolate(newVertex, *current, *previous, p_w + p_x, (p_w + p_x) - (c_w + c_x));
+				Interpolate(newVertex, *current, *previous, num / denom);
 				newVertex.m_ClipCoords.SET_COORDINATE(-newVertex.m_ClipCoords.w());
 
 				//previous = current;

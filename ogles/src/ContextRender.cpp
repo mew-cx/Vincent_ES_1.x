@@ -966,11 +966,11 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 
 	// fix possible rounding problems
 	if (x < -w)	x = -w;
-	if (x >= w)	x = w - 1;
+	if (x > w)	x = w - 1;
 	if (y < -w)	y = -w;
-	if (y >= w)	y = w - 1;
+	if (y > w)	y = w - 1;
 	if (z < -w)	z = -w;
-	if (z >= w)	z = w - 1;
+	if (z > w)	z = w - 1;
 
 	if ((w >> 24) && (w >> 24) + 1) {
 		// keep this value around for perspective-correct texturing
@@ -987,6 +987,22 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 			EGL_Mul(EGL_Mul(y >> 8, invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
 		pos.m_WindowCoords.depth = 
 			EGL_CLAMP(EGL_Mul(z >> 8, EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase, 0, 0xffff);
+
+	} else if (w <= 0x100 && w >= -0x100) {
+		// keep this value around for perspective-correct texturing
+		EGL_Fixed invDenominator = EGL_Inverse(w << 8);
+
+		// Scale 1/Z by 2^-6 to avoid rounding problems during prespective correct
+		// interpolation
+		// See book by LaMothe for more detailed discussion on this
+		pos.m_WindowCoords.invZ = invDenominator;
+
+		pos.m_WindowCoords.x = 
+			EGL_Mul(EGL_Mul(x << 8, invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
+		pos.m_WindowCoords.y = 
+			EGL_Mul(EGL_Mul(y << 8, invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
+		pos.m_WindowCoords.depth = 
+			EGL_CLAMP(EGL_Mul(z << 8, EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase, 0, 0xffff);
 
 	} else {
 		// keep this value around for perspective-correct texturing
@@ -1006,8 +1022,8 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 
 	}
 
-	pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x80) & ~0xff);
-	pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x80) & ~0xff);
+	pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x800) & ~0xfff);
+	pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x800) & ~0xfff);
 }
 
 void Context :: GetClipPlanex(GLenum plane, GLfixed eqn[4]) {

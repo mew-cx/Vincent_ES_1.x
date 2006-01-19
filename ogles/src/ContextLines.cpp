@@ -40,6 +40,7 @@
 #include "stdafx.h"
 #include "Context.h"
 #include "fixed.h"
+#include "arithmetic.h"
 #include "Rasterizer.h"
 
 using namespace EGL;
@@ -333,26 +334,30 @@ void Context :: RenderLineLoop(GLsizei count, const GLushort * indices) {
 
 namespace {
 
-	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed x1, EGL_Fixed num, EGL_Fixed denom) {
-		return x1 + (EGL_Fixed)((((I64)(x0-x1))*num)/denom);
+	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed x1, float coeff) {
+		float x0f = EGL_FloatFromFixed(x0);
+		float x1f = EGL_FloatFromFixed(x1);
+		float complement = 1.0f - coeff;
+		float result = x1f * complement + x0f * coeff;
+		return EGL_FixedFromFloat(result);
 	}
 
-	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, EGL_Fixed num, EGL_Fixed denom) {
-		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), num, denom));
-		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), num, denom));
-		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), num, denom));
-		result.m_ClipCoords.setW(Interpolate(dst.m_ClipCoords.w(), src.m_ClipCoords.w(), num, denom));
-		result.m_Color.r = Interpolate(dst.m_Color.r, src.m_Color.r, num, denom);
-		result.m_Color.g = Interpolate(dst.m_Color.g, src.m_Color.g, num, denom);
-		result.m_Color.b = Interpolate(dst.m_Color.b, src.m_Color.b, num, denom);
-		result.m_Color.a = Interpolate(dst.m_Color.a, src.m_Color.a, num, denom);
+	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, float coeff) {
+		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), coeff));
+		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), coeff));
+		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), coeff));
+		result.m_ClipCoords.setW(Interpolate(dst.m_ClipCoords.w(), src.m_ClipCoords.w(), coeff));
+		result.m_Color.r = Interpolate(dst.m_Color.r, src.m_Color.r, coeff);
+		result.m_Color.g = Interpolate(dst.m_Color.g, src.m_Color.g, coeff);
+		result.m_Color.b = Interpolate(dst.m_Color.b, src.m_Color.b, coeff);
+		result.m_Color.a = Interpolate(dst.m_Color.a, src.m_Color.a, coeff);
 
 		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
-			result.m_TextureCoords[index].tu = Interpolate(dst.m_TextureCoords[index].tu, src.m_TextureCoords[index].tu, num, denom);
-			result.m_TextureCoords[index].tv = Interpolate(dst.m_TextureCoords[index].tv, src.m_TextureCoords[index].tv, num, denom);
+			result.m_TextureCoords[index].tu = Interpolate(dst.m_TextureCoords[index].tu, src.m_TextureCoords[index].tu, coeff);
+			result.m_TextureCoords[index].tv = Interpolate(dst.m_TextureCoords[index].tv, src.m_TextureCoords[index].tv, coeff);
 		}
 
-		result.m_FogDensity = Interpolate(dst.m_FogDensity, src.m_FogDensity, num, denom);
+		result.m_FogDensity = Interpolate(dst.m_FogDensity, src.m_FogDensity, coeff);
 	}
 
 	inline bool ClipX(RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices) {
@@ -383,14 +388,20 @@ namespace {
 				return false;
 			}
 
-			Interpolate(*tempVertices, *from, *to, t, t - f);
+			float num = EGL_FloatFromFixed(t); 
+			float denom = EGL_FloatFromFixed(t - f);
+
+			Interpolate(*tempVertices, *from, *to, num / denom);
 			from = tempVertices++;
 
 			return true;
 
 		} else if (t < 0) {
 
-			Interpolate(*tempVertices, *to, *from, f, f - t);
+			float num = EGL_FloatFromFixed(f); 
+			float denom = EGL_FloatFromFixed(f - t);
+
+			Interpolate(*tempVertices, *to, *from, num / denom);
 			to = tempVertices++;
 
 			return true;
