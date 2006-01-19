@@ -334,15 +334,20 @@ void Context :: RenderLineLoop(GLsizei count, const GLushort * indices) {
 
 namespace {
 
-	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed x1, float coeff) {
-		float x0f = EGL_FloatFromFixed(x0);
-		float x1f = EGL_FloatFromFixed(x1);
-		float complement = 1.0f - coeff;
-		float result = x1f * complement + x0f * coeff;
-		return EGL_FixedFromFloat(result);
+	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed x1, Float coeff) {
+		Float x0f = Float::fromX(x0);
+		Float x1f = Float::fromX(x1);
+		Float complement = Float::One() - coeff;
+		Float result = x1f * complement + x0f * coeff;
+		return result.toX();
 	}
 
-	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, float coeff) {
+	inline Float Interpolate(Float x0f, Float x1f, Float coeff) {
+		Float complement = Float::One() - coeff;
+		return x1f * complement + x0f * coeff;
+	}
+
+	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, Float coeff) {
 		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), coeff));
 		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), coeff));
 		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), coeff));
@@ -378,30 +383,24 @@ namespace {
 #		undef COORDINATE
 	}
 
-	inline bool ClipUser(const Vec4D& plane, RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices) {
+	inline bool ClipUser(const Vec4f& plane, RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices) {
 
-		EGL_Fixed f = from->m_EyeCoords * plane;
-		EGL_Fixed t = to->m_EyeCoords * plane;
+		Float f = Vec4f(from->m_EyeCoords) * plane;
+		Float t = Vec4f(to->m_EyeCoords) * plane;
 
-		if (f < 0) {
-			if (t < 0) {
+		if (f < Float::Zero()) {
+			if (t < Float::Zero()) {
 				return false;
 			}
 
-			float num = EGL_FloatFromFixed(t); 
-			float denom = EGL_FloatFromFixed(t - f);
-
-			Interpolate(*tempVertices, *from, *to, num / denom);
+			Interpolate(*tempVertices, *from, *to, t / (t - f));
 			from = tempVertices++;
 
 			return true;
 
-		} else if (t < 0) {
+		} else if (t < Float::Zero()) {
 
-			float num = EGL_FloatFromFixed(f); 
-			float denom = EGL_FloatFromFixed(f - t);
-
-			Interpolate(*tempVertices, *to, *from, num / denom);
+			Interpolate(*tempVertices, *to, *from, f / (f - t));
 			to = tempVertices++;
 
 			return true;

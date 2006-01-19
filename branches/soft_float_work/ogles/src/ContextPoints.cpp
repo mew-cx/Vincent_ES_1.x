@@ -123,7 +123,7 @@ void Context :: RenderPoint(RasterPos& point, EGL_Fixed size) {
 	if (m_ClipPlaneEnabled) {
 		for (size_t index = 0, mask = 1; index < NUM_CLIP_PLANES; ++index, mask <<= 1) {
 			if (m_ClipPlaneEnabled & mask) {
-				if (point.m_EyeCoords * m_ClipPlanes[index] < 0) {
+				if (Vec4f(point.m_EyeCoords) * m_ClipPlanes[index] < Float::Zero()) {
 					return;
 				}
 			}

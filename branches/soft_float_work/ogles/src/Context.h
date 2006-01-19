@@ -484,7 +484,7 @@ private:
 		// Rendering State
 		// ----------------------------------------------------------------------
 
-		Vec4D				m_ClipPlanes[NUM_CLIP_PLANES];
+		Vec4f				m_ClipPlanes[NUM_CLIP_PLANES];
 		U32					m_ClipPlaneEnabled;
 		Light				m_Lights[EGL_NUMBER_LIGHTS];
 		Material			m_FrontMaterial;
@@ -591,13 +591,13 @@ private:
 
 	inline void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
 		(this->*m_GeometryFunction)(rasterPos);
-
-		if ((rasterPos->m_ClipCoords.x() >= 0x10000000 || rasterPos->m_ClipCoords.x() < - 0x10000000 ||
+/*		if ((rasterPos->m_ClipCoords.x() >= 0x10000000 || rasterPos->m_ClipCoords.x() < - 0x10000000 ||
 			 rasterPos->m_ClipCoords.y() >= 0x10000000 || rasterPos->m_ClipCoords.y() < - 0x10000000 ||
 			 rasterPos->m_ClipCoords.z() >= 0x10000000 || rasterPos->m_ClipCoords.z() < - 0x10000000) &&
 			(rasterPos->m_ClipCoords.w() >= 0x100     || rasterPos->m_ClipCoords.w() < - 0x100))
 			rasterPos->m_ClipCoords = (rasterPos->m_ClipCoords * 0x201) * (EGL_ONE/2);
-	}
+*/
+  }
 
 
 }

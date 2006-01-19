@@ -377,10 +377,10 @@ void Context :: GetClipPlanef(GLenum plane, GLfloat eqn[4]) {
 	}
 
 	size_t index = plane - GL_CLIP_PLANE0;
-	eqn[0] = EGL_FloatFromFixed(m_ClipPlanes[index].x());
-	eqn[1] = EGL_FloatFromFixed(m_ClipPlanes[index].y());
-	eqn[2] = EGL_FloatFromFixed(m_ClipPlanes[index].z());
-	eqn[3] = EGL_FloatFromFixed(m_ClipPlanes[index].w());
+	eqn[0] = m_ClipPlanes[index].x().toF();
+	eqn[1] = m_ClipPlanes[index].y().toF();
+	eqn[2] = m_ClipPlanes[index].z().toF();
+	eqn[3] = m_ClipPlanes[index].w().toF();
 }
 
 

@@ -49,13 +49,13 @@
 			return false;
 		}
 
-		EGL_Fixed c_x = from->m_ClipCoords.COORDINATE;
-		EGL_Fixed c_w = -from->m_ClipCoords.w();
-		EGL_Fixed p_x = to->m_ClipCoords.COORDINATE;
-		EGL_Fixed p_w = -to->m_ClipCoords.w();
+		Float c_x = from->m_ClipCoords.COORDINATE;
+		Float c_w = -from->m_ClipCoords.w();
+		Float p_x = to->m_ClipCoords.COORDINATE;
+		Float p_w = -to->m_ClipCoords.w();
 		
-		float num = EGL_FloatFromFixed(p_w - p_x); 
-		float denom = EGL_FloatFromFixed((p_w - p_x) - (c_w - c_x));
+		Float num = p_w - p_x; 
+		Float denom = (p_w - p_x) - (c_w - c_x);
 
 		Interpolate(*tempVertices, *from, *to, num / denom);
 		from = tempVertices++;
@@ -67,13 +67,13 @@
 			return false;
 		}
 
-		EGL_Fixed c_x = from->m_ClipCoords.COORDINATE;
-		EGL_Fixed c_w = from->m_ClipCoords.w();
-		EGL_Fixed p_x = to->m_ClipCoords.COORDINATE;
-		EGL_Fixed p_w = to->m_ClipCoords.w();
+		Float c_x = from->m_ClipCoords.COORDINATE;
+		Float c_w = from->m_ClipCoords.w();
+		Float p_x = to->m_ClipCoords.COORDINATE;
+		Float p_w = to->m_ClipCoords.w();
 		
-		float num = EGL_FloatFromFixed(p_w - p_x); 
-		float denom = EGL_FloatFromFixed((p_w - p_x) - (c_w - c_x));
+		Float num = p_w - p_x; 
+		Float denom = (p_w - p_x) - (c_w - c_x);
 
 		Interpolate(*tempVertices, *from, *to, num / denom);
 		from = tempVertices++;
@@ -82,13 +82,13 @@
 
 	} else if (to->m_ClipCoords.COORDINATE < -to->m_ClipCoords.w()) {
 
-		EGL_Fixed c_x = to->m_ClipCoords.COORDINATE;
-		EGL_Fixed c_w = -to->m_ClipCoords.w();
-		EGL_Fixed p_x = from->m_ClipCoords.COORDINATE;
-		EGL_Fixed p_w = -from->m_ClipCoords.w();
+		Float c_x = to->m_ClipCoords.COORDINATE;
+		Float c_w = -to->m_ClipCoords.w();
+		Float p_x = from->m_ClipCoords.COORDINATE;
+		Float p_w = -from->m_ClipCoords.w();
 		
-		float num = EGL_FloatFromFixed(p_w - p_x); 
-		float denom = EGL_FloatFromFixed((p_w - p_x) - (c_w - c_x));
+		Float num = p_w - p_x; 
+		Float denom = (p_w - p_x) - (c_w - c_x);
 
 		Interpolate(*tempVertices, *to, *from, num / denom);
 		to = tempVertices++;
@@ -97,13 +97,13 @@
 
 	} else if (to->m_ClipCoords.COORDINATE > to->m_ClipCoords.w()) {
 
-		EGL_Fixed c_x = to->m_ClipCoords.COORDINATE;
-		EGL_Fixed c_w = to->m_ClipCoords.w();
-		EGL_Fixed p_x = from->m_ClipCoords.COORDINATE;
-		EGL_Fixed p_w = from->m_ClipCoords.w();
+		Float c_x = to->m_ClipCoords.COORDINATE;
+		Float c_w = to->m_ClipCoords.w();
+		Float p_x = from->m_ClipCoords.COORDINATE;
+		Float p_w = from->m_ClipCoords.w();
 		
-		float num = EGL_FloatFromFixed(p_w - p_x); 
-		float denom = EGL_FloatFromFixed((p_w - p_x) - (c_w - c_x));
+		Float num = p_w - p_x; 
+		Float denom = (p_w - p_x) - (c_w - c_x);
 
 		Interpolate(*tempVertices, *to, *from, num / denom);
 		to = tempVertices++;

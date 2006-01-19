@@ -40,6 +40,7 @@
 #include "stdafx.h"
 #include "Context.h"
 #include "fixed.h"
+#include "arithmetic.h"
 #include "Rasterizer.h"
 
 using namespace EGL;
@@ -467,16 +468,20 @@ void Context :: RenderTriangleFan(GLsizei count, const GLushort * indices) {
 
 namespace {
 
-	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed x1, float coeff) {
-		float x0f = EGL_FloatFromFixed(x0);
-		float x1f = EGL_FloatFromFixed(x1);
-		float complement = 1.0f - coeff;
-		float result = x1f * complement + x0f * coeff;
-		return EGL_FixedFromFloat(result);
+	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed x1, Float coeff) {
+		Float x0f = Float::fromX(x0);
+		Float x1f = Float::fromX(x1);
+		Float complement = Float::One() - coeff;
+		Float result = x1f * complement + x0f * coeff;
+		return result.toX();
 	}
 
+	inline Float Interpolate(Float x0f, Float x1f, Float coeff) {
+		Float complement = Float::One() - coeff;
+		return x1f * complement + x0f * coeff;
+	}
 
-	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, float coeff) {
+	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, Float coeff) {
 		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), coeff));
 		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), coeff));
 		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), coeff));
@@ -494,7 +499,7 @@ namespace {
 		result.m_FogDensity = Interpolate(dst.m_FogDensity, src.m_FogDensity, coeff);
 	}
 
-	inline void InterpolateWithEye(RasterPos& result, const RasterPos& dst, const RasterPos& src, float coeff) {
+	inline void InterpolateWithEye(RasterPos& result, const RasterPos& dst, const RasterPos& src, Float coeff) {
 		result.m_EyeCoords.setX(Interpolate(dst.m_EyeCoords.x(), src.m_EyeCoords.x(), coeff));
 		result.m_EyeCoords.setY(Interpolate(dst.m_EyeCoords.y(), src.m_EyeCoords.y(), coeff));
 		result.m_EyeCoords.setZ(Interpolate(dst.m_EyeCoords.z(), src.m_EyeCoords.z(), coeff));
@@ -564,7 +569,7 @@ namespace {
 	}
 
 
-	size_t ClipUser(const Vec4D& plane, RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+	size_t ClipUser(const Vec4f& plane, RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 		if (inputCount < 3) {
 			return 0;
 		}
@@ -577,11 +582,11 @@ namespace {
 
 			current = input[index];
 
-			EGL_Fixed c = current->m_EyeCoords * plane;
-			EGL_Fixed p = previous->m_EyeCoords * plane;
+			Float c = Vec4f(current->m_EyeCoords) * plane;
+			Float p = Vec4f(previous->m_EyeCoords) * plane;
 
-			if (c >= 0) {
-				if (p >= 0) {
+			if (c >= Float::Zero()) {
+				if (p >= Float::Zero()) {
 					// line segment between previous and current is fully contained in cube
 					output[resultCount++] = current;
 				} else {
@@ -590,23 +595,17 @@ namespace {
 					RasterPos & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 										
-					float num = EGL_FloatFromFixed(p); 
-					float denom = EGL_FloatFromFixed(p - c);
-
-					InterpolateWithEye(newVertex, *current, *previous, num / denom); 
+					InterpolateWithEye(newVertex, *current, *previous, p / (p - c)); 
 					output[resultCount++] = current;
 				}
 			} else {
-				if (p >= 0) {
+				if (p >= Float::Zero()) {
 					// line segment between previous and current is intersected;
 					// create vertex at intersection and add it
 					RasterPos & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 					
-					float num = EGL_FloatFromFixed(p); 
-					float denom = EGL_FloatFromFixed(p - c);
-
-					InterpolateWithEye(newVertex, *current, *previous, num / denom); 
+					InterpolateWithEye(newVertex, *current, *previous, p / (p - c)); 
 				}
 			}
 
@@ -614,15 +613,6 @@ namespace {
 		}
 
 		return resultCount;
-	}
-
-
-	inline I64 MulLong(EGL_Fixed a, EGL_Fixed b) {
-		return (((I64) a * (I64) b)  >> EGL_PRECISION);
-	}
-
-	inline EGL_Fixed Round(EGL_Fixed value) {
-		return (value + 8) >> 4;
 	}
 
 }
@@ -666,51 +656,45 @@ void Context :: CullFace(GLenum mode) {
 	}
 }
 
+namespace {
+	inline Float Det3x3(Float x0, Float x1, Float x2,
+						Float y0, Float y1, Float y2,
+						Float z0, Float z1, Float z2) {
+		return 
+			  x0 * y1 * z2
+			+ x1 * y2 * z0
+			+ x2 * y0 * z1
+			- x0 * y2 * z1
+			- x1 * y0 * z2
+			- x2 * y1 * z0;
+	}
+}
 
 inline bool Context :: IsCulled(RasterPos& a, RasterPos& b, RasterPos& c) {
 
-	EGL_Fixed x0 = a.m_ClipCoords.w();
-	EGL_Fixed x1 = a.m_ClipCoords.x();
-	EGL_Fixed x2 = a.m_ClipCoords.y();
+	Float x0 = a.m_ClipCoords.w();
+	Float x1 = a.m_ClipCoords.x();
+	Float x2 = a.m_ClipCoords.y();
 								
-	EGL_Fixed y0 = b.m_ClipCoords.w();
-	EGL_Fixed y1 = b.m_ClipCoords.x();
-	EGL_Fixed y2 = b.m_ClipCoords.y();
+	Float y0 = b.m_ClipCoords.w();
+	Float y1 = b.m_ClipCoords.x();
+	Float y2 = b.m_ClipCoords.y();
 								
-	EGL_Fixed z0 = c.m_ClipCoords.w();
-	EGL_Fixed z1 = c.m_ClipCoords.x();
-	EGL_Fixed z2 = c.m_ClipCoords.y();
+	Float z0 = c.m_ClipCoords.w();
+	Float z1 = c.m_ClipCoords.x();
+	Float z2 = c.m_ClipCoords.y();
 
-	I64 sign,t;
-	
-	if (((x0 & 0xff000000) == 0 || (x0 & 0xff000000) == 0xff000000) &&
-		((y0 & 0xff000000) == 0 || (y0 & 0xff000000) == 0xff000000) &&
-		((z0 & 0xff000000) == 0 || (z0 & 0xff000000) == 0xff000000)) {
-         sign=Round(x0);
-         sign*=MulLong(Round(y1), Round(z2)) - MulLong(Round(z1), Round(y2));
-         t=Round(y0);
-         t*=MulLong(Round(x1), Round(z2)) - MulLong(Round(z1), Round(x2));
-         sign-=t;
-         t=Round(z0);
-         t*=MulLong(Round(x1), Round(y2)) - MulLong(Round(y1), Round(x2));
-         sign+=t;
-	} else {
-         sign=Round(x0>>6);
-         sign*=MulLong(Round(y1), Round(z2)) - MulLong(Round(z1), Round(y2));
-         t=Round(y0>>6);
-         t*=MulLong(Round(x1), Round(z2)) - MulLong(Round(z1), Round(x2));
-         sign-=t;
-         t=Round(z0>>6);
-         t*=MulLong(Round(x1), Round(y2)) - MulLong(Round(y1), Round(x2));
-         sign+=t;
-	}
+	Float sign = 
+		Det3x3(a.m_ClipCoords.w(), a.m_ClipCoords.x(), a.m_ClipCoords.y(),
+			   b.m_ClipCoords.w(), b.m_ClipCoords.x(), b.m_ClipCoords.y(),
+			   c.m_ClipCoords.w(), c.m_ClipCoords.x(), c.m_ClipCoords.y());
 
 	switch (m_CullMode) {
 		case CullModeBack:
-			return (sign < 0) ^ m_ReverseFaceOrientation;
+			return (sign < Float::Zero()) ^ m_ReverseFaceOrientation;
 
 		case CullModeFront:
-			return (sign > 0) ^ m_ReverseFaceOrientation;
+			return (sign > Float::Zero()) ^ m_ReverseFaceOrientation;
 
 		default:
 		case CullModeBackAndFront:
