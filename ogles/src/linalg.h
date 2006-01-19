@@ -40,6 +40,7 @@
 
 #include "OGLES.h"
 #include "fixed.h"
+#include "arithmetic.h"
 
 namespace EGL {
 
@@ -453,6 +454,143 @@ namespace EGL {
 		}
 
 		inline void setW(EGL_Fixed value) {
+			m_w = value;
+		}
+	};
+
+	// --------------------------------------------------------------------------
+	// 4-D Vector class
+	// --------------------------------------------------------------------------
+
+
+	class Vec4f {
+
+		Float 	m_x, m_y, m_z, m_w;
+
+	public:
+		// ----------------------------------------------------------------------
+		// Constructor
+		// ----------------------------------------------------------------------
+		inline Vec4f() {
+			m_x = m_y = m_z = Float::Zero();
+			m_w = Float::One();
+		}
+
+		// ----------------------------------------------------------------------
+		// Constructor, canonical embedding of R^3 in SO^2
+		//
+		// Parameters:
+		//	x, y, z			-	individual coordinates of 3-D vector
+		// ----------------------------------------------------------------------
+		inline Vec4f(Float x, Float y, Float z) {
+			m_x = x;
+			m_y = y;
+			m_z = z;
+			m_w = Float::One();
+		}
+
+		// ----------------------------------------------------------------------
+		// Constructor
+		//
+		// Parameters:
+		//	coords			-	individual coordinates of 3-D vector
+		// ----------------------------------------------------------------------
+		inline Vec4f(const Float * coords) {
+			m_x = coords[0];
+			m_y = coords[1];
+			m_z = coords[2];
+			m_w = coords[3];
+		}
+
+		// ----------------------------------------------------------------------
+		// Constructor
+		//
+		// Parameters:
+		//	x, y, z, w			-	individual coordinates of 4-D vector
+		// ----------------------------------------------------------------------
+		inline Vec4f(Float x, Float y, Float z, Float w) {
+			m_x = x;
+			m_y = y;
+			m_z = z;
+			m_w = w;
+		}
+
+		// ----------------------------------------------------------------------
+		// Copy constructor
+		// ----------------------------------------------------------------------
+		inline Vec4f(const Vec4f& other) {
+			m_x = other.m_x;
+			m_y = other.m_y;
+			m_z = other.m_z;
+			m_w = other.m_w;
+		}
+
+		// ----------------------------------------------------------------------
+		// Constructor from fixed point
+		// ----------------------------------------------------------------------
+		inline Vec4f(const Vec4D& other) {
+			m_x = Float::fromX(other.x());
+			m_y = Float::fromX(other.y());
+			m_z = Float::fromX(other.z());
+			m_w = Float::fromX(other.w());
+		}
+
+
+		// ----------------------------------------------------------------------
+		// Assignment operator
+		// ----------------------------------------------------------------------
+		inline Vec4f& operator=(const Vec4f& other) {
+			m_x = other.m_x;
+			m_y = other.m_y;
+			m_z = other.m_z;
+			m_w = other.m_w;
+			return *this;
+		}
+
+		// ----------------------------------------------------------------------
+		// Operations
+		// ----------------------------------------------------------------------
+
+		inline Float operator*(const Vec4f& other) const {
+			return m_x * other.m_x +
+				m_y * other.m_y +
+				m_z * other.m_z +
+				m_w * other.m_w;
+		}
+
+		// ----------------------------------------------------------------------
+		// Element accessors
+		// ----------------------------------------------------------------------
+
+		inline Float x() const {
+			return m_x;
+		}
+
+		inline Float y() const {
+			return m_y;
+		}
+
+		inline Float z() const {
+			return m_z;
+		}
+
+		inline Float w() const {
+			return m_w;
+		}
+
+		inline void setX(Float value) {
+			m_x = value;
+		}
+
+		inline void setY(Float value) {
+			m_y = value;
+		}
+
+		inline void setZ(Float value) {
+			m_z = value;
+		}
+
+		inline void setW(Float value) {
 			m_w = value;
 		}
 	};
