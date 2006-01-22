@@ -40,7 +40,6 @@
 
 #include "OGLES.h"
 #include "fixed.h"
-#include "arithmetic.h"
 
 namespace EGL {
 
@@ -223,12 +222,9 @@ namespace EGL {
 		}
 	};
 
-
 	inline OGLES_API Vec3D operator*(EGL_Fixed factor, const Vec3D& vector) {
 		return vector * factor;
 	}
-
-
 
 	// --------------------------------------------------------------------------
 	// 4-D Vector class
@@ -465,15 +461,15 @@ namespace EGL {
 
 	class Vec4f {
 
-		Float 	m_x, m_y, m_z, m_w;
+		GLfloat m_coords[4];
 
 	public:
 		// ----------------------------------------------------------------------
 		// Constructor
 		// ----------------------------------------------------------------------
 		inline Vec4f() {
-			m_x = m_y = m_z = Float::Zero();
-			m_w = Float::One();
+			m_coords[0] = m_coords[1] = m_coords[2] = 0.0f;
+			m_coords[3] = 1.0f;
 		}
 
 		// ----------------------------------------------------------------------
@@ -482,11 +478,11 @@ namespace EGL {
 		// Parameters:
 		//	x, y, z			-	individual coordinates of 3-D vector
 		// ----------------------------------------------------------------------
-		inline Vec4f(Float x, Float y, Float z) {
-			m_x = x;
-			m_y = y;
-			m_z = z;
-			m_w = Float::One();
+		inline Vec4f(GLfloat x, GLfloat y, GLfloat z) {
+			m_coords[0] = x;
+			m_coords[1] = y;
+			m_coords[2] = z;
+			m_coords[3] = 1.0f;
 		}
 
 		// ----------------------------------------------------------------------
@@ -495,11 +491,9 @@ namespace EGL {
 		// Parameters:
 		//	coords			-	individual coordinates of 3-D vector
 		// ----------------------------------------------------------------------
-		inline Vec4f(const Float * coords) {
-			m_x = coords[0];
-			m_y = coords[1];
-			m_z = coords[2];
-			m_w = coords[3];
+		inline Vec4f(const GLfloat * coords) {
+			for (size_t index = 0; index < 4; ++index)
+				m_coords[index] = coords[index];
 		}
 
 		// ----------------------------------------------------------------------
@@ -508,31 +502,29 @@ namespace EGL {
 		// Parameters:
 		//	x, y, z, w			-	individual coordinates of 4-D vector
 		// ----------------------------------------------------------------------
-		inline Vec4f(Float x, Float y, Float z, Float w) {
-			m_x = x;
-			m_y = y;
-			m_z = z;
-			m_w = w;
+		inline Vec4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w) {
+			m_coords[0] = x;
+			m_coords[1] = y;
+			m_coords[2] = z;
+			m_coords[3] = w;
 		}
 
 		// ----------------------------------------------------------------------
 		// Copy constructor
 		// ----------------------------------------------------------------------
 		inline Vec4f(const Vec4f& other) {
-			m_x = other.m_x;
-			m_y = other.m_y;
-			m_z = other.m_z;
-			m_w = other.m_w;
+			for (size_t index = 0; index < 4; ++index)
+				m_coords[index] = other.m_coords[index];
 		}
 
 		// ----------------------------------------------------------------------
 		// Constructor from fixed point
 		// ----------------------------------------------------------------------
 		inline Vec4f(const Vec4D& other) {
-			m_x = Float::fromX(other.x());
-			m_y = Float::fromX(other.y());
-			m_z = Float::fromX(other.z());
-			m_w = Float::fromX(other.w());
+			m_coords[0] = EGL_FloatFromFixed(other.x());
+			m_coords[1] = EGL_FloatFromFixed(other.y());
+			m_coords[2] = EGL_FloatFromFixed(other.z());
+			m_coords[3] = EGL_FloatFromFixed(other.w());
 		}
 
 
@@ -540,10 +532,8 @@ namespace EGL {
 		// Assignment operator
 		// ----------------------------------------------------------------------
 		inline Vec4f& operator=(const Vec4f& other) {
-			m_x = other.m_x;
-			m_y = other.m_y;
-			m_z = other.m_z;
-			m_w = other.m_w;
+			for (size_t index = 0; index < 4; ++index)
+				m_coords[index] = other.m_coords[index];
 			return *this;
 		}
 
@@ -551,47 +541,57 @@ namespace EGL {
 		// Operations
 		// ----------------------------------------------------------------------
 
-		inline Float operator*(const Vec4f& other) const {
-			return m_x * other.m_x +
-				m_y * other.m_y +
-				m_z * other.m_z +
-				m_w * other.m_w;
+		inline GLfloat operator*(const Vec4f& other) const {
+			GLfloat sum = 0.0f;
+
+			for (int index = 0; index < 4; ++index)
+				sum += m_coords[index] * other.m_coords[index];
+
+			return sum;
 		}
 
 		// ----------------------------------------------------------------------
 		// Element accessors
 		// ----------------------------------------------------------------------
 
-		inline Float x() const {
-			return m_x;
+		inline GLfloat x() const {
+			return m_coords[0];
 		}
 
-		inline Float y() const {
-			return m_y;
+		inline GLfloat y() const {
+			return m_coords[1];
 		}
 
-		inline Float z() const {
-			return m_z;
+		inline GLfloat z() const {
+			return m_coords[2];
 		}
 
-		inline Float w() const {
-			return m_w;
+		inline GLfloat w() const {
+			return m_coords[3];
 		}
 
-		inline void setX(Float value) {
-			m_x = value;
+		inline void setX(GLfloat value) {
+			m_coords[0] = value;
 		}
 
-		inline void setY(Float value) {
-			m_y = value;
+		inline void setY(GLfloat value) {
+			m_coords[1] = value;
 		}
 
-		inline void setZ(Float value) {
-			m_z = value;
+		inline void setZ(GLfloat value) {
+			m_coords[2] = value;
 		}
 
-		inline void setW(Float value) {
-			m_w = value;
+		inline void setW(GLfloat value) {
+			m_coords[3] = value;
+		}
+
+		inline const GLfloat & operator[](size_t index) const {
+			return m_coords[index];
+		}
+
+		inline GLfloat & operator[](size_t index) {
+			return m_coords[index];
 		}
 	};
 
