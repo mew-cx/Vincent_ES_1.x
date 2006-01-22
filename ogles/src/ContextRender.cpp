@@ -959,10 +959,10 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 
 	// perform depth division
-	Float x = pos.m_ClipCoords.x();
-	Float y = pos.m_ClipCoords.y();
-	Float z = pos.m_ClipCoords.z();
-	Float w = pos.m_ClipCoords.w();
+	GLfloat x = pos.m_ClipCoords.x();
+	GLfloat y = pos.m_ClipCoords.y();
+	GLfloat z = pos.m_ClipCoords.z();
+	GLfloat w = pos.m_ClipCoords.w();
 
 	// fix possible rounding problems
 	if (x < -w)	x = -w;
@@ -973,22 +973,24 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 	if (z > w)	z = w;
 
 	// keep this value around for perspective-correct texturing
-	Float invDenominator = (w != Float::Zero()) ? Float::Inverse(w) : Float::Zero();
+	GLfloat invDenominator = (w != 0.0f) ? 1.0f / w : 0.0f;
 
 	// Scale 1/Z by 2^10 to avoid rounding problems during prespective correct
 	// interpolation
 	// See book by LaMothe for more detailed discussion on this
-	pos.m_WindowCoords.invZ = invDenominator.toX() << 10;
+	pos.m_WindowCoords.invZ = EGL_FixedFromFloat(invDenominator) << 10;
 
 	pos.m_WindowCoords.x = 
-		EGL_Mul((x * invDenominator).toX(), m_ViewportScale.x()) + m_ViewportOrigin.x();
+		EGL_Mul(EGL_FixedFromFloat(x * invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
 	pos.m_WindowCoords.y = 
-		EGL_Mul((y * invDenominator).toX(), m_ViewportScale.y()) + m_ViewportOrigin.y();
+		EGL_Mul(EGL_FixedFromFloat(y * invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
 	pos.m_WindowCoords.depth = 
-		EGL_CLAMP(EGL_Mul((z * invDenominator).toX(), m_DepthRangeFactor) + m_DepthRangeBase, 0, 0xffff);
+		EGL_CLAMP(EGL_Mul(EGL_FixedFromFloat(z * invDenominator), m_DepthRangeFactor) + m_DepthRangeBase, 0, 0xffff);
 
 	pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x1000) & ~0x1fff);
 	pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x1000) & ~0x1fff);
+	//pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x80) & ~0xff);
+	//pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x80) & ~0xff);
 }
 
 void Context :: GetClipPlanex(GLenum plane, GLfixed eqn[4]) {
@@ -998,10 +1000,10 @@ void Context :: GetClipPlanex(GLenum plane, GLfixed eqn[4]) {
 	}
 
 	size_t index = plane - GL_CLIP_PLANE0;
-	eqn[0] = m_ClipPlanes[index].x().toX();
-	eqn[1] = m_ClipPlanes[index].y().toX();
-	eqn[2] = m_ClipPlanes[index].z().toX();
-	eqn[3] = m_ClipPlanes[index].w().toX();
+	eqn[0] = EGL_FixedFromFloat(m_ClipPlanes[index].x());
+	eqn[1] = EGL_FixedFromFloat(m_ClipPlanes[index].y());
+	eqn[2] = EGL_FixedFromFloat(m_ClipPlanes[index].z());
+	eqn[3] = EGL_FixedFromFloat(m_ClipPlanes[index].w());
 }
 
 void Context :: ClipPlanex(GLenum plane, const GLfixed *equation) {

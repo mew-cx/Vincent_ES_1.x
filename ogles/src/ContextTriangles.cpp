@@ -40,7 +40,6 @@
 #include "stdafx.h"
 #include "Context.h"
 #include "fixed.h"
-#include "arithmetic.h"
 #include "Rasterizer.h"
 
 using namespace EGL;
@@ -468,20 +467,15 @@ void Context :: RenderTriangleFan(GLsizei count, const GLushort * indices) {
 
 namespace {
 
-	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed x1, Float coeff) {
-		Float x0f = Float::fromX(x0);
-		Float x1f = Float::fromX(x1);
-		Float complement = Float::One() - coeff;
-		Float result = x1f * complement + x0f * coeff;
-		return result.toX();
+	inline GLfloat Interpolate(GLfloat x0f, GLfloat x1f, GLfloat coeff) {
+		return x1f + (x0f - x1f) * coeff;
 	}
 
-	inline Float Interpolate(Float x0f, Float x1f, Float coeff) {
-		Float complement = Float::One() - coeff;
-		return x1f * complement + x0f * coeff;
+	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed x1, GLfloat coeff) {
+		return EGL_FixedFromFloat(Interpolate(EGL_FloatFromFixed(x0), EGL_FloatFromFixed(x1), coeff));
 	}
 
-	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, Float coeff) {
+	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, GLfloat coeff) {
 		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), coeff));
 		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), coeff));
 		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), coeff));
@@ -499,7 +493,7 @@ namespace {
 		result.m_FogDensity = Interpolate(dst.m_FogDensity, src.m_FogDensity, coeff);
 	}
 
-	inline void InterpolateWithEye(RasterPos& result, const RasterPos& dst, const RasterPos& src, Float coeff) {
+	inline void InterpolateWithEye(RasterPos& result, const RasterPos& dst, const RasterPos& src, GLfloat coeff) {
 		result.m_EyeCoords.setX(Interpolate(dst.m_EyeCoords.x(), src.m_EyeCoords.x(), coeff));
 		result.m_EyeCoords.setY(Interpolate(dst.m_EyeCoords.y(), src.m_EyeCoords.y(), coeff));
 		result.m_EyeCoords.setZ(Interpolate(dst.m_EyeCoords.z(), src.m_EyeCoords.z(), coeff));
@@ -508,66 +502,135 @@ namespace {
 		Interpolate(result, dst, src, coeff);
 	}
 
-	inline size_t ClipXLow(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+	inline size_t ClipLow(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary, size_t coord) {
 
-#		define SET_COORDINATE setX
-#		define COORDINATE x()
-#		include "TriangleClipperLow.inc"
-#		undef COORDINATE
-#		undef SET_COORDINATE
+		if (inputCount < 3) {
+			return 0;
+		}
+
+		RasterPos * previous = input[inputCount - 1];
+		RasterPos * current;
+		int resultCount = 0;
+
+		for (size_t index = 0; index < inputCount; ++index) {
+
+			current = input[index];
+
+			if (current->m_ClipCoords[coord] >= -current->m_ClipCoords.w()) {
+
+				if (previous->m_ClipCoords[coord] >= -previous->m_ClipCoords.w()) {
+					// line segment between previous and current is fully contained in cube
+					output[resultCount++] = current;
+					//previous = current;
+				} else {
+					// line segment between previous and current is intersected;
+					// create vertex at intersection, then add current
+					RasterPos & newVertex = *nextTemporary++;
+					output[resultCount++] = &newVertex;
+					
+					GLfloat c_x = current->m_ClipCoords[coord];
+					GLfloat c_w = current->m_ClipCoords.w();
+					GLfloat p_x = previous->m_ClipCoords[coord];
+					GLfloat p_w = previous->m_ClipCoords.w();
+					GLfloat num = p_w + p_x; 
+					GLfloat denom = (p_w + p_x) - (c_w + c_x);
+
+					Interpolate(newVertex, *current, *previous, num / denom);
+					newVertex.m_ClipCoords[coord] = -newVertex.m_ClipCoords.w();
+
+					output[resultCount++] = current;
+					//previous = current;
+				}
+			} else {
+				if (previous->m_ClipCoords[coord] >= -previous->m_ClipCoords.w()) {
+					// line segment between previous and current is intersected;
+					// create vertex at intersection and add it
+					RasterPos & newVertex = *nextTemporary++;
+					output[resultCount++] = &newVertex;
+					
+					GLfloat c_x = current->m_ClipCoords[coord];
+					GLfloat c_w = current->m_ClipCoords.w();
+					GLfloat p_x = previous->m_ClipCoords[coord];
+					GLfloat p_w = previous->m_ClipCoords.w();
+					GLfloat num = p_w + p_x; 
+					GLfloat denom = (p_w + p_x) - (c_w + c_x);
+					
+					Interpolate(newVertex, *current, *previous, num / denom);
+					newVertex.m_ClipCoords[coord] = -newVertex.m_ClipCoords.w();
+
+					//previous = current;
+				}
+			}
+
+			previous = current;
+		}
+
+		return resultCount;
 
 	}
 
-	inline size_t ClipXHigh(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+	inline size_t ClipHigh(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary, size_t coord) {
 
-#		define SET_COORDINATE setX
-#		define COORDINATE x()
-#		include "TriangleClipperHigh.inc"
-#		undef COORDINATE
-#		undef SET_COORDINATE
+		if (inputCount < 3) {
+			return 0;
+		}
+
+		RasterPos * previous = input[inputCount - 1];
+		RasterPos * current;
+		int resultCount = 0;
+
+		for (size_t index = 0; index < inputCount; ++index) {
+
+			current = input[index];
+
+			if (current->m_ClipCoords[coord] < current->m_ClipCoords.w()) {
+
+				if (previous->m_ClipCoords[coord] < previous->m_ClipCoords.w()) {
+					// line segment between previous and current is fully contained in cube
+					output[resultCount++] = current;
+				} else {
+					// line segment between previous and current is intersected;
+					// create vertex at intersection, then add current
+					RasterPos & newVertex = *nextTemporary++;
+					output[resultCount++] = &newVertex;
+					
+					GLfloat c_x = current->m_ClipCoords[coord];
+					GLfloat c_w = current->m_ClipCoords.w();
+					GLfloat p_x = previous->m_ClipCoords[coord];
+					GLfloat p_w = previous->m_ClipCoords.w();
+					GLfloat num = p_w - p_x; 
+					GLfloat denom = (p_w - p_x) - (c_w - c_x);
+					
+					Interpolate(newVertex, *current, *previous, num / denom); 
+					newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
+
+					output[resultCount++] = current;
+				}
+			} else {
+				if (previous->m_ClipCoords[coord] < previous->m_ClipCoords.w()) {
+					// line segment between previous and current is intersected;
+					// create vertex at intersection and add it
+					RasterPos & newVertex = *nextTemporary++;
+					output[resultCount++] = &newVertex;
+					
+					GLfloat c_x = current->m_ClipCoords[coord];
+					GLfloat c_w = current->m_ClipCoords.w();
+					GLfloat p_x = previous->m_ClipCoords[coord];
+					GLfloat p_w = previous->m_ClipCoords.w();
+					GLfloat num = p_w - p_x; 
+					GLfloat denom = (p_w - p_x) - (c_w - c_x);
+					
+					Interpolate(newVertex, *current, *previous, num / denom); 
+					newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
+				}
+			}
+
+			previous = current;
+		}
+
+		return resultCount;
 
 	}
-
-	inline size_t ClipYLow(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
-
-#		define SET_COORDINATE setY
-#		define COORDINATE y()
-#		include "TriangleClipperLow.inc"
-#		undef COORDINATE
-#		undef SET_COORDINATE
-
-	}
-
-	inline size_t ClipYHigh(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
-
-#		define SET_COORDINATE setY
-#		define COORDINATE y()
-#		include "TriangleClipperHigh.inc"
-#		undef COORDINATE
-#		undef SET_COORDINATE
-
-	}
-
-	inline size_t ClipZLow(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
-
-#		define SET_COORDINATE setZ
-#		define COORDINATE z()
-#		include "TriangleClipperLow.inc"
-#		undef COORDINATE
-#		undef SET_COORDINATE
-
-	}
-
-	inline size_t ClipZHigh(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
-
-#		define SET_COORDINATE setZ
-#		define COORDINATE z()
-#		include "TriangleClipperHigh.inc"
-#		undef COORDINATE
-#		undef SET_COORDINATE
-
-	}
-
 
 	size_t ClipUser(const Vec4f& plane, RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
 		if (inputCount < 3) {
@@ -582,11 +645,11 @@ namespace {
 
 			current = input[index];
 
-			Float c = Vec4f(current->m_EyeCoords) * plane;
-			Float p = Vec4f(previous->m_EyeCoords) * plane;
+			GLfloat c = Vec4f(current->m_EyeCoords) * plane;
+			GLfloat p = Vec4f(previous->m_EyeCoords) * plane;
 
-			if (c >= Float::Zero()) {
-				if (p >= Float::Zero()) {
+			if (c > 0.0f) {
+				if (p >= 0.0f) {
 					// line segment between previous and current is fully contained in cube
 					output[resultCount++] = current;
 				} else {
@@ -599,7 +662,7 @@ namespace {
 					output[resultCount++] = current;
 				}
 			} else {
-				if (p >= Float::Zero()) {
+				if (p > 0.0f) {
 					// line segment between previous and current is intersected;
 					// create vertex at intersection and add it
 					RasterPos & newVertex = *nextTemporary++;
@@ -657,9 +720,9 @@ void Context :: CullFace(GLenum mode) {
 }
 
 namespace {
-	inline Float Det3x3(Float x0, Float x1, Float x2,
-						Float y0, Float y1, Float y2,
-						Float z0, Float z1, Float z2) {
+	inline GLfloat Det3x3(GLfloat x0, GLfloat x1, GLfloat x2,
+						GLfloat y0, GLfloat y1, GLfloat y2,
+						GLfloat z0, GLfloat z1, GLfloat z2) {
 		return 
 			  x0 * y1 * z2
 			+ x1 * y2 * z0
@@ -672,29 +735,29 @@ namespace {
 
 inline bool Context :: IsCulled(RasterPos& a, RasterPos& b, RasterPos& c) {
 
-	Float x0 = a.m_ClipCoords.w();
-	Float x1 = a.m_ClipCoords.x();
-	Float x2 = a.m_ClipCoords.y();
+	GLfloat x0 = a.m_ClipCoords.w();
+	GLfloat x1 = a.m_ClipCoords.x();
+	GLfloat x2 = a.m_ClipCoords.y();
 								
-	Float y0 = b.m_ClipCoords.w();
-	Float y1 = b.m_ClipCoords.x();
-	Float y2 = b.m_ClipCoords.y();
+	GLfloat y0 = b.m_ClipCoords.w();
+	GLfloat y1 = b.m_ClipCoords.x();
+	GLfloat y2 = b.m_ClipCoords.y();
 								
-	Float z0 = c.m_ClipCoords.w();
-	Float z1 = c.m_ClipCoords.x();
-	Float z2 = c.m_ClipCoords.y();
+	GLfloat z0 = c.m_ClipCoords.w();
+	GLfloat z1 = c.m_ClipCoords.x();
+	GLfloat z2 = c.m_ClipCoords.y();
 
-	Float sign = 
+	GLfloat sign = 
 		Det3x3(a.m_ClipCoords.w(), a.m_ClipCoords.x(), a.m_ClipCoords.y(),
 			   b.m_ClipCoords.w(), b.m_ClipCoords.x(), b.m_ClipCoords.y(),
 			   c.m_ClipCoords.w(), c.m_ClipCoords.x(), c.m_ClipCoords.y());
 
 	switch (m_CullMode) {
 		case CullModeBack:
-			return (sign < Float::Zero()) ^ m_ReverseFaceOrientation;
+			return (sign < 0.0f) ^ m_ReverseFaceOrientation;
 
 		case CullModeFront:
-			return (sign > Float::Zero()) ^ m_ReverseFaceOrientation;
+			return (sign > 0.0f) ^ m_ReverseFaceOrientation;
 
 		default:
 		case CullModeBackAndFront:
@@ -756,12 +819,10 @@ void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
 		}
 	}
 
-	numVertices = ClipXLow(array1, numVertices, array2, tempVertices);
-	numVertices = ClipXHigh(array2, numVertices, array1, tempVertices);
-	numVertices = ClipYLow(array1, numVertices, array2, tempVertices);
-	numVertices = ClipYHigh(array2, numVertices, array1, tempVertices);
-	numVertices = ClipZLow(array1, numVertices, array2, tempVertices);
-	numVertices = ClipZHigh(array2, numVertices, array1, tempVertices);
+	for (size_t coord = 0; coord < 3; ++coord) {
+		numVertices = ClipLow(array1, numVertices, array2, tempVertices, coord);
+		numVertices = ClipHigh(array2, numVertices, array1, tempVertices, coord);
+	}
 
 	if (numVertices >= 3) {
 		ClipCoordsToWindowCoords(*array1[0]);

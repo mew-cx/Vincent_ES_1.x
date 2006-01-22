@@ -66,12 +66,12 @@
 				RasterPos & newVertex = *nextTemporary++;
 				output[resultCount++] = &newVertex;
 				
-				Float c_x = current->m_ClipCoords.COORDINATE;
-				Float c_w = current->m_ClipCoords.w();
-				Float p_x = previous->m_ClipCoords.COORDINATE;
-				Float p_w = previous->m_ClipCoords.w();
-				Float num = p_w - p_x; 
-				Float denom = (p_w - p_x) - (c_w - c_x);
+				GLfloat c_x = current->m_ClipCoords.COORDINATE;
+				GLfloat c_w = current->m_ClipCoords.w();
+				GLfloat p_x = previous->m_ClipCoords.COORDINATE;
+				GLfloat p_w = previous->m_ClipCoords.w();
+				GLfloat num = p_w - p_x; 
+				GLfloat denom = (p_w - p_x) - (c_w - c_x);
 				
 				Interpolate(newVertex, *current, *previous, num / denom); 
 				newVertex.m_ClipCoords.SET_COORDINATE(newVertex.m_ClipCoords.w());
@@ -85,12 +85,12 @@
 				RasterPos & newVertex = *nextTemporary++;
 				output[resultCount++] = &newVertex;
 				
-				Float c_x = current->m_ClipCoords.COORDINATE;
-				Float c_w = current->m_ClipCoords.w();
-				Float p_x = previous->m_ClipCoords.COORDINATE;
-				Float p_w = previous->m_ClipCoords.w();
-				Float num = p_w - p_x; 
-				Float denom = (p_w - p_x) - (c_w - c_x);
+				GLfloat c_x = current->m_ClipCoords.COORDINATE;
+				GLfloat c_w = current->m_ClipCoords.w();
+				GLfloat p_x = previous->m_ClipCoords.COORDINATE;
+				GLfloat p_w = previous->m_ClipCoords.w();
+				GLfloat num = p_w - p_x; 
+				GLfloat denom = (p_w - p_x) - (c_w - c_x);
 				
 				Interpolate(newVertex, *current, *previous, num / denom); 
 				newVertex.m_ClipCoords.SET_COORDINATE(newVertex.m_ClipCoords.w());
