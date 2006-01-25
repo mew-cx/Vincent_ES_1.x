@@ -144,30 +144,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "lines"=..\..\redbook\evc4\lines.vcp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "model"=..\..\redbook\evc4\model.vcp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
 Project: "platform"=.\platform.vcp - Package Owner=<4>
 
 Package=<5>
@@ -195,9 +171,6 @@ Package=<4>
     Project_Dep_Name fixed
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name OGLES
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name platform
     End Project Dependency
 }}}
@@ -212,9 +185,6 @@ Package=<5>
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name OGLES
-    End Project Dependency
 }}}
 
 ###############################################################################
