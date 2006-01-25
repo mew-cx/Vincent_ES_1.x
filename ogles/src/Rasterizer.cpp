@@ -1565,7 +1565,7 @@ void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
 	EGL_Fixed fogDensity = point.m_FogDensity;
 
 
-	if (!m_State->m_Point.SpriteEnabled && !m_State->m_Point.CoordReplaceEnabled) {
+	if (!m_State->m_Point.SpriteEnabled) {
 		EGL_Fixed tu[EGL_NUM_TEXTURE_UNITS], tv[EGL_NUM_TEXTURE_UNITS];
 
 		for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
@@ -1582,7 +1582,7 @@ void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
 		EGL_Fixed delta = EGL_Inverse(size);
 
 		for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			if (m_UseMipmap[unit]) {
+			if (m_UseMipmap[unit] && m_State->m_Texture[unit].CoordReplaceEnabled) {
 				EGL_Fixed maxDu = delta >> (16 - m_Texture[unit]->GetTexture(0)->GetLogWidth());
 				EGL_Fixed maxDv = delta >> (16 - m_Texture[unit]->GetTexture(0)->GetLogHeight());
 
@@ -1591,6 +1591,8 @@ void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
 				// we start with nearest/minification only selection; will add LINEAR later
 
 				m_RasterInfo.MipmapLevel[unit] = EGL_Min(Log2(rho), m_RasterInfo.MaxMipmapLevel[unit]);
+			} else {
+				m_RasterInfo.MipmapLevel[unit] = 0;
 			}
 		}
 
@@ -1599,12 +1601,18 @@ void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
 		for (I32 y = ymin, tv0 = delta / 2; y <= ymax; y++, tv0 += delta) {
 
 			for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-				tv[unit] = tv0;
+				if (m_State->m_Texture[unit].CoordReplaceEnabled)
+					tv[unit] = tv0;
+				else 
+					tv[unit] = point.m_TextureCoords[unit].tv;
 			}
 
 			for (I32 x = xmin, tu0 = delta / 2; x <= xmax; x++, tu0 += delta) {
 				for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-					tu[unit] = tu0;
+					if (m_State->m_Texture[unit].CoordReplaceEnabled)
+						tu[unit] = tu0;
+					else 
+						tu[unit] = point.m_TextureCoords[unit].tu;
 				}
 
 				Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
