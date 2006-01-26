@@ -345,32 +345,26 @@ namespace EGL {
 			PointState() {
 				SmoothEnabled = false;
 				SpriteEnabled = false;
-				CoordReplaceEnabled = false;
 			}
 
 			PointState(const PointState& other) {
 				SmoothEnabled = other.SmoothEnabled;
 				SpriteEnabled = other.SpriteEnabled;
-				CoordReplaceEnabled = other.CoordReplaceEnabled;
 			}
 
 			PointState& operator=(const PointState& other) {
 				SmoothEnabled = other.SmoothEnabled;
 				SpriteEnabled = other.SpriteEnabled;
-				CoordReplaceEnabled = other.CoordReplaceEnabled;
 				return *this;
 			}
 
 			bool operator==(const PointState& other) const {
 				return	SmoothEnabled == other.SmoothEnabled &&
-					SpriteEnabled == other.SpriteEnabled &&
-					(!SpriteEnabled ||
-					 CoordReplaceEnabled == other.CoordReplaceEnabled);
+					SpriteEnabled == other.SpriteEnabled;
 			}
 
 			bool				SmoothEnabled;
 			bool				SpriteEnabled;
-			bool				CoordReplaceEnabled;
 		}
 								m_Point;
 
@@ -490,6 +484,7 @@ namespace EGL {
 				CombineOpAlpha[1] = CombineOpAlpha[2] = TextureCombineOpSrcAlpha;
 
 				ScaleRGB = ScaleAlpha = EGL_ONE;
+				CoordReplaceEnabled = false;
 			}
 
 			TextureState(const TextureState& other) {
@@ -514,6 +509,7 @@ namespace EGL {
 
 				ScaleRGB = other.ScaleRGB;
 				ScaleAlpha = other.ScaleAlpha;
+				CoordReplaceEnabled = other.CoordReplaceEnabled;
 			}
 
 			TextureState& operator=(const TextureState& other) {
@@ -538,6 +534,7 @@ namespace EGL {
 
 				ScaleRGB = other.ScaleRGB;
 				ScaleAlpha = other.ScaleAlpha;
+				CoordReplaceEnabled = other.CoordReplaceEnabled;
 
 				return *this;
 			}
@@ -556,7 +553,8 @@ namespace EGL {
 					MipmapFilterMode != other.MipmapFilterMode ||
 					WrappingModeS != other.WrappingModeS ||
 					WrappingModeT != other.WrappingModeT ||
-					InternalFormat != other.InternalFormat)
+					InternalFormat != other.InternalFormat ||
+					CoordReplaceEnabled != other.CoordReplaceEnabled)
 					return false;
 
 				if (Mode == TextureModeCombine) {
@@ -592,6 +590,7 @@ namespace EGL {
 			WrappingMode			WrappingModeS;
 			WrappingMode			WrappingModeT;
 			TextureFormat			InternalFormat;
+			bool					CoordReplaceEnabled;
 		}
 								m_Texture[EGL_NUM_TEXTURE_UNITS];
 
@@ -1055,11 +1054,11 @@ namespace EGL {
 	}
 
 	inline void RasterizerState :: SetPointCoordReplaceEnabled(size_t unit, bool enabled) {
-		m_Point.CoordReplaceEnabled = enabled;
+		m_Texture[unit].CoordReplaceEnabled = enabled;
 	}
 
 	inline bool RasterizerState :: IsPointCoordReplaceEnabled(size_t unit) const {
-		return m_Point.CoordReplaceEnabled;
+		return m_Texture[unit].CoordReplaceEnabled;
 	}
 
 	inline bool RasterizerState :: IsEnabledFog() const {
