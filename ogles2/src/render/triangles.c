@@ -46,20 +46,6 @@ void GlesPrepareTriangles(State * state) {
 }
 
 /*
-** Calculate the interpolation vertex between vertices v0 and v1 at relative position coeff
-*/
-static void Interpolate(Vertex * newVertex, const Vertex * v0, const Vertex * v1, GLfloat coeff) {
-	GLuint index;
-
-	/*
-	** TODO: restrict this to the actual number of floats used
-	*/
-	for (index = 0; index < GLES_MAX_VARYING_FLOATS; ++index) {
-		newVertex->data[index] = v1->data[index] + (v0->data[index] - v1->data[index]) * coeff;
-	}
-}
-
-/*
 ** Clip a polygon along lower boundary of frustrum
 */
 static GLuint ClipLow(const Vertex * input[], GLuint inputCount, const Vertex * output[], Vertex ** nextTemporary, GLuint coord) {
@@ -97,7 +83,7 @@ static GLuint ClipLow(const Vertex * input[], GLuint inputCount, const Vertex * 
 				GLfloat num = p_w + p_x; 
 				GLfloat denom = (p_w + p_x) - (c_w + c_x);
 
-				Interpolate(newVertex, current, previous, num / denom);
+				GlesInterpolateVertex(newVertex, current, previous, num / denom);
 				newVertex->data[coord] = -newVertex->v.position.w;
 
 				output[resultCount++] = newVertex;
@@ -116,7 +102,7 @@ static GLuint ClipLow(const Vertex * input[], GLuint inputCount, const Vertex * 
 				GLfloat num = p_w + p_x; 
 				GLfloat denom = (p_w + p_x) - (c_w + c_x);
 				
-				Interpolate(newVertex, current, previous, num / denom);
+				GlesInterpolateVertex(newVertex, current, previous, num / denom);
 				newVertex->data[coord] = -newVertex->v.position.w;
 
 				output[resultCount++] = newVertex;
@@ -167,7 +153,7 @@ static GLuint ClipHigh(const Vertex * input[], GLuint inputCount, const Vertex *
 				GLfloat num = p_w - p_x; 
 				GLfloat denom = (p_w - p_x) - (c_w - c_x);
 
-				Interpolate(newVertex, current, previous, num / denom);
+				GlesInterpolateVertex(newVertex, current, previous, num / denom);
 				newVertex->data[coord] = newVertex->v.position.w;
 
 				output[resultCount++] = newVertex;
@@ -186,7 +172,7 @@ static GLuint ClipHigh(const Vertex * input[], GLuint inputCount, const Vertex *
 				GLfloat num = p_w - p_x; 
 				GLfloat denom = (p_w - p_x) - (c_w - c_x);
 				
-				Interpolate(newVertex, current, previous, num / denom);
+				GlesInterpolateVertex(newVertex, current, previous, num / denom);
 				newVertex->data[coord] = newVertex->v.position.w;
 
 				output[resultCount++] = newVertex;

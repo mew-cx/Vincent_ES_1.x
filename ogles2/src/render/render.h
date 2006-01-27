@@ -52,6 +52,7 @@
 void GlesPrepareRendering(State * state);
 void GlesSelectArrayElement(State * state, GLint index);
 void GlesProcessVertex(State * state, Vertex * result);
+void GlesInterpolateVertex(Vertex * newVertex, const Vertex * v0, const Vertex * v1, GLfloat coeff);
 
 /*
 ** --------------------------------------------------------------------------

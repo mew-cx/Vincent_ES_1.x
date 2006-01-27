@@ -80,4 +80,19 @@ void GlesSelectArrayElement(State * state, GLint index) {
 void GlesProcessVertex(State * state, Vertex * result) {
 }
 
+/*
+** Calculate the interpolation vertex between vertices v0 and v1 at relative position coeff
+*/
+void GlesInterpolateVertex(Vertex * newVertex, const Vertex * v0, const Vertex * v1, GLfloat coeff) {
+	GLuint index;
+
+	/*
+	** TODO: restrict this to the actual number of floats used
+	*/
+	for (index = 0; index < GLES_MAX_VARYING_FLOATS; ++index) {
+		newVertex->data[index] = v1->data[index] + (v0->data[index] - v1->data[index]) * coeff;
+	}
+}
+
+
 
