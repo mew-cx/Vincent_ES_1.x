@@ -49,7 +49,106 @@
 void GlesPrepareLines(State * state) {
 }
 
+static GLboolean Clip(const Vertex ** from, const Vertex ** to, Vertex ** nextTemporary, GLuint coord) {
+	if ((*from)->data[coord] < -(*from)->v.position.w) {
+		if ((*to)->data[coord] < -(*to)->v.position.w) {
+			return GL_FALSE;
+		} else {
+			Vertex * newVertex = (*nextTemporary)++;
+			GLfloat c_x = (*from)->data[coord];
+			GLfloat c_w = -(*from)->v.position.w;
+			GLfloat p_x = (*to)->data[coord];
+			GLfloat p_w = -(*to)->v.position.w;
+			
+			GLfloat num = p_w - p_x; 
+			GLfloat denom = (p_w - p_x) - (c_w - c_x);
+
+			GlesInterpolateVertex(newVertex, *from, *to, num / denom);
+			*from = newVertex;
+
+			return GL_TRUE;
+		}
+	} else if ((*from)->data[coord] > (*from)->v.position.w) {
+		if ((*to)->data[coord] > (*to)->v.position.w) {
+			return GL_FALSE;
+		} else {		
+			Vertex * newVertex = (*nextTemporary)++;
+			GLfloat c_x = (*from)->data[coord];
+			GLfloat c_w = (*from)->v.position.w;
+			GLfloat p_x = (*to)->data[coord];
+			GLfloat p_w = (*to)->v.position.w;
+			
+			GLfloat num = p_w - p_x; 
+			GLfloat denom = (p_w - p_x) - (c_w - c_x);
+
+			GlesInterpolateVertex(newVertex, *from, *to, num / denom);
+			*from = newVertex;
+
+			return GL_TRUE;
+		}
+	} else if ((*to)->data[coord] < -(*to)->v.position.w) {
+
+		Vertex * newVertex = (*nextTemporary)++;
+		GLfloat c_x = (*to)->data[coord];
+		GLfloat c_w = -(*to)->v.position.w;
+		GLfloat p_x = (*from)->data[coord];
+		GLfloat p_w = -(*from)->v.position.w;
+		
+		GLfloat num = p_w - p_x; 
+		GLfloat denom = (p_w - p_x) - (c_w - c_x);
+
+		GlesInterpolateVertex(newVertex, *to, *from, num / denom);
+		*to = newVertex;
+
+		return GL_TRUE;
+
+	} else if ((*to)->data[coord] > (*to)->v.position.w) {
+
+		Vertex * newVertex = (*nextTemporary)++;
+		GLfloat c_x = (*to)->data[coord];
+		GLfloat c_w = (*to)->v.position.w;
+		GLfloat p_x = (*from)->data[coord];
+		GLfloat p_w = (*from)->v.position.w;
+		
+		GLfloat num = p_w - p_x; 
+		GLfloat denom = (p_w - p_x) - (c_w - c_x);
+
+		GlesInterpolateVertex(newVertex, *to, *from, num / denom);
+		*to = newVertex;
+
+		return GL_TRUE;
+
+	} else {
+		// no clipping
+		return GL_TRUE;
+	}
+}
+
+
 void GlesRenderLine(State * state, const Vertex * p1, const Vertex * p2) {
+
+	Vertex temporary[16];					/* space for vertices introduced through clipping	*/
+	Vertex * nextTemporary = temporary;		/* pointer for next temporary vertex to use			*/
+
+	if (Clip(&p1, &p2, &nextTemporary, 0) &&
+		Clip(&p1, &p2, &nextTemporary, 1) &&
+		Clip(&p1, &p2, &nextTemporary, 2)) {
+
+		// TODO
+#if 0
+		ClipCoordsToWindowCoords(*pFrom);
+		ClipCoordsToWindowCoords(*pTo);
+
+		if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
+			pFrom->m_Color = pFrom->m_FrontColor;
+		} else {
+			pFrom->m_Color = pTo->m_FrontColor;
+		}
+
+		pTo->m_Color = pTo->m_FrontColor;
+		m_Rasterizer->RasterLine(*pFrom, *pTo);
+# endif
+	}
 }
 
 /*

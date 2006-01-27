@@ -46,6 +46,17 @@ void GlesPreparePoints(State * state) {
 }
 
 void GlesRenderPoint(State * state, const Vertex * p1) {
+	if (p1->v.position.x < -p1->v.position.w ||
+		p1->v.position.x >  p1->v.position.w ||
+		p1->v.position.y < -p1->v.position.w ||
+		p1->v.position.y >  p1->v.position.w ||
+		p1->v.position.z < -p1->v.position.w ||
+		p1->v.position.z >  p1->v.position.w) 
+		return;
+
+#if 0
+	// TODO raster the point
+#endif
 }
 
 void GlesRenderPoints(State * state, GLint first, GLsizei count, GLenum type, const void * indices) {
