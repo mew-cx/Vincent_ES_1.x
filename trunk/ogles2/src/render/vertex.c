@@ -94,5 +94,38 @@ void GlesInterpolateVertex(Vertex * newVertex, const Vertex * v0, const Vertex *
 	}
 }
 
+/*
+** Transform the vertex from clip space to viewport space
+*/
+void GlesViewportTransform(State * state, RasterVertex * raster, Vertex * vertex) {
+	GLfloat x = vertex->v.position.x;
+	GLfloat y = vertex->v.position.y;
+	GLfloat z = vertex->v.position.z;
+	GLfloat w = vertex->v.position.w;
+	GLfloat depth, invW;
 
+	// fix possible rounding problems
+	if (x < -w)	x = -w;
+	if (x > w)	x = w;
+	if (y < -w)	y = -w;
+	if (y > w)	y = w;
+	if (z < -w)	z = -w;
+	if (z > w)	z = w;
+
+	// keep this value around for perspective-correct texturing
+	invW = (w != 0.0f) ? 1.0f / w : 0.0f;
+
+	// Scale 1/Z by 2^10 to avoid rounding problems during prespective correct
+	// interpolation
+	// See book by LaMothe for more detailed discussion on this
+	raster->screen.w = invW;
+
+	raster->screen.x = invW * x * state->viewportScale.x + state->viewportOrigin.x;
+	raster->screen.y = invW * y * state->viewportScale.y + state->viewportOrigin.y;
+	depth			 = invW * z * state->depthScale      + state->depthOrigin;
+
+	raster->screen.z = GLES_CLAMP(depth);
+
+	raster->varyingData = vertex->data;
+}
 

@@ -1,14 +1,11 @@
-#ifndef GLES_RASTER_RASTER_H
-#define GLES_RASTER_RASTER_H 1
-
 /*
 ** ==========================================================================
 **
-** raster.h			Rasterizer Function Declarations
+** rline.c			Line Rasterization
 **
 ** --------------------------------------------------------------------------
 **
-** 11-12-2005		Hans-Martin Will	initial version
+** 01-27-2006		Hans-Martin Will	initial version
 **
 ** --------------------------------------------------------------------------
 **
@@ -39,17 +36,11 @@
 ** ==========================================================================
 */
 
+#include <GLES/gl.h>
+#include "config.h"
+#include "platform/platform.h"
+#include "raster/raster.h"
+#include "fragment/fragment.h"
 
-#include "gl/state.h"
-
-
-void GlesRasterPoint(State * state, const RasterVertex * p0);
-
-void GlesRasterLine(State * state, const RasterVertex * p0, const RasterVertex * p1);
-
-void GlesRasterScanline(State * state);
-
-void GlesRasterTriangle(State * state, const RasterVertex * p0, const RasterVertex * p1, const RasterVertex * p2);
-
-
-#endif /* ndef GLES_RASTER_RASTER_H */
+void GlesRasterLine(State * state, const RasterVertex * p0, const RasterVertex * p1) {
+}

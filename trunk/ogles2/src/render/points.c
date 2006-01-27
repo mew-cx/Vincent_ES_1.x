@@ -40,12 +40,15 @@
 #include "config.h"
 #include "platform/platform.h"
 #include "render/render.h"
+#include "raster/raster.h"
 
 
 void GlesPreparePoints(State * state) {
 }
 
 void GlesRenderPoint(State * state, const Vertex * p1) {
+	RasterVertex a;
+
 	if (p1->v.position.x < -p1->v.position.w ||
 		p1->v.position.x >  p1->v.position.w ||
 		p1->v.position.y < -p1->v.position.w ||
@@ -54,9 +57,26 @@ void GlesRenderPoint(State * state, const Vertex * p1) {
 		p1->v.position.z >  p1->v.position.w) 
 		return;
 
+	GlesViewportTransform(state, &a, p1);
 #if 0
-	// TODO raster the point
+	point.m_Color = point.m_FrontColor;
+
+	if (m_PointSizeAttenuate) {
+		EGL_Fixed eyeDistance = EGL_Abs(point.m_EyeCoords.z());
+
+		EGL_Fixed factor =
+			EGL_InvSqrt(m_PointDistanceAttenuation[0] +
+						EGL_Mul(m_PointDistanceAttenuation[1], eyeDistance) +
+						EGL_Mul(m_PointDistanceAttenuation[2], EGL_Mul(eyeDistance, eyeDistance)));
+
+		size = EGL_Mul(size, factor);
+	}
+
+	// as long as we do not have anti-aliasing, determining the effective point size here is fine
+	EGL_Fixed pointSize = EGL_Max(size, EGL_ONE);
 #endif
+
+	GlesRasterPoint(state, &a);
 }
 
 void GlesRenderPoints(State * state, GLint first, GLsizei count, GLenum type, const void * indices) {

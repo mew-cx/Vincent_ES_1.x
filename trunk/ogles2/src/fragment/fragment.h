@@ -43,10 +43,9 @@
 #include "gl/state.h"
 
 
+#if 0
 typedef struct
 {
-	// needs access to currently active read/write surface
-	// needs access to the different texture units
 }
 FragmentProcessor;
 
@@ -56,7 +55,8 @@ typedef struct
 }
 Fragment;
 
-GLvoid GenFragment(FragmentProcessor * fragProc, Fragment * fragment);
+void GenFragment(FragmentProcessor * fragProc, Fragment * fragment);
+#endif
 
 
 #endif /* ndef GLES_FRAGMENT_FRAGMENT_H */
