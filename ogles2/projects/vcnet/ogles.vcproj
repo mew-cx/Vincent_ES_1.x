@@ -269,6 +269,18 @@
 					RelativePath="..\..\src\raster\readme.txt"
 					>
 				</File>
+				<File
+					RelativePath="..\..\src\raster\rline.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\raster\rpoint.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\raster\rtriangle.c"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="render"
