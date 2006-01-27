@@ -40,6 +40,7 @@
 #include "config.h"
 #include "platform/platform.h"
 #include "render/render.h"
+#include "raster/raster.h"
 
 /*
 ** --------------------------------------------------------------------------
@@ -129,16 +130,17 @@ void GlesRenderLine(State * state, const Vertex * p1, const Vertex * p2) {
 
 	Vertex temporary[16];					/* space for vertices introduced through clipping	*/
 	Vertex * nextTemporary = temporary;		/* pointer for next temporary vertex to use			*/
+	RasterVertex a, b;
 
 	if (Clip(&p1, &p2, &nextTemporary, 0) &&
 		Clip(&p1, &p2, &nextTemporary, 1) &&
 		Clip(&p1, &p2, &nextTemporary, 2)) {
 
 		// TODO
-#if 0
-		ClipCoordsToWindowCoords(*pFrom);
-		ClipCoordsToWindowCoords(*pTo);
+		GlesViewportTransform(state, &a, p1);
+		GlesViewportTransform(state, &b, p2);
 
+#if 0
 		if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
 			pFrom->m_Color = pFrom->m_FrontColor;
 		} else {
@@ -146,8 +148,8 @@ void GlesRenderLine(State * state, const Vertex * p1, const Vertex * p2) {
 		}
 
 		pTo->m_Color = pTo->m_FrontColor;
-		m_Rasterizer->RasterLine(*pFrom, *pTo);
 # endif
+		GlesRasterLine(state, &a, &b);
 	}
 }
 

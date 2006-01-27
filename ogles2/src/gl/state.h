@@ -51,6 +51,14 @@
 
 /*
 ** --------------------------------------------------------------------------
+** Macros
+** --------------------------------------------------------------------------
+*/
+
+#define GLES_CLAMP(v)  ((v) > 1.0f ? 1.0f : (v) < 0.0f ? 0.0f : (v))
+
+/*
+** --------------------------------------------------------------------------
 ** Geometry Types
 ** --------------------------------------------------------------------------
 */
@@ -144,6 +152,11 @@ typedef union Vertex {
 	}				v;
 	GLfloat			data[GLES_MAX_VARYING_FLOATS];
 } Vertex;
+
+typedef struct RasterVertex {
+	Vec4f			screen;					/* screen coordinates			*/
+	const GLfloat *	varyingData;			/* varying vertex data			*/
+} RasterVertex;
 
 /*
 ** --------------------------------------------------------------------------
@@ -413,6 +426,11 @@ typedef struct State {
 	Rect			viewport;				/* viewport area				*/
 	GLclampf		zNear;					/* depth range near plane		*/
 	GLclampf		zFar;					/* depth range far plane		*/
+
+	Vec2f			viewportOrigin;			/* derived state				*/
+	Vec2f			viewportScale;			/* derived state				*/
+	GLfloat			depthOrigin;			/* derived state				*/
+	GLfloat			depthScale;				/* derived state				*/
 
 	/* general settings */
 	GLuint			packAlignment;			/* image pixel packing			*/

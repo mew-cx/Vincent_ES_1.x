@@ -40,6 +40,7 @@
 #include "config.h"
 #include "platform/platform.h"
 #include "render/render.h"
+#include "raster/raster.h"
 
 
 void GlesPrepareTriangles(State * state) {
@@ -193,7 +194,8 @@ void GlesRenderTriangle(State * state, const Vertex * p1, const Vertex * p2, con
 	const Vertex * array2[16];				/* list of vertices									*/
 	Vertex * nextTemporary = temporary;		/* pointer for next temporary vertex to use			*/
 	GLuint numVertices = 3;					/* number of vertices								*/
-	GLuint coord;							/* index of coordinate to clip						*/
+	GLuint coord, index;					/* index of coordinate to clip						*/
+	RasterVertex a, b, c;					/* screen coordinates								*/
 
 	/*
 	** Cull triangle based on orientation
@@ -244,15 +246,14 @@ void GlesRenderTriangle(State * state, const Vertex * p1, const Vertex * p2, con
 	*/
 
 	if (numVertices >= 3) {
-#if 0
-		ClipCoordsToWindowCoords(*array1[0]);
-		ClipCoordsToWindowCoords(*array1[1]);
+		GlesViewportTransform(state, &a, array1[0]);
+		GlesViewportTransform(state, &b, array1[1]);
 
-		for (size_t index = 2; index < numVertices; ++index) {
-			ClipCoordsToWindowCoords(*array1[index]);
-			m_Rasterizer->RasterTriangle(*array1[0], *array1[index - 1], *array1[index]);
+		for (index = 2; index < numVertices; ++index) {
+			GlesViewportTransform(state, &c, array1[index]);
+			GlesRasterTriangle(state, &a, &b, &c);
+			b = c;
 		}
-#endif
 	}
 }
 
