@@ -43,13 +43,11 @@
 #include "gl/state.h"
 
 
-void GlesRasterPoint(State * state, const RasterVertex * p0);
+void GlesRasterPoint(State * state, const RasterVertex * p);
 
-void GlesRasterLine(State * state, const RasterVertex * p0, const RasterVertex * p1);
+void GlesRasterLine(State * state, const RasterVertex * p1, const RasterVertex * p2);
 
-void GlesRasterScanline(State * state);
-
-void GlesRasterTriangle(State * state, const RasterVertex * p0, const RasterVertex * p1, const RasterVertex * p2);
+void GlesRasterTriangle(State * state, const RasterVertex * p1, const RasterVertex * p2, const RasterVertex * p3);
 
 
 #endif /* ndef GLES_RASTER_RASTER_H */

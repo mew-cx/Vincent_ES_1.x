@@ -1,11 +1,14 @@
+#ifndef GLES_RASTER_RUTIL_H
+#define GLES_RASTER_RUTIL_H 1
+
 /*
 ** ==========================================================================
 **
-** processor.c		A virtual vertex/fragment processor
+** rutil.h			Rasterizer Utility Declarations
 **
 ** --------------------------------------------------------------------------
 **
-** 10-21-2005		Hans-Martin Will	initial version
+** 11-28-2005		Hans-Martin Will	initial version
 **
 ** --------------------------------------------------------------------------
 **
@@ -37,17 +40,26 @@
 */
 
 
-#include <GLES/gl.h>
-#include "config.h"
 #include "platform/platform.h"
-#include "processor/processor.h"
 
 
-void Execute(Processor * proc,				/* the processor object			*/
-			 GLES_gpumem_t ip,				/* instruction pointer			*/
-			 GLES_gpumem_t input,			/* input data area base			*/
-			 GLES_gpumem_t output,			/* output data area base		*/
-			 GLES_gpumem_t params,			/* parameter area base			*/
-			 GLES_gpumem_t constants) {		/* constant area base			*/
+/*
+** --------------------------------------------------------------------------
+** Constants
+** --------------------------------------------------------------------------
+*/
 
-}
+/* 1.0f */
+#define GLES_ONE			1.0f
+
+/* 1.0f - FLT_EPSILON */
+#define GLES_ONE_MINUS_EPS	(1.0f - FLT_EPSILON)
+
+/* 0.5f */
+#define GLES_HALF			0.5f
+
+/* 0.5f - FLT_EPSILON/2 */
+#define GLES_HALF_MINUS_EPS	(0.5f * (1.0f - FLT_EPSILON))
+
+
+#endif /* ndef GLES_RASTER_RUTIL_H */

@@ -197,17 +197,18 @@ void GlesRenderTriangle(State * state, const Vertex * p1, const Vertex * p2, con
 	GLuint coord, index;					/* index of coordinate to clip						*/
 	RasterVertex a, b, c;					/* screen coordinates								*/
 
+	GLfloat det =
+		  p1->v.position.w * p2->v.position.x * p3->v.position.y
+		+ p2->v.position.w * p3->v.position.x * p1->v.position.y
+		+ p3->v.position.w * p1->v.position.x * p2->v.position.y
+		- p1->v.position.w * p3->v.position.x * p2->v.position.y
+		- p2->v.position.w * p1->v.position.x * p3->v.position.y
+		- p3->v.position.w * p2->v.position.x * p1->v.position.y;
+
 	/*
 	** Cull triangle based on orientation
 	*/
 	if (state->cullFaceEnabled) {
-		GLfloat det =
-			  p1->v.position.w * p2->v.position.x * p3->v.position.y
-			+ p2->v.position.w * p3->v.position.x * p1->v.position.y
-			+ p3->v.position.w * p1->v.position.x * p2->v.position.y
-			- p1->v.position.w * p3->v.position.x * p2->v.position.y
-			- p2->v.position.w * p1->v.position.x * p3->v.position.y
-			- p3->v.position.w * p2->v.position.x * p1->v.position.y;
 
 		switch (state->cullMode) {
 			case GL_BACK:
@@ -229,12 +230,19 @@ void GlesRenderTriangle(State * state, const Vertex * p1, const Vertex * p2, con
 	}
 
 	/*
-	** Clip triangle to frustrum
+	** Clip triangle to frustrum; First let's arrange the vertices in CCW order,
+	** clipping is going to preserve the orientation
 	*/
 
 	array1[0] = p1;
-	array1[1] = p2;
-	array1[2] = p3;
+
+	if (det > 0) {
+		array1[1] = p2;
+		array1[2] = p3;
+	} else {
+		array1[2] = p2;
+		array1[1] = p3;
+	}
 
 	for (coord = 0; coord < 3; ++coord) {
 		numVertices = ClipLow(array1, numVertices, array2, &nextTemporary, coord);

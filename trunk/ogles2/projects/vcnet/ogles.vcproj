@@ -281,6 +281,10 @@
 					RelativePath="..\..\src\raster\rtriangle.c"
 					>
 				</File>
+				<File
+					RelativePath="..\..\src\raster\rutil.h"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="render"

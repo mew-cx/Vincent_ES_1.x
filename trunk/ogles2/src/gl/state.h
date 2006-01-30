@@ -318,6 +318,54 @@ typedef struct Program {
 
 /*
 ** --------------------------------------------------------------------------
+** Rendering Surface
+** --------------------------------------------------------------------------
+*/
+
+/*
+** TODO: Maybe we should introduce a lookup table of surface format
+** descriptors, this would include
+**	the GL enumeration constant identifying this type
+**	the number of bits
+**	the base internal format if applicable
+**	the number of bytes
+**	the alignment / byte steping value
+*/
+
+typedef struct Surface {
+	GLES_gpumem_t	colorBuffer;		/* color buffer address				*/
+	GLES_gpumem_t	depthBuffer;		/* depth buffer address				*/
+	GLES_gpumem_t	stencilBuffer;		/* stencil buffer address			*/
+
+	GLuint			width, height;		/* surface dimensions				*/
+
+	GLenum			colorFormat;		/* format of color buffer:			*/
+										/*  value		int. format bits	*/
+										/*  ----------  ----------- ----	*/
+										/*	GL_RGBA8	RGBA		32		*/
+										/*	GL_RGBA4	RGBA		16		*/
+										/*	GL_RGB5_A1	RGBA		16		*/
+										/*	GL_RGB8		RGB			24		*/
+										/*	GL_RGB565	RGB			16		*/
+
+	GLenum			depthFormat;		/* format of depth buffer:			*/
+										/*  value					bits	*/
+										/*	---------------------	----	*/
+										/*	GL_DEPTH_COMPONENT_16	16		*/
+										/*	GL_DEPTH_COMPONENT_24	24		*/
+										/*	GL_DEPTH_COMPONENT_32	32		*/
+
+	GLenum			stencilFormat;		/* format of stencil buffer:		*/
+										/*  value					bits	*/
+										/*	---------------------	----	*/
+										/*	GL_STENCIL_INDEX1_OES	1		*/
+										/*	GL_STENCIL_INDEX4_OES	4		*/
+										/*	GL_STENCIL_INDEX8_OES	8		*/
+										/*	GL_STENCIL_INDEX16_OES	16		*/
+} Surface;
+
+/*
+** --------------------------------------------------------------------------
 ** GL State
 ** --------------------------------------------------------------------------
 */

@@ -80,6 +80,7 @@
 #define GLES_MAX_VERTEX_QUEUE	12		/* size of processed vertices queue	*/
 										/* should be multiple of 2 and 3	*/
 
+#define GLES_RASTER_BLOCK_SIZE	8		/* block size used in rasterizer	*/
 
 /*
 ** --------------------------------------------------------------------------
