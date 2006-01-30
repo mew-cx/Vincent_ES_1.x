@@ -54,6 +54,10 @@ static GLES_INLINE GLint max(GLint a, GLint b, GLint c) {
 	return d > c ? d : c;
 }
 
+static GLES_INLINE GLfloat det2x2(GLfloat a11, GLfloat a12, GLfloat a21, GLfloat a22) {
+	return a11 * a22 - a12 * a21;
+}
+
 typedef struct {
 	GLES_gpumem_t	colorBuffer;		/* color buffer address	for pixels	*/
 	GLES_gpumem_t	depthBuffer;		/* depth buffer address	for pixels	*/
@@ -115,6 +119,12 @@ void GlesRasterTriangle(State * state, const RasterVertex * p1, const RasterVert
     GLint C3 = DY31 * X3 - DX31 * Y3;
 
 	GLint x, y, ix, iy; // loop variables
+	GLuint index;
+
+	GLfloat dVaryingDx[GLES_MAX_VARYING_FLOATS];
+	GLfloat dVaryingDy[GLES_MAX_VARYING_FLOATS];
+
+	GLfloat area, invArea;
 
     // Correct for fill convention
 	if (DY12 < 0 || (DY12 == 0 && DX12 > 0)) {
@@ -130,6 +140,25 @@ void GlesRasterTriangle(State * state, const RasterVertex * p1, const RasterVert
 	}
 
 	// setup of interpolation of varying variables goes here
+	// TODO: make this perspective correct
+
+	area = 
+		det2x2(p2->screen.x - p1->screen.x, p2->screen.y - p1->screen.y,
+			   p3->screen.x - p1->screen.x, p3->screen.y - p1->screen.y);
+
+	invArea = 1.0f / area;
+
+	for (index = 0; index < GLES_MAX_VARYING_FLOATS; ++index) {
+		dVaryingDx[index] = 
+			det2x2(p2->varyingData[index] - p1->varyingData[index], p2->screen.y - p1->screen.y,
+				   p3->varyingData[index] - p1->varyingData[index], p3->screen.y - p1->screen.y) * invArea;
+		dVaryingDy[index] = 
+			det2x2(p2->varyingData[index] - p1->varyingData[index], p2->screen.x - p1->screen.x,
+				   p3->varyingData[index] - p1->varyingData[index], p3->screen.x - p1->screen.x) * invArea;
+	}
+
+	// TODO: set up variables initialized to the upper leftcorner of the rectangle scanned
+	// TODO: update the interpolated values
 
     // Loop through blocks
     for(y = miny; y < maxy; y += GLES_RASTER_BLOCK_SIZE) {
