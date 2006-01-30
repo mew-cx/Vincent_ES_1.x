@@ -72,10 +72,10 @@ void FreeClient(void * ptr) {
 	free(ptr);
 }
 
-OGLESgpuaddr MallocServer(GLsizeiptr size) {
+GLES_gpumem_t MallocServer(GLsizeiptr size) {
 	return malloc(size);
 }
 
-void FreeServer(OGLESgpuaddr ptr) {
+void FreeServer(GLES_gpumem_t ptr) {
 	free(ptr);
 }

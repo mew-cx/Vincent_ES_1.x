@@ -42,9 +42,22 @@
 
 #include <stddef.h>
 #include <assert.h>
+#include <math.h>
+#include <float.h>
 
 #define GLES_ASSERT(c) assert(c)
 
+#ifdef _MSC_VER
+#	define GLES_INLINE	__inline
+#else /* GNU CC - what's the identifier? */
+#	define GLES_INLINE	__inline__
+#endif
+
+/*
+** --------------------------------------------------------------------------
+** Constants
+** --------------------------------------------------------------------------
+*/
 
 /*
 ** --------------------------------------------------------------------------
@@ -52,7 +65,7 @@
 ** --------------------------------------------------------------------------
 */
 
-typedef void *	OGLESgpuaddr;		/* Memory in (virtual) CPU		*/
+typedef void *	GLES_gpumem_t;		/* Memory in (virtual) CPU		*/
 
 /*
 ** --------------------------------------------------------------------------
@@ -73,8 +86,8 @@ void GLES_MEMMOVE(void * dst, const void * src, GLsizeiptr size);
 void * MallocClient(GLsizeiptr size);
 void FreeClient(void * ptr);
 
-OGLESgpuaddr MallocServer(GLsizeiptr size);
-void FreeServer(OGLESgpuaddr ptr);
+GLES_gpumem_t MallocServer(GLsizeiptr size);
+void FreeServer(GLES_gpumem_t ptr);
 
 
 #endif /* ndef GLES_PLATFORM_PLATFORM_H */

@@ -42,5 +42,5 @@
 #include "raster/raster.h"
 #include "fragment/fragment.h"
 
-void GlesRasterPoint(State * state, const RasterVertex * p0) {
+void GlesRasterPoint(State * state, const RasterVertex * p) {
 }

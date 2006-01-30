@@ -698,7 +698,7 @@ glCopyTexSubImage3D (GLenum target, GLint level, GLint xoffset, GLint yoffset, G
 }
 
 GL_API void GL_APIENTRY 
-glTexImage2D (GLenum target, GLint level, GLint internalformat, 
+glTexImage2D (GLenum target, GLint level, GLenum internalformat, 
 			  GLsizei width, GLsizei height, GLint border, 
 			  GLenum format, GLenum type, const void *pixels) {
 
