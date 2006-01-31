@@ -423,10 +423,13 @@ typedef struct State {
 	GLenum			depthFunc;				/* depth test function			*/
 	GLboolean		depthMask;				/* depth write mask				*/
 
-#if 0
 	/* no multi-sampling support at this point */
+	GLboolean		multiSampleEnabled;		/* multi-sampling?				*/
+	GLboolean		sampleAlphaToCoverageEnabled;
+	GLboolean		sampleAlphaToOneEnabled;
+	GLboolean		sampleCoverageEnabled;
 	GLclampf		sampleCovValue;			/* sample coverage value		*/
-#endif
+	GLboolean		sampleCovInvert;		/* invert flag					*/
 
 	GLboolean		scissorTestEnabled;		/* is the scissor test enabled	*/
 	Rect			scissorRect;			/* scissor rectangle			*/
@@ -504,11 +507,13 @@ extern State OglesGlobalState;
 ** --------------------------------------------------------------------------
 */
 
-void RecordError(State * state, GLenum error);
+void GlesRecordError(State * state, GLenum error);
 
-void RecordInvalidEnum(State * state);
-void RecordInvalidValue(State * state);
-void RecordOutOfMemory(State * state);
+void GlesRecordInvalidEnum(State * state);
+void GlesRecordInvalidValue(State * state);
+void GlesRecordOutOfMemory(State * state);
+
+GLboolean GlesValidateEnum(State * state, GLenum value, const GLenum * values, GLuint numValues);
 
 void InitState(State * state);
 

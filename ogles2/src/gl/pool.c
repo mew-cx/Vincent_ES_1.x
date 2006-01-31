@@ -69,7 +69,7 @@ void Pool_Initialize(ObjectPool * pool, GLuint initialSize) {
 	pool->objects = malloc(sizeof(void *) * initialSize);
 
 	if (!pool->objects) {
-		RecordError(GLES_GET_STATE(), GL_OUT_OF_MEMORY);
+		GlesRecordError(GLES_GET_STATE(), GL_OUT_OF_MEMORY);
 		return;
 	}
 

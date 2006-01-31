@@ -68,14 +68,14 @@ GL_API GLuint GL_APIENTRY glCreateShader (GLenum type) {
 	GLuint shader;
 
 	if (type != GL_VERTEX_SHADER && type != GL_FRAGMENT_SHADER) {
-		RecordInvalidEnum(state);
+		GlesRecordInvalidEnum(state);
 		return 0;
 	}
 
 	shader = BindObject(state->shaderFreeListHead, state->shaderFreeList, GLES_MAX_SHADERS);
 
 	if (shader == NIL) {
-		RecordError(state, GL_OUT_OF_MEMORY);
+		GlesRecordError(state, GL_OUT_OF_MEMORY);
 		return 0;
 	} else {
 		InitShader(state->shaders + shader, type);

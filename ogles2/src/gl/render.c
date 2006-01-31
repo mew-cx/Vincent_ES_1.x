@@ -59,14 +59,14 @@ GL_API void GL_APIENTRY glDrawArrays (GLenum mode, GLint first, GLsizei count) {
 	State * state = GLES_GET_STATE();
 
 	if (count < 0) {
-		RecordInvalidValue(state);
+		GlesRecordInvalidValue(state);
 		return;
 	}
 
 	/*
 	if (!m_VertexArrayEnabled ||
 		(m_MatrixPaletteEnabled && (!m_MatrixIndexArrayEnabled || !m_WeightArrayEnabled))) {
-		RecordError(GL_INVALID_OPERATION);
+		GlesRecordError(GL_INVALID_OPERATION);
 		return;
 	}
 
@@ -104,7 +104,7 @@ GL_API void GL_APIENTRY glDrawArrays (GLenum mode, GLint first, GLsizei count) {
 		break;
 
 	default:
-		RecordInvalidEnum(state);
+		GlesRecordInvalidEnum(state);
 		return;
 	}
 }
@@ -114,14 +114,14 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 	State * state = GLES_GET_STATE();
 
 	if (count < 0) {
-		RecordInvalidValue(state);
+		GlesRecordInvalidValue(state);
 		return;
 	}
 
 	/*
 	if (!m_VertexArrayEnabled ||
 		(m_MatrixPaletteEnabled && (!m_MatrixIndexArrayEnabled || !m_WeightArrayEnabled))) {
-		RecordError(GL_INVALID_OPERATION);
+		GlesRecordError(GL_INVALID_OPERATION);
 		return;
 	}
 
@@ -130,7 +130,7 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 			static_cast<U8 *>(m_Buffers.GetObject(m_CurrentElementArrayBuffer)->GetData());
 
 		if (!bufferBase) {
-			RecordError(GL_INVALID_OPERATION);
+			GlesRecordError(GL_INVALID_OPERATION);
 			return;
 		}
 
@@ -150,7 +150,7 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 		if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT) {
 			GlesRenderPoints(state, 0, count, type, indices);
 		} else {
-			RecordInvalidEnum(state);
+			GlesRecordInvalidEnum(state);
 		}
 
 		break;
@@ -159,7 +159,7 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 		if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT) {
 			GlesRenderLines(state, 0, count, type, indices);
 		} else {
-			RecordInvalidEnum(state);
+			GlesRecordInvalidEnum(state);
 		}
 
 		break;
@@ -168,7 +168,7 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 		if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT) {
 			GlesRenderLineStrip(state, 0, count, type, indices);
 		} else {
-			RecordInvalidEnum(state);
+			GlesRecordInvalidEnum(state);
 		}
 
 		break;
@@ -177,7 +177,7 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 		if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT) {
 			GlesRenderLineLoop(state, 0, count, type, indices);
 		} else {
-			RecordInvalidEnum(state);
+			GlesRecordInvalidEnum(state);
 		}
 
 		break;
@@ -186,7 +186,7 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 		if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT) {
 			GlesRenderTriangles(state, 0, count, type, indices);
 		} else {
-			RecordInvalidEnum(state);
+			GlesRecordInvalidEnum(state);
 		}
 
 		break;
@@ -195,7 +195,7 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 		if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT) {
 			GlesRenderTriangleStrip(state, 0, count, type, indices);
 		} else {
-			RecordInvalidEnum(state);
+			GlesRecordInvalidEnum(state);
 		}
 
 		break;
@@ -204,13 +204,13 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 		if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT) {
 			GlesRenderTriangleFan(state, 0, count, type, indices);
 		} else {
-			RecordInvalidEnum(state);
+			GlesRecordInvalidEnum(state);
 		}
 
 		break;
 
 	default:
-		RecordInvalidEnum(state);
+		GlesRecordInvalidEnum(state);
 		return;
 	}
 }

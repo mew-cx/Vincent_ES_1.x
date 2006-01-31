@@ -211,12 +211,12 @@ GL_API void GL_APIENTRY glBindTexture (GLenum target, GLuint texture) {
 	/************************************************************************/
 
 	if (target != GL_TEXTURE_2D && target != GL_TEXTURE_3D && target != GL_TEXTURE_CUBE_MAP) {
-		RecordInvalidEnum(state);
+		GlesRecordInvalidEnum(state);
 		return;
 	}
 
 	if (texture >= GLES_MAX_TEXTURES) {
-		RecordInvalidValue(state);
+		GlesRecordInvalidValue(state);
 		return;
 	}
 
@@ -248,7 +248,7 @@ GL_API void GL_APIENTRY glBindTexture (GLenum target, GLuint texture) {
 
 		if (state->textures[texture].base.textureType != target) {
 
-			RecordError(state, GL_INVALID_OPERATION);
+			GlesRecordError(state, GL_INVALID_OPERATION);
 			return;
 		}
 
@@ -287,7 +287,7 @@ GL_API void GL_APIENTRY glDeleteTextures (GLsizei n, const GLuint *textures) {
 	/************************************************************************/
 
 	if (n < 0 || textures == NULL) {
-		RecordInvalidValue(state);
+		GlesRecordInvalidValue(state);
 		return;
 	}
 
@@ -364,7 +364,7 @@ GL_API void GL_APIENTRY glPixelStorei (GLenum pname, GLint param) {
 				break;
 
 			default:
-				RecordInvalidValue(state);
+				GlesRecordInvalidValue(state);
 				break;
 			}
 
@@ -380,14 +380,14 @@ GL_API void GL_APIENTRY glPixelStorei (GLenum pname, GLint param) {
 				break;
 
 			default:
-				RecordInvalidValue(state);
+				GlesRecordInvalidValue(state);
 				break;
 			}
 
 			break;
 
 		default:
-			RecordInvalidEnum(state);
+			GlesRecordInvalidEnum(state);
 			break;
 	}
 }
@@ -398,7 +398,7 @@ GL_API void GL_APIENTRY glGetTexParameterfv (GLenum target, GLenum pname, GLfloa
 	GLint result;
 
 	if (params == NULL) {
-		RecordInvalidValue(state);
+		GlesRecordInvalidValue(state);
 		return;
 	}
 
@@ -413,7 +413,7 @@ GL_API void GL_APIENTRY glGetTexParameteriv (GLenum target, GLenum pname, GLint 
 
 
 	if (params == NULL) {
-		RecordInvalidValue(state);
+		GlesRecordInvalidValue(state);
 		return;
 	}
 
@@ -449,7 +449,7 @@ GL_API void GL_APIENTRY glGetTexParameteriv (GLenum target, GLenum pname, GLint 
 			break;
 
 		default:
-			RecordInvalidEnum(state);
+			GlesRecordInvalidEnum(state);
 			return;
 	}
 
@@ -473,7 +473,7 @@ GL_API void GL_APIENTRY glGetTexParameteriv (GLenum target, GLenum pname, GLint 
 		case GL_TEXTURE_WRAP_R:
 
 			if (target != GL_TEXTURE_3D) {
-				RecordInvalidEnum(state);
+				GlesRecordInvalidEnum(state);
 				return;
 			}
 
@@ -481,7 +481,7 @@ GL_API void GL_APIENTRY glGetTexParameteriv (GLenum target, GLenum pname, GLint 
 			break;
 
 		default:
-			RecordInvalidEnum(state);
+			GlesRecordInvalidEnum(state);
 			return;
 	}
 }
@@ -495,7 +495,7 @@ GL_API void GL_APIENTRY glTexParameterfv (GLenum target, GLenum pname, const GLf
 	State * state = GLES_GET_STATE();
 
 	if (params == NULL) {
-		RecordInvalidValue(state);
+		GlesRecordInvalidValue(state);
 		return;
 	}
 
@@ -539,7 +539,7 @@ GL_API void GL_APIENTRY glTexParameteri (GLenum target, GLenum pname, GLint para
 			break;
 
 		default:
-			RecordInvalidEnum(state);
+			GlesRecordInvalidEnum(state);
 			return;
 	}
 
@@ -556,7 +556,7 @@ GL_API void GL_APIENTRY glTexParameteri (GLenum target, GLenum pname, GLint para
 					break;
 
 				default:
-					RecordInvalidValue(state);
+					GlesRecordInvalidValue(state);
 					return;
 			}
 
@@ -570,7 +570,7 @@ GL_API void GL_APIENTRY glTexParameteri (GLenum target, GLenum pname, GLint para
 					break;
 
 				default:
-					RecordInvalidValue(state);
+					GlesRecordInvalidValue(state);
 					return;
 			}
 
@@ -585,7 +585,7 @@ GL_API void GL_APIENTRY glTexParameteri (GLenum target, GLenum pname, GLint para
 					break;
 
 				default:
-					RecordInvalidValue(state);
+					GlesRecordInvalidValue(state);
 					return;
 			}
 
@@ -600,7 +600,7 @@ GL_API void GL_APIENTRY glTexParameteri (GLenum target, GLenum pname, GLint para
 					break;
 
 				default:
-					RecordInvalidValue(state);
+					GlesRecordInvalidValue(state);
 					return;
 			}
 
@@ -609,7 +609,7 @@ GL_API void GL_APIENTRY glTexParameteri (GLenum target, GLenum pname, GLint para
 		case GL_TEXTURE_WRAP_R:
 
 			if (target != GL_TEXTURE_3D) {
-				RecordInvalidEnum(state);
+				GlesRecordInvalidEnum(state);
 				return;
 			}
 
@@ -621,14 +621,14 @@ GL_API void GL_APIENTRY glTexParameteri (GLenum target, GLenum pname, GLint para
 					break;
 
 				default:
-					RecordInvalidValue(state);
+					GlesRecordInvalidValue(state);
 					return;
 			}
 
 			break;
 
 		default:
-			RecordInvalidEnum(state);
+			GlesRecordInvalidEnum(state);
 			return;
 	}
 }
@@ -638,7 +638,7 @@ GL_API void GL_APIENTRY glTexParameteriv (GLenum target, GLenum pname, const GLi
 	State * state = GLES_GET_STATE();
 
 	if (params == NULL) {
-		RecordInvalidValue(state);
+		GlesRecordInvalidValue(state);
 		return;
 	}
 
@@ -713,7 +713,7 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 	Image2D * image = NULL;
 
 	if (level < 0 || level >= GLES_MAX_MIPMAP_LEVELS) {
-		RecordInvalidValue(state);
+		GlesRecordInvalidValue(state);
 		return;
 	}
 
@@ -747,7 +747,7 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 			break;
 
 		default:
-			RecordInvalidEnum(state);
+			GlesRecordInvalidEnum(state);
 			return;
 	}
 
@@ -782,7 +782,7 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 					break;
 
 				default:
-					RecordInvalidEnum(state);
+					GlesRecordInvalidEnum(state);
 					return;
 			}
 
@@ -791,7 +791,7 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 
 		case GL_UNSIGNED_SHORT_4_4_4_4:
 			if (internalformat != GL_RGBA) {
-				RecordInvalidEnum(state);
+				GlesRecordInvalidEnum(state);
 				return;
 			}
 
@@ -802,7 +802,7 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 
 		case GL_UNSIGNED_SHORT_5_5_5_1:
 			if (internalformat != GL_RGBA) {
-				RecordInvalidEnum(state);
+				GlesRecordInvalidEnum(state);
 				return;
 			}
 
@@ -814,7 +814,7 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 
 		case GL_UNSIGNED_SHORT_5_6_5:
 			if (internalformat != GL_RGBA) {
-				RecordInvalidEnum(state);
+				GlesRecordInvalidEnum(state);
 				return;
 			}
 
@@ -825,7 +825,7 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 			break;
 
 		default:
-			RecordInvalidEnum(state);
+			GlesRecordInvalidEnum(state);
 			return;
 	}
 
@@ -834,17 +834,17 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 	/************************************************************************/
 
 	if (width > GLES_MAX_TEXTURE_WIDTH || height > GLES_MAX_TEXTURE_HEIGHT) {
-		RecordInvalidValue(state);
+		GlesRecordInvalidValue(state);
 		return;
 	}
 
 	if ((width == 0 || height == 0) && pixels != NULL) {
-		RecordInvalidValue(state);
+		GlesRecordInvalidValue(state);
 		return;
 	}
 
 	if (width != 0 && height != 0 && pixels == NULL) {
-		RecordInvalidValue(state);
+		GlesRecordInvalidValue(state);
 		return;
 	}
 

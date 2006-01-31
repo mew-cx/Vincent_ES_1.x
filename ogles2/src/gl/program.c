@@ -72,7 +72,7 @@ GL_API GLuint GL_APIENTRY glCreateProgram (void) {
 	GLuint program = BindObject(state->programFreeListHead, state->programFreeList, GLES_MAX_PROGRAMS);
 
 	if (program == NIL) {
-		RecordError(state, GL_OUT_OF_MEMORY);
+		GlesRecordError(state, GL_OUT_OF_MEMORY);
 		return 0;
 	} else {
 		InitProgram(state->programs + program);

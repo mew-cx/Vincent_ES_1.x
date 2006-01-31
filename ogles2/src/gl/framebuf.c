@@ -75,6 +75,10 @@ GL_API void GL_APIENTRY glClearStencil (GLint s) {
 	State * state = GLES_GET_STATE();
 }
 
+GL_API void GL_APIENTRY glDepthRangef (GLclampf zNear, GLclampf zFar) {
+	State * state = GLES_GET_STATE();
+}
+
 GL_API void GL_APIENTRY glReadPixels (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, void *pixels) {
 	State * state = GLES_GET_STATE();
 }

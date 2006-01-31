@@ -187,6 +187,9 @@ void GlesRasterTriangle(State * state, const RasterVertex * p1, const RasterVert
 				    - (p1->screen.y - miny * 1.0f/16.0f) * dVaryingDy[index];
 	}
 
+	// TODO: have linear interpolaton per block
+	// TODO: investiagte: two levels of block sizes
+
     // Loop through blocks
     for(y = miny; y < maxy; y += GLES_RASTER_BLOCK_SIZE) {
         for(x = minx; x < maxx; x += GLES_RASTER_BLOCK_SIZE) {
