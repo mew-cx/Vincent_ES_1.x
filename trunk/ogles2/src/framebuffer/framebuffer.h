@@ -1,11 +1,14 @@
+#ifndef GLES_FRAMEBUFFER_FRAMEBUFFER_H
+#define GLES_FRAMEBUFFER_FRAMEBUFFER_H 1
+
 /*
 ** ==========================================================================
 **
-** rpoint.c			Point Rasterization
+** framebuffer.h	Framebuffer interface
 **
 ** --------------------------------------------------------------------------
 **
-** 01-27-2006		Hans-Martin Will	initial version
+** 01-31-2006		Hans-Martin Will	initial version
 **
 ** --------------------------------------------------------------------------
 **
@@ -36,11 +39,14 @@
 ** ==========================================================================
 */
 
-#include <GLES/gl.h>
-#include "config.h"
-#include "platform/platform.h"
-#include "raster/raster.h"
-#include "fragment/fragment.h"
+typedef struct BufferFormat {
+	GLenum		format;						/* format identifier			*/
+	GLenum		baseFormat;					/* base format identifier		*/
+	GLuint		bits;						/* bits per element				*/
+	GLuint		alignment;					/* alignment of elements		*/
+} BufferFormat;
 
-void GlesRasterPoint(State * state, const RasterVertex * p) {
-}
+/* Retrieve the format descriptor for the given buffer type */
+const BufferFormat * GlesGetFormat(GLenum format);
+
+#endif //ndef GLES_FRAMEBUFFER_FRAMEBUFFER_H

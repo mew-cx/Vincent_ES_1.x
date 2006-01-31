@@ -1,11 +1,11 @@
 /*
 ** ==========================================================================
 **
-** rpoint.c			Point Rasterization
+** framebuffer.h	Framebuffer interface
 **
 ** --------------------------------------------------------------------------
 **
-** 01-27-2006		Hans-Martin Will	initial version
+** 01-31-2006		Hans-Martin Will	initial version
 **
 ** --------------------------------------------------------------------------
 **
@@ -36,11 +36,58 @@
 ** ==========================================================================
 */
 
+
 #include <GLES/gl.h>
 #include "config.h"
 #include "platform/platform.h"
-#include "raster/raster.h"
-#include "fragment/fragment.h"
+#include "framebuffer/framebuffer.h"
 
-void GlesRasterPoint(State * state, const RasterVertex * p) {
+	GLenum			colorFormat;		/* format of color buffer:			*/
+										/*  value		int. format bits	*/
+										/*  ----------  ----------- ----	*/
+										/*	GL_RGBA8	RGBA		32		*/
+										/*	GL_RGBA4	RGBA		16		*/
+										/*	GL_RGB5_A1	RGBA		16		*/
+										/*	GL_RGB8		RGB			24		*/
+										/*	GL_RGB565	RGB			16		*/
+
+	GLenum			depthFormat;		/* format of depth buffer:			*/
+										/*  value					bits	*/
+										/*	---------------------	----	*/
+										/*	GL_DEPTH_COMPONENT_16	16		*/
+										/*	GL_DEPTH_COMPONENT_24	24		*/
+										/*	GL_DEPTH_COMPONENT_32	32		*/
+
+	GLenum			stencilFormat;		/* format of stencil buffer:		*/
+										/*  value					bits	*/
+										/*	---------------------	----	*/
+										/*	GL_STENCIL_INDEX1_OES	1		*/
+										/*	GL_STENCIL_INDEX4_OES	4		*/
+										/*	GL_STENCIL_INDEX8_OES	8		*/
+										/*	GL_STENCIL_INDEX16_OES	16		*/
+
+static BufferFormat formats[] = {
+	{	GL_RGBA8,				GL_RGBA,	32,		4	},
+	{	GL_RGBA4,				GL_RGBA,	16,		2	},
+	{	GL_RGB5_A1,				GL_RGBA,	16,		2	},
+	{	GL_RGB8,				GL_RGB,		24,		1	},
+	{	GL_RGB565_OES,			GL_RGB,		16,		2	},
+	{	GL_DEPTH_COMPONENT16,	GL_NONE,	16,		2	},
+	{	GL_DEPTH_COMPONENT24,	GL_NONE,	24,		1	},
+	{	GL_DEPTH_COMPONENT32,	GL_NONE,	32,		4	},
+	{	GL_STENCIL_INDEX1_OES,	GL_NONE,	 1,		1	},
+	{	GL_STENCIL_INDEX4_OES,	GL_NONE,	 4,		1	},
+	{	GL_STENCIL_INDEX8_OES,	GL_NONE,	 8,		1	},
+};
+
+const BufferFormat * GlesGetFormat(GLenum format) {
+	GLuint index;
+
+	for (index = 0; index < GLES_ELEMENTSOF(formats); ++index) {
+		if (formats[index].format == format) {
+			return formats + index;
+		}
+	}
+
+	return NULL;
 }

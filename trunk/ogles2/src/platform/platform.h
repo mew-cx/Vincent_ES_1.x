@@ -12,7 +12,7 @@
 **
 ** --------------------------------------------------------------------------
 **
-** Copyright (c) 2005, Hans-Martin Will. All rights reserved.
+** Copyright (c) 2003-2006, Hans-Martin Will. All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
 ** modification, are permitted provided that the following conditions are
@@ -58,6 +58,14 @@
 ** Constants
 ** --------------------------------------------------------------------------
 */
+
+/*
+** --------------------------------------------------------------------------
+** Macros
+** --------------------------------------------------------------------------
+*/
+
+#define GLES_ELEMENTSOF(a)	(sizeof(a) / sizeof((a)[0]))
 
 /*
 ** --------------------------------------------------------------------------

@@ -9,7 +9,7 @@
 **
 ** --------------------------------------------------------------------------
 **
-** Copyright (c) 2005, Hans-Martin Will. All rights reserved.
+** Copyright (c) 2003-2006, Hans-Martin Will. All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
 ** modification, are permitted provided that the following conditions are
@@ -97,7 +97,7 @@ void GlesInterpolateVertex(Vertex * newVertex, const Vertex * v0, const Vertex *
 /*
 ** Transform the vertex from clip space to viewport space
 */
-void GlesViewportTransform(State * state, RasterVertex * raster, Vertex * vertex) {
+void GlesViewportTransform(State * state, RasterVertex * raster, const Vertex * vertex) {
 	GLfloat x = vertex->v.position.x;
 	GLfloat y = vertex->v.position.y;
 	GLfloat z = vertex->v.position.z;

@@ -12,7 +12,7 @@
 **
 ** --------------------------------------------------------------------------
 **
-** Copyright (c) 2005, Hans-Martin Will. All rights reserved.
+** Copyright (c) 2003-2006, Hans-Martin Will. All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
 ** modification, are permitted provided that the following conditions are
@@ -39,6 +39,7 @@
 ** ==========================================================================
 */
 
+#include "framebuffer/framebuffer.h"
 
 /*
 ** --------------------------------------------------------------------------
@@ -339,29 +340,9 @@ typedef struct Surface {
 
 	GLuint			width, height;		/* surface dimensions				*/
 
-	GLenum			colorFormat;		/* format of color buffer:			*/
-										/*  value		int. format bits	*/
-										/*  ----------  ----------- ----	*/
-										/*	GL_RGBA8	RGBA		32		*/
-										/*	GL_RGBA4	RGBA		16		*/
-										/*	GL_RGB5_A1	RGBA		16		*/
-										/*	GL_RGB8		RGB			24		*/
-										/*	GL_RGB565	RGB			16		*/
-
-	GLenum			depthFormat;		/* format of depth buffer:			*/
-										/*  value					bits	*/
-										/*	---------------------	----	*/
-										/*	GL_DEPTH_COMPONENT_16	16		*/
-										/*	GL_DEPTH_COMPONENT_24	24		*/
-										/*	GL_DEPTH_COMPONENT_32	32		*/
-
-	GLenum			stencilFormat;		/* format of stencil buffer:		*/
-										/*  value					bits	*/
-										/*	---------------------	----	*/
-										/*	GL_STENCIL_INDEX1_OES	1		*/
-										/*	GL_STENCIL_INDEX4_OES	4		*/
-										/*	GL_STENCIL_INDEX8_OES	8		*/
-										/*	GL_STENCIL_INDEX16_OES	16		*/
+	const BufferFormat * colorFormat;	/* format of color buffer:			*/
+	const BufferFormat * depthFormat;	/* format of depth buffer:			*/
+	const BufferFormat * stencilFormat;	/* format of stencil buffer:		*/
 } Surface;
 
 /*
@@ -483,6 +464,10 @@ typedef struct State {
 	/* general settings */
 	GLuint			packAlignment;			/* image pixel packing			*/
 	GLuint			unpackAlignment;		/* image pixel packing			*/
+
+	/* hints */
+	GLenum			fragmentShaderDerivativeHint;
+	GLenum			generateMipmapHint;
 
 	/* error state */
 	GLenum			lastError;				/* last error that occurred		*/
