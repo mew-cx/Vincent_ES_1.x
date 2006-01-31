@@ -9,7 +9,7 @@
 **
 ** --------------------------------------------------------------------------
 **
-** Copyright (c) 2005, Hans-Martin Will. All rights reserved.
+** Copyright (c) 2003-2006, Hans-Martin Will. All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
 ** modification, are permitted provided that the following conditions are
@@ -208,6 +208,11 @@ void InitState(State * state) {
 
 	state->packAlignment			= 4;
 	state->unpackAlignment			= 4;
+
+	/* hints */
+
+	state->generateMipmapHint			= GL_DONT_CARE;
+	state->fragmentShaderDerivativeHint	= GL_DONT_CARE;
 
 	/* error state */
 

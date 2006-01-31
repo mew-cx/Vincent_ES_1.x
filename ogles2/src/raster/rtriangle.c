@@ -9,7 +9,7 @@
 **
 ** --------------------------------------------------------------------------
 **
-** Copyright (c) 2005, Hans-Martin Will. All rights reserved.
+** Copyright (c) 2003-2006, Hans-Martin Will. All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
 ** modification, are permitted provided that the following conditions are
@@ -56,6 +56,14 @@ static GLES_INLINE GLint max(GLint a, GLint b, GLint c) {
 
 static GLES_INLINE GLfloat det2x2(GLfloat a11, GLfloat a12, GLfloat a21, GLfloat a22) {
 	return a11 * a22 - a12 * a21;
+}
+
+static void calculateVarying(GLfloat * varying, const GLfloat * base, const GLfloat * dx, const GLfloat * dy, GLint x, GLint y, GLfloat w) {
+	GLint index;
+
+	for (index = 0; index < GLES_MAX_VARYING_FLOATS; ++index) {
+		varying[index] = (base[index] + dx[index] * x + dy[index] * y) * w;
+	}
 }
 
 typedef struct {
@@ -123,6 +131,9 @@ void GlesRasterTriangle(State * state, const RasterVertex * p1, const RasterVert
 
 	GLfloat dVaryingDx[GLES_MAX_VARYING_FLOATS];
 	GLfloat dVaryingDy[GLES_MAX_VARYING_FLOATS];
+	GLfloat varying[GLES_MAX_VARYING_FLOATS];
+	GLfloat varyingStart[GLES_MAX_VARYING_FLOATS];
+	GLfloat dWdX, dWdY, wStart;
 
 	GLfloat area, invArea;
 
@@ -140,7 +151,6 @@ void GlesRasterTriangle(State * state, const RasterVertex * p1, const RasterVert
 	}
 
 	// setup of interpolation of varying variables goes here
-	// TODO: make this perspective correct
 
 	area = 
 		det2x2(p2->screen.x - p1->screen.x, p2->screen.y - p1->screen.y,
@@ -148,17 +158,34 @@ void GlesRasterTriangle(State * state, const RasterVertex * p1, const RasterVert
 
 	invArea = 1.0f / area;
 
-	for (index = 0; index < GLES_MAX_VARYING_FLOATS; ++index) {
-		dVaryingDx[index] = 
-			det2x2(p2->varyingData[index] - p1->varyingData[index], p2->screen.y - p1->screen.y,
-				   p3->varyingData[index] - p1->varyingData[index], p3->screen.y - p1->screen.y) * invArea;
-		dVaryingDy[index] = 
-			det2x2(p2->varyingData[index] - p1->varyingData[index], p2->screen.x - p1->screen.x,
-				   p3->varyingData[index] - p1->varyingData[index], p3->screen.x - p1->screen.x) * invArea;
-	}
+	dWdX =
+		det2x2(p2->screen.w - p1->screen.w, p2->screen.y - p1->screen.y,
+			   p3->screen.w - p1->screen.w, p3->screen.y - p1->screen.y) * invArea;
 
-	// TODO: set up variables initialized to the upper leftcorner of the rectangle scanned
-	// TODO: update the interpolated values
+	dWdY =
+		det2x2(p2->screen.w - p1->screen.w, p2->screen.x - p1->screen.x,
+			   p3->screen.w - p1->screen.w, p3->screen.x - p1->screen.x) * invArea;
+
+	wStart = 
+		p1->screen.w - (p1->screen.x - minx * 1.0f/16.0f) * dWdX
+			         - (p1->screen.y - miny * 1.0f/16.0f) * dWdY;
+
+	for (index = 0; index < GLES_MAX_VARYING_FLOATS; ++index) {
+		GLfloat p1OverW = p1->varyingData[index] * p1->screen.w;
+		GLfloat p2OverW = p2->varyingData[index] * p1->screen.w;
+		GLfloat p3OverW = p3->varyingData[index] * p1->screen.w;
+
+		dVaryingDx[index] = 
+			det2x2(p2OverW - p1OverW, p2->screen.y - p1->screen.y,
+				   p3OverW - p1OverW, p3->screen.y - p1->screen.y) * invArea;
+		dVaryingDy[index] = 
+			det2x2(p2OverW - p1OverW, p2->screen.x - p1->screen.x,
+				   p3OverW - p1OverW, p3->screen.x - p1->screen.x) * invArea;
+
+		varyingStart[index] = 
+			p1OverW - (p1->screen.x - minx * 1.0f/16.0f) * dVaryingDx[index]
+				    - (p1->screen.y - miny * 1.0f/16.0f) * dVaryingDy[index];
+	}
 
     // Loop through blocks
     for(y = miny; y < maxy; y += GLES_RASTER_BLOCK_SIZE) {
@@ -195,10 +222,13 @@ void GlesRasterTriangle(State * state, const RasterVertex * p1, const RasterVert
 
             //unsigned int *buffer = colorBuffer;
 
-            // Accept whole block when totally covered
+			// Accept whole block when totally covered
             if (a == 0xF && b == 0xF && c == 0xF) {
                 for (iy = 0; iy < GLES_RASTER_BLOCK_SIZE; iy++) {
                     for (ix = x; ix < x + GLES_RASTER_BLOCK_SIZE; ix++) {
+						GLfloat w = 1.0f / (wStart + (ix - minx) * dWdX + (iy - miny) * dWdY);
+						calculateVarying(varying, varyingStart, dVaryingDx, dVaryingDy, ix - minx, iy - miny, w);
+
                         //buffer[ix] = 0x00007F00;<< // Green
 						/* TODO: fragment processing goes here */
                     }
@@ -219,7 +249,10 @@ void GlesRasterTriangle(State * state, const RasterVertex * p1, const RasterVert
 
                     for(ix = x; ix < x + GLES_RASTER_BLOCK_SIZE; ix++) {
                         if (CX1 > 0 && CX2 > 0 && CX3 > 0) {
-                            //buffer[ix] = 0x0000007F;<< // Blue
+							GLfloat w = 1.0f / (wStart + (ix - minx) * dWdX + (iy - miny) * dWdY);
+							calculateVarying(varying, varyingStart, dVaryingDx, dVaryingDy, ix - minx, iy - miny, w);
+
+							//buffer[ix] = 0x0000007F;<< // Blue
 							/* TODO: fragment processing goes here */
                         }
 
@@ -238,5 +271,6 @@ void GlesRasterTriangle(State * state, const RasterVertex * p1, const RasterVert
         }
 
         //(char*&)colorBuffer += GLES_RASTER_BLOCK_SIZE * stride;
+
     }
 }
