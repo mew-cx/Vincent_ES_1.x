@@ -350,7 +350,7 @@ typedef int             GLsizeiptr;
 #define GL_REPLACE                        0x1E01
 #define GL_INCR                           0x1E02
 #define GL_DECR                           0x1E03
-/*      GL_INVERT */
+#define GL_INVERT						  0x150A 
 #define GL_INCR_WRAP                      0x8507
 #define GL_DECR_WRAP                      0x8508
 

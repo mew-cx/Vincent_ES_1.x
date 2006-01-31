@@ -46,22 +46,36 @@
 State OglesGlobalState;
 
 
-void RecordError(State * state, GLenum error) {
+void GlesRecordError(State * state, GLenum error) {
 	if (state->lastError == GL_NO_ERROR) {
 		state->lastError = error;
 	}
 }
 
-void RecordInvalidEnum(State * state) {
-	RecordError(state, GL_INVALID_ENUM);
+void GlesRecordInvalidEnum(State * state) {
+	GlesRecordError(state, GL_INVALID_ENUM);
 }
 
-void RecordInvalidValue(State * state) {
-	RecordError(state, GL_INVALID_VALUE);
+void GlesRecordInvalidValue(State * state) {
+	GlesRecordError(state, GL_INVALID_VALUE);
 }
 
-void RecordOutOfMemory(State * state) {
-	RecordError(state, GL_OUT_OF_MEMORY);
+void GlesRecordOutOfMemory(State * state) {
+	GlesRecordError(state, GL_OUT_OF_MEMORY);
+}
+
+GLboolean GlesValidateEnum(State * state, GLenum value, const GLenum * values, GLuint numValues) {
+	while (numValues) {
+		if (value == *values) {
+			return GL_TRUE;
+		}
+
+		++values;
+		--numValues;
+	}
+
+	GlesRecordInvalidEnum(state);
+	return GL_FALSE;
 }
 
 void InitState(State * state) {
@@ -184,6 +198,14 @@ void InitState(State * state) {
 	state->stencilBackZpass			= GL_KEEP;
 	state->stencilMask				= (1 << GLES_MAX_STENCIL_BITS) - 1;
 
+	/* multi-sampling */
+	state->multiSampleEnabled			= GL_FALSE;
+	state->sampleAlphaToCoverageEnabled	= GL_FALSE;
+	state->sampleAlphaToOneEnabled		= GL_FALSE;
+	state->sampleCoverageEnabled		= GL_FALSE;
+	state->sampleCovValue				= 1.0f;
+	state->sampleCovInvert				= GL_FALSE;
+
 	/* clear values */
 
 	state->clearColor.red			= 0.0f;
@@ -223,7 +245,7 @@ void GenObjects(State * state, GLuint freeListHead, GLuint * freeList, GLuint ma
 	GLuint * base = objs;
 
 	if (n < 0 || objs == NULL) {
-		RecordInvalidValue(state);
+		GlesRecordInvalidValue(state);
 		return;
 	}
 
@@ -231,7 +253,7 @@ void GenObjects(State * state, GLuint freeListHead, GLuint * freeList, GLuint ma
 		GLuint nextObj = BindObject(freeListHead, freeList, maxElements);
 
 		if (nextObj == NIL) {
-			RecordError(state, GL_OUT_OF_MEMORY);
+			GlesRecordError(state, GL_OUT_OF_MEMORY);
 
 			while (base != objs) {
 				UnbindObject(freeListHead, freeList, maxElements, *base++);
