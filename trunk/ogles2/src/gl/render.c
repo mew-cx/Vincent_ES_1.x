@@ -43,6 +43,22 @@
 #include "render/render.h"
 
 
+/*
+** --------------------------------------------------------------------------
+** Module data
+** --------------------------------------------------------------------------
+*/
+
+static const GLenum CullFaceValues[] = {
+	GL_FRONT,
+	GL_BACK,
+	GL_FRONT_AND_BACK
+};
+
+static const GLenum FrontFaceValues[] = {
+	GL_CCW,
+	GL_CW
+};
 
 /*
 ** --------------------------------------------------------------------------
@@ -52,6 +68,10 @@
 
 GL_API void GL_APIENTRY glCullFace (GLenum mode) {
 	State * state = GLES_GET_STATE();
+
+	if (GlesValidateEnum(state, mode, CullFaceValues, GLES_ELEMENTSOF(CullFaceValues))) {
+		state->cullMode = mode;
+	}
 }
 
 GL_API void GL_APIENTRY glDrawArrays (GLenum mode, GLint first, GLsizei count) {
@@ -118,6 +138,11 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 		return;
 	}
 
+	if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT) {
+		GlesRecordInvalidEnum(state);
+		return;
+	}
+
 	/*
 	if (!m_VertexArrayEnabled ||
 		(m_MatrixPaletteEnabled && (!m_MatrixIndexArrayEnabled || !m_WeightArrayEnabled))) {
@@ -147,66 +172,31 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 
 	switch (mode) {
 	case GL_POINTS:
-		if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT) {
-			GlesRenderPoints(state, 0, count, type, indices);
-		} else {
-			GlesRecordInvalidEnum(state);
-		}
-
+		GlesRenderPoints(state, 0, count, type, indices);
 		break;
 
 	case GL_LINES:
-		if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT) {
-			GlesRenderLines(state, 0, count, type, indices);
-		} else {
-			GlesRecordInvalidEnum(state);
-		}
-
+		GlesRenderLines(state, 0, count, type, indices);
 		break;
 
 	case GL_LINE_STRIP:
-		if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT) {
-			GlesRenderLineStrip(state, 0, count, type, indices);
-		} else {
-			GlesRecordInvalidEnum(state);
-		}
-
+		GlesRenderLineStrip(state, 0, count, type, indices);
 		break;
 
 	case GL_LINE_LOOP:
-		if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT) {
-			GlesRenderLineLoop(state, 0, count, type, indices);
-		} else {
-			GlesRecordInvalidEnum(state);
-		}
-
+		GlesRenderLineLoop(state, 0, count, type, indices);
 		break;
 
 	case GL_TRIANGLES:
-		if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT) {
-			GlesRenderTriangles(state, 0, count, type, indices);
-		} else {
-			GlesRecordInvalidEnum(state);
-		}
-
+		GlesRenderTriangles(state, 0, count, type, indices);
 		break;
 
 	case GL_TRIANGLE_STRIP:
-		if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT) {
-			GlesRenderTriangleStrip(state, 0, count, type, indices);
-		} else {
-			GlesRecordInvalidEnum(state);
-		}
-
+		GlesRenderTriangleStrip(state, 0, count, type, indices);
 		break;
 
 	case GL_TRIANGLE_FAN:
-		if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT) {
-			GlesRenderTriangleFan(state, 0, count, type, indices);
-		} else {
-			GlesRecordInvalidEnum(state);
-		}
-
+		GlesRenderTriangleFan(state, 0, count, type, indices);
 		break;
 
 	default:
@@ -217,5 +207,9 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 
 GL_API void GL_APIENTRY glFrontFace (GLenum mode) {
 	State * state = GLES_GET_STATE();
+
+	if (GlesValidateEnum(state, mode, FrontFaceValues, GLES_ELEMENTSOF(FrontFaceValues))) {
+		state->frontFace = mode;
+	}
 }
 

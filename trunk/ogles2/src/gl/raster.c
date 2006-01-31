@@ -51,13 +51,28 @@
 
 GL_API void GL_APIENTRY glLineWidth (GLfloat width) {
 	State * state = GLES_GET_STATE();
+
+	if (width <= 0.0f) {
+		GlesRecordInvalidValue(state);
+	} else {
+		state->lineWidth = width;
+	}
 }
 
 GL_API void GL_APIENTRY glPointSize (GLfloat size) {
 	State * state = GLES_GET_STATE();
+
+	if (size <= 0.0f) {
+		GlesRecordInvalidValue(state);
+	} else {
+		state->pointSize = size;
+	}
 }
 
 GL_API void GL_APIENTRY glPolygonOffset (GLfloat factor, GLfloat units) {
 	State * state = GLES_GET_STATE();
+
+	state->polygonOffsetFactor = factor;
+	state->polygonOffsetUnits  = units;
 }
 
