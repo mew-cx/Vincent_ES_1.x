@@ -42,30 +42,6 @@
 #include "platform/platform.h"
 #include "framebuffer/framebuffer.h"
 
-	GLenum			colorFormat;		/* format of color buffer:			*/
-										/*  value		int. format bits	*/
-										/*  ----------  ----------- ----	*/
-										/*	GL_RGBA8	RGBA		32		*/
-										/*	GL_RGBA4	RGBA		16		*/
-										/*	GL_RGB5_A1	RGBA		16		*/
-										/*	GL_RGB8		RGB			24		*/
-										/*	GL_RGB565	RGB			16		*/
-
-	GLenum			depthFormat;		/* format of depth buffer:			*/
-										/*  value					bits	*/
-										/*	---------------------	----	*/
-										/*	GL_DEPTH_COMPONENT_16	16		*/
-										/*	GL_DEPTH_COMPONENT_24	24		*/
-										/*	GL_DEPTH_COMPONENT_32	32		*/
-
-	GLenum			stencilFormat;		/* format of stencil buffer:		*/
-										/*  value					bits	*/
-										/*	---------------------	----	*/
-										/*	GL_STENCIL_INDEX1_OES	1		*/
-										/*	GL_STENCIL_INDEX4_OES	4		*/
-										/*	GL_STENCIL_INDEX8_OES	8		*/
-										/*	GL_STENCIL_INDEX16_OES	16		*/
-
 static BufferFormat formats[] = {
 	{	GL_RGBA8,				GL_RGBA,	32,		4	},
 	{	GL_RGBA4,				GL_RGBA,	16,		2	},
