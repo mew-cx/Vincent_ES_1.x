@@ -88,6 +88,10 @@ void InitState(State * state) {
 
 	for (index = 0; index < GLES_MAX_VERTEX_ATTRIBS; ++index) {
 		InitArray(state->vertexAttribArray + index);
+		state->vertexAttrib[index].x = 0.0f;
+		state->vertexAttrib[index].y = 0.0f;
+		state->vertexAttrib[index].z = 0.0f;
+		state->vertexAttrib[index].w = 1.0f;
 	}
 
 	/* buffer state */
@@ -99,7 +103,8 @@ void InitState(State * state) {
 
 	state->bufferFreeListHead = 1;
 	state->bufferFreeList[GLES_MAX_BUFFERS - 1] = NIL;
-	state->buffer = 0;
+	state->arrayBuffer = 0;
+	state->elementArrayBuffer = 0;
 
 	/* texture state */
 
