@@ -92,7 +92,7 @@ void InitImage2D(Image2D * image) {
 void DeleteImage2D(State * state, Image2D * image) {
 
 	if (image->data != NULL) {
-		Deallocate(state, image->data);
+		FreeServer(image->data);
 		image->data = NULL;
 	}
 }
@@ -109,7 +109,7 @@ void InitImage3D(Image3D * image) {
 void DeleteImage3D(State * state, Image3D * image) {
 
 	if (image->data != NULL) {
-		Deallocate(state, image->data);
+		FreeServer(image->data);
 		image->data = NULL;
 	}
 }
