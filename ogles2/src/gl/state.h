@@ -363,21 +363,22 @@ typedef struct State {
 	Array			vertexAttribArray[GLES_MAX_VERTEX_ATTRIBS];
 
 	/* attribute state */
-	Cell			vertexAttrib[GLES_MAX_VERTEX_ATTRIBS * GLES_VERTEX_ATTRIB_COMPONENTS];
-	Cell			uniform[GLES_MAX_VERTEX_UNIFORM_COMPONENTS];
+	Vec4f			vertexAttrib[GLES_MAX_VERTEX_ATTRIBS * GLES_VERTEX_ATTRIB_COMPONENTS];
+	Vec4f			uniform[GLES_MAX_VERTEX_UNIFORM_COMPONENTS];
 
 	/* buffer state */
 	Buffer			buffers[GLES_MAX_BUFFERS];	/* defined buffers				*/
-	GLuint			buffer;					/* currently active buffer		*/
+	GLuint			arrayBuffer;				/* currently active array buffer*/
+	GLuint			elementArrayBuffer;			/* currently active index buffer*/
 
 	GLuint			bufferFreeList[GLES_MAX_BUFFERS];	/* free list for bufs	*/
 	GLuint			bufferFreeListHead;				/* head of free list	*/
 
 	/* texture state */
-	TextureState	textureState;			/* default texture state		*/
-	GLuint			texture2D;				/* current 2D texture			*/
-	GLuint			texture3D;				/* current 3D texture			*/
-	GLuint			textureCube;			/* current cube map texture		*/
+	TextureState	textureState;				/* default texture state		*/
+	GLuint			texture2D;					/* current 2D texture			*/
+	GLuint			texture3D;					/* current 3D texture			*/
+	GLuint			textureCube;				/* current cube map texture		*/
 
 	Texture 		textures[GLES_MAX_TEXTURES];	/* bound textures		*/
 
@@ -486,7 +487,7 @@ typedef struct State {
 	GLsizei			numEnabledAttribArrays;
 
 	/* storage area for vertex attributes as input to vertex processing */
-	Cell			tempVertexAttrib[GLES_MAX_VERTEX_ATTRIBS];
+	Vec4f			tempVertexAttrib[GLES_MAX_VERTEX_ATTRIBS];
 
 	/* storage area for results of vertex processing */
 	Vertex			vertexQueue[GLES_MAX_VERTEX_QUEUE];

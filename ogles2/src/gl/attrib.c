@@ -45,6 +45,23 @@
 
 /*
 ** --------------------------------------------------------------------------
+** Module variables
+** --------------------------------------------------------------------------
+*/
+
+static GLenum VertexAttribTypeValues[] = {
+	GL_BYTE,
+	GL_UNSIGNED_BYTE,
+	GL_SHORT,
+	GL_UNSIGNED_SHORT,
+	GL_INT,
+	GL_UNSIGNED_INT,
+	GL_FLOAT,
+	GL_FIXED
+};
+
+/*
+** --------------------------------------------------------------------------
 ** Internal functions
 ** --------------------------------------------------------------------------
 */
@@ -67,56 +84,188 @@ void InitArray(Array * array) {
 
 GL_API void GL_APIENTRY glDisableVertexAttribArray (GLuint index) {
 	State * state = GLES_GET_STATE();
+
+	if (index >= GLES_MAX_VERTEX_ATTRIBS) {
+		GlesRecordInvalidValue(state);
+	} else {
+		state->vertexAttribArray[index].enabled = GL_FALSE;
+	}
 }
 
 GL_API void GL_APIENTRY glEnableVertexAttribArray (GLuint index) {
 	State * state = GLES_GET_STATE();
+
+	if (index >= GLES_MAX_VERTEX_ATTRIBS) {
+		GlesRecordInvalidValue(state);
+	} else {
+		state->vertexAttribArray[index].enabled = GL_TRUE;
+	}
 }
 
 GL_API void GL_APIENTRY glGetVertexAttribfv (GLuint index, GLenum pname, GLfloat *params) {
 	State * state = GLES_GET_STATE();
+
+	if (index >= GLES_MAX_VERTEX_ATTRIBS) {
+		GlesRecordInvalidValue(state);
+	} else {
+		switch (pname) {
+		case GL_VERTEX_ATTRIB_ARRAY_ENABLED:
+			*params = (GLfloat) (state->vertexAttribArray[index].enabled == GL_TRUE);
+			break;
+
+		case GL_VERTEX_ATTRIB_ARRAY_SIZE:
+			*params = (GLfloat) (state->vertexAttribArray[index].size);
+			break;
+
+		case GL_VERTEX_ATTRIB_ARRAY_STRIDE:
+			*params = (GLfloat) (state->vertexAttribArray[index].stride);
+			break;
+
+		case GL_VERTEX_ATTRIB_ARRAY_TYPE:
+			*params = (GLfloat) (state->vertexAttribArray[index].type);
+			break;
+
+		case GL_VERTEX_ATTRIB_ARRAY_NORMALIZED:
+			*params = (GLfloat) (state->vertexAttribArray[index].normalized == GL_TRUE);
+			break;
+
+		case GL_CURRENT_VERTEX_ATTRIB:
+			params[0] = state->vertexAttrib[index].x;
+			params[1] = state->vertexAttrib[index].y;
+			params[2] = state->vertexAttrib[index].z;
+			params[3] = state->vertexAttrib[index].w;
+			break;
+
+		default:
+			GlesRecordInvalidEnum(state);
+			break;
+		}
+	}
 }
 
 GL_API void GL_APIENTRY glGetVertexAttribiv (GLuint index, GLenum pname, GLint *params) {
 	State * state = GLES_GET_STATE();
+
+	if (index >= GLES_MAX_VERTEX_ATTRIBS) {
+		GlesRecordInvalidValue(state);
+	} else {
+		switch (pname) {
+		case GL_VERTEX_ATTRIB_ARRAY_ENABLED:
+			*params = state->vertexAttribArray[index].enabled == GL_TRUE;
+			break;
+
+		case GL_VERTEX_ATTRIB_ARRAY_SIZE:
+			*params = state->vertexAttribArray[index].size;
+			break;
+
+		case GL_VERTEX_ATTRIB_ARRAY_STRIDE:
+			*params = state->vertexAttribArray[index].stride;
+			break;
+
+		case GL_VERTEX_ATTRIB_ARRAY_TYPE:
+			*params = state->vertexAttribArray[index].type;
+			break;
+
+		case GL_VERTEX_ATTRIB_ARRAY_NORMALIZED:
+			*params = state->vertexAttribArray[index].normalized == GL_TRUE;
+			break;
+
+		case GL_CURRENT_VERTEX_ATTRIB:
+			params[0] = (GLint) state->vertexAttrib[index].x;
+			params[1] = (GLint) state->vertexAttrib[index].y;
+			params[2] = (GLint) state->vertexAttrib[index].z;
+			params[3] = (GLint) state->vertexAttrib[index].w;
+			break;
+
+		default:
+			GlesRecordInvalidEnum(state);
+			break;
+		}
+	}
 }
 
 GL_API void GL_APIENTRY glGetVertexAttribPointerv (GLuint index, GLenum pname, void* *pointer) {
 	State * state = GLES_GET_STATE();
+
+	if (index >= GLES_MAX_VERTEX_ATTRIBS) {
+		GlesRecordInvalidValue(state);
+	} else if (pname != GL_VERTEX_ATTRIB_ARRAY_POINTER) {
+		GlesRecordInvalidEnum(state);
+	} else {
+		*pointer = (void *) state->vertexAttribArray[index].ptr;
+	}
 }
 
 GL_API void GL_APIENTRY glVertexAttrib1f (GLuint index, GLfloat x) {
-	State * state = GLES_GET_STATE();
+	glVertexAttrib4f(index, x, 0.0f, 0.0f, 1.0f);
 }
 
 GL_API void GL_APIENTRY glVertexAttrib1fv (GLuint index, const GLfloat *values) {
-	State * state = GLES_GET_STATE();
+	if (values) {
+		glVertexAttrib4f(index, values[0], 0.0f, 0.0f, 1.0f);
+	}
 }
 
 GL_API void GL_APIENTRY glVertexAttrib2f (GLuint index, GLfloat x, GLfloat y) {
-	State * state = GLES_GET_STATE();
+	glVertexAttrib4f(index, x, y, 0.0f, 1.0f);
 }
 
 GL_API void GL_APIENTRY glVertexAttrib2fv (GLuint index, const GLfloat *values) {
-	State * state = GLES_GET_STATE();
+	if (values) {
+		glVertexAttrib4f(index, values[0], values[1], 0.0f, 1.0f);
+	}
 }
 
 GL_API void GL_APIENTRY glVertexAttrib3f (GLuint index, GLfloat x, GLfloat y, GLfloat z) {
-	State * state = GLES_GET_STATE();
+	glVertexAttrib4f(index, x, y, z, 1.0f);
 }
 
 GL_API void GL_APIENTRY glVertexAttrib3fv (GLuint index, const GLfloat *values) {
-	State * state = GLES_GET_STATE();
+	if (values) {
+		glVertexAttrib4f(index, values[0], values[1], values[2], 1.0f);
+	}
 }
 
 GL_API void GL_APIENTRY glVertexAttrib4f (GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w) {
 	State * state = GLES_GET_STATE();
+
+	if (index >= GLES_MAX_VERTEX_ATTRIBS) {
+		GlesRecordInvalidValue(state);
+	} else {
+		state->vertexAttrib[index].x = x;
+		state->vertexAttrib[index].y = y;
+		state->vertexAttrib[index].z = z;
+		state->vertexAttrib[index].w = w;
+	}
 }
 
 GL_API void GL_APIENTRY glVertexAttrib4fv (GLuint index, const GLfloat *values) {
-	State * state = GLES_GET_STATE();
+	if (values) {
+		glVertexAttrib4f(index, values[0], values[1], values[2], values[3]);
+	} 
 }
 
 GL_API void GL_APIENTRY glVertexAttribPointer (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void * ptr) {
 	State * state = GLES_GET_STATE();
+
+	if (index >= GLES_MAX_VERTEX_ATTRIBS) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (size < 1 || size > 4 || stride < 0) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (!GlesValidateEnum(state, type, VertexAttribTypeValues, GLES_ELEMENTSOF(VertexAttribTypeValues))) {
+		return;
+	}
+
+	state->vertexAttribArray[index].size		= size;
+	state->vertexAttribArray[index].type		= type;
+	state->vertexAttribArray[index].normalized	= normalized != GL_FALSE;
+	state->vertexAttribArray[index].stride		= stride;
+	state->vertexAttribArray[index].ptr			= ptr;
+	state->vertexAttribArray[index].boundBuffer = state->arrayBuffer;
 }
