@@ -198,18 +198,18 @@ typedef struct Buffer {
 */
 
 typedef struct Image2D {
-	void *			data;				/* image data						*/
-	GLsizei			width;				/* width in pixels					*/
-	GLsizei			height;				/* height in pixels					*/
-	GLenum			format;				/* image format						*/
+	void *					data;		/* image data						*/
+	GLsizei					width;		/* width in pixels					*/
+	GLsizei					height;		/* height in pixels					*/
+	const BufferFormat *	format;		/* image format						*/
 } Image2D;
 
 typedef struct Image3D {
-	void *			data;				/* image data						*/
-	GLsizei			width;				/* width in pixels					*/
-	GLsizei			height;				/* height in pixels					*/
-	GLsizei			depth;				/* depth in pixels					*/
-	GLenum			format;				/* image format						*/
+	void *					data;		/* image data						*/
+	GLsizei					width;		/* width in pixels					*/
+	GLsizei					height;		/* height in pixels					*/
+	GLsizei					depth;		/* depth in pixels					*/
+	const BufferFormat *	format;		/* image format						*/
 } Image3D;
 
 typedef struct TextureBase {

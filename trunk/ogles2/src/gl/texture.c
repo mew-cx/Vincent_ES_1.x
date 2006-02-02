@@ -84,7 +84,7 @@ static TextureCube * GetCurrentTextureCube(State * state) {
 void InitImage2D(Image2D * image) {
 
 	image->data		= NULL;
-	image->format	= GL_LUMINANCE;
+	image->format	= GlesGetFormat(GL_LUMINANCE);
 	image->width	= 0;
 	image->height	= 0;
 }
@@ -100,7 +100,7 @@ void DeleteImage2D(State * state, Image2D * image) {
 void InitImage3D(Image3D * image) {
 
 	image->data		= NULL;
-	image->format	= GL_LUMINANCE;
+	image->format	= GlesGetFormat(GL_LUMINANCE);
 	image->width	= 0;
 	image->height	= 0;
 	image->depth	= 0;

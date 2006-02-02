@@ -51,31 +51,64 @@
 ** --------------------------------------------------------------------------
 */
 
-GL_API void GL_APIENTRY glClear (GLbitfield mask) {
-	State * state = GLES_GET_STATE();
-}
-
 GL_API void GL_APIENTRY glClearColor (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) {
 	State * state = GLES_GET_STATE();
+
+	state->clearColor.red	= GlesClampf(red);
+	state->clearColor.green	= GlesClampf(green);
+	state->clearColor.blue	= GlesClampf(blue);
+	state->clearColor.alpha = GlesClampf(alpha);
 }
 
 GL_API void GL_APIENTRY glClearColorx (GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha) {
-	State * state = GLES_GET_STATE();
+	glClearColor(GlesFloatx(red), GlesFloatx(green), GlesFloatx(blue), GlesFloatx(alpha));
 }
 
 GL_API void GL_APIENTRY glClearDepthf (GLclampf depth) {
 	State * state = GLES_GET_STATE();
+
+	state->clearDepth = GlesClampf(depth);
 }
 
 GL_API void GL_APIENTRY glClearDepthx (GLclampx depth) {
-	State * state = GLES_GET_STATE();
+	glClearDepthf(GlesFloatx(depth));
 }
 
 GL_API void GL_APIENTRY glClearStencil (GLint s) {
 	State * state = GLES_GET_STATE();
+
+	state->clearStencil = s;
 }
 
 GL_API void GL_APIENTRY glDepthRangef (GLclampf zNear, GLclampf zFar) {
+	State * state = GLES_GET_STATE();
+
+	zNear = GlesClampf(zNear);
+	zFar = GlesClampf(zFar);
+
+	state->depthOrigin = (zNear + zFar) / 2.0f;
+	state->depthScale = ((zFar - zNear) / 2.0f) * (1.0f - FLT_EPSILON);
+}
+
+GL_API void GL_APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height) {
+	State * state = GLES_GET_STATE();
+
+	if (width < 0 || height < 0) {
+		GlesRecordInvalidValue(state);
+	} else {
+		state->viewport.x		= x;
+		state->viewport.y		= y;
+		state->viewport.width	= width;
+		state->viewport.height	= height;
+
+		state->viewportOrigin.x	= x + width / 2.0f;
+		state->viewportOrigin.y = y + height / 2.0f;
+		state->viewportScale.x = width / 2.0f;
+		state->viewportScale.y = height / 2.0f;
+	}
+}
+
+GL_API void GL_APIENTRY glClear (GLbitfield mask) {
 	State * state = GLES_GET_STATE();
 }
 
@@ -83,6 +116,3 @@ GL_API void GL_APIENTRY glReadPixels (GLint x, GLint y, GLsizei width, GLsizei h
 	State * state = GLES_GET_STATE();
 }
 
-GL_API void GL_APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height) {
-	State * state = GLES_GET_STATE();
-}
