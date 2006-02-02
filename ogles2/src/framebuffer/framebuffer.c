@@ -43,17 +43,19 @@
 #include "framebuffer/framebuffer.h"
 
 static BufferFormat formats[] = {
-	{	GL_RGBA8,				GL_RGBA,	32,		4	},
-	{	GL_RGBA4,				GL_RGBA,	16,		2	},
-	{	GL_RGB5_A1,				GL_RGBA,	16,		2	},
-	{	GL_RGB8,				GL_RGB,		24,		1	},
-	{	GL_RGB565_OES,			GL_RGB,		16,		2	},
-	{	GL_DEPTH_COMPONENT16,	GL_NONE,	16,		2	},
-	{	GL_DEPTH_COMPONENT24,	GL_NONE,	24,		1	},
-	{	GL_DEPTH_COMPONENT32,	GL_NONE,	32,		4	},
-	{	GL_STENCIL_INDEX1_OES,	GL_NONE,	 1,		1	},
-	{	GL_STENCIL_INDEX4_OES,	GL_NONE,	 4,		1	},
-	{	GL_STENCIL_INDEX8_OES,	GL_NONE,	 8,		1	},
+	{	GL_RGBA8,				GL_RGBA,			32,		4	},
+	{	GL_RGBA4,				GL_RGBA,			16,		2	},
+	{	GL_RGB5_A1,				GL_RGBA,			16,		2	},
+	{	GL_RGB8,				GL_RGB,				24,		1	},
+	{	GL_RGB565_OES,			GL_RGB,				16,		2	},
+	{	GL_LUMINANCE,			GL_LUMINANCE,		 8,		1	},
+	{	GL_LUMINANCE_ALPHA,		GL_LUMINANCE_ALPHA,	16,		1	},
+	{	GL_DEPTH_COMPONENT16,	GL_NONE,			16,		2	},
+	{	GL_DEPTH_COMPONENT24,	GL_NONE,			24,		1	},
+	{	GL_DEPTH_COMPONENT32,	GL_NONE,			32,		4	},
+	{	GL_STENCIL_INDEX1_OES,	GL_NONE,			 1,		1	},
+	{	GL_STENCIL_INDEX4_OES,	GL_NONE,			 4,		1	},
+	{	GL_STENCIL_INDEX8_OES,	GL_NONE,			 8,		1	},
 };
 
 const BufferFormat * GlesGetFormat(GLenum format) {

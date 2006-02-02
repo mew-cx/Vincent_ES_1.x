@@ -85,6 +85,10 @@ GLclampf GLES_INLINE GlesClampf(GLfloat value) {
 	return value > 1.0f ? 1.0f : value < 0.0f ? 0.0f : value;
 }
 
+GLfloat GLES_INLINE GlesFloatx(GLfixed value) {
+	return (GLfloat) ldexp((double) value, -16);
+}
+
 /*
 ** --------------------------------------------------------------------------
 ** Memory Functions
