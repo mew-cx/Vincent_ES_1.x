@@ -604,7 +604,12 @@ function_call
 				if (parseContext.extensionizedFunctionErrorCheck($1.line, fnCandidate->getMangledName() )){
 					parseContext.recover();                
 				}
-
+				
+				printf("func call line %d - mangledname %s \n",$1.line,fnCandidate->getMangledName().c_str());
+				TSymbol* test = parseContext.symbolTable.findUnmangledName(fnCandidate->getName());
+				if (test) {
+					printf("  test call info: %s\n", test->getMangledName().c_str());
+				}
 
                 op = fnCandidate->getBuiltInOp();
                 if (builtIn && op != EOpNull) {
@@ -1190,7 +1195,10 @@ function_prototype
         //
         // Redeclarations are allowed.  But, return types and parameter qualifiers must match.
         //        
+
         TFunction* prevDec = static_cast<TFunction*>(parseContext.symbolTable.find($1->getMangledName()));
+		if (!parseContext.symbolTable.atBuiltInLevel())
+			printf("function_prot line %d - %s - predec=%s\n",$2.line,$1->getMangledName().c_str(),prevDec?"Yes":"No");
         if (prevDec) {
             if (prevDec->getReturnType() != $1->getReturnType()) {
                 parseContext.error($2.line, "overloaded functions must have the same return type", $1->getReturnType().getBasicString(), "");
