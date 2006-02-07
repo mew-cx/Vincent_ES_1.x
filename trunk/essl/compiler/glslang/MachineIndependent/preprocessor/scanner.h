@@ -1,6 +1,6 @@
 /*
 //
-//Copyright (C) 2002-2005  Falanx Microsystems AS
+//Copyright (C) 2005-2006  Falanx Microsystems AS
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
