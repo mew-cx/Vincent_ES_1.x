@@ -1,3 +1,38 @@
+/*
+//
+//Copyright (C) 2002-2005  Falanx Microsystems AS
+//All rights reserved.
+//
+//Redistribution and use in source and binary forms, with or without
+//modification, are permitted provided that the following conditions
+//are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//
+//    Neither the name of Falanx Microsystems AS nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+//POSSIBILITY OF SUCH DAMAGE.
+//
+*/
 #include "ARBFunctions.h"
 #include "Util.h"
 
@@ -142,7 +177,7 @@ nodeResult ARBMathFunctionNode(TIntermAggregate* node) {
 						msg() << " " << getopname(node->getOp()) << ", " << param1.var.tostr() << " " << var2.tostr() << "\n";
 						return nodeResult(result, list);
 					}
-				} 
+				}
 				else if (node->getOp() == EOpPow) {
 					list.append(param1.list);
 					list.append(param2.list);
@@ -207,7 +242,7 @@ nodeResult ARBMathFunctionNode(TIntermAggregate* node) {
 
 						TIntermTyped* param2typed = seq[1]->getAsTyped();
 						TIntermTyped* param3typed = seq[2]->getAsTyped();
-						
+
 						if(param2typed && param3typed) {
 							ARBVar var2 = param2.var;
 							ARBVar var3 = param3.var;
@@ -231,7 +266,7 @@ nodeResult ARBMathFunctionNode(TIntermAggregate* node) {
 					failmsg() << " unhandled function call " << getopname(node->getOp()) << " on line " << node->getLine() << "\n";
 					failmsg() << "   first param: " << param1.var.tostr() << " { " << (param1.fullyParsed?"parsed":"not parsed") << " }\n";
 					failmsg() << "   second param: " << param2.var.tostr() << " { " << (param2.fullyParsed?"parsed":"not parsed") << " }\n";
-					failmsg() << "   third param: " << param3.var.tostr() << " { " << (param3.fullyParsed?"parsed":"not parsed") << " }\n";					
+					failmsg() << "   third param: " << param3.var.tostr() << " { " << (param3.fullyParsed?"parsed":"not parsed") << " }\n";
 					failmsg() << "\n";
 					return nodeResult(false);
 				}
