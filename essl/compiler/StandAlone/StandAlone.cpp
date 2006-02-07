@@ -1,3 +1,38 @@
+/*
+//
+//Copyright (C) 2005-2006  Falanx Microsystems AS
+//All rights reserved.
+//
+//Redistribution and use in source and binary forms, with or without
+//modification, are permitted provided that the following conditions
+//are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//
+//    Neither the name of Falanx Microsystems AS nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+//POSSIBILITY OF SUCH DAMAGE.
+//
+*/
 //
 //Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
@@ -64,7 +99,7 @@ enum TFailCode {
 // can't actually do a full link without something specifying real
 // attribute bindings.
 //
-ShBinding FixedAttributeBindings[] = { 
+ShBinding FixedAttributeBindings[] = {
     { "gl_Vertex", 15 },
     { "gl_Color", 10 },
     { "gl_Normal", 7 },
@@ -86,7 +121,7 @@ int OutputMultipleStrings = 1;
 // Set up the per compile resources
 //
 void GenerateResources(TBuiltInResource& resources)
-{    
+{
     resources.maxLights = 32;
     resources.maxClipPlanes = 6;
     resources.maxTextureUnits = 32;
@@ -109,7 +144,7 @@ int C_DECL main(int argc, char* argv[])
     bool linkFailed = false;
     int debugOptions = 0;
     int i;
-    
+
     ShHandle    linker = 0;
     ShHandle    uniformMap = 0;
     ShHandle    compilers[EShLangCount];
@@ -120,7 +155,7 @@ int C_DECL main(int argc, char* argv[])
     __try {
 #endif
         argc--;
-        argv++;    
+        argv++;
         for (; argc >= 1; argc--, argv++) {
             if (argv[0][0] == '-' || argv[0][0] == '/') {
                 switch (argv[0][1]) {
@@ -135,7 +170,7 @@ int C_DECL main(int argc, char* argv[])
                 case 'a': debugOptions |= EDebugOpAssembly;           break;
 #endif
                 case 'c': if(!ShOutputMultipleStrings(++argv))
-                                                         return EFailUsage; 
+                                                         return EFailUsage;
                           --argc;                                    break;
                 case 'm': debugOptions |= EDebugOpLinkMaps;           break;
                 default:  usage();                       return EFailUsage;
@@ -149,7 +184,7 @@ int C_DECL main(int argc, char* argv[])
                 TBuiltInResource resources;
                 GenerateResources(resources);
                 if (! CompileFile(argv[0], compilers[numCompilers-1], debugOptions, &resources))
-                    compileFailed = true;                
+                    compileFailed = true;
             }
         }
 
@@ -181,10 +216,10 @@ int C_DECL main(int argc, char* argv[])
         InfoLogMsg("BEGIN", "LINKER", -1);
         puts(ShGetInfoLog(linker));
         InfoLogMsg("END", "LINKER", -1);
-    
+
 #ifdef _WIN32
-    } __finally {    
-#endif    
+    } __finally {
+#endif
         for (i = 0; i < numCompilers; ++i)
             ShDestruct(compilers[i]);
 
@@ -224,7 +259,7 @@ static EShLanguage FindLanguage(char *name)
 
     if (ext && strcmp(ext, ".sl") == 0)
         for (; ext > name && ext[0] != '.'; ext--);
-    
+
     if (ext = strrchr(name, '.')) {
         if (strncmp(ext, ".frag", 4) == 0) return EShLangFragment;
         if (strncmp(ext, ".vert", 4) == 0) return EShLangVertex;
@@ -282,7 +317,7 @@ void usage()
 //   Malloc a string of sufficient size and read a string into it.
 //
 # define MAX_SOURCE_STRINGS 5
-char** ReadFileData(char *fileName) 
+char** ReadFileData(char *fileName)
 {
     FILE *in    = fopen(fileName, "r");
     char *fdata;
@@ -294,13 +329,13 @@ char** ReadFileData(char *fileName)
         printf("Error: unable to open input file: %s\n", fileName);
         return 0;
     }
-    
+
     while (fgetc(in) != EOF)
         count++;
 
 	fseek(in, 0, SEEK_SET);
-	
-	
+
+
 	if (!(fdata = (char *)malloc(count+2))) {
             printf("Error allocating memory\n");
             return 0;
@@ -315,7 +350,7 @@ char** ReadFileData(char *fileName)
         return_data[0]=(char*)malloc(count+2);
         return_data[0][0]='\0';
         OutputMultipleStrings=0;
-        return return_data;       
+        return return_data;
     }
 
 	int len = (int)(ceil)((float)count/(float)OutputMultipleStrings);
@@ -332,7 +367,7 @@ char** ReadFileData(char *fileName)
                break;
             }
            len = count;
-		}  
+		}
 		++i;
 	}
     return return_data;
