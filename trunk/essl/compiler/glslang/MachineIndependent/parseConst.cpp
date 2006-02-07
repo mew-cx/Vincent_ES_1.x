@@ -1,3 +1,38 @@
+/*
+//
+//Copyright (C) 2002-2005  Falanx Microsystems AS
+//All rights reserved.
+//
+//Redistribution and use in source and binary forms, with or without
+//modification, are permitted provided that the following conditions
+//are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//
+//    Neither the name of Falanx Microsystems AS nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+//POSSIBILITY OF SUCH DAMAGE.
+//
+*/
 //
 //Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
@@ -35,7 +70,7 @@
 #include "ParseHelper.h"
 
 //
-// Use this class to carry along data from node to node in 
+// Use this class to carry along data from node to node in
 // the traversal
 //
 class TConstTraverser : public TIntermTraverser {
@@ -76,19 +111,19 @@ void ParseSymbol(TIntermSymbol* node, TIntermTraverser* it)
 bool ParseBinary(bool /* preVisit */, TIntermBinary* node, TIntermTraverser* it)
 {
     TConstTraverser* oit = static_cast<TConstTraverser*>(it);
-    
+
     TQualifier qualifier = node->getType().getQualifier();
-    
+
     if (qualifier != EvqConst) {
         char buf[200];
         sprintf(buf, "'constructor' : assigning non-constant to %s", oit->type.getCompleteString().c_str());
         oit->infoSink.info.message(EPrefixError, buf, node->getLine());
         oit->error = true;
-        return false;  
+        return false;
     }
 
    oit->infoSink.info.message(EPrefixInternalError, "Binary Node found in constant constructor", node->getLine());
-    
+
     return false;
 }
 
@@ -100,7 +135,7 @@ bool ParseUnary(bool /* preVisit */, TIntermUnary* node, TIntermTraverser* it)
     sprintf(buf, "'constructor' : assigning non-constant to '%s'", oit->type.getCompleteString().c_str());
     oit->infoSink.info.message(EPrefixError, buf, node->getLine());
     oit->error = true;
-    return false;  
+    return false;
 }
 
 bool ParseAggregate(bool /* preVisit */, TIntermAggregate* node, TIntermTraverser* it)
@@ -112,7 +147,7 @@ bool ParseAggregate(bool /* preVisit */, TIntermAggregate* node, TIntermTraverse
         sprintf(buf, "'constructor' : assigning non-constant to '%s'", oit->type.getCompleteString().c_str());
         oit->infoSink.info.message(EPrefixError, buf, node->getLine());
         oit->error = true;
-        return false;  
+        return false;
     }
 
     if (node->getSequence().size() == 0) {
@@ -121,9 +156,9 @@ bool ParseAggregate(bool /* preVisit */, TIntermAggregate* node, TIntermTraverse
     }
 
     bool flag = node->getSequence().size() == 1 && node->getSequence()[0]->getAsTyped()->getAsConstantUnion();
-    if (flag) 
+    if (flag)
     {
-        oit->singleConstantParam = true; 
+        oit->singleConstantParam = true;
         oit->constructorType = node->getOp();
         oit->size = node->getType().getObjectSize();
 
@@ -131,19 +166,19 @@ bool ParseAggregate(bool /* preVisit */, TIntermAggregate* node, TIntermTraverse
             oit->isMatrix = true;
             oit->matrixSize = node->getType().getNominalSize();
         }
-    }       
+    }
 
-    for (TIntermSequence::iterator p = node->getSequence().begin(); 
+    for (TIntermSequence::iterator p = node->getSequence().begin();
                                    p != node->getSequence().end(); p++) {
 
         if (node->getOp() == EOpComma)
-            oit->index = 0;           
+            oit->index = 0;
 
         (*p)->traverse(oit);
-    }   
-    if (flag) 
+    }
+    if (flag)
     {
-        oit->singleConstantParam = false;   
+        oit->singleConstantParam = false;
         oit->constructorType = EOpNull;
         oit->size = 0;
         oit->isMatrix = false;
@@ -171,7 +206,7 @@ void ParseConstantUnion(TIntermConstantUnion* node, TIntermTraverser* it)
 
     if (!oit->singleConstantParam) {
         int size = node->getType().getObjectSize();
-    
+
         constUnion *rightUnionArray = node->getUnionArrayPointer();
         for (int i=0; i < size; i++) {
             if (oit->index >= instanceSize)
@@ -197,7 +232,7 @@ void ParseConstantUnion(TIntermConstantUnion* node, TIntermTraverser* it)
                 leftUnionArray[i] = rightUnionArray[count];
 
                 (oit->index)++;
-                
+
                 if (node->getType().getObjectSize() > 1)
                     count++;
             }
@@ -209,13 +244,13 @@ void ParseConstantUnion(TIntermConstantUnion* node, TIntermTraverser* it)
                     return;
                 if (index - i == 0 || (i - index) % (matrixSize + 1) == 0 )
                     leftUnionArray[i] = rightUnionArray[count];
-                else 
+                else
                     leftUnionArray[i].setFConst(0.0f);
 
                 (oit->index)++;
 
                 if (node->getType().getObjectSize() > 1)
-                    count++;                
+                    count++;
             }
         }
     }
@@ -248,7 +283,7 @@ bool TIntermediate::parseConstTree(TSourceLoc line, TIntermNode* root, constUnio
         return false;
 
     TConstTraverser it(unionArray, singleConstantParam, constructorType, infoSink, symbolTable, t);
-    
+
     it.visitAggregate = ParseAggregate;
     it.visitBinary = ParseBinary;
     it.visitConstantUnion = ParseConstantUnion;

@@ -1,3 +1,38 @@
+/*
+//
+//Copyright (C) 2002-2005  Falanx Microsystems AS
+//All rights reserved.
+//
+//Redistribution and use in source and binary forms, with or without
+//modification, are permitted provided that the following conditions
+//are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//
+//    Neither the name of Falanx Microsystems AS nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+//POSSIBILITY OF SUCH DAMAGE.
+//
+*/
 //
 //Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
@@ -36,7 +71,7 @@
 // Definition of the in-memory high-level intermediate representation
 // of shaders.  This is a tree that parser creates.
 //
-// Nodes in the tree are defined as a hierarchy of classes derived from 
+// Nodes in the tree are defined as a hierarchy of classes derived from
 // TIntermNode. Each is a node in a tree.  There is no preset branching factor;
 // each node can have it's own type of list of children.
 //
@@ -54,14 +89,14 @@
 enum TOperator {
     EOpNull,            // if in a node, should only mean a node is still being built
     EOpSequence,        // denotes a list of statements, or parameters, etc.
-    EOpFunctionCall,    
+    EOpFunctionCall,
     EOpFunction,        // For function definition
     EOpParameters,      // an aggregate listing the parameters to a function
 
     //
     // Unary operators
     //
-    
+
     EOpNegative,
     EOpLogicalNot,
     EOpVectorLogicalNot,
@@ -168,9 +203,9 @@ enum TOperator {
 
     EOpAny,
     EOpAll,
-    
+
     EOpItof,         // pack/unpack only
-    EOpFtoi,         // pack/unpack only    
+    EOpFtoi,         // pack/unpack only
     EOpSkipPixels,   // pack/unpack only
     EOpReadInput,    // unpack only
     EOpWritePixel,   // unpack only
@@ -178,7 +213,7 @@ enum TOperator {
     EOpBitmapMsb,    // unpack only
     EOpWriteOutput,  // pack only
     EOpReadPixel,    // pack only
-    
+
     //
     // Branch
     //
@@ -212,7 +247,7 @@ enum TOperator {
     //
     // moves
     //
-    
+
     EOpAssign,
     EOpAddAssign,
     EOpSubAssign,
@@ -292,7 +327,7 @@ public:
     virtual void setType(const TType& t) { type = t; }
     virtual TType getType() const { return type; }
     virtual TType* getTypePointer() { return &type; }
-    
+
     virtual TBasicType getBasicType() const { return type.getBasicType(); }
     virtual TQualifier getQualifier() const { return type.getQualifier(); }
     virtual TQualifier getPrecision() const { return type.getPrecision(); }		// Added for ESSL support
@@ -315,7 +350,7 @@ protected:
 //
 class TIntermLoop : public TIntermNode {
 public:
-    TIntermLoop(TIntermNode* aBody, TIntermTyped* aTest, TIntermTyped* aTerminal, bool testFirst) : 
+    TIntermLoop(TIntermNode* aBody, TIntermTyped* aTest, TIntermTyped* aTerminal, bool testFirst) :
         body(aBody),
         test(aTest),
         terminal(aTerminal),
@@ -357,8 +392,8 @@ public:
 	// if symbol is initialized as symbol(sym), the memory comes from the poolallocator of sym. If sym comes from
 	// per process globalpoolallocator, then it causes increased memory usage per compile
 	// it is essential to use "symbol = sym" to assign to symbol
-    TIntermSymbol(int i, const TString& sym, const TType& t) : 
-        TIntermTyped(t), id(i)  { symbol = sym;} 
+    TIntermSymbol(int i, const TString& sym, const TType& t) :
+        TIntermTyped(t), id(i)  { symbol = sym;}
     virtual int getId() const { return id; }
     virtual const TString& getSymbol() const { return symbol;  }
     virtual void traverse(TIntermTraverser*);
@@ -391,7 +426,7 @@ public:
     virtual bool promote(TInfoSink&) { return true; }
 protected:
     TIntermOperator(TOperator o) : TIntermTyped(TType(EbtFloat)), op(o) {}
-    TIntermOperator(TOperator o, TType& t) : TIntermTyped(t), op(o) {}   
+    TIntermOperator(TOperator o, TType& t) : TIntermTyped(t), op(o) {}
     TOperator op;
 };
 
@@ -487,7 +522,7 @@ protected:
 };
 
 //
-// For traversing the tree.  User should derive from this, 
+// For traversing the tree.  User should derive from this,
 // put their traversal specific data in it, and then pass
 // it to a Traverse method.
 //
@@ -498,8 +533,8 @@ class TIntermTraverser {
 public:
     POOL_ALLOCATOR_NEW_DELETE(GlobalPoolAllocator)
 
-    TIntermTraverser() : 
-        visitSymbol(0), 
+    TIntermTraverser() :
+        visitSymbol(0),
         visitConstantUnion(0),
         visitBinary(0),
         visitUnary(0),

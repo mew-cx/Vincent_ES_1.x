@@ -1,3 +1,38 @@
+/*
+//
+//Copyright (C) 2002-2005  Falanx Microsystems AS
+//All rights reserved.
+//
+//Redistribution and use in source and binary forms, with or without
+//modification, are permitted provided that the following conditions
+//are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//
+//    Neither the name of Falanx Microsystems AS nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+//POSSIBILITY OF SUCH DAMAGE.
+//
+*/
 //
 //Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
@@ -34,7 +69,7 @@
 
 //
 // Create strings that declare built-in definitions, add built-ins that
-// cannot be expressed in the files, and establish mappings between 
+// cannot be expressed in the files, and establish mappings between
 // built-in functions and operators.
 //
 
@@ -46,11 +81,11 @@ void TBuiltIns::initialize()
     //
     // Initialize all the built-in strings for parsing.
     //
-    
-	
+
+
 	TString VertexDefaultPrecision;						// Added for ESSL support
 	TString FragmentDefaultPrecision;					// Added for ESSL support
-	
+
 	TString BuiltInFunctions;
     TString BuiltInFunctionsVertex;
     TString BuiltInFunctionsFragment;
@@ -69,12 +104,12 @@ void TBuiltIns::initialize()
 		// Default precision for vertex shaders.
         //
         //============================================================================
-	
+
         TString& s = VertexDefaultPrecision;
 
         s.append(TString("precision highp int;"));
         s.append(TString("precision highp float;"));
-		
+
 		s.append(TString("\n"));
 	}
 	{
@@ -83,7 +118,7 @@ void TBuiltIns::initialize()
         // Default precision for fragment shaders.
         //
         //============================================================================
-	
+
         TString& s = FragmentDefaultPrecision;
 
         s.append(TString("precision mediump int;"));
@@ -95,10 +130,10 @@ void TBuiltIns::initialize()
 	/****************************************************************************************/
 	// Addition ended
 	/****************************************************************************************/
-	
-	
-	
-	
+
+
+
+
 	{
         //============================================================================
         //
@@ -473,13 +508,13 @@ void TBuiltIns::initialize()
         // Geometric Functions.
         //
 
-		// Removed for ESSL support		
+		// Removed for ESSL support
 //		s.append(TString("vec4 ftransform();"));
 
         //
         // Texture Functions.
         //
-		// Removed for ESSL support		
+		// Removed for ESSL support
 //        s.append(TString("vec4 texture1DLod(sampler1D sampler, float coord, float lod);"));
 //        s.append(TString("vec4 texture1DProjLod(sampler1D sampler, vec2 coord, float lod);"));
 //        s.append(TString("vec4 texture1DProjLod(sampler1D sampler, vec4 coord, float lod);"));
@@ -556,7 +591,7 @@ void TBuiltIns::initialize()
         //============================================================================
 
         TString& s = StandardUniforms;
-       
+
 
         //
         // OpenGL'uniform' state.  Page numbers are in reference to version
@@ -619,10 +654,10 @@ void TBuiltIns::initialize()
         s.append(TString("    float distanceLinearAttenuation;"));
         s.append(TString("    float distanceQuadraticAttenuation;"));
         s.append(TString("};"));
-         
+
         s.append(TString("uniform gl_PointParameters gl_Point;"));
 		*/
-        
+
 		//
         // Material State p. 50, 55.
         //
@@ -675,7 +710,7 @@ void TBuiltIns::initialize()
 		//
         // Derived state from products of light and material.
         //
-		
+
 		// Removed for ESSL support
 		/*
         s.append(TString("struct gl_LightModelProducts {"));
@@ -700,7 +735,7 @@ void TBuiltIns::initialize()
 
 		// Removed for ESSL support
 
-		/*		
+		/*
 		s.append(TString("struct gl_FogParameters {"));
         s.append(TString("    vec4  color;"));
         s.append(TString("    float density;"));
@@ -708,7 +743,7 @@ void TBuiltIns::initialize()
         s.append(TString("    float end;"));
         s.append(TString("    float scale;"));   //  1 / (gl_FogEnd - gl_FogStart)
         s.append(TString("};"));
-         
+
         s.append(TString("uniform gl_FogParameters gl_Fog;"));
 		*/
         s.append(TString("\n"));
@@ -748,7 +783,7 @@ void TBuiltIns::initialize()
 
         TString& s = StandardVertexVaryings;
 		// Removed for ESSL support
-		/*		
+		/*
         s.append(TString("varying vec4  gl_FrontColor;"));
         s.append(TString("varying vec4  gl_BackColor;"));
         s.append(TString("varying vec4  gl_FrontSecondaryColor;"));
@@ -767,7 +802,7 @@ void TBuiltIns::initialize()
 
         TString& s = StandardFragmentVaryings;
 		// Removed for ESSL support
-		/*		
+		/*
         s.append(TString("varying vec4  gl_Color;"));
         s.append(TString("varying vec4  gl_SecondaryColor;"));
         s.append(TString("varying vec4  gl_TexCoord[];"));
@@ -778,7 +813,7 @@ void TBuiltIns::initialize()
 
 		s.append(TString("\n"));
     }
-	
+
 
     builtInStrings[EShLangFragment].push_back(FragmentDefaultPrecision);			// Added for ESSL support
     builtInStrings[EShLangFragment].push_back(BuiltInFunctions.c_str());
@@ -800,7 +835,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources)
     //
     // Initialize all the built-in strings for parsing.
     //
-    TString StandardUniforms;    
+    TString StandardUniforms;
     {
         //============================================================================
         //
@@ -809,24 +844,24 @@ void TBuiltIns::initialize(const TBuiltInResource &resources)
         //============================================================================
 
         TString& s = StandardUniforms;
-       
+
         //
         // Implementation dependent constants.  The example values below
         // are the minimum values allowed for these maximums.
         //
         char builtInConstant[80];
 
-//		Removed for ESSL support		
+//		Removed for ESSL support
 /*
 		sprintf(builtInConstant, "const int  gl_MaxLights = %d;", resources.maxLights); // GL 1.0
-	    s.append(TString(builtInConstant));                            
-        
+	    s.append(TString(builtInConstant));
+
         sprintf(builtInConstant, "const int  gl_MaxClipPlanes = %d;", resources.maxClipPlanes);  // GL 1.0
         s.append(TString(builtInConstant));
-        
+
         sprintf(builtInConstant, "const int  gl_MaxTextureUnits = %d;", resources.maxTextureUnits); // GL 1.2
         s.append(TString(builtInConstant));
-        
+
         sprintf(builtInConstant, "const int  gl_MaxTextureCoords = %d;", resources.maxTextureCoords); // ARB_fragment_program
         s.append(TString(builtInConstant));
 */
@@ -835,25 +870,25 @@ void TBuiltIns::initialize(const TBuiltInResource &resources)
 
         sprintf(builtInConstant, "const int  gl_MaxVertexAttribs = %d;", resources.maxVertexAttribs); // ARB_vertex_shader
         s.append(TString(builtInConstant));
-        
+
         sprintf(builtInConstant, "const int  gl_MaxVertexUniformComponents = %d;", resources.maxVertexUniformComponents); // ARB_vertex_shader
-        s.append(TString(builtInConstant));       
-        
+        s.append(TString(builtInConstant));
+
         sprintf(builtInConstant, "const int  gl_MaxVaryingFloats = %d;", resources.maxVaryingFloats); // ARB_vertex_shader
-        s.append(TString(builtInConstant));        
-        
+        s.append(TString(builtInConstant));
+
         sprintf(builtInConstant, "const int  gl_MaxVertexTextureImageUnits = %d;", resources.maxVertexTextureImageUnits); // ARB_vertex_shader
-        s.append(TString(builtInConstant));        
-        
+        s.append(TString(builtInConstant));
+
         sprintf(builtInConstant, "const int  gl_MaxCombinedTextureImageUnits = %d;", resources.maxCombinedTextureImageUnits); // ARB_vertex_shader
-        s.append(TString(builtInConstant));        
-        
+        s.append(TString(builtInConstant));
+
         sprintf(builtInConstant, "const int  gl_MaxTextureImageUnits = %d;", resources.maxTextureImageUnits); // ARB_fragment_shader
         s.append(TString(builtInConstant));
-        
+
         sprintf(builtInConstant, "const int  gl_MaxFragmentUniformComponents = %d;", resources.maxFragmentUniformComponents); // ARB_fragment_shader
         s.append(TString(builtInConstant));
-        
+
         sprintf(builtInConstant, "const int  gl_MaxDrawBuffers = %d;", resources.maxDrawBuffers); // proposed ARB_draw_buffers
         s.append(TString(builtInConstant));
 
@@ -893,14 +928,14 @@ void TBuiltIns::initialize(const TBuiltInResource &resources)
         // Light State p 50, 53, 55.
         //
 
-		// Removed for ESSL support		
+		// Removed for ESSL support
 //		s.append(TString("uniform gl_LightSourceParameters  gl_LightSource[gl_MaxLights];"));
 
         //
         // Derived state from products of light.
         //
 
-		// Removed for ESSL support		
+		// Removed for ESSL support
 /*
 		s.append(TString("uniform gl_LightProducts gl_FrontLightProduct[gl_MaxLights];"));
         s.append(TString("uniform gl_LightProducts gl_BackLightProduct[gl_MaxLights];"));
@@ -909,7 +944,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources)
         // Textureg Environment and Generation, p. 152, p. 40-42.
         //
 
-		// Removed for ESSL support		
+		// Removed for ESSL support
 /*
 		s.append(TString("uniform vec4  gl_TextureEnvColor[gl_MaxTextureImageUnits];"));
         s.append(TString("uniform vec4  gl_EyePlaneS[gl_MaxTextureCoords];"));
@@ -931,7 +966,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources)
 void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable)
 {
     //
-    // First, insert some special built-in variables that are not in 
+    // First, insert some special built-in variables that are not in
     // the built-in header files.
     //
 switch(language) {
@@ -947,8 +982,8 @@ switch(language) {
         break;
 
     case EShLangVertex:
-        
-		
+
+
 		symbolTable.insert(*new TVariable(NewPoolTString("gl_Position"),    TType(EbtFloat, EvqPosition,  EvqHighp,   4 )));
 		symbolTable.insert(*new TVariable(NewPoolTString("gl_PointSize"),   TType(EbtFloat, EvqPointSize, EvqMediump, 1 )));
 
@@ -975,7 +1010,7 @@ switch(language) {
     symbolTable.relateToOperator("greaterThan",      EOpGreaterThan);
     symbolTable.relateToOperator("lessThanEqual",    EOpLessThanEqual);
     symbolTable.relateToOperator("greaterThanEqual", EOpGreaterThanEqual);
-    
+
     symbolTable.relateToOperator("radians",      EOpRadians);
     symbolTable.relateToOperator("degrees",      EOpDegrees);
     symbolTable.relateToOperator("sin",          EOpSin);
@@ -1013,7 +1048,7 @@ switch(language) {
     symbolTable.relateToOperator("forward",      EOpFaceForward);
     symbolTable.relateToOperator("reflect",      EOpReflect);
     symbolTable.relateToOperator("refract",      EOpRefract);
-    
+
     symbolTable.relateToOperator("any",          EOpAny);
     symbolTable.relateToOperator("all",          EOpAll);
 
@@ -1021,10 +1056,10 @@ switch(language) {
 
     case EShLangVertex:
         break;
-    
+
     case EShLangFragment:
-        symbolTable.relateToOperator("dFdx",         EOpDPdx);             
-        symbolTable.relateToOperator("dFdy",         EOpDPdy);             
+        symbolTable.relateToOperator("dFdx",         EOpDPdx);
+        symbolTable.relateToOperator("dFdy",         EOpDPdy);
         symbolTable.relateToOperator("fwidth",       EOpFwidth);
 
         break;
@@ -1048,7 +1083,7 @@ switch(language) {
 void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable, const TBuiltInResource &resources)
 {
     //
-    // First, insert some special built-in variables that are not in 
+    // First, insert some special built-in variables that are not in
     // the built-in header files.
     //
     switch(language) {
@@ -1068,7 +1103,7 @@ void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable, const TBu
 char* GetPreprocessorBuiltinString()
 {
 	static char *PreprocessorBuiltinString = "#define GL_ES 1\n";							// Added for ESSL support
-/*	
+/*
 	// The old preprocessor string were commented out during the ESSL work. This function weren't used at all in the existing code.
 	static char *PreprocessorBuiltinString = "#define GL_ARB_texture_rectangle 1\n"
                                              "#define GL_3DL_array_objects 1\n"

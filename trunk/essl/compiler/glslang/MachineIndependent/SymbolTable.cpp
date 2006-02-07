@@ -1,3 +1,38 @@
+/*
+//
+//Copyright (C) 2002-2005  Falanx Microsystems AS
+//All rights reserved.
+//
+//Redistribution and use in source and binary forms, with or without
+//modification, are permitted provided that the following conditions
+//are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//
+//    Neither the name of Falanx Microsystems AS nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+//POSSIBILITY OF SUCH DAMAGE.
+//
+*/
 //
 //Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
@@ -33,7 +68,7 @@
 //
 
 //
-// Symbol table for parsing.  Most functionaliy and main ideas 
+// Symbol table for parsing.  Most functionaliy and main ideas
 // are documented in the header file.
 //
 
@@ -75,7 +110,7 @@ void TType::buildMangledName(TString& mangledName)
                 (*structure)[i].type->buildMangledName(mangledName);
             }
         }
-    default: 
+    default:
         break;
     }
 
@@ -90,7 +125,7 @@ void TType::buildMangledName(TString& mangledName)
 }
 
 int TType::getStructSize() const
-{ 
+{
     if (!getStruct()) {
         assert(false && "Not a struct");
         return 0;
@@ -99,7 +134,7 @@ int TType::getStructSize() const
     if (structureSize == 0)
         for (TTypeList::iterator tl = getStruct()->begin(); tl != getStruct()->end(); tl++)
             structureSize += ((*tl).type)->getObjectSize();
-        
+
     return structureSize;
 }
 
@@ -107,7 +142,7 @@ int TType::getStructSize() const
 // Dump functions.
 //
 
-void TVariable::dump(TInfoSink& infoSink) const 
+void TVariable::dump(TInfoSink& infoSink) const
 {
     infoSink.debug << getName().c_str() << ": " << type.getQualifierString() << " " << type.getBasicString();
     if (type.isArray()) {
@@ -123,7 +158,7 @@ void TFunction::dump(TInfoSink &infoSink) const
     infoSink.debug << getName().c_str() << ": " <<  returnType.getBasicString() << " " << getMangledName().c_str() << "\n";
 }
 
-void TSymbolTableLevel::dump(TInfoSink &infoSink) const 
+void TSymbolTableLevel::dump(TInfoSink &infoSink) const
 {
     tLevel::const_iterator it;
     for (it = level.begin(); it != level.end(); ++it)
@@ -162,7 +197,7 @@ TSymbolTableLevel::~TSymbolTableLevel()
 // performance operation, and only intended for symbol tables that
 // live across a large number of compiles.
 //
-void TSymbolTableLevel::relateToOperator(const char* name, TOperator op) 
+void TSymbolTableLevel::relateToOperator(const char* name, TOperator op)
 {
     tLevel::iterator it;
     for (it = level.begin(); it != level.end(); ++it) {
@@ -172,7 +207,7 @@ void TSymbolTableLevel::relateToOperator(const char* name, TOperator op)
                 function->relateToOperator(op);
         }
     }
-}    
+}
 
 
 TSymbol::TSymbol(const TSymbol& copyOf)
@@ -182,15 +217,15 @@ TSymbol::TSymbol(const TSymbol& copyOf)
 }
 
 TVariable::TVariable(const TVariable& copyOf, TStructureMap& remapper) : TSymbol(copyOf)
-{	
+{
 	type.copyType(copyOf.type, remapper);
 	userType = copyOf.userType;
 	// for builtIn symbol table level, unionArray and arrayInformation pointers should be NULL
-	assert(copyOf.arrayInformationType == 0); 
+	assert(copyOf.arrayInformationType == 0);
 	arrayInformationType = 0;
 
-	if (copyOf.unionArray) {		
-		assert(!copyOf.type.getStruct()); 
+	if (copyOf.unionArray) {
+		assert(!copyOf.type.getStruct());
 		assert(copyOf.type.getObjectSize() == 1);
 		unionArray = new constUnion[1];
         unionArray[0] = copyOf.unionArray[0];
@@ -198,14 +233,14 @@ TVariable::TVariable(const TVariable& copyOf, TStructureMap& remapper) : TSymbol
 		unionArray = 0;
 }
 
-TVariable* TVariable::clone(TStructureMap& remapper) 
+TVariable* TVariable::clone(TStructureMap& remapper)
 {
 	TVariable *variable = new TVariable(*this, remapper);
 	return variable;
 }
 
 TFunction::TFunction(const TFunction& copyOf, TStructureMap& remapper) : TSymbol(copyOf)
-{	
+{
 	for (unsigned int i = 0; i < copyOf.parameters.size(); ++i) {
 		TParameter param;
 		parameters.push_back(param);
@@ -218,7 +253,7 @@ TFunction::TFunction(const TFunction& copyOf, TStructureMap& remapper) : TSymbol
 	defined = copyOf.defined;
 }
 
-TFunction* TFunction::clone(TStructureMap& remapper) 
+TFunction* TFunction::clone(TStructureMap& remapper)
 {
 	TFunction *function = new TFunction(*this, remapper);
 

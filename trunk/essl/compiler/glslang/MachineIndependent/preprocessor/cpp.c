@@ -1,3 +1,38 @@
+/*
+//
+//Copyright (C) 2002-2005  Falanx Microsystems AS
+//All rights reserved.
+//
+//Redistribution and use in source and binary forms, with or without
+//modification, are permitted provided that the following conditions
+//are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//
+//    Neither the name of Falanx Microsystems AS nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+//POSSIBILITY OF SUCH DAMAGE.
+//
+*/
 //
 //Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
@@ -56,7 +91,7 @@ Except as expressly stated in this notice, no other rights or licenses
 express or implied, are granted by NVIDIA herein, including but not
 limited to any patent rights that may be infringed by your derivative
 works or by other works in which the NVIDIA Software may be
-incorporated. No hardware is licensed hereunder. 
+incorporated. No hardware is licensed hereunder.
 
 THE NVIDIA SOFTWARE IS BEING PROVIDED ON AN "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -242,7 +277,7 @@ static int CPPdefine(yystypepp * yylvalpp)
                 old_token = ReadToken(symb->details.mac.body, yylvalpp);
                 old_lval = yylvalpp->sc_int;
                 token = ReadToken(mac.body, yylvalpp);
-                if (token != old_token || yylvalpp->sc_int != old_lval) { 
+                if (token != old_token || yylvalpp->sc_int != old_lval) {
                 error:
                     StoreStr("Macro Redefined");
                     StoreStr(GetStringOfAtom(atable,name));
@@ -295,12 +330,12 @@ static int CPPelse(int matchelse, yystypepp * yylvalpp)
 {
     int atom,depth=0;
     int token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
-	
+
 	while (token > 0) {
         if (token != '#') {
 		    while (token != '\n')
                 token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
-            
+
             token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
             continue;
         }
@@ -314,10 +349,10 @@ static int CPPelse(int matchelse, yystypepp * yylvalpp)
             if(--depth<=0){
 		        cpp->elsedepth[cpp->elsetracker]=0;
 			    --cpp->elsetracker;
-                if (cpp->ifdepth) 
+                if (cpp->ifdepth)
                     --cpp->ifdepth;
                 break;
-            }             
+            }
                 --cpp->elsetracker;
                 --cpp->ifdepth;
             }
@@ -328,9 +363,9 @@ static int CPPelse(int matchelse, yystypepp * yylvalpp)
                     CPPWarningToInfoLog("unexpected tokens following #else preprocessor directive - expected a newline");
                     while (token != '\n')
                         token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
-                } 
+                }
 				break;
-			} 
+			}
 			else if (atom == elifAtom) {
                 /* we decrement cpp->ifdepth here, because CPPif will increment
                  * it and we really want to leave it alone */
@@ -500,7 +535,7 @@ static int CPPif(yystypepp * yylvalpp) {
         CPPWarningToInfoLog("unexpected tokens following the preprocessor directive - expected a newline");
         while (token != '\n')
             token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
-    } 
+    }
     if (!res && !err) {
         token = CPPelse(1, yylvalpp);
     }
@@ -533,7 +568,7 @@ static int CPPifdef(int defined, yystypepp * yylvalpp)
     return token;
 } // CPPifdef
 
-static int CPPline(yystypepp * yylvalpp) 
+static int CPPline(yystypepp * yylvalpp)
 {
     int token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
 	if(token=='\n'){
@@ -546,7 +581,7 @@ static int CPPline(yystypepp * yylvalpp)
 		yylvalpp->sc_int=atoi(yylvalpp->symbol_name);
 		SetLineNumber(yylvalpp->sc_int);
         token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
-        
+
 		if (token == CPP_INTCONSTANT) {
             yylvalpp->sc_int=atoi(yylvalpp->symbol_name);
 			SetStringNumber(yylvalpp->sc_int);
@@ -571,7 +606,7 @@ static int CPPerror(yystypepp * yylvalpp) {
 
 	int token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
     const char *message;
-	
+
     while (token != '\n') {
 		if (token == CPP_FLOATCONSTANT || token == CPP_INTCONSTANT){
             StoreStr(yylvalpp->symbol_name);
@@ -602,15 +637,15 @@ static int CPPpragma(yystypepp * yylvalpp)
 	int i;
 
 	int token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
-	
+
 	if (token=='\n') {
 		DecLineNumber();
         CPPErrorToInfoLog("#pragma");
         IncLineNumber();
 	    return token;
 	}
-	
-	allTokens = (char**)malloc(sizeof(char*) * maxTokenCount);	
+
+	allTokens = (char**)malloc(sizeof(char*) * maxTokenCount);
 
 	while (token != '\n') {
 		if (tokenCount >= maxTokenCount) {
@@ -635,7 +670,7 @@ static int CPPpragma(yystypepp * yylvalpp)
 			break;
 		case -1:
             // EOF
-            CPPShInfoLogMsg("#pragma directive must end with a newline");			
+            CPPShInfoLogMsg("#pragma directive must end with a newline");
 			return token;
 		default:
 			SrcStrName[0] = token;
@@ -649,13 +684,13 @@ static int CPPpragma(yystypepp * yylvalpp)
 	cpp->currentInput->ungetch(cpp->currentInput, token, yylvalpp);
 	HandlePragma((const char**)allTokens, tokenCount);
 	token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
-	
+
 	for (i = 0; i < tokenCount; ++i) {
 		free (allTokens[i]);
 	}
-	free (allTokens);	
+	free (allTokens);
 
-	return token;    
+	return token;
 } // CPPpragma
 
 #define GL2_VERSION_NUMBER 110
@@ -676,15 +711,15 @@ static int CPPversion(yystypepp * yylvalpp)
 	}
     if (token != CPP_INTCONSTANT)
         CPPErrorToInfoLog("#version");
-	
+
     yylvalpp->sc_int=atoi(yylvalpp->symbol_name);
 	//SetVersionNumber(yylvalpp->sc_int);
-    
+
     if (yylvalpp->sc_int != GL2_VERSION_NUMBER)
         CPPShInfoLogMsg("Version number not supported by GL2");
 
     token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
-    
+
 	if (token == '\n'){
 		return token;
 	}
@@ -709,15 +744,15 @@ static int CPPextension(yystypepp * yylvalpp)
 
     if (token != CPP_IDENTIFIER)
         CPPErrorToInfoLog("#extension");
-    
+
     strcpy(extensionName, GetAtomString(atable, yylvalpp->sc_ident));
-	    
+
     token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
     if (token != ':') {
         CPPShInfoLogMsg("':' missing after extension name");
         return token;
     }
-    
+
     token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
     if (token != CPP_IDENTIFIER) {
         CPPShInfoLogMsg("behavior for extension not specified");
@@ -768,9 +803,9 @@ int readCPPline(yystypepp * yylvalpp)
             if (!cpp->ifdepth){
                  CPPErrorToInfoLog("#elif mismatch");
                  cpp->CompileError=1;
-            } 
+            }
             // this token is really a dont care, but we still need to eat the tokens
-            token = cpp->currentInput->scan(cpp->currentInput, yylvalpp); 
+            token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
             while (token != '\n')
                 token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
 		    token = CPPelse(0, yylvalpp);
@@ -813,7 +848,7 @@ int readCPPline(yystypepp * yylvalpp)
     while (token != '\n' && token != 0 && token != EOF) {
 		token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
 	}
-        
+
     cpp->notAVersionToken = !isVersion;
 
     return token;
@@ -874,7 +909,7 @@ typedef struct MacroInputSrc {
 } MacroInputSrc;
 
 /* macro_scan ---
-** return the next token for a macro expanion, handling macro args 
+** return the next token for a macro expanion, handling macro args
 */
 static int macro_scan(MacroInputSrc *in, yystypepp * yylvalpp) {
     int i;
@@ -989,7 +1024,7 @@ int MacroExpand(int atom, yystypepp * yylvalpp)
                 token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
                 if (token == '(') depth++;
             }
-			
+
             if (token <= 0) {
                 StoreStr("EOF in Macro ");
                 StoreStr(GetStringOfAtom(atable,atom));
@@ -1029,7 +1064,7 @@ int ChkCorrectElseNesting(void)
 {
     if(cpp->elsedepth[cpp->elsetracker]==0){
 	  cpp->elsedepth[cpp->elsetracker]=1;
-      return 1;          
+      return 1;
     }
     return 0;
 }

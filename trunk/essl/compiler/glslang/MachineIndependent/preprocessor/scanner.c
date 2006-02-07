@@ -1,3 +1,38 @@
+/*
+//
+//Copyright (C) 2002-2005  Falanx Microsystems AS
+//All rights reserved.
+//
+//Redistribution and use in source and binary forms, with or without
+//modification, are permitted provided that the following conditions
+//are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//
+//    Neither the name of Falanx Microsystems AS nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+//POSSIBILITY OF SUCH DAMAGE.
+//
+*/
 //
 //Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
@@ -56,7 +91,7 @@ Except as expressly stated in this notice, no other rights or licenses
 express or implied, are granted by NVIDIA herein, including but not
 limited to any patent rights that may be infringed by your derivative
 works or by other works in which the NVIDIA Software may be
-incorporated. No hardware is licensed hereunder. 
+incorporated. No hardware is licensed hereunder.
 
 THE NVIDIA SOFTWARE IS BEING PROVIDED ON AN "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -123,12 +158,12 @@ static int byte_scan(InputSrc *, yystypepp * yylvalpp);
     __int64 RDTSC ( void ) {
 
         __int64 v;
-    
+
         __asm __emit 0x0f
         __asm __emit 0x31
         __asm mov dword ptr v, eax
         __asm mov dword ptr v+4, edx
-    
+
         return v;
     }
 #endif
@@ -180,14 +215,14 @@ static int str_getch(StringInputSrc *in)
     	  SetLineNumber(1);
 		  ScanFromString(cpp->PaArgv[cpp->PaWhichStr]);
 		  in=(StringInputSrc*)cpp->currentInput;
-	      continue;             
+	      continue;
 	   }
 	   else{
 	      cpp->currentInput = in->base.prev;
 	      cpp->PaWhichStr=0;
           free(in);
           return EOF;
-       }  
+       }
 	}
 } // str_getch
 
@@ -196,7 +231,7 @@ static void str_ungetch(StringInputSrc *in, int ch, yystypepp *type) {
 	else {
 		*(in->p)='\0'; //this would take care of shifting to the previous string.
 	    cpp->PaWhichStr--;
-	}  
+	}
 	if (ch == '\n') {
         in->base.line--;
         DecLineNumber();
@@ -205,7 +240,7 @@ static void str_ungetch(StringInputSrc *in, int ch, yystypepp *type) {
 
 int ScanFromString(char *s)
 {
-    
+
 	StringInputSrc *in = malloc(sizeof(StringInputSrc));
     memset(in, 0, sizeof(StringInputSrc));
 	in->p = s;
@@ -273,11 +308,11 @@ static int lFloatConst(char *str, int len, int ch, yystypepp * yylvalpp)
     int HasDecimal, declen, exp, ExpSign;
     int str_len;
     float lval;
-    
+
     HasDecimal = 0;
     declen = 0;
     exp = 0;
-	
+
     str_len=len;
     if (ch == '.') {
 		str[len++]=ch;
@@ -305,7 +340,7 @@ static int lFloatConst(char *str, int len, int ch, yystypepp * yylvalpp)
 		str[len++]=ch;
         ch = cpp->currentInput->getch(cpp->currentInput, yylvalpp);
         if (ch == '+') {
-            str[len++]=ch;  
+            str[len++]=ch;
 			ch = cpp->currentInput->getch(cpp->currentInput, yylvalpp);
         } else if (ch == '-') {
             ExpSign = -1;
@@ -323,26 +358,26 @@ static int lFloatConst(char *str, int len, int ch, yystypepp * yylvalpp)
         }
         exp *= ExpSign;
     }
-      
+
     if (len == 0) {
         lval = 0.0f;
 		strcpy(str,"0.0");
     } else {
-        str[len]='\0';      
+        str[len]='\0';
         lval = lBuildFloatValue(str, str_len, exp - declen);
     }
     // Suffix:
-    
+
     yylvalpp->sc_fval = lval;
     strcpy(yylvalpp->symbol_name,str);
-    cpp->currentInput->ungetch(cpp->currentInput, ch, yylvalpp);            
+    cpp->currentInput->ungetch(cpp->currentInput, ch, yylvalpp);
     return CPP_FLOATCONSTANT;
 } // lFloatConst
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////// Normal Scanner //////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-    
+
 static int byte_scan(InputSrc *in, yystypepp * yylvalpp)
 {
     char symbol_name[MAX_SYMBOL_NAME_LEN + 1];
@@ -353,12 +388,12 @@ static int byte_scan(InputSrc *in, yystypepp * yylvalpp)
     for (;;) {
         yylvalpp->sc_int = 0;
         ch = cpp->currentInput->getch(cpp->currentInput, yylvalpp);
-		
+
         while (ch == ' ' || ch == '\t' || ch == '\r') {
             yylvalpp->sc_int = 1;
             ch = cpp->currentInput->getch(cpp->currentInput, yylvalpp);
         }
-		
+
         cpp->ltokenLoc.file = cpp->currentInput->name;
         cpp->ltokenLoc.line = cpp->currentInput->line;
         len = 0;
@@ -378,12 +413,12 @@ static int byte_scan(InputSrc *in, yystypepp * yylvalpp)
         case 'k': case 'l': case 'm': case 'n': case 'o':
         case 'p': case 'q': case 'r': case 's': case 't':
         case 'u': case 'v': case 'w': case 'x': case 'y':
-        case 'z':            
+        case 'z':
             do {
                 if (len < MAX_SYMBOL_NAME_LEN) {
                     symbol_name[len] = ch;
                     len++;
-                    ch = cpp->currentInput->getch(cpp->currentInput, yylvalpp);					
+                    ch = cpp->currentInput->getch(cpp->currentInput, yylvalpp);
                 } else {
                     ch = cpp->currentInput->getch(cpp->currentInput, yylvalpp);
                 }
@@ -452,7 +487,7 @@ static int byte_scan(InputSrc *in, yystypepp * yylvalpp)
                     }
                     ch = cpp->currentInput->getch(cpp->currentInput, yylvalpp);
                 } while (ch >= '0' && ch <= '7');
-                if (ch == '.' || ch == 'e' || ch == 'f' || ch == 'h' || ch == 'x'|| ch == 'E') 
+                if (ch == '.' || ch == 'e' || ch == 'f' || ch == 'h' || ch == 'x'|| ch == 'E')
                      return lFloatConst(yylvalpp->symbol_name, len, ch, yylvalpp);
                 yylvalpp->symbol_name[len] = '\0';
 				cpp->currentInput->ungetch(cpp->currentInput, ch, yylvalpp);
@@ -554,7 +589,7 @@ static int byte_scan(InputSrc *in, yystypepp * yylvalpp)
                   return '^';
                 }
             }
-        
+
         case '=':
             ch = cpp->currentInput->getch(cpp->currentInput, yylvalpp);
             if (ch == '=') {
@@ -716,9 +751,9 @@ static int byte_scan(InputSrc *in, yystypepp * yylvalpp)
 } // byte_scan
 
 int yylex_CPP(char* buf, int maxSize)
-{    
+{
 	yystypepp yylvalpp;
-    int token = '\n';   
+    int token = '\n';
 
     for(;;) {
 
@@ -743,30 +778,30 @@ int yylex_CPP(char* buf, int maxSize)
             cpp->notAVersionToken = 1;
             continue;
         }
-        
+
         if (token == '\n')
             continue;
-          
-        if (token == CPP_IDENTIFIER) {                
+
+        if (token == CPP_IDENTIFIER) {
             cpp->notAVersionToken = 1;
             tokenString = GetStringOfAtom(atable,yylvalpp.sc_ident);
-        } else if (token == CPP_FLOATCONSTANT||token == CPP_INTCONSTANT){             
-            cpp->notAVersionToken = 1;            
+        } else if (token == CPP_FLOATCONSTANT||token == CPP_INTCONSTANT){
+            cpp->notAVersionToken = 1;
             tokenString = yylvalpp.symbol_name;
-		} else {            
-            cpp->notAVersionToken = 1;            
+		} else {
+            cpp->notAVersionToken = 1;
             tokenString = GetStringOfAtom(atable,token);
 	    }
 
         if (tokenString) {
             if ((signed)strlen(tokenString) >= maxSize) {
                 cpp->tokensBeforeEOF = 1;
-                return maxSize;               
+                return maxSize;
             } else  if (strlen(tokenString) > 0) {
 			    strcpy(buf, tokenString);
                 cpp->tokensBeforeEOF = 1;
                 return (int)strlen(tokenString);
-            }  
+            }
 
             return 0;
         }

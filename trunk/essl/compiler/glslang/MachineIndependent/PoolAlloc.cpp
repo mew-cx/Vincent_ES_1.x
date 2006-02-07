@@ -1,3 +1,38 @@
+/*
+//
+//Copyright (C) 2002-2005  Falanx Microsystems AS
+//All rights reserved.
+//
+//Redistribution and use in source and binary forms, with or without
+//modification, are permitted provided that the following conditions
+//are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//
+//    Neither the name of Falanx Microsystems AS nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+//POSSIBILITY OF SUCH DAMAGE.
+//
+*/
 //
 //Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
@@ -42,29 +77,29 @@ OS_TLSIndex PoolIndex;
 
 void InitializeGlobalPools()
 {
-    TThreadGlobalPools* globalPools= static_cast<TThreadGlobalPools*>(OS_GetTLSValue(PoolIndex));    
+    TThreadGlobalPools* globalPools= static_cast<TThreadGlobalPools*>(OS_GetTLSValue(PoolIndex));
     if (globalPools)
         return;
 
     TPoolAllocator *globalPoolAllocator = new TPoolAllocator(true);
 
     TThreadGlobalPools* threadData = new TThreadGlobalPools();
-    
+
     threadData->globalPoolAllocator = globalPoolAllocator;
-    	
-    OS_SetTLSValue(PoolIndex, threadData);     
+
+    OS_SetTLSValue(PoolIndex, threadData);
 	globalPoolAllocator->push();
 }
 
 void FreeGlobalPools()
 {
     // Release the allocated memory for this thread.
-    TThreadGlobalPools* globalPools= static_cast<TThreadGlobalPools*>(OS_GetTLSValue(PoolIndex));    
+    TThreadGlobalPools* globalPools= static_cast<TThreadGlobalPools*>(OS_GetTLSValue(PoolIndex));
     if (!globalPools)
         return;
-	
+
     GlobalPoolAllocator.popAll();
-    delete &GlobalPoolAllocator;       
+    delete &GlobalPoolAllocator;
     delete globalPools;
 }
 
@@ -101,7 +136,7 @@ void SetGlobalPoolAllocatorPtr(TPoolAllocator* poolAllocator)
 // Implement the functionality of the TPoolAllocator class, which
 // is documented in PoolAlloc.h.
 //
-TPoolAllocator::TPoolAllocator(bool g, int growthIncrement, int allocationAlignment) : 
+TPoolAllocator::TPoolAllocator(bool g, int growthIncrement, int allocationAlignment) :
     global(g),
     pageSize(growthIncrement),
     alignment(allocationAlignment),
@@ -149,7 +184,7 @@ TPoolAllocator::~TPoolAllocator()
 {
     if (!global) {
         //
-        // Then we know that this object is not being 
+        // Then we know that this object is not being
         // allocated after other, globally scoped objects
         // that depend on it.  So we can delete the "in use" memory.
         //
@@ -209,7 +244,7 @@ void TPoolAllocator::push()
     tAllocState state = { currentPageOffset, inUseList };
 
     stack.push_back(state);
-        
+
     //
     // Indicate there is no current page to allocate from.
     //
@@ -234,7 +269,7 @@ void TPoolAllocator::pop()
     while (inUseList != page) {
         // invoke destructor to free allocation list
         inUseList->~tHeader();
-        
+
         tHeader* nextInUse = inUseList->nextPage;
         if (inUseList->pageCount > 1)
             delete [] reinterpret_cast<char*>(inUseList);
@@ -266,7 +301,7 @@ void* TPoolAllocator::allocate(size_t numBytes)
     // size including guard blocks.  In release build,
     // guardBlockSize=0 and this all gets optimized away.
     size_t allocationSize = TAllocation::allocationSize(numBytes);
-    
+
     //
     // Just keep some interesting statistics.
     //
@@ -324,7 +359,7 @@ void* TPoolAllocator::allocate(size_t numBytes)
     // Use placement-new to initialize header
     new(memory) tHeader(inUseList, 1);
     inUseList = memory;
-    
+
     unsigned char* ret = reinterpret_cast<unsigned char *>(inUseList) + headerSkip;
     currentPageOffset = (headerSkip + allocationSize + alignmentMask) & ~alignmentMask;
 

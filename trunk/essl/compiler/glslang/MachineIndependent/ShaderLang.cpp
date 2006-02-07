@@ -1,3 +1,38 @@
+/*
+//
+//Copyright (C) 2002-2005  Falanx Microsystems AS
+//All rights reserved.
+//
+//Redistribution and use in source and binary forms, with or without
+//modification, are permitted provided that the following conditions
+//are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//
+//    Neither the name of Falanx Microsystems AS nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+//POSSIBILITY OF SUCH DAMAGE.
+//
+*/
 //
 //Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
@@ -71,10 +106,10 @@ int ShInitialize()
     if (!InitProcess())
         return 0;
 
-    // This method should be called once per process. If its called by multiple threads, then 
+    // This method should be called once per process. If its called by multiple threads, then
     // we need to have thread synchronization code around the initialization of per process
     // global pool allocator
-    if (!PerProcessGPA) { 
+    if (!PerProcessGPA) {
         TPoolAllocator *builtInPoolAllocator = new TPoolAllocator(true);
         builtInPoolAllocator->push();
         TPoolAllocator* gPoolAllocator = &GlobalPoolAllocator;
@@ -96,7 +131,7 @@ int ShInitialize()
         symTables[EShLangFragment].pop();
 
         builtInPoolAllocator->popAll();
-        delete builtInPoolAllocator;        
+        delete builtInPoolAllocator;
 
     }
 
@@ -114,7 +149,7 @@ ShHandle ShConstructCompiler(const EShLanguage language, int debugOptions)
         return 0;
 
     TShHandleBase* base = static_cast<TShHandleBase*>(ConstructCompiler(language, debugOptions));
-    
+
     return reinterpret_cast<void*>(base);
 }
 
@@ -157,7 +192,7 @@ void ShDestruct(ShHandle handle)
 // Cleanup symbol tables
 //
 int __fastcall ShFinalize()
-{  
+{
   if (PerProcessGPA) {
     PerProcessGPA->popAll();
     delete PerProcessGPA;
@@ -168,7 +203,7 @@ int __fastcall ShFinalize()
 bool GenerateBuiltInSymbolTable(const TBuiltInResource* resources, TInfoSink& infoSink, TSymbolTable* symbolTables, EShLanguage language)
 {
     TBuiltIns builtIns;
-    
+
 	if (resources) {
 		builtIns.initialize(*resources);
 		InitializeSymbolTable(builtIns.getBuiltInStrings(), language, infoSink, resources, symbolTables);
@@ -183,9 +218,9 @@ bool GenerateBuiltInSymbolTable(const TBuiltInResource* resources, TInfoSink& in
 
 bool InitializeSymbolTable(TBuiltInStrings* BuiltInStrings, EShLanguage language, TInfoSink& infoSink, const TBuiltInResource* resources, TSymbolTable* symbolTables)
 {
-    TIntermediate intermediate(infoSink);	
+    TIntermediate intermediate(infoSink);
     TSymbolTable* symbolTable;
-	
+
 	if (resources)
 		symbolTable = symbolTables;
 	else
@@ -194,11 +229,11 @@ bool InitializeSymbolTable(TBuiltInStrings* BuiltInStrings, EShLanguage language
     TParseContext parseContext(*symbolTable, intermediate, language, infoSink);
 
     GlobalParseContext = &parseContext;
-    
+
     setInitialState();
 
     assert(symbolTable->isEmpty() || symbolTable->atSharedBuiltInLevel());
-       
+
     //
     // Parse the built-ins.  This should only happen once per
     // language symbol table.
@@ -209,14 +244,14 @@ bool InitializeSymbolTable(TBuiltInStrings* BuiltInStrings, EShLanguage language
     //
 
     symbolTable->push();
-    
+
     //Initialize the Preprocessor
     int ret = InitPreprocessor();
     if (ret) {
         infoSink.info.message(EPrefixInternalError,  "Unable to intialize the Preprocessor");
         return false;
     }
-    
+
     for (TBuiltInStrings::iterator i  = BuiltInStrings[parseContext.language].begin();
                                     i != BuiltInStrings[parseContext.language].end();
                                     ++i) {
@@ -234,7 +269,7 @@ bool InitializeSymbolTable(TBuiltInStrings* BuiltInStrings, EShLanguage language
 
 	if (resources) {
 		IdentifyBuiltIns(parseContext.language, *symbolTable, *resources);
-	} else {									   
+	} else {
 		IdentifyBuiltIns(parseContext.language, *symbolTable);
 	}
 
@@ -252,7 +287,7 @@ bool InitializeSymbolTable(TBuiltInStrings* BuiltInStrings, EShLanguage language
 }
 
 //
-// Do an actual compile on the given strings.  The result is left 
+// Do an actual compile on the given strings.  The result is left
 // in the given compile object.
 //
 // Return:  The return value of ShCompile is really boolean, indicating
@@ -277,7 +312,7 @@ int ShCompile(
     TCompiler* compiler = base->getAsCompiler();
     if (compiler == 0)
         return 0;
-    
+
     GlobalPoolAllocator.push();
     compiler->infoSink.info.erase();
     compiler->infoSink.debug.erase();
@@ -292,22 +327,22 @@ int ShCompile(
 
     TParseContext parseContext(symbolTable, intermediate, compiler->getLanguage(), compiler->infoSink);
 
-	
-	
+
+
 	parseContext.initializeExtensionBehavior();
 
     GlobalParseContext = &parseContext;
-    
+
     setInitialState();
 
-    InitPreprocessor();    
+    InitPreprocessor();
     //
     // Parse the application's shaders.  All the following symbol table
     // work will be throw-away, so push a new allocation scope that can
     // be thrown away, then push a scope for the current shader's globals.
     //
     bool success = true;
-    
+
     symbolTable.push();
     if (!symbolTable.atGlobalLevel())
         parseContext.infoSink.info.message(EPrefixInternalError, "Wrong symbol table level");
@@ -427,8 +462,8 @@ int ShLinkExt(
             }
             if (base->getAsCompiler())
                 cObjects.push_back(base->getAsCompiler());
-    
-    
+
+
             if (cObjects[i] == 0)
                 return 0;
         }
@@ -446,7 +481,7 @@ int ShLinkExt(
         for (int i = 0; i < numHandles; ++i) {
             if (cObjects[i]->getAsCompiler()) {
                 if (! cObjects[i]->getAsCompiler()->linkable()) {
-                    linker->infoSink.info.message(EPrefixError, "Not all shaders have valid object code.");                
+                    linker->infoSink.info.message(EPrefixError, "Not all shaders have valid object code.");
                     return 0;
                 }
             }
@@ -504,7 +539,7 @@ const void* ShGetExecutable(const ShHandle handle)
         return 0;
 
     TShHandleBase* base = reinterpret_cast<TShHandleBase*>(handle);
-    
+
     TLinker* linker = static_cast<TLinker*>(base->getAsLinker());
     if (linker == 0)
         return 0;
@@ -521,7 +556,7 @@ const void* ShGetExecutable(const ShHandle handle)
 // success or failure.
 //
 int ShSetVirtualAttributeBindings(const ShHandle handle, const ShBindingTable* table)
-{    
+{
     if (!InitThread())
         return 0;
 
@@ -533,7 +568,7 @@ int ShSetVirtualAttributeBindings(const ShHandle handle, const ShBindingTable* t
 
     if (linker == 0)
         return 0;
-   
+
     linker->setAppAttributeBindings(table);
 
     return 1;
