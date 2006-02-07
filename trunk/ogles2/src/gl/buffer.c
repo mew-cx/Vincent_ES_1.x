@@ -50,7 +50,7 @@
 ** --------------------------------------------------------------------------
 */
 
-void InitBuffer(Buffer * buffer) {
+void GlesInitBuffer(Buffer * buffer) {
 	buffer->data		= NULL;
 	buffer->size		= 0;
 	buffer->bufferType	= GL_INVALID_ENUM;
@@ -85,7 +85,7 @@ GL_API void GL_APIENTRY glDeleteBuffers (GLsizei n, const GLuint *buffers) {
 GL_API void GL_APIENTRY glGenBuffers (GLsizei n, GLuint *buffers) {
 
 	State * state = GLES_GET_STATE();
-	GenObjects(state, state->bufferFreeListHead, state->bufferFreeList, GLES_MAX_BUFFERS, n, buffers);
+	GlesGenObjects(state, state->bufferFreeListHead, state->bufferFreeList, GLES_MAX_BUFFERS, n, buffers);
 }
 
 GL_API void GL_APIENTRY glGetBufferParameteriv (GLenum target, GLenum pname, GLint *params) {
@@ -99,7 +99,7 @@ GL_API void GL_APIENTRY glGetBufferPointerv (GLenum target, GLenum pname, void* 
 GL_API GLboolean GL_APIENTRY glIsBuffer (GLuint buffer) {
 
 	State * state = GLES_GET_STATE();
-	return IsBoundObject(state->bufferFreeListHead, state->bufferFreeList, GLES_MAX_BUFFERS, buffer) &&
+	return GlesIsBoundObject(state->bufferFreeListHead, state->bufferFreeList, GLES_MAX_BUFFERS, buffer) &&
 		state->buffers[buffer].bufferType != GL_INVALID_ENUM;
 }
 

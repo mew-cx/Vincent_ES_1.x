@@ -67,9 +67,9 @@ static void calculateVarying(GLfloat * varying, const GLfloat * base, const GLfl
 }
 
 typedef struct {
-	GLES_gpumem_t	colorBuffer;		/* color buffer address	for pixels	*/
-	GLES_gpumem_t	depthBuffer;		/* depth buffer address	for pixels	*/
-	GLES_gpumem_t	stencilBuffer;		/* stencil buffer address for pixels*/
+	void *	colorBuffer;		/* color buffer address	for pixels	*/
+	void *	depthBuffer;		/* depth buffer address	for pixels	*/
+	void *	stencilBuffer;		/* stencil buffer address for pixels*/
 
 	const GLfloat * startValues;		/* start values for pixel attributes*/
 	const GLfloat *	increments;			/* increments for pixel attributes	*/

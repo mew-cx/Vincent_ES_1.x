@@ -39,7 +39,6 @@
 ** ==========================================================================
 */
 
-#include "framebuffer/framebuffer.h"
 
 /*
 ** --------------------------------------------------------------------------
@@ -198,18 +197,18 @@ typedef struct Buffer {
 */
 
 typedef struct Image2D {
-	void *					data;		/* image data						*/
-	GLsizei					width;		/* width in pixels					*/
-	GLsizei					height;		/* height in pixels					*/
-	const BufferFormat *	format;		/* image format						*/
+	void *					data;			/* image data					*/
+	GLsizei					width;			/* width in pixels				*/
+	GLsizei					height;			/* height in pixels				*/
+	GLenum					internalFormat;	/* image format					*/
 } Image2D;
 
 typedef struct Image3D {
-	void *					data;		/* image data						*/
-	GLsizei					width;		/* width in pixels					*/
-	GLsizei					height;		/* height in pixels					*/
-	GLsizei					depth;		/* depth in pixels					*/
-	const BufferFormat *	format;		/* image format						*/
+	void *					data;			/* image data					*/
+	GLsizei					width;			/* width in pixels				*/
+	GLsizei					height;			/* height in pixels				*/
+	GLsizei					depth;			/* depth in pixels				*/
+	GLenum					internalFormat;	/* image format					*/
 } Image3D;
 
 typedef struct TextureBase {
@@ -334,15 +333,15 @@ typedef struct Program {
 */
 
 typedef struct Surface {
-	GLES_gpumem_t	colorBuffer;		/* color buffer address				*/
-	GLES_gpumem_t	depthBuffer;		/* depth buffer address				*/
-	GLES_gpumem_t	stencilBuffer;		/* stencil buffer address			*/
+	void *	colorBuffer;		/* color buffer address				*/
+	void *	depthBuffer;		/* depth buffer address				*/
+	void *	stencilBuffer;		/* stencil buffer address			*/
 
 	GLuint			width, height;		/* surface dimensions				*/
 
-	const BufferFormat * colorFormat;	/* format of color buffer:			*/
-	const BufferFormat * depthFormat;	/* format of depth buffer:			*/
-	const BufferFormat * stencilFormat;	/* format of stencil buffer:		*/
+	GLenum			colorFormat;		/* format of color buffer:			*/
+	GLenum			depthFormat;		/* format of depth buffer:			*/
+	GLenum			stencilFormat;		/* format of stencil buffer:		*/
 } Surface;
 
 /*
@@ -516,35 +515,32 @@ void GlesRecordOutOfMemory(State * state);
 
 GLboolean GlesValidateEnum(State * state, GLenum value, const GLenum * values, GLuint numValues);
 
-void InitState(State * state);
+void GlesInitState(State * state);
 
-void InitImage2D(Image2D * image);
-void DeleteImage2D(State * state, Image2D * image);
+void GlesInitImage2D(Image2D * image);
+void GlesDeleteImage2D(State * state, Image2D * image);
 
-void InitImage3D(Image3D * image);
-void DeleteImage3D(State * state, Image3D * image);
+void GlesInitImage3D(Image3D * image);
+void GlesDeleteImage3D(State * state, Image3D * image);
 
-void InitTexture2D(Texture2D * texture);
-void DeleteTexture2D(State * state, Texture2D * texture);
+void GlesInitTexture2D(Texture2D * texture);
+void GlesDeleteTexture2D(State * state, Texture2D * texture);
 
-void InitTexture3D(Texture3D * texture);
-void DeleteTexture3D(State * state, Texture3D * texture);
+void GlesInitTexture3D(Texture3D * texture);
+void GlesDeleteTexture3D(State * state, Texture3D * texture);
 
-void InitTextureCube(TextureCube * texture);
-void DeleteTextureCube(State * state, TextureCube * texture);
+void GlesInitTextureCube(TextureCube * texture);
+void GlesDeleteTextureCube(State * state, TextureCube * texture);
 
-void InitArray(Array * array);
-void InitBuffer(Buffer * buffer);
-void InitProgram(Program * program);
-void InitShader(Shader * shader, GLenum shaderType);
+void GlesInitArray(Array * array);
+void GlesInitBuffer(Buffer * buffer);
+void GlesInitProgram(Program * program);
+void GlesInitShader(Shader * shader, GLenum shaderType);
 
-void * Allocate(State * state, GLsizeiptr size);
-void Deallocate(State * state, void * mem);
-
-void GenObjects(State * state, GLuint freeListHead, GLuint * freeList, GLuint maxElements, GLsizei n, GLuint *objs);
-GLuint BindObject(GLuint freeListHead, GLuint * freeList, GLuint maxElements);
-void UnbindObject(GLuint freeListHead, GLuint * freeList, GLuint maxElements, GLuint obj);
-GLboolean IsBoundObject(GLuint freeListHead, GLuint * freeList, GLuint maxElements, GLuint obj);
+void GlesGenObjects(State * state, GLuint freeListHead, GLuint * freeList, GLuint maxElements, GLsizei n, GLuint *objs);
+GLuint GlesBindObject(GLuint freeListHead, GLuint * freeList, GLuint maxElements);
+void GlesUnbindObject(GLuint freeListHead, GLuint * freeList, GLuint maxElements, GLuint obj);
+GLboolean GlesIsBoundObject(GLuint freeListHead, GLuint * freeList, GLuint maxElements, GLuint obj);
 
 
 #endif /* ndef GLES_STATE_STATE_H */
