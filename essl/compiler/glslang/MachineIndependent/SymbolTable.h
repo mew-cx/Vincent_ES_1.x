@@ -1,3 +1,38 @@
+/*
+//
+//Copyright (C) 2002-2005  Falanx Microsystems AS
+//All rights reserved.
+//
+//Redistribution and use in source and binary forms, with or without
+//modification, are permitted provided that the following conditions
+//are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//
+//    Neither the name of Falanx Microsystems AS nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+//POSSIBILITY OF SUCH DAMAGE.
+//
+*/
 //
 //Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
@@ -46,7 +81,7 @@
 //   so that symbol table lookups are never ambiguous.  This allows
 //   a simpler symbol table structure.
 //
-// * Pushing and popping of scope, so symbol table will really be a stack 
+// * Pushing and popping of scope, so symbol table will really be a stack
 //   of symbol tables.  Searched from the top, with new inserts going into
 //   the top.
 //
@@ -67,11 +102,11 @@
 #include "Include/Common.h"
 #include "Include/intermediate.h"
 #include "Include/InfoSink.h"
- 
+
 //
 // Symbol base class.  (Can build functions or variables out of these...)
 //
-class TSymbol {    
+class TSymbol {
 public:
     POOL_ALLOCATOR_NEW_DELETE(GlobalPoolAllocator)
     TSymbol(const TString *n) :  name(n) { }
@@ -82,7 +117,7 @@ public:
     virtual bool isVariable() const { return false; }
     void setUniqueId(int id) { uniqueId = id; }
     int getUniqueId() const { return uniqueId; }
-    virtual void dump(TInfoSink &infoSink) const = 0;	
+    virtual void dump(TInfoSink &infoSink) const = 0;
 	TSymbol(const TSymbol&);
 	virtual TSymbol* clone(TStructureMap& remapper) = 0;
 
@@ -93,20 +128,20 @@ protected:
 
 //
 // Variable class, meaning a symbol that's not a function.
-// 
+//
 // There could be a separate class heirarchy for Constant variables;
 // Only one of int, bool, or float, (or none) is correct for
 // any particular use, but it's easy to do this way, and doesn't
 // seem worth having separate classes, and "getConst" can't simply return
-// different values for different types polymorphically, so this is 
+// different values for different types polymorphically, so this is
 // just simple and pragmatic.
 //
 class TVariable : public TSymbol {
 public:
     TVariable(const TString *name, const TType& t, bool uT = false ) : TSymbol(name), type(t), userType(uT), unionArray(0), arrayInformationType(0) { }
     virtual ~TVariable() { }
-    virtual bool isVariable() const { return true; }    
-    TType& getType() { return type; }    
+    virtual bool isVariable() const { return true; }
+    TType& getType() { return type; }
     const TType& getType() const { return type; }
     bool isUserType() const { return userType; }
     void changeQualifier(TQualifier qualifier) { type.changeQualifier(qualifier); }
@@ -115,7 +150,7 @@ public:
 
     virtual void dump(TInfoSink &infoSink) const;
 
-    constUnion* getConstPointer() { 
+    constUnion* getConstPointer() {
         if (!unionArray)
             unionArray = new constUnion[type.getObjectSize()];
 
@@ -127,11 +162,11 @@ public:
     void shareConstPointer( constUnion *constArray)
     {
         delete unionArray;
-        unionArray = constArray;  
+        unionArray = constArray;
     }
 	TVariable(const TVariable&, TStructureMap& remapper); // copy constructor
 	virtual TVariable* clone(TStructureMap& remapper);
-      
+
 protected:
     TType type;
     bool userType;
@@ -155,7 +190,7 @@ struct TParameter {
 };
 
 //
-// The function sub-class of a symbol.  
+// The function sub-class of a symbol.
 //
 class TFunction : public TSymbol {
 public:
@@ -164,21 +199,21 @@ public:
         returnType(TType(EbtVoid)),
         op(o),
         defined(false) { }
-    TFunction(const TString *name, TType& retType, TOperator tOp = EOpNull) : 
-        TSymbol(name), 
+    TFunction(const TString *name, TType& retType, TOperator tOp = EOpNull) :
+        TSymbol(name),
         returnType(retType),
         mangledName(*name + '('),
         op(tOp),
         defined(false) { }
 	virtual ~TFunction();
-    virtual bool isFunction() const { return true; }    
-    
-    void addParameter(TParameter& p) 
-    { 
+    virtual bool isFunction() const { return true; }
+
+    void addParameter(TParameter& p)
+    {
         parameters.push_back(p);
         mangledName = mangledName + p.type->getMangledName();
     }
-    
+
     const TString& getMangledName() const { return mangledName; }
     const TType& getReturnType() const { return returnType; }
     void relateToOperator(TOperator o) { op = o; }
@@ -186,14 +221,14 @@ public:
     void setDefined() { defined = true; }
     bool isDefined() { return defined; }
 
-    int getParamCount() const { return static_cast<int>(parameters.size()); }    
+    int getParamCount() const { return static_cast<int>(parameters.size()); }
           TParameter& operator [](int i)       { return parameters[i]; }
     const TParameter& operator [](int i) const { return parameters[i]; }
-    
+
     virtual void dump(TInfoSink &infoSink) const;
 	TFunction(const TFunction&, TStructureMap& remapper);
 	virtual TFunction* clone(TStructureMap& remapper);
-    
+
 protected:
     typedef TVector<TParameter> TParamList;
 	TParamList parameters;
@@ -209,15 +244,15 @@ public:
     POOL_ALLOCATOR_NEW_DELETE(GlobalPoolAllocator)
     TSymbolTableLevel() { }
 	~TSymbolTableLevel();
-    
-    bool insert(TSymbol& symbol) 
+
+    bool insert(TSymbol& symbol)
     {
         //
         // returning true means symbol was added to the table
         //
         tInsertResult result;
         result = level.insert(tLevelPair(symbol.getMangledName(), &symbol));
-        
+
         return result.second;
     }
 
@@ -234,7 +269,7 @@ public:
     void relateToOperator(const char* name, TOperator op);
     void dump(TInfoSink &infoSink) const;
 	TSymbolTableLevel* clone(TStructureMap& remapper);
-    
+
 protected:
     typedef std::map<TString, TSymbol*, std::less<TString>, pool_allocator<std::pair<const TString, TSymbol*> > > tLevel;
     typedef const tLevel::value_type tLevelPair;
@@ -279,18 +314,18 @@ public:
     //
     bool isEmpty() { return table.size() == 0; }
     bool atBuiltInLevel() { return atSharedBuiltInLevel() || atDynamicBuiltInLevel(); }
-    bool atSharedBuiltInLevel() { return table.size() == 1; }	
+    bool atSharedBuiltInLevel() { return table.size() == 1; }
     bool atGlobalLevel() { return table.size() <= 3; }
-    void push() { 
+    void push() {
         table.push_back(new TSymbolTableLevel);
 
 		// Added for ESSL support
 		precisionStack.push_back( PrecisionStackLevel() );
 	}
 
-    void pop() { 
-        delete table[currentLevel()]; 
-        table.pop_back(); 
+    void pop() {
+        delete table[currentLevel()];
+        table.pop_back();
 
 		// Added for ESSL support
 		precisionStack.pop_back();
@@ -303,18 +338,18 @@ public:
     }
 
 	// Added for ESSL support
-	void setDefaultPrecision( TBasicType type, TQualifier prec ){  
+	void setDefaultPrecision( TBasicType type, TQualifier prec ){
 		if( type != EbtFloat && type != EbtInt ) return;						// Only set default precision for int/float
 
 		int indexOfLastElement = static_cast<int>(precisionStack.size()) - 1;
 		precisionStack[indexOfLastElement][type] = prec;						// Uses map operator [], overwrites the current value
 
-	} 
-	
+	}
+
 	// Added for ESSL support
 	// Searches down the precisionStack for a precision qualifier for the specified TBasicType
-	TQualifier getDefaultPrecision( TBasicType type){  
-		if( type != EbtFloat && type != EbtInt ) return EvqNoPrecSpecified;		
+	TQualifier getDefaultPrecision( TBasicType type){
+		if( type != EbtFloat && type != EbtInt ) return EvqNoPrecSpecified;
 		int level = static_cast<int>(precisionStack.size()) - 1;
 
 		assert( level >= 0);													// Just to be safe. Should not happen.
@@ -325,7 +360,7 @@ public:
 			it = precisionStack[level].find( type );
 			if( it != precisionStack[level].end() ){
 				prec = (*it).second;
-				
+
 				break;
 			}
 			level--;
@@ -335,7 +370,7 @@ public:
 	}
 
 
-    TSymbol* find(const TString& name, bool* builtIn = 0, bool *sameScope = 0) 
+    TSymbol* find(const TString& name, bool* builtIn = 0, bool *sameScope = 0)
     {
         int level = currentLevel();
         TSymbol* symbol;
@@ -357,7 +392,7 @@ public:
     void dump(TInfoSink &infoSink) const;
 	void copyTable(const TSymbolTable& copyOf);
 
-protected:    
+protected:
     int currentLevel() const { return static_cast<int>(table.size()) - 1; }
     bool atDynamicBuiltInLevel() { return table.size() == 2; }
 

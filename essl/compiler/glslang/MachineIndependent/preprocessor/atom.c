@@ -1,3 +1,38 @@
+/*
+//
+//Copyright (C) 2002-2005  Falanx Microsystems AS
+//All rights reserved.
+//
+//Redistribution and use in source and binary forms, with or without
+//modification, are permitted provided that the following conditions
+//are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//
+//    Neither the name of Falanx Microsystems AS nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+//POSSIBILITY OF SUCH DAMAGE.
+//
+*/
 //
 //Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
@@ -56,7 +91,7 @@ Except as expressly stated in this notice, no other rights or licenses
 express or implied, are granted by NVIDIA herein, including but not
 limited to any patent rights that may be infringed by your derivative
 works or by other works in which the NVIDIA Software may be
-incorporated. No hardware is licensed hereunder. 
+incorporated. No hardware is licensed hereunder.
 
 THE NVIDIA SOFTWARE IS BEING PROVIDED ON AN "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -107,24 +142,24 @@ static const struct {
     { CPP_MUL_ASSIGN,     "*=" },
     { CPP_RIGHT_BRACKET,  ":>" },
     { CPP_EQ_OP,          "==" },
-    { CPP_XOR_OP,         "^^" }, 
-    { CPP_XOR_ASSIGN,     "^=" }, 
+    { CPP_XOR_OP,         "^^" },
+    { CPP_XOR_ASSIGN,     "^=" },
     { CPP_FLOATCONSTANT,  "<float-const>" },
     { CPP_GE_OP,          ">=" },
     { CPP_RIGHT_OP,       ">>" },
-    { CPP_RIGHT_ASSIGN,   ">>=" }, 
+    { CPP_RIGHT_ASSIGN,   ">>=" },
     { CPP_IDENTIFIER,     "<ident>" },
     { CPP_INTCONSTANT,    "<int-const>" },
     { CPP_LE_OP,          "<=" },
     { CPP_LEFT_OP,        "<<" },
     { CPP_LEFT_ASSIGN,    "<<=" },
     { CPP_LEFT_BRACKET,   "<:" },
-    { CPP_LEFT_BRACE,     "<%" }, 
+    { CPP_LEFT_BRACE,     "<%" },
     { CPP_DEC_OP,         "--" },
-    { CPP_RIGHT_BRACE,    "%>" }, 
+    { CPP_RIGHT_BRACE,    "%>" },
     { CPP_NE_OP,          "!=" },
     { CPP_OR_OP,          "||" },
-    { CPP_OR_ASSIGN,      "|=" }, 
+    { CPP_OR_ASSIGN,      "|=" },
     { CPP_INC_OP,         "++" },
     { CPP_STRCONSTANT,    "<string-const>" },
     { CPP_TYPEIDENTIFIER, "<type-ident>" },
