@@ -214,7 +214,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\gl\pool.c"
+					RelativePath="..\..\src\gl\hash.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\gl\hash.h"
 					>
 				</File>
 				<File
@@ -369,14 +373,6 @@
 			<Filter
 				Name="framebuffer"
 				>
-				<File
-					RelativePath="..\..\src\framebuffer\framebuffer.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\framebuffer\framebuffer.h"
-					>
-				</File>
 			</Filter>
 		</Filter>
 		<Filter
