@@ -77,8 +77,8 @@ static TextureCube * GetCurrentTextureCube(State * state) {
 
 static void AllocateImage2D(State * state, Image2D * image, GLenum internalFormat, 
 							GLsizei width, GLsizei height,
-							GLuint pixelElementSize, GLuint pixelElements) {
-	GLsizeiptr size = pixelElementSize * pixelElements * width * height;
+							GLuint pixelElementSize) {
+	GLsizeiptr size = pixelElementSize * width * height;
 
 	GlesDeleteImage2D(state, image);
 
@@ -93,8 +93,8 @@ static void AllocateImage2D(State * state, Image2D * image, GLenum internalForma
 
 static void AllocateImage3D(State * state, Image3D * image, GLenum internalFormat, 
 							GLsizei width, GLsizei height, GLsizei depth,
-							GLuint pixelElementSize, GLuint pixelElements) {
-	GLsizeiptr size = pixelElementSize * pixelElements * width * height * depth;
+							GLuint pixelElementSize) {
+	GLsizeiptr size = pixelElementSize * width * height * depth;
 
 	GlesDeleteImage3D(state, image);
 
@@ -108,6 +108,155 @@ static void AllocateImage3D(State * state, Image3D * image, GLenum internalForma
 	}
 }
 
+/*
+** --------------------------------------------------------------------------
+** Format information
+** --------------------------------------------------------------------------
+*/
+
+static GLenum GetBaseInternalFormat(GLenum internalFormat) {
+	switch (internalFormat) {
+		case GL_LUMINANCE:
+		case GL_LUMINANCE_ALPHA:
+		case GL_ALPHA:
+			return internalFormat;
+
+		case GL_RGB8:
+		case GL_UNSIGNED_SHORT_5_6_5:
+			return GL_RGB;
+
+		case GL_RGBA8:
+		case GL_RGBA4:
+		case GL_UNSIGNED_SHORT_4_4_4_4:
+		case GL_UNSIGNED_SHORT_5_5_5_1:
+			return GL_RGBA;
+
+		default:
+			GLES_ASSERT(0);
+			return GL_NONE;
+	}
+}
+
+static GLenum GetInternalFormat(State * state, GLenum internalformat, GLenum type) {
+	switch (type) {
+		case GL_UNSIGNED_BYTE:
+
+			switch (internalformat) {
+				case GL_LUMINANCE:
+					return GL_LUMINANCE;
+
+				case GL_LUMINANCE_ALPHA:
+					return GL_LUMINANCE_ALPHA;
+
+				case GL_ALPHA:
+					return GL_ALPHA;
+
+				case GL_RGB:
+					return GL_RGB8;
+
+				case GL_RGBA:
+					return GL_RGBA8;
+
+				default:
+					GlesRecordInvalidEnum(state);
+					return GL_NONE;
+			}
+
+		case GL_UNSIGNED_SHORT_4_4_4_4:
+			if (internalformat != GL_RGBA) {
+				GlesRecordInvalidEnum(state);
+				return GL_NONE;
+			}
+
+			return type;
+
+		case GL_UNSIGNED_SHORT_5_5_5_1:
+			if (internalformat != GL_RGBA) {
+				GlesRecordInvalidEnum(state);
+				return GL_NONE;
+			}
+
+			return type;
+
+		case GL_UNSIGNED_SHORT_5_6_5:
+			if (internalformat != GL_RGB) {
+				GlesRecordInvalidEnum(state);
+				return GL_NONE;
+			}
+
+			return type;
+
+		default:
+			GlesRecordInvalidEnum(state);
+			return GL_NONE;
+	}
+}
+
+static GLsizei GetPixelSize(GLenum internalFormat) {
+	switch (internalFormat) {
+		case GL_LUMINANCE:
+		case GL_ALPHA:
+			return sizeof(GLubyte);
+
+		case GL_LUMINANCE_ALPHA:
+			return sizeof(GLubyte) * 2;
+
+		case GL_RGB8:
+			return sizeof(GLubyte) * 3;
+
+		case GL_UNSIGNED_SHORT_5_6_5:
+		case GL_UNSIGNED_SHORT_4_4_4_4:
+		case GL_UNSIGNED_SHORT_5_5_5_1:
+			return sizeof(GLushort);
+
+		case GL_RGBA8:
+			return sizeof(GLubyte) * 4;
+
+		default:
+			GLES_ASSERT(0);
+			return 0;
+	}
+}
+
+static Image2D * GetImage2DForTargetAndLevel(State * state, GLenum target, GLint level) {
+	if (level < 0 || level >= GLES_MAX_MIPMAP_LEVELS) {
+		GlesRecordInvalidValue(state);
+		return NULL;
+	}
+
+	switch (target) {
+		case GL_TEXTURE_2D:
+			return GetCurrentTexture2D(state)->image + level;			
+
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+			return GetCurrentTextureCube(state)->positiveX + level;			
+
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+			return GetCurrentTextureCube(state)->negativeX + level;			
+
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+			return GetCurrentTextureCube(state)->positiveY + level;			
+
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+			return GetCurrentTextureCube(state)->negativeY + level;			
+
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+			return GetCurrentTextureCube(state)->positiveZ + level;			
+
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+			return GetCurrentTextureCube(state)->negativeZ + level;			
+
+		default:
+			GlesRecordInvalidEnum(state);
+			return NULL;
+	}
+}
+
+/*
+** --------------------------------------------------------------------------
+** Bitmap copy and conversion functions
+** --------------------------------------------------------------------------
+*/
 typedef void (*CopyConversion)(GLubyte * dst, const GLubyte * src, GLsizei elements);
 
 static void CopyRGB8fromRGB8(GLubyte * dst, const GLubyte * src, GLsizei elements) {
@@ -1105,135 +1254,30 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 			  GLenum format, GLenum type, const void *pixels) {
 
 	State * state = GLES_GET_STATE();
-	GLsizei pixelSize, pixelElements;
-	GLenum textureFormat, externalFormat;
+	GLsizei pixelSize;
+	GLenum textureFormat;
 
 	/************************************************************************/
 	/* Determine texture image to load										*/
 	/************************************************************************/
 
-	Image2D * image = NULL;
+	Image2D * image = GetImage2DForTargetAndLevel(state, target, level);
 
-	if (level < 0 || level >= GLES_MAX_MIPMAP_LEVELS) {
-		GlesRecordInvalidValue(state);
+	if (image == NULL) {
 		return;
-	}
-
-	switch (target) {
-		case GL_TEXTURE_2D:
-			image = GetCurrentTexture2D(state)->image + level;			
-			break;
-
-		case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-			image = GetCurrentTextureCube(state)->positiveX + level;			
-			break;
-
-		case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-			image = GetCurrentTextureCube(state)->negativeX + level;			
-			break;
-
-		case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-			image = GetCurrentTextureCube(state)->positiveY + level;			
-			break;
-
-		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-			image = GetCurrentTextureCube(state)->negativeY + level;			
-			break;
-
-		case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-			image = GetCurrentTextureCube(state)->positiveZ + level;			
-			break;
-
-		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-			image = GetCurrentTextureCube(state)->negativeZ + level;			
-			break;
-
-		default:
-			GlesRecordInvalidEnum(state);
-			return;
 	}
 
 	/************************************************************************/
 	/* Determine texture format												*/
 	/************************************************************************/
 
-	switch (type) {
-		case GL_UNSIGNED_BYTE:
+	textureFormat = GetInternalFormat(state, internalformat, type);
 
-			pixelSize = 1;
-
-			switch (internalformat) {
-				case GL_LUMINANCE:
-					pixelElements = 1;
-					externalFormat = textureFormat = GL_LUMINANCE;
-					break;
-
-				case GL_LUMINANCE_ALPHA:
-					pixelElements = 2;
-					externalFormat = textureFormat = GL_LUMINANCE_ALPHA;
-					break;
-
-				case GL_ALPHA:
-					pixelElements = 1;
-					externalFormat = textureFormat = GL_ALPHA;
-					break;
-
-				case GL_RGB:
-					pixelElements = 3;
-					externalFormat = textureFormat = GL_RGB8;
-					break;
-
-				case GL_RGBA:
-					pixelElements = 4;
-					externalFormat = textureFormat = GL_RGBA8;
-					break;
-
-				default:
-					GlesRecordInvalidEnum(state);
-					return;
-			}
-
-			break;
-
-		case GL_UNSIGNED_SHORT_4_4_4_4:
-			if (internalformat != GL_RGBA) {
-				GlesRecordInvalidEnum(state);
-				return;
-			}
-
-			externalFormat = textureFormat = type;
-			pixelSize = 2;
-			pixelElements = 1;
-			break;
-
-		case GL_UNSIGNED_SHORT_5_5_5_1:
-			if (internalformat != GL_RGBA) {
-				GlesRecordInvalidEnum(state);
-				return;
-			}
-
-			externalFormat = textureFormat = type;
-			pixelSize = 2;
-			pixelElements = 1;
-
-			break;
-
-		case GL_UNSIGNED_SHORT_5_6_5:
-			if (internalformat != GL_RGBA) {
-				GlesRecordInvalidEnum(state);
-				return;
-			}
-
-			externalFormat = textureFormat = type;
-			pixelSize = 2;
-			pixelElements = 1;
-
-			break;
-
-		default:
-			GlesRecordInvalidEnum(state);
-			return;
+	if (textureFormat == GL_NONE) {
+		return;
 	}
+
+	pixelSize = GetPixelSize(textureFormat);
 
 	/************************************************************************/
 	/* Verify image dimensions												*/
@@ -1258,7 +1302,7 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 	/* Copy the actual image data											*/
 	/************************************************************************/
 
-	AllocateImage2D(state, image, textureFormat, width, height, pixelSize, pixelElements);
+	AllocateImage2D(state, image, textureFormat, width, height, pixelSize);
 
 	if (!image->data) {
 		GlesRecordOutOfMemory(state);
@@ -1268,7 +1312,7 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 	CopyPixels(pixels, 
 			   width, height, 
 			   0, 0, width, height, 
-			   image->data, width, height, 0, 0, internalformat, textureFormat, externalFormat, state->packAlignment, 1);
+			   image->data, width, height, 0, 0, internalformat, textureFormat, textureFormat, state->packAlignment, 1);
 }
 
 GL_API void GL_APIENTRY 
@@ -1283,6 +1327,75 @@ glTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset,
 				 GLsizei width, GLsizei height, 
 				 GLenum format, GLenum type, const void *pixels) {
 	State * state = GLES_GET_STATE();
+	GLsizei pixelSize;
+	GLenum textureFormat;
+
+	/************************************************************************/
+	/* Determine texture image to load										*/
+	/************************************************************************/
+
+	Image2D * image = GetImage2DForTargetAndLevel(state, target, level);
+
+	if (image == NULL) {
+		return;
+	}
+
+	if (GetBaseInternalFormat(image->internalFormat) != format) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	/************************************************************************/
+	/* Determine texture format												*/
+	/************************************************************************/
+
+	textureFormat = GetInternalFormat(state, format, type);
+
+	if (textureFormat == GL_NONE) {
+		return;
+	}
+
+	pixelSize = GetPixelSize(textureFormat);
+
+	/************************************************************************/
+	/* Verify image dimensions												*/
+	/************************************************************************/
+
+	if (width > GLES_MAX_TEXTURE_WIDTH || height > GLES_MAX_TEXTURE_HEIGHT) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if ((width == 0 || height == 0) && pixels != NULL) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (width != 0 && height != 0 && pixels == NULL) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (xoffset < 0 || yoffset < 0 || 
+		xoffset + width > image->width || 
+		yoffset + height > image->height) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	/************************************************************************/
+	/* Copy the actual image data											*/
+	/************************************************************************/
+
+	if (!image->data) {
+		GlesRecordOutOfMemory(state);
+		return;
+	}
+
+	CopyPixels(pixels, 
+			   width, height, 
+			   0, 0, width, height, 
+			   image->data, image->width, image->height, xoffset, yoffset, format, image->internalFormat, textureFormat, state->packAlignment, 1);
 }
 
 GL_API void GL_APIENTRY 

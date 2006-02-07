@@ -71,7 +71,7 @@ struct HashTable {
 struct HashTable *
 	GlesNewHashTable(void)
 {
-	struct HashTable *table = MallocClient(sizeof(struct HashTable));
+	struct HashTable *table = GlesMalloc(sizeof(struct HashTable));
 
 	return table;
 }
@@ -95,11 +95,11 @@ GlesDeleteHashTable(struct HashTable *table)
 		struct HashEntry *entry = table->Table[i];
 		while (entry) {
 			struct HashEntry *next = entry->Next;
-			FreeClient(entry);
+			GlesFree(entry);
 			entry = next;
 		}
 	}
-	FreeClient(table);
+	GlesFree(table);
 }
 
 
@@ -167,7 +167,7 @@ GlesHashInsert(struct HashTable *table, GLuint key, void *data)
 	}
 
 	/* alloc and insert new table entry */
-	entry = MallocClient(sizeof(struct HashEntry));
+	entry = GlesMalloc(sizeof(struct HashEntry));
 	entry->Key = key;
 	entry->Data = data;
 	entry->Next = table->Table[pos];
@@ -206,7 +206,7 @@ GlesHashRemove(struct HashTable *table, GLuint key)
 			else {
 				table->Table[pos] = entry->Next;
 			}
-			FreeClient(entry);
+			GlesFree(entry);
 			return;
 		}
 		prev = entry;
