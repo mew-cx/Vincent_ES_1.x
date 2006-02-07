@@ -64,7 +64,7 @@ void GLES_MEMMOVE(void * dst, const void * src, GLsizeiptr size) {
 ** --------------------------------------------------------------------------
 */
 
-void * GlesMallocClient(GLsizeiptr size) {
+void * GlesMalloc(GLsizeiptr size) {
 	void * result = malloc(size);
 
 	if (result) {
@@ -74,20 +74,8 @@ void * GlesMallocClient(GLsizeiptr size) {
 	return result;
 }
 
-void GlesFreeClient(void * ptr) {
+void GlesFree(void * ptr) {
 	free(ptr);
 }
 
-void * GlesMallocServer(GLsizeiptr size) {
-	void * result = malloc(size);
 
-	if (result) {
-		GLES_MEMSET(result, 0, size);
-	}
-
-	return result;
-}
-
-void GlesFreeServer(void * ptr) {
-	free(ptr);
-}
