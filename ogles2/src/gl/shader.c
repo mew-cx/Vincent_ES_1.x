@@ -72,7 +72,7 @@ GL_API GLuint GL_APIENTRY glCreateShader (GLenum type) {
 		return 0;
 	}
 
-	shader = BindObject(state->shaderFreeListHead, state->shaderFreeList, GLES_MAX_SHADERS);
+	shader = GlesBindObject(state->shaderFreeListHead, state->shaderFreeList, GLES_MAX_SHADERS);
 
 	if (shader == NIL) {
 		GlesRecordError(state, GL_OUT_OF_MEMORY);
@@ -106,7 +106,7 @@ GL_API void GL_APIENTRY glGetShaderPrecisionFormati(GLenum shadertype, GLenum pr
 GL_API GLboolean GL_APIENTRY glIsShader (GLuint shader) {
 
 	State * state = GLES_GET_STATE();
-	return IsBoundObject(state->shaderFreeListHead, state->shaderFreeList, GLES_MAX_SHADERS, shader);
+	return GlesIsBoundObject(state->shaderFreeListHead, state->shaderFreeList, GLES_MAX_SHADERS, shader);
 }
 
 GL_API GLboolean GL_APIENTRY glIsShaderCompilerAvailable (void) {

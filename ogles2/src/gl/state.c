@@ -78,7 +78,7 @@ GLboolean GlesValidateEnum(State * state, GLenum value, const GLenum * values, G
 	return GL_FALSE;
 }
 
-void InitState(State * state) {
+void GlesInitState(State * state) {
 
 	GLuint index;
 
@@ -87,7 +87,7 @@ void InitState(State * state) {
 	/* array state */
 
 	for (index = 0; index < GLES_MAX_VERTEX_ATTRIBS; ++index) {
-		InitArray(state->vertexAttribArray + index);
+		GlesInitArray(state->vertexAttribArray + index);
 		state->vertexAttrib[index].x = 0.0f;
 		state->vertexAttrib[index].y = 0.0f;
 		state->vertexAttrib[index].z = 0.0f;
@@ -97,7 +97,7 @@ void InitState(State * state) {
 	/* buffer state */
 
 	for (index = 0; index < GLES_MAX_BUFFERS; ++index) {
-		InitBuffer(state->buffers + index);
+		GlesInitBuffer(state->buffers + index);
 		state->bufferFreeList[index] = index + 1;
 	}
 
@@ -108,9 +108,9 @@ void InitState(State * state) {
 
 	/* texture state */
 
-	InitTexture2D(&state->textureState.texture2D);
-	InitTexture3D(&state->textureState.texture3D);
-	InitTextureCube(&state->textureState.textureCube);
+	GlesInitTexture2D(&state->textureState.texture2D);
+	GlesInitTexture3D(&state->textureState.texture3D);
+	GlesInitTextureCube(&state->textureState.textureCube);
 
 	state->texture2D				= 0;
 	state->texture3D				= 0;
@@ -137,7 +137,7 @@ void InitState(State * state) {
 	/* program state */
 
 	for (index = 0; index < GLES_MAX_PROGRAMS; ++index) {
-		InitProgram(state->programs + index);
+		GlesInitProgram(state->programs + index);
 		state->programFreeList[index] = index + 1;
 	}
 
@@ -246,7 +246,7 @@ void InitState(State * state) {
 	state->lastError				= GL_NO_ERROR;
 }
 
-void GenObjects(State * state, GLuint freeListHead, GLuint * freeList, GLuint maxElements, GLsizei n, GLuint *objs) {
+void GlesGenObjects(State * state, GLuint freeListHead, GLuint * freeList, GLuint maxElements, GLsizei n, GLuint *objs) {
 	GLuint * base = objs;
 
 	if (n < 0 || objs == NULL) {
@@ -255,13 +255,13 @@ void GenObjects(State * state, GLuint freeListHead, GLuint * freeList, GLuint ma
 	}
 
 	while (n--) {
-		GLuint nextObj = BindObject(freeListHead, freeList, maxElements);
+		GLuint nextObj = GlesBindObject(freeListHead, freeList, maxElements);
 
 		if (nextObj == NIL) {
 			GlesRecordError(state, GL_OUT_OF_MEMORY);
 
 			while (base != objs) {
-				UnbindObject(freeListHead, freeList, maxElements, *base++);
+				GlesUnbindObject(freeListHead, freeList, maxElements, *base++);
 			}
 
 			return;
@@ -271,7 +271,7 @@ void GenObjects(State * state, GLuint freeListHead, GLuint * freeList, GLuint ma
 	}
 }
 
-GLuint BindObject(GLuint freeListHead, GLuint * freeList, GLuint maxElements) {
+GLuint GlesBindObject(GLuint freeListHead, GLuint * freeList, GLuint maxElements) {
 	if (freeListHead != NIL) {
 		GLuint result = freeListHead;
 		freeListHead = freeList[freeListHead];
@@ -282,14 +282,14 @@ GLuint BindObject(GLuint freeListHead, GLuint * freeList, GLuint maxElements) {
 	}
 }
 
-void UnbindObject(GLuint freeListHead, GLuint * freeList, GLuint maxElements, GLuint obj) {
-	assert(IsBoundObject(freeListHead, freeList, maxElements, obj));
+void GlesUnbindObject(GLuint freeListHead, GLuint * freeList, GLuint maxElements, GLuint obj) {
+	assert(GlesIsBoundObject(freeListHead, freeList, maxElements, obj));
 
 	freeList[obj] = freeListHead;
 	freeListHead = obj;
 }
 
-GLboolean IsBoundObject(GLuint freeListHead, GLuint * freeList, GLuint maxElements, GLuint obj) {
+GLboolean GlesIsBoundObject(GLuint freeListHead, GLuint * freeList, GLuint maxElements, GLuint obj) {
 	if (obj < maxElements) {
 		return freeList[obj] == BOUND;
 	} else {

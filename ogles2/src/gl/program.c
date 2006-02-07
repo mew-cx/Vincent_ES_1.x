@@ -50,7 +50,7 @@
 ** --------------------------------------------------------------------------
 */
 
-void InitProgram(Program * program) {
+void GlesInitProgram(Program * program) {
 }
 
 /*
@@ -69,13 +69,13 @@ GL_API void GL_APIENTRY glBindAttribLocation (GLuint program, GLuint index, cons
 GL_API GLuint GL_APIENTRY glCreateProgram (void) {
 
 	State * state = GLES_GET_STATE();
-	GLuint program = BindObject(state->programFreeListHead, state->programFreeList, GLES_MAX_PROGRAMS);
+	GLuint program = GlesBindObject(state->programFreeListHead, state->programFreeList, GLES_MAX_PROGRAMS);
 
 	if (program == NIL) {
 		GlesRecordError(state, GL_OUT_OF_MEMORY);
 		return 0;
 	} else {
-		InitProgram(state->programs + program);
+		GlesInitProgram(state->programs + program);
 		return program;
 	}
 }
@@ -116,7 +116,7 @@ GL_API void GL_APIENTRY glGetProgramiv (GLuint program, GLenum pname, GLint *par
 GL_API GLboolean GL_APIENTRY glIsProgram (GLuint program) {
 
 	State * state = GLES_GET_STATE();
-	return IsBoundObject(state->programFreeListHead, state->programFreeList, GLES_MAX_PROGRAMS, program);
+	return GlesIsBoundObject(state->programFreeListHead, state->programFreeList, GLES_MAX_PROGRAMS, program);
 }
 
 GL_API void GL_APIENTRY glLinkProgram (GLuint pogram) {

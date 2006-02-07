@@ -75,46 +75,448 @@ static TextureCube * GetCurrentTextureCube(State * state) {
 	}
 }
 
+static void AllocateImage2D(State * state, Image2D * image, GLenum internalFormat, 
+							GLsizei width, GLsizei height,
+							GLuint pixelElementSize, GLuint pixelElements) {
+	GLsizeiptr size = pixelElementSize * pixelElements * width * height;
+
+	GlesDeleteImage2D(state, image);
+
+	image->internalFormat	= internalFormat;
+	image->data				= GlesMalloc(size);
+
+	if (image->data) {
+		image->width		= width;
+		image->height		= height;
+	}
+}
+
+static void AllocateImage3D(State * state, Image3D * image, GLenum internalFormat, 
+							GLsizei width, GLsizei height, GLsizei depth,
+							GLuint pixelElementSize, GLuint pixelElements) {
+	GLsizeiptr size = pixelElementSize * pixelElements * width * height * depth;
+
+	GlesDeleteImage3D(state, image);
+
+	image->internalFormat	= internalFormat;
+	image->data				= GlesMalloc(size);
+
+	if (image->data) {
+		image->width		= width;
+		image->height		= height;
+		image->depth		= depth;
+	}
+}
+
+typedef void (*CopyConversion)(GLubyte * dst, const GLubyte * src, GLsizei elements);
+
+static void CopyRGB8fromRGB8(GLubyte * dst, const GLubyte * src, GLsizei elements) {
+	GLsizeiptr size = elements * 3;
+
+	do {
+		*dst++ = *src++;
+	} while (--size);
+}
+
+static void CopyRGB8fromRGB565(GLubyte * dst, const GLubyte * src, GLsizei elements) {
+	const GLushort * srcPtr = (const GLushort *) src;
+
+	do {
+		GLushort u565 = *srcPtr++;
+		GLubyte b = (u565 & 0x001Fu) << 3;
+		GLubyte g = (u565 & 0x07E0u) >> 3;
+		GLubyte r = (u565 & 0xF800u) >> 8;
+
+		r |= r >> 5;
+		g |= g >> 6;
+		b |= b >> 5;
+
+		*dst++ = r;
+		*dst++ = g;
+		*dst++ = b;
+	} while (--elements);
+}
+
+static void CopyRGB565fromRGB8(GLubyte * dst, const GLubyte * src, GLsizei elements) {
+	GLushort * dstPtr = (GLushort *) dst;
+
+	do {
+		GLushort r = *src++;
+		GLushort g = *src++;
+		GLushort b = *src++;
+
+		*dstPtr++ = (b & 0xF8) >> 3 | (g & 0xFC) << 3 | (r & 0xF8) << 8;
+	} while (--elements);
+}
+
+static void CopyRGBA8fromRGBA8(GLubyte * dst, const GLubyte * src, GLsizei elements) {
+	GLsizeiptr size = elements * 4;
+
+	do {
+		*dst++ = *src++;
+	} while (--size);
+}
+
+static void CopyRGBA8fromRGBA51(GLubyte * dst, const GLubyte * src, GLsizei elements) {
+	const GLushort * srcPtr = (const GLushort *) src;
+
+	do {
+		GLushort u5551 = *srcPtr++;
+		GLubyte b = (u5551 & 0x003Eu) << 2;
+		GLubyte g = (u5551 & 0x07C0u) >> 3;
+		GLubyte r = (u5551 & 0xF800u) >> 8;
+		GLubyte a = (u5551 & 0x0001u) << 7;
+
+		r |= r >> 5;
+		g |= g >> 5;
+		b |= b >> 5;
+		if (a) a |= 0x7f;
+
+		*dst++ = r;
+		*dst++ = g;
+		*dst++ = b;
+		*dst++ = a;
+	} while (--elements);
+}
+
+static void CopyRGBA51fromRGBA8(GLubyte * dst, const GLubyte * src, GLsizei elements) {
+	GLushort * dstPtr = (GLushort *) dst;
+
+	do {
+		GLushort r = *src++;
+		GLushort g = *src++;
+		GLushort b = *src++;
+		GLushort a = *src++;
+
+		*dstPtr++ = (b & 0xF8) >> 2 | (g & 0xF8) << 3 | (r & 0xF8) << 8 | (a & 0x80) >> 7;
+	} while (--elements);
+}
+
+static void CopyRGBA8fromRGBA4(GLubyte * dst, const GLubyte * src, GLsizei elements) {
+	const GLushort * srcPtr = (const GLushort *) src;
+
+	do {
+		GLushort u4444 = *srcPtr++;
+		GLubyte r = (u4444 & 0xF000u) >> 8;
+		GLubyte g = (u4444 & 0x0F00u) >> 4;
+		GLubyte b = (u4444 & 0x00F0u);
+		GLubyte a = (u4444 & 0x000Fu) << 4;
+
+		r |= r >> 4;
+		g |= g >> 4;
+		b |= b >> 4;
+		a |= a >> 4;
+
+		*dst++ = r;
+		*dst++ = g;
+		*dst++ = b;
+		*dst++ = a;
+	} while (--elements);
+}
+
+static void CopyRGBA4fromRGBA8(GLubyte * dst, const GLubyte * src, GLsizei elements) {
+	GLushort * dstPtr = (GLushort *) dst;
+
+	do {
+		GLushort r = *src++;
+		GLushort g = *src++;
+		GLushort b = *src++;
+		GLushort a = *src++;
+
+		*dstPtr++ = (r & 0xf0) << 8 | (g & 0xf0) << 4 | (b & 0xf0) | a >> 4;
+	} while (--elements);
+}
+
+static GLES_INLINE GLsizeiptr Align(GLsizeiptr offset, GLuint alignment) {
+	return (offset + alignment - 1) & ~(alignment - 1);
+}
+
+// -------------------------------------------------------------------------
+// Given two bitmaps src and dst, where src has dimensions 
+// (srcWidth * srcHeight) and dst has dimensions (dstWidth * dstHeight),
+// copy the rectangle (srcX, srcY, copyWidth, copyHeight) into
+// dst at location (dstX, dstY).
+//
+// It is assumed that the copy rectangle is non-empty and has been clipped
+// against the src and target rectangles
+// -------------------------------------------------------------------------
+static void SimpleCopyPixels(GLsizei pixelSize, const GLubyte * src, GLsizei srcWidth, GLsizei srcHeight, 
+				GLint srcX, GLint srcY, GLsizei copyWidth, GLsizei copyHeight,
+				GLubyte * dst, GLsizei dstWidth, GLsizei dstHeight, GLint dstX, GLint dstY,
+				GLuint srcAlignment, GLuint dstAlignment) {
+
+	GLsizeiptr srcBytesWidth = Align(srcWidth * pixelSize, srcAlignment);
+	GLsizeiptr dstBytesWidth = Align(dstWidth * pixelSize, dstAlignment);
+
+	GLsizeiptr srcGap = srcBytesWidth - copyWidth * pixelSize;	// how many bytes to skip for next line
+	GLsizeiptr dstGap = dstBytesWidth - copyWidth * pixelSize;	// how many bytes to skip for next line
+
+	const GLubyte * srcPtr = src + srcX * pixelSize + srcY * srcBytesWidth;
+	GLubyte * dstPtr = dst + dstX * pixelSize + dstY * dstBytesWidth;
+
+	do {
+		GLsizeiptr span = copyWidth * pixelSize;
+
+		do {
+			*dstPtr++ = *srcPtr++;
+		} while (--span);
+
+		srcPtr += srcGap;
+		dstPtr += dstGap;
+	} while (--copyHeight);
+}
+
+/*
+** Given two bitmaps src and dst, where src has dimensions 
+** (srcWidth * srcHeight) and dst has dimensions (dstWidth * dstHeight),
+** copy the rectangle (srcX, srcY, copyWidth, copyHeight) into
+** dst at location (dstX, dstY).
+**
+** It is assumed that the copy rectangle is non-empty and has been clipped
+** against the src and target rectangles
+*/
+static void ConvertCopyPixels(GLsizei srcPixelSize, GLsizei dstPixelSize,
+							  const GLubyte * src, GLsizei srcWidth, GLsizei srcHeight, 
+							  GLint srcX, GLint srcY, GLsizei copyWidth, GLsizei copyHeight,
+							  GLubyte * dst, GLsizei dstWidth, GLsizei dstHeight, GLint dstX, GLint dstY,
+							  CopyConversion srcConversion, CopyConversion dstConversion,
+							  GLuint srcAlignment, GLuint dstAlignment) {
+
+	GLsizeiptr srcBytesWidth = Align(srcWidth * srcPixelSize, srcAlignment);
+	GLsizeiptr dstBytesWidth = Align(dstWidth * dstPixelSize, dstAlignment);
+
+	GLsizeiptr srcGap = srcBytesWidth - copyWidth * srcPixelSize;	// how many bytes to skip for next line
+	GLsizeiptr dstGap = dstBytesWidth - copyWidth * dstPixelSize;	// how many bytes to skip for next line
+
+	const GLubyte * srcPtr = src + srcX * srcPixelSize + srcY * srcBytesWidth;
+	GLubyte * dstPtr = dst + dstX * dstPixelSize + dstY * dstBytesWidth;
+
+	do {
+		GLsizeiptr span = copyWidth;
+		GLubyte buffer[128 * 4];
+
+		while (span > 128) {
+			srcConversion(buffer, srcPtr, 128);
+			dstConversion(dstPtr, buffer, 128);
+			srcPtr += srcPixelSize * 128;
+			dstPtr += dstPixelSize * 128;
+
+			span -= 128;
+		}
+
+		if (span > 0) {
+			srcConversion(buffer, srcPtr, span);
+			dstConversion(dstPtr, buffer, span);
+			srcPtr += srcPixelSize * span;
+			dstPtr += dstPixelSize * span;
+		}
+
+		srcPtr += srcGap;
+		dstPtr += dstGap;
+	} while (--copyHeight);
+}
+
+/*
+** Given two bitmaps src and dst, where src has dimensions 
+** (srcWidth * srcHeight) and dst has dimensions (dstWidth * dstHeight),
+** copy the rectangle (srcX, srcY, copyWidth, copyHeight) into
+** dst at location (dstX, dstY).
+**
+** The texture format and the type of the source format a given as
+** parameters.
+*/
+static void CopyPixels(const void * src, GLsizei srcWidth, GLsizei srcHeight, 
+					   GLint srcX, GLint srcY, GLsizei copyWidth, GLsizei copyHeight,
+					   void * dst, GLsizei dstWidth, GLsizei dstHeight, GLint dstX, GLint dstY,
+					   GLenum baseInternalFormat, GLenum srcInternalFormat, GLenum dstInternalFormat,
+					   GLuint srcAlignment, GLuint dstAlignment) {
+
+	// ---------------------------------------------------------------------
+	// clip lower left corner
+	// ---------------------------------------------------------------------
+
+	if (srcX >= srcWidth || srcY >= srcHeight ||
+		dstX >= dstWidth || dstY >= dstHeight ||
+		copyWidth == 0 || copyHeight == 0) {
+		return;
+	}
+
+	// ---------------------------------------------------------------------
+	// clip the copy rectangle to the valid size
+	// ---------------------------------------------------------------------
+
+	if (copyWidth > dstWidth) {
+		copyWidth = dstWidth;
+	}
+
+	if (copyWidth > srcWidth) {
+		copyWidth = srcWidth;
+	}
+
+	if (copyHeight > dstHeight) {
+		copyHeight = dstHeight;
+	}
+
+	if (copyHeight > srcHeight) {
+		copyHeight = srcHeight;
+	}
+
+	// ---------------------------------------------------------------------
+	// at this point we know that the copy rectangle is valid and non-empty
+	// ---------------------------------------------------------------------
+
+		
+	switch (baseInternalFormat) {
+		case GL_ALPHA:
+		case GL_LUMINANCE:
+			SimpleCopyPixels(sizeof(GLubyte), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+							 (GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
+			break;
+
+		case GL_LUMINANCE_ALPHA:
+			SimpleCopyPixels(sizeof(GLubyte) * 2, (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+							 (GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
+			break;
+
+		case GL_RGB:
+			switch (srcInternalFormat) {
+				case GL_RGB:
+					switch (dstInternalFormat) {
+						case GL_RGB:
+							SimpleCopyPixels(sizeof(GLubyte) * 3, (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+								 (GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
+							break;
+
+						case GL_UNSIGNED_SHORT_5_6_5:
+							ConvertCopyPixels(sizeof(GLubyte) * 3, sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGB8fromRGB8, CopyRGB565fromRGB8, srcAlignment, dstAlignment);
+							break;
+					}
+					break;
+
+				case GL_UNSIGNED_SHORT_5_6_5:
+					switch (dstInternalFormat) {
+						case GL_RGB8:
+							ConvertCopyPixels(sizeof(GLushort), sizeof(GLubyte) * 3, (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGB8fromRGB565, CopyRGB8fromRGB8, srcAlignment, dstAlignment);
+							break;
+
+						case GL_UNSIGNED_SHORT_5_6_5:
+							SimpleCopyPixels(sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+								 (GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
+							break;
+					}
+					break;
+			}
+
+			break;
+
+		case GL_RGBA:
+			switch (srcInternalFormat) {
+				case GL_RGBA8:
+					switch (dstInternalFormat) {
+						case GL_RGBA8:
+							SimpleCopyPixels(sizeof(GLubyte) * 4, (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+								 (GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
+							break;
+						case GL_UNSIGNED_SHORT_5_5_5_1:
+							ConvertCopyPixels(sizeof(GLubyte) * 4, sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGBA8fromRGBA8, CopyRGBA51fromRGBA8, srcAlignment, dstAlignment);
+							break;
+						case GL_UNSIGNED_SHORT_4_4_4_4:
+							ConvertCopyPixels(sizeof(GLubyte) * 4, sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGBA8fromRGBA8, CopyRGBA4fromRGBA8, srcAlignment, dstAlignment);
+							break;
+					}
+					break;
+
+				case GL_UNSIGNED_SHORT_5_5_5_1:
+					switch (dstInternalFormat) {
+						case GL_RGBA8:
+							ConvertCopyPixels(sizeof(GLushort), sizeof(GLubyte) * 4, (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGBA8fromRGBA51, CopyRGBA8fromRGBA8, srcAlignment, dstAlignment);
+							break;
+						case GL_UNSIGNED_SHORT_5_5_5_1:
+							SimpleCopyPixels(sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+								 (GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
+							break;
+						case GL_UNSIGNED_SHORT_4_4_4_4:
+							ConvertCopyPixels(sizeof(GLushort), sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGBA8fromRGBA51, CopyRGBA4fromRGBA8, srcAlignment, dstAlignment);
+							break;
+					}
+					break;
+
+				case GL_UNSIGNED_SHORT_4_4_4_4:
+					switch (dstInternalFormat) {
+						case GL_RGBA8:
+							ConvertCopyPixels(sizeof(GLushort), sizeof(GLubyte) * 4, (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGBA8fromRGBA4, CopyRGBA8fromRGBA8, srcAlignment, dstAlignment);
+							break;
+						case GL_UNSIGNED_SHORT_5_5_5_1:
+							ConvertCopyPixels(sizeof(GLushort), sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGBA8fromRGBA4, CopyRGBA51fromRGBA8, srcAlignment, dstAlignment);
+							break;
+						case GL_UNSIGNED_SHORT_4_4_4_4:
+							SimpleCopyPixels(sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
+								 (GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
+							break;
+					}
+					break;
+			}
+
+			break;
+
+	}
+}
+
 /*
 ** --------------------------------------------------------------------------
 ** Internal functions
 ** --------------------------------------------------------------------------
 */
 
-void InitImage2D(Image2D * image) {
+void GlesInitImage2D(Image2D * image) {
 
-	image->data		= NULL;
-	image->format	= GlesGetFormat(GL_LUMINANCE);
-	image->width	= 0;
-	image->height	= 0;
+	image->data				= NULL;
+	image->internalFormat	= GL_LUMINANCE;
+	image->width			= 0;
+	image->height			= 0;
 }
 
-void DeleteImage2D(State * state, Image2D * image) {
+void GlesDeleteImage2D(State * state, Image2D * image) {
 
 	if (image->data != NULL) {
-		FreeServer(image->data);
+		GlesFree(image->data);
 		image->data = NULL;
 	}
+
+	image->width			= 0;
+	image->height			= 0;
 }
 
-void InitImage3D(Image3D * image) {
+void GlesInitImage3D(Image3D * image) {
 
-	image->data		= NULL;
-	image->format	= GlesGetFormat(GL_LUMINANCE);
-	image->width	= 0;
-	image->height	= 0;
-	image->depth	= 0;
+	image->data				= NULL;
+	image->internalFormat	= GL_LUMINANCE;
+	image->width			= 0;
+	image->height			= 0;
+	image->depth			= 0;
 }
 
-void DeleteImage3D(State * state, Image3D * image) {
+void GlesDeleteImage3D(State * state, Image3D * image) {
 
 	if (image->data != NULL) {
-		FreeServer(image->data);
+		GlesFree(image->data);
 		image->data = NULL;
 	}
+
+	image->width			= 0;
+	image->height			= 0;
+	image->depth			= 0;
 }
 
-void InitTextureBase(TextureBase * texture, GLenum textureType) {
+void GlesInitTextureBase(TextureBase * texture, GLenum textureType) {
 	texture->textureType	= textureType;
 	texture->isComplete		= GL_FALSE;
 	texture->minFilter		= GL_NEAREST_MIPMAP_LINEAR;
@@ -124,74 +526,74 @@ void InitTextureBase(TextureBase * texture, GLenum textureType) {
 	texture->wrapT			= GL_REPEAT;
 }
 
-void InitTexture2D(Texture2D * texture) {
+void GlesInitTexture2D(Texture2D * texture) {
 
 	GLuint index;
 
-	InitTextureBase(&texture->base, GL_TEXTURE_2D);
+	GlesInitTextureBase(&texture->base, GL_TEXTURE_2D);
 
 	for (index = 0; index < GLES_MAX_MIPMAP_LEVELS; ++index) {
-		InitImage2D(texture->image + index);
+		GlesInitImage2D(texture->image + index);
 	}
 }
 
-void DeleteTexture2D(State * state, Texture2D * texture) {
+void GlesDeleteTexture2D(State * state, Texture2D * texture) {
 
 	GLuint index;
 
 	for (index = 0; index < GLES_MAX_MIPMAP_LEVELS; ++index) {
-		DeleteImage2D(state, texture->image + index);
+		GlesDeleteImage2D(state, texture->image + index);
 	}
 }
 
-void InitTexture3D(Texture3D * texture) {
+void GlesInitTexture3D(Texture3D * texture) {
 
 	GLuint index;
 
-	InitTextureBase(&texture->base, GL_TEXTURE_3D);
+	GlesInitTextureBase(&texture->base, GL_TEXTURE_3D);
 
 	for (index = 0; index < GLES_MAX_MIPMAP_LEVELS; ++index) {
-		InitImage3D(texture->image + index);
+		GlesInitImage3D(texture->image + index);
 	}
 }
 
-void DeleteTexture3D(State * state, Texture3D * texture) {
+void GlesDeleteTexture3D(State * state, Texture3D * texture) {
 
 	GLuint index;
 
 	for (index = 0; index < GLES_MAX_MIPMAP_LEVELS; ++index) {
-		DeleteImage3D(state, texture->image + index);
+		GlesDeleteImage3D(state, texture->image + index);
 	}
 }
 
-void InitTextureCube(TextureCube * texture) {
+void GlesInitTextureCube(TextureCube * texture) {
 
 	GLuint index;
 
-	InitTextureBase(&texture->base, GL_TEXTURE_CUBE_MAP);
+	GlesInitTextureBase(&texture->base, GL_TEXTURE_CUBE_MAP);
 
 	for (index = 0; index < GLES_MAX_MIPMAP_LEVELS; ++index) {
-		InitImage2D(texture->negativeX + index);
-		InitImage2D(texture->positiveX + index);
-		InitImage2D(texture->negativeY + index);
-		InitImage2D(texture->positiveY + index);
-		InitImage2D(texture->negativeZ + index);
-		InitImage2D(texture->positiveZ + index);
+		GlesInitImage2D(texture->negativeX + index);
+		GlesInitImage2D(texture->positiveX + index);
+		GlesInitImage2D(texture->negativeY + index);
+		GlesInitImage2D(texture->positiveY + index);
+		GlesInitImage2D(texture->negativeZ + index);
+		GlesInitImage2D(texture->positiveZ + index);
 	}
 }
 
-void DeleteTextureCube(State * state, TextureCube * texture) {
+void GlesDeleteTextureCube(State * state, TextureCube * texture) {
 
 	GLuint index;
 
 	for (index = 0; index < GLES_MAX_MIPMAP_LEVELS; ++index) {
 
-		DeleteImage2D(state, texture->negativeX + index);
-		DeleteImage2D(state, texture->positiveX + index);
-		DeleteImage2D(state, texture->negativeY + index);
-		DeleteImage2D(state, texture->positiveY + index);
-		DeleteImage2D(state, texture->negativeZ + index);
-		DeleteImage2D(state, texture->positiveZ + index);
+		GlesDeleteImage2D(state, texture->negativeX + index);
+		GlesDeleteImage2D(state, texture->positiveX + index);
+		GlesDeleteImage2D(state, texture->negativeY + index);
+		GlesDeleteImage2D(state, texture->positiveY + index);
+		GlesDeleteImage2D(state, texture->negativeZ + index);
+		GlesDeleteImage2D(state, texture->positiveZ + index);
 	}
 }
 
@@ -262,15 +664,15 @@ GL_API void GL_APIENTRY glBindTexture (GLenum target, GLuint texture) {
 		switch (target) {
 
 			case GL_TEXTURE_2D:			
-				InitTexture2D(&state->textures[texture].texture2D);	
+				GlesInitTexture2D(&state->textures[texture].texture2D);	
 				break;
 
 			case GL_TEXTURE_3D:			
-				InitTexture3D(&state->textures[texture].texture3D);	
+				GlesInitTexture3D(&state->textures[texture].texture3D);	
 				break;
 
 			case GL_TEXTURE_CUBE_MAP:	
-				InitTextureCube(&state->textures[texture].textureCube);	
+				GlesInitTextureCube(&state->textures[texture].textureCube);	
 				break;
 		}
 
@@ -296,7 +698,7 @@ GL_API void GL_APIENTRY glDeleteTextures (GLsizei n, const GLuint *textures) {
 	/************************************************************************/
 
 	while (n--) {
-		if (IsBoundObject(state->textureFreeListHead, state->textureFreeList, GLES_MAX_TEXTURES, *textures)) {
+		if (GlesIsBoundObject(state->textureFreeListHead, state->textureFreeList, GLES_MAX_TEXTURES, *textures)) {
 
 			GLuint * textureRef = NULL;
 
@@ -304,17 +706,17 @@ GL_API void GL_APIENTRY glDeleteTextures (GLsizei n, const GLuint *textures) {
 
 				case GL_TEXTURE_2D:			
 					textureRef = &state->texture2D;	
-					DeleteTexture2D(state, &state->textures[*textures].texture2D);
+					GlesDeleteTexture2D(state, &state->textures[*textures].texture2D);
 					break;
 
 				case GL_TEXTURE_3D:			
 					textureRef = &state->texture3D;	
-					DeleteTexture3D(state, &state->textures[*textures].texture3D);
+					GlesDeleteTexture3D(state, &state->textures[*textures].texture3D);
 					break;
 
 				case GL_TEXTURE_CUBE_MAP:	
 					textureRef = &state->textureCube;	
-					DeleteTextureCube(state, &state->textures[*textures].textureCube);
+					GlesDeleteTextureCube(state, &state->textures[*textures].textureCube);
 					break;
 			}
 
@@ -334,13 +736,13 @@ GL_API void GL_APIENTRY glDeleteTextures (GLsizei n, const GLuint *textures) {
 GL_API void GL_APIENTRY glGenTextures (GLsizei n, GLuint *textures) {
 
 	State * state = GLES_GET_STATE();
-	GenObjects(state, state->textureFreeListHead, state->textureFreeList, GLES_MAX_TEXTURES, n, textures);
+	GlesGenObjects(state, state->textureFreeListHead, state->textureFreeList, GLES_MAX_TEXTURES, n, textures);
 }
 
 GL_API GLboolean GL_APIENTRY glIsTexture (GLuint texture) {
 
 	State * state = GLES_GET_STATE();
-	return IsBoundObject(state->textureFreeListHead, state->textureFreeList, GLES_MAX_TEXTURES, texture) &&
+	return GlesIsBoundObject(state->textureFreeListHead, state->textureFreeList, GLES_MAX_TEXTURES, texture) &&
 		state->textures[texture].base.textureType != GL_INVALID_ENUM;
 }
 
@@ -704,7 +1106,7 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 
 	State * state = GLES_GET_STATE();
 	GLsizei pixelSize, pixelElements;
-	GLenum textureFormat;
+	GLenum textureFormat, externalFormat;
 
 	/************************************************************************/
 	/* Determine texture image to load										*/
@@ -763,22 +1165,27 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 			switch (internalformat) {
 				case GL_LUMINANCE:
 					pixelElements = 1;
+					externalFormat = textureFormat = GL_LUMINANCE;
 					break;
 
 				case GL_LUMINANCE_ALPHA:
 					pixelElements = 2;
+					externalFormat = textureFormat = GL_LUMINANCE_ALPHA;
 					break;
 
 				case GL_ALPHA:
 					pixelElements = 1;
+					externalFormat = textureFormat = GL_ALPHA;
 					break;
 
 				case GL_RGB:
 					pixelElements = 3;
+					externalFormat = textureFormat = GL_RGB8;
 					break;
 
 				case GL_RGBA:
 					pixelElements = 4;
+					externalFormat = textureFormat = GL_RGBA8;
 					break;
 
 				default:
@@ -786,7 +1193,6 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 					return;
 			}
 
-			textureFormat = internalformat;
 			break;
 
 		case GL_UNSIGNED_SHORT_4_4_4_4:
@@ -795,7 +1201,7 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 				return;
 			}
 
-			textureFormat = type;
+			externalFormat = textureFormat = type;
 			pixelSize = 2;
 			pixelElements = 1;
 			break;
@@ -806,7 +1212,7 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 				return;
 			}
 
-			textureFormat = type;
+			externalFormat = textureFormat = type;
 			pixelSize = 2;
 			pixelElements = 1;
 
@@ -818,7 +1224,7 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 				return;
 			}
 
-			textureFormat = type;
+			externalFormat = textureFormat = type;
 			pixelSize = 2;
 			pixelElements = 1;
 
@@ -852,6 +1258,17 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 	/* Copy the actual image data											*/
 	/************************************************************************/
 
+	AllocateImage2D(state, image, textureFormat, width, height, pixelSize, pixelElements);
+
+	if (!image->data) {
+		GlesRecordOutOfMemory(state);
+		return;
+	}
+
+	CopyPixels(pixels, 
+			   width, height, 
+			   0, 0, width, height, 
+			   image->data, width, height, 0, 0, internalformat, textureFormat, externalFormat, state->packAlignment, 1);
 }
 
 GL_API void GL_APIENTRY 

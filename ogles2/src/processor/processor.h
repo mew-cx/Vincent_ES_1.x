@@ -120,10 +120,10 @@ void ProcInitialize(Processor * proc,		/* processor to initialize		*/
 					GLsizeiptr tempSpace);	/* Temporary space needed		*/
 
 void ProcExecute(Processor * proc,			/* the processor object			*/
-				 GLES_gpumem_t ip,			/* instruction pointer			*/
-				 GLES_gpumem_t input,		/* input data area base			*/
-				 GLES_gpumem_t output,		/* output data area base		*/
-				 GLES_gpumem_t params,		/* parameter area base			*/
-				 GLES_gpumem_t constants);	/* constant area base			*/
+				 void * ip,			/* instruction pointer			*/
+				 void * input,		/* input data area base			*/
+				 void * output,		/* output data area base		*/
+				 void * params,		/* parameter area base			*/
+				 void * constants);	/* constant area base			*/
 
 #endif /* ndef GLES_PROCESSOR_PROCESSOR_H */

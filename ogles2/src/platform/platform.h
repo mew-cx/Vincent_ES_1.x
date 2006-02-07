@@ -59,6 +59,9 @@
 ** --------------------------------------------------------------------------
 */
 
+#define GLES_NIL ((const void *) 4)		/* platform dependent invalid		*/
+										/* pointer != NULL					*/
+
 /*
 ** --------------------------------------------------------------------------
 ** Macros
@@ -73,7 +76,6 @@
 ** --------------------------------------------------------------------------
 */
 
-typedef void *	GLES_gpumem_t;		/* Memory in (virtual) CPU		*/
 
 /*
 ** --------------------------------------------------------------------------
@@ -105,11 +107,7 @@ void GLES_MEMMOVE(void * dst, const void * src, GLsizeiptr size);
 ** --------------------------------------------------------------------------
 */
 
-void * MallocClient(GLsizeiptr size);
-void FreeClient(void * ptr);
-
-GLES_gpumem_t MallocServer(GLsizeiptr size);
-void FreeServer(GLES_gpumem_t ptr);
-
+void * GlesMalloc(GLsizeiptr size);
+void GlesFree(void * ptr);
 
 #endif /* ndef GLES_PLATFORM_PLATFORM_H */

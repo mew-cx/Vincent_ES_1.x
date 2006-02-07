@@ -66,7 +66,7 @@ static GLenum VertexAttribTypeValues[] = {
 ** --------------------------------------------------------------------------
 */
 
-void InitArray(Array * array) {
+void GlesInitArray(Array * array) {
 	array->ptr			= NULL;
 	array->boundBuffer	= 0;
 	array->size			= 0;

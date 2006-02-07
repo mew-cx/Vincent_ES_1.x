@@ -51,7 +51,7 @@ void GlesPrepareRendering(State * state) {
 	for (index = 0; index < GLES_MAX_VERTEX_ATTRIBS; ++index) {
 
 		if (!state->vertexAttribArray[index].enabled) {
-			GLES_MEMCPY(state->tempVertexAttrib + index, state->vertexAttrib + index, sizeof(Cell));
+			GLES_MEMCPY(state->tempVertexAttrib + index, state->vertexAttrib + index, sizeof(state->vertexAttrib[0]));
 		} else {
 			state->enabledAttribArrays[numEnabledAttribArrays++] = index;
 		}
