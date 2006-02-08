@@ -333,15 +333,15 @@ typedef struct Program {
 */
 
 typedef struct Surface {
-	void *	colorBuffer;		/* color buffer address				*/
-	void *	depthBuffer;		/* depth buffer address				*/
-	void *	stencilBuffer;		/* stencil buffer address			*/
+	void *	colorBuffer;				/* color buffer address				*/
+	void *	depthBuffer;				/* depth buffer address				*/
+	void *	stencilBuffer;				/* stencil buffer address			*/
 
-	GLuint			width, height;		/* surface dimensions				*/
+	GLsizei			width, height;		/* surface dimensions				*/
 
-	GLenum			colorFormat;		/* format of color buffer:			*/
-	GLenum			depthFormat;		/* format of depth buffer:			*/
-	GLenum			stencilFormat;		/* format of stencil buffer:		*/
+	GLenum			colorFormat;		/* format of color buffer			*/
+	GLenum			depthFormat;		/* format of depth buffer			*/
+	GLenum			stencilFormat;		/* format of stencil buffer			*/
 } Surface;
 
 /*
@@ -354,7 +354,16 @@ typedef struct State {
 
 	/*
 	** ----------------------------------------------------------------------
-	** Exposed State
+	** EGL State
+	** ----------------------------------------------------------------------
+	*/
+
+	Surface *		readSurface;				/* read surface					*/
+	Surface *		writeSurface;				/* write surface				*/
+
+	/*
+	** ----------------------------------------------------------------------
+	** Exposed GL State
 	** ----------------------------------------------------------------------
 	*/
 
