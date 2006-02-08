@@ -1206,6 +1206,7 @@ glCompressedTexImage2D (GLenum target, GLint level, GLenum internalformat,
 						GLsizei width, GLsizei height, GLint border, 
 						GLsizei imageSize, const void *data) {
 	State * state = GLES_GET_STATE();
+	GlesRecordInvalidEnum(state);
 }
 
 GL_API void GL_APIENTRY 
@@ -1213,6 +1214,7 @@ glCompressedTexImage3D (GLenum target, GLint level, GLenum internalformat,
 						GLsizei width, GLsizei height, GLsizei depth, GLint border, 
 						GLsizei imageSize, const void *data) {
 	State * state = GLES_GET_STATE();
+	GlesRecordInvalidEnum(state);
 }
 
 GL_API void GL_APIENTRY 
@@ -1220,6 +1222,7 @@ glCompressedTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoff
 						   GLsizei width, GLsizei height, GLenum format, 
 						   GLsizei imageSize, const void *data) {
 	State * state = GLES_GET_STATE();
+	GlesRecordInvalidEnum(state);
 }
 
 GL_API void GL_APIENTRY 
@@ -1228,18 +1231,157 @@ glCompressedTexSubImage3D (GLenum target, GLint level,
 						   GLsizei width, GLsizei height, GLsizei depth, 
 						   GLenum format, GLsizei imageSize, const void *data) {
 	State * state = GLES_GET_STATE();
+	GlesRecordInvalidEnum(state);
 }
 
 GL_API void GL_APIENTRY 
 glCopyTexImage2D (GLenum target, GLint level, GLenum internalformat, 
 				  GLint x, GLint y, GLsizei width, GLsizei height, GLint border) {
 	State * state = GLES_GET_STATE();
+
+	GLsizei pixelSize;
+	GLenum textureFormat;
+
+	/************************************************************************/
+	/* Determine texture image to load										*/
+	/************************************************************************/
+
+	Image2D * image = GetImage2DForTargetAndLevel(state, target, level);
+
+	if (image == NULL) {
+		return;
+	}
+
+	/************************************************************************/
+	/* Determine texture format												*/
+	/************************************************************************/
+
+	if (state->readSurface == NULL) {
+		GlesRecordError(state, GL_INVALID_OPERATION);
+		return;
+	}
+
+	textureFormat = state->readSurface->colorFormat;
+
+	if (internalformat != GetBaseInternalFormat(textureFormat)) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	pixelSize = GetPixelSize(textureFormat);
+
+	/************************************************************************/
+	/* Verify image dimensions												*/
+	/************************************************************************/
+
+	if (width > GLES_MAX_TEXTURE_WIDTH || height > GLES_MAX_TEXTURE_HEIGHT) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (width == 0 || height == 0) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (width + x > state->readSurface->width || height + y > state->readSurface->height) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (border != 0) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	/************************************************************************/
+	/* Copy the actual image data											*/
+	/************************************************************************/
+
+	AllocateImage2D(state, image, textureFormat, width, height, pixelSize);
+
+	if (!image->data) {
+		GlesRecordOutOfMemory(state);
+		return;
+	}
+
+	CopyPixels(state->readSurface->colorBuffer, 
+			   state->readSurface->width, state->readSurface->height, 
+			   x, y, width, height, 
+			   image->data, width, height, 0, 0, internalformat, textureFormat, textureFormat, 1, 1);
 }
 
 GL_API void GL_APIENTRY 
 glCopyTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, 
 					 GLint x, GLint y, GLsizei width, GLsizei height) {
 	State * state = GLES_GET_STATE();
+
+	GLenum textureFormat, baseInternalFormat;
+
+	/************************************************************************/
+	/* Determine texture image to load										*/
+	/************************************************************************/
+
+	Image2D * image = GetImage2DForTargetAndLevel(state, target, level);
+
+	if (image == NULL) {
+		return;
+	}
+
+	baseInternalFormat = GetBaseInternalFormat(image->internalFormat);
+
+	if (baseInternalFormat != 
+		GetBaseInternalFormat(state->readSurface->colorFormat)) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	/************************************************************************/
+	/* Determine texture format												*/
+	/************************************************************************/
+
+	textureFormat = state->readSurface->colorFormat;
+
+	/************************************************************************/
+	/* Verify image dimensions												*/
+	/************************************************************************/
+
+	if (width > GLES_MAX_TEXTURE_WIDTH || height > GLES_MAX_TEXTURE_HEIGHT) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (width == 0 || height == 0) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (width + x > state->readSurface->width || height + y > state->readSurface->height) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (xoffset < 0 || yoffset < 0 || 
+		xoffset + width > image->width || 
+		yoffset + height > image->height) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	/************************************************************************/
+	/* Copy the actual image data											*/
+	/************************************************************************/
+
+	if (!image->data) {
+		GlesRecordOutOfMemory(state);
+		return;
+	}
+
+	CopyPixels(state->readSurface->colorBuffer, 
+			   state->readSurface->width, state->readSurface->height, 
+			   x, y, width, height, 
+			   image->data, image->width, image->height, xoffset, yoffset, baseInternalFormat, 
+			   textureFormat, image->internalFormat, 1, 1);
 }
 
 GL_API void GL_APIENTRY 
@@ -1288,6 +1430,11 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 		return;
 	}
 
+	if (border != 0) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
 	if ((width == 0 || height == 0) && pixels != NULL) {
 		GlesRecordInvalidValue(state);
 		return;
@@ -1312,7 +1459,8 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 	CopyPixels(pixels, 
 			   width, height, 
 			   0, 0, width, height, 
-			   image->data, width, height, 0, 0, internalformat, textureFormat, textureFormat, state->packAlignment, 1);
+			   image->data, width, height, 0, 0, 
+			   internalformat, textureFormat, textureFormat, state->packAlignment, 1);
 }
 
 GL_API void GL_APIENTRY 
@@ -1395,7 +1543,8 @@ glTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset,
 	CopyPixels(pixels, 
 			   width, height, 
 			   0, 0, width, height, 
-			   image->data, image->width, image->height, xoffset, yoffset, format, image->internalFormat, textureFormat, state->packAlignment, 1);
+			   image->data, image->width, image->height, xoffset, yoffset, 
+			   format, textureFormat, image->internalFormat, state->packAlignment, 1);
 }
 
 GL_API void GL_APIENTRY 
