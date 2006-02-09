@@ -252,6 +252,22 @@ static Image2D * GetImage2DForTargetAndLevel(State * state, GLenum target, GLint
 	}
 }
 
+static Image3D * GetImage3DForTargetAndLevel(State * state, GLenum target, GLint level) {
+	if (level < 0 || level >= GLES_MAX_MIPMAP_LEVELS) {
+		GlesRecordInvalidValue(state);
+		return NULL;
+	}
+
+	switch (target) {
+		case GL_TEXTURE_3D:
+			return GetCurrentTexture3D(state)->image + level;			
+
+		default:
+			GlesRecordInvalidEnum(state);
+			return NULL;
+	}
+}
+
 /*
 ** --------------------------------------------------------------------------
 ** Bitmap copy and conversion functions
@@ -389,10 +405,15 @@ static GLES_INLINE GLsizeiptr Align(GLsizeiptr offset, GLuint alignment) {
 // It is assumed that the copy rectangle is non-empty and has been clipped
 // against the src and target rectangles
 // -------------------------------------------------------------------------
-static void SimpleCopyPixels(GLsizei pixelSize, const GLubyte * src, GLsizei srcWidth, GLsizei srcHeight, 
-				GLint srcX, GLint srcY, GLsizei copyWidth, GLsizei copyHeight,
-				GLubyte * dst, GLsizei dstWidth, GLsizei dstHeight, GLint dstX, GLint dstY,
-				GLuint srcAlignment, GLuint dstAlignment) {
+static void SimpleCopyPixels(GLsizei pixelSize, 
+							 const GLubyte * src, 
+							 GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth,
+							 GLint srcX, GLint srcY, GLint srcZ, 
+							 GLsizei copyWidth, GLsizei copyHeight, GLsizei copyDepth,
+							 GLubyte * dst, 
+							 GLsizei dstWidth, GLsizei dstHeight, GLsizei dstDepth, 
+							 GLint dstX, GLint dstY, GLint dstZ,
+							 GLuint srcAlignment, GLuint dstAlignment) {
 
 	GLsizeiptr srcBytesWidth = Align(srcWidth * pixelSize, srcAlignment);
 	GLsizeiptr dstBytesWidth = Align(dstWidth * pixelSize, dstAlignment);
@@ -400,19 +421,27 @@ static void SimpleCopyPixels(GLsizei pixelSize, const GLubyte * src, GLsizei src
 	GLsizeiptr srcGap = srcBytesWidth - copyWidth * pixelSize;	// how many bytes to skip for next line
 	GLsizeiptr dstGap = dstBytesWidth - copyWidth * pixelSize;	// how many bytes to skip for next line
 
-	const GLubyte * srcPtr = src + srcX * pixelSize + srcY * srcBytesWidth;
-	GLubyte * dstPtr = dst + dstX * pixelSize + dstY * dstBytesWidth;
+	GLsizeiptr srcImageGap = srcBytesWidth * (srcHeight - copyHeight);
+	GLsizeiptr dstImageGap = dstBytesWidth * (dstHeight - copyHeight);
+
+	const GLubyte * srcPtr = src + srcX * pixelSize + (srcY + srcZ * srcHeight) * srcBytesWidth;
+	GLubyte * dstPtr = dst + dstX * pixelSize + (dstY + dstZ * dstHeight) * dstBytesWidth;
 
 	do {
-		GLsizeiptr span = copyWidth * pixelSize;
-
 		do {
-			*dstPtr++ = *srcPtr++;
-		} while (--span);
+			GLsizeiptr span = copyWidth * pixelSize;
 
-		srcPtr += srcGap;
-		dstPtr += dstGap;
-	} while (--copyHeight);
+			do {
+				*dstPtr++ = *srcPtr++;
+			} while (--span);
+
+			srcPtr += srcGap;
+			dstPtr += dstGap;
+		} while (--copyHeight);
+
+		srcPtr += srcImageGap;
+		dstPtr += dstImageGap;
+	} while (--copyDepth);
 }
 
 /*
@@ -425,9 +454,13 @@ static void SimpleCopyPixels(GLsizei pixelSize, const GLubyte * src, GLsizei src
 ** against the src and target rectangles
 */
 static void ConvertCopyPixels(GLsizei srcPixelSize, GLsizei dstPixelSize,
-							  const GLubyte * src, GLsizei srcWidth, GLsizei srcHeight, 
-							  GLint srcX, GLint srcY, GLsizei copyWidth, GLsizei copyHeight,
-							  GLubyte * dst, GLsizei dstWidth, GLsizei dstHeight, GLint dstX, GLint dstY,
+							  const GLubyte * src, 
+							  GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth,
+							  GLint srcX, GLint srcY, GLint srcZ, 
+							  GLsizei copyWidth, GLsizei copyHeight, GLsizei copyDepth,
+							  GLubyte * dst, 
+							  GLsizei dstWidth, GLsizei dstHeight, GLsizei dstDepth, 
+							  GLint dstX, GLint dstY, GLint dstZ,
 							  CopyConversion srcConversion, CopyConversion dstConversion,
 							  GLuint srcAlignment, GLuint dstAlignment) {
 
@@ -437,32 +470,40 @@ static void ConvertCopyPixels(GLsizei srcPixelSize, GLsizei dstPixelSize,
 	GLsizeiptr srcGap = srcBytesWidth - copyWidth * srcPixelSize;	// how many bytes to skip for next line
 	GLsizeiptr dstGap = dstBytesWidth - copyWidth * dstPixelSize;	// how many bytes to skip for next line
 
-	const GLubyte * srcPtr = src + srcX * srcPixelSize + srcY * srcBytesWidth;
-	GLubyte * dstPtr = dst + dstX * dstPixelSize + dstY * dstBytesWidth;
+	GLsizeiptr srcImageGap = srcBytesWidth * (srcHeight - copyHeight);
+	GLsizeiptr dstImageGap = dstBytesWidth * (dstHeight - copyHeight);
+
+	const GLubyte * srcPtr = src + srcX * srcPixelSize + (srcY + srcZ * srcHeight) * srcBytesWidth;
+	GLubyte * dstPtr = dst + dstX * dstPixelSize + (dstY + dstZ * dstHeight) * dstBytesWidth;
 
 	do {
-		GLsizeiptr span = copyWidth;
-		GLubyte buffer[128 * 4];
+		do {
+			GLsizeiptr span = copyWidth;
+			GLubyte buffer[128 * 4];
 
-		while (span > 128) {
-			srcConversion(buffer, srcPtr, 128);
-			dstConversion(dstPtr, buffer, 128);
-			srcPtr += srcPixelSize * 128;
-			dstPtr += dstPixelSize * 128;
+			while (span > 128) {
+				srcConversion(buffer, srcPtr, 128);
+				dstConversion(dstPtr, buffer, 128);
+				srcPtr += srcPixelSize * 128;
+				dstPtr += dstPixelSize * 128;
 
-			span -= 128;
-		}
+				span -= 128;
+			}
 
-		if (span > 0) {
-			srcConversion(buffer, srcPtr, span);
-			dstConversion(dstPtr, buffer, span);
-			srcPtr += srcPixelSize * span;
-			dstPtr += dstPixelSize * span;
-		}
+			if (span > 0) {
+				srcConversion(buffer, srcPtr, span);
+				dstConversion(dstPtr, buffer, span);
+				srcPtr += srcPixelSize * span;
+				dstPtr += dstPixelSize * span;
+			}
 
-		srcPtr += srcGap;
-		dstPtr += dstGap;
-	} while (--copyHeight);
+			srcPtr += srcGap;
+			dstPtr += dstGap;
+		} while (--copyHeight);
+
+		srcPtr += srcImageGap;
+		dstPtr += dstImageGap;
+	} while (--copyDepth);
 }
 
 /*
@@ -474,9 +515,13 @@ static void ConvertCopyPixels(GLsizei srcPixelSize, GLsizei dstPixelSize,
 ** The texture format and the type of the source format a given as
 ** parameters.
 */
-static void CopyPixels(const void * src, GLsizei srcWidth, GLsizei srcHeight, 
-					   GLint srcX, GLint srcY, GLsizei copyWidth, GLsizei copyHeight,
-					   void * dst, GLsizei dstWidth, GLsizei dstHeight, GLint dstX, GLint dstY,
+static void CopyPixels(const void * src, 
+					   GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth,
+					   GLint srcX, GLint srcY, GLint srcZ, 
+					   GLsizei copyWidth, GLsizei copyHeight, GLsizei copyDepth,
+					   GLubyte * dst, 
+					   GLsizei dstWidth, GLsizei dstHeight, GLsizei dstDepth, 
+					   GLint dstX, GLint dstY, GLint dstZ,
 					   GLenum baseInternalFormat, GLenum srcInternalFormat, GLenum dstInternalFormat,
 					   GLuint srcAlignment, GLuint dstAlignment) {
 
@@ -484,9 +529,9 @@ static void CopyPixels(const void * src, GLsizei srcWidth, GLsizei srcHeight,
 	// clip lower left corner
 	// ---------------------------------------------------------------------
 
-	if (srcX >= srcWidth || srcY >= srcHeight ||
-		dstX >= dstWidth || dstY >= dstHeight ||
-		copyWidth == 0 || copyHeight == 0) {
+	if (srcX >= srcWidth || srcY >= srcHeight || srcY >= srcDepth ||
+		dstX >= dstWidth || dstY >= dstHeight || dstZ >= dstDepth ||
+		copyWidth == 0 || copyHeight == 0 || copyDepth == 0) {
 		return;
 	}
 
@@ -510,6 +555,14 @@ static void CopyPixels(const void * src, GLsizei srcWidth, GLsizei srcHeight,
 		copyHeight = srcHeight;
 	}
 
+	if (copyDepth > dstDepth) {
+		copyDepth = dstDepth;
+	}
+
+	if (copyDepth > srcDepth) {
+		copyDepth = srcDepth;
+	}
+
 	// ---------------------------------------------------------------------
 	// at this point we know that the copy rectangle is valid and non-empty
 	// ---------------------------------------------------------------------
@@ -518,13 +571,25 @@ static void CopyPixels(const void * src, GLsizei srcWidth, GLsizei srcHeight,
 	switch (baseInternalFormat) {
 		case GL_ALPHA:
 		case GL_LUMINANCE:
-			SimpleCopyPixels(sizeof(GLubyte), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-							 (GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
+			SimpleCopyPixels(sizeof(GLubyte), (const GLubyte *) src, 
+							 srcWidth, srcHeight, srcDepth,
+							 srcX, srcY, srcZ,
+							 copyWidth, copyHeight, copyDepth,
+							 (GLubyte *) dst, 
+							 dstWidth, dstHeight, dstHeight,
+							 dstX, dstY, dstZ,
+							 srcAlignment, dstAlignment);
 			break;
 
 		case GL_LUMINANCE_ALPHA:
-			SimpleCopyPixels(sizeof(GLubyte) * 2, (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-							 (GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
+			SimpleCopyPixels(sizeof(GLubyte) * 2, (const GLubyte *) src, 
+							 srcWidth, srcHeight, srcDepth, 
+							 srcX, srcY, srcZ,
+							 copyWidth, copyHeight,copyDepth,
+							 (GLubyte *) dst, 
+							 dstWidth, dstHeight, dstDepth,
+							 dstX, dstY, dstZ,
+							 srcAlignment, dstAlignment);
 			break;
 
 		case GL_RGB:
@@ -532,13 +597,25 @@ static void CopyPixels(const void * src, GLsizei srcWidth, GLsizei srcHeight,
 				case GL_RGB:
 					switch (dstInternalFormat) {
 						case GL_RGB:
-							SimpleCopyPixels(sizeof(GLubyte) * 3, (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-								 (GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
+							SimpleCopyPixels(sizeof(GLubyte) * 3, (const GLubyte *) src, 
+											 srcWidth, srcHeight, srcDepth,
+											 srcX, srcY, srcZ,
+											 copyWidth, copyHeight, copyDepth,
+											 (GLubyte *) dst, 
+											 dstWidth, dstHeight, dstDepth,
+											 dstX, dstY, dstZ,
+											 srcAlignment, dstAlignment);
 							break;
 
 						case GL_UNSIGNED_SHORT_5_6_5:
-							ConvertCopyPixels(sizeof(GLubyte) * 3, sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGB8fromRGB8, CopyRGB565fromRGB8, srcAlignment, dstAlignment);
+							ConvertCopyPixels(sizeof(GLubyte) * 3, sizeof(GLushort), (const GLubyte *) src, 
+											  srcWidth, srcHeight, srcDepth,
+											  srcX, srcY, srcZ,
+											  copyWidth, copyHeight, copyDepth,
+											  (GLubyte *) dst, 
+											  dstWidth, dstHeight, dstDepth,
+											  dstX, dstY, dstZ,
+											  CopyRGB8fromRGB8, CopyRGB565fromRGB8, srcAlignment, dstAlignment);
 							break;
 					}
 					break;
@@ -546,13 +623,25 @@ static void CopyPixels(const void * src, GLsizei srcWidth, GLsizei srcHeight,
 				case GL_UNSIGNED_SHORT_5_6_5:
 					switch (dstInternalFormat) {
 						case GL_RGB8:
-							ConvertCopyPixels(sizeof(GLushort), sizeof(GLubyte) * 3, (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGB8fromRGB565, CopyRGB8fromRGB8, srcAlignment, dstAlignment);
+							ConvertCopyPixels(sizeof(GLushort), sizeof(GLubyte) * 3, (const GLubyte *) src, 
+											  srcWidth, srcHeight, srcDepth,
+											  srcX, srcY, srcZ,
+											  copyWidth, copyHeight, copyDepth,
+											  (GLubyte *) dst, 
+											  dstWidth, dstHeight, dstDepth, 
+											  dstX, dstY, dstZ,
+											  CopyRGB8fromRGB565, CopyRGB8fromRGB8, srcAlignment, dstAlignment);
 							break;
 
 						case GL_UNSIGNED_SHORT_5_6_5:
-							SimpleCopyPixels(sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-								 (GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
+							SimpleCopyPixels(sizeof(GLushort), (const GLubyte *) src, 
+											 srcWidth, srcHeight, srcDepth,
+											 srcX, srcY, srcZ,
+											 copyWidth, copyHeight, copyDepth,
+											 (GLubyte *) dst, 
+											 dstWidth, dstHeight, dstDepth,
+											 dstX, dstY, dstZ,
+											 srcAlignment, dstAlignment);
 							break;
 					}
 					break;
@@ -565,16 +654,34 @@ static void CopyPixels(const void * src, GLsizei srcWidth, GLsizei srcHeight,
 				case GL_RGBA8:
 					switch (dstInternalFormat) {
 						case GL_RGBA8:
-							SimpleCopyPixels(sizeof(GLubyte) * 4, (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-								 (GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
+							SimpleCopyPixels(sizeof(GLubyte) * 4, (const GLubyte *) src, 
+											 srcWidth, srcHeight, srcDepth,
+											 srcX, srcY, srcZ,
+											 copyWidth, copyHeight, copyDepth,
+											 (GLubyte *) dst, 
+											 dstWidth, dstHeight, dstDepth,
+											 dstX, dstY, dstZ,
+											 srcAlignment, dstAlignment);
 							break;
 						case GL_UNSIGNED_SHORT_5_5_5_1:
-							ConvertCopyPixels(sizeof(GLubyte) * 4, sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGBA8fromRGBA8, CopyRGBA51fromRGBA8, srcAlignment, dstAlignment);
+							ConvertCopyPixels(sizeof(GLubyte) * 4, sizeof(GLushort), (const GLubyte *) src, 
+											  srcWidth, srcHeight, srcDepth,
+											  srcX, srcY, srcZ,
+											  copyWidth, copyHeight, copyDepth,
+											  (GLubyte *) dst, 
+											  dstWidth, dstHeight, dstDepth,
+											  dstX, dstY, dstZ,
+											  CopyRGBA8fromRGBA8, CopyRGBA51fromRGBA8, srcAlignment, dstAlignment);
 							break;
 						case GL_UNSIGNED_SHORT_4_4_4_4:
-							ConvertCopyPixels(sizeof(GLubyte) * 4, sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGBA8fromRGBA8, CopyRGBA4fromRGBA8, srcAlignment, dstAlignment);
+							ConvertCopyPixels(sizeof(GLubyte) * 4, sizeof(GLushort), (const GLubyte *) src, 
+											  srcWidth, srcHeight, srcDepth,
+											  srcX, srcY, srcZ,
+											  copyWidth, copyHeight, copyDepth,
+											  (GLubyte *) dst, 
+											  dstWidth, dstHeight, dstDepth,
+											  dstX, dstY, dstZ,
+											  CopyRGBA8fromRGBA8, CopyRGBA4fromRGBA8, srcAlignment, dstAlignment);
 							break;
 					}
 					break;
@@ -582,16 +689,34 @@ static void CopyPixels(const void * src, GLsizei srcWidth, GLsizei srcHeight,
 				case GL_UNSIGNED_SHORT_5_5_5_1:
 					switch (dstInternalFormat) {
 						case GL_RGBA8:
-							ConvertCopyPixels(sizeof(GLushort), sizeof(GLubyte) * 4, (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGBA8fromRGBA51, CopyRGBA8fromRGBA8, srcAlignment, dstAlignment);
+							ConvertCopyPixels(sizeof(GLushort), sizeof(GLubyte) * 4, (const GLubyte *) src, 
+											  srcWidth, srcHeight, srcDepth,
+											  srcX, srcY, srcZ,
+											  copyWidth, copyHeight, copyDepth,
+											  (GLubyte *) dst, 
+											  dstWidth, dstHeight, dstDepth,
+											  dstX, dstY, dstZ,
+											  CopyRGBA8fromRGBA51, CopyRGBA8fromRGBA8, srcAlignment, dstAlignment);
 							break;
 						case GL_UNSIGNED_SHORT_5_5_5_1:
-							SimpleCopyPixels(sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-								 (GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
+							SimpleCopyPixels(sizeof(GLushort), (const GLubyte *) src, 
+											 srcWidth, srcHeight, srcDepth,
+											 srcX, srcY, srcZ,
+											 copyWidth, copyHeight, copyDepth,
+											 (GLubyte *) dst, 
+											 dstWidth, dstHeight, dstDepth,
+											 dstX, dstY, dstZ,
+											 srcAlignment, dstAlignment);
 							break;
 						case GL_UNSIGNED_SHORT_4_4_4_4:
-							ConvertCopyPixels(sizeof(GLushort), sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGBA8fromRGBA51, CopyRGBA4fromRGBA8, srcAlignment, dstAlignment);
+							ConvertCopyPixels(sizeof(GLushort), sizeof(GLushort), (const GLubyte *) src, 
+											  srcWidth, srcHeight, srcDepth,
+											  srcX, srcY, srcZ,
+											  copyWidth, copyHeight, copyDepth,
+											  (GLubyte *) dst, 
+											  dstWidth, dstHeight, dstDepth,
+											  dstX, dstY, dstDepth,
+											  CopyRGBA8fromRGBA51, CopyRGBA4fromRGBA8, srcAlignment, dstAlignment);
 							break;
 					}
 					break;
@@ -599,16 +724,34 @@ static void CopyPixels(const void * src, GLsizei srcWidth, GLsizei srcHeight,
 				case GL_UNSIGNED_SHORT_4_4_4_4:
 					switch (dstInternalFormat) {
 						case GL_RGBA8:
-							ConvertCopyPixels(sizeof(GLushort), sizeof(GLubyte) * 4, (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGBA8fromRGBA4, CopyRGBA8fromRGBA8, srcAlignment, dstAlignment);
+							ConvertCopyPixels(sizeof(GLushort), sizeof(GLubyte) * 4, (const GLubyte *) src, 
+											  srcWidth, srcHeight, srcDepth,
+											  srcX, srcY, srcZ,
+											  copyWidth, copyHeight, copyDepth,
+											  (GLubyte *) dst, 
+											  dstWidth, dstHeight, dstDepth,
+											  dstX, dstY, dstZ,
+											  CopyRGBA8fromRGBA4, CopyRGBA8fromRGBA8, srcAlignment, dstAlignment);
 							break;
 						case GL_UNSIGNED_SHORT_5_5_5_1:
-							ConvertCopyPixels(sizeof(GLushort), sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-								(GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, CopyRGBA8fromRGBA4, CopyRGBA51fromRGBA8, srcAlignment, dstAlignment);
+							ConvertCopyPixels(sizeof(GLushort), sizeof(GLushort), (const GLubyte *) src, 
+											  srcWidth, srcHeight, srcDepth,
+											  srcX, srcY, srcZ,
+											  copyWidth, copyHeight, copyDepth,
+											  (GLubyte *) dst, 
+											  dstWidth, dstHeight, dstDepth,
+											  dstX, dstY, dstZ,
+											  CopyRGBA8fromRGBA4, CopyRGBA51fromRGBA8, srcAlignment, dstAlignment);
 							break;
 						case GL_UNSIGNED_SHORT_4_4_4_4:
-							SimpleCopyPixels(sizeof(GLushort), (const GLubyte *) src, srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-								 (GLubyte *) dst, dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
+							SimpleCopyPixels(sizeof(GLushort), (const GLubyte *) src, 
+											 srcWidth, srcHeight, srcDepth,
+											 srcX, srcY, srcZ,
+											 copyWidth, copyHeight, copyDepth,
+											 (GLubyte *) dst, 
+											 dstWidth, dstHeight, dstDepth,
+											 dstX, dstY, dstZ,
+											 srcAlignment, dstAlignment);
 							break;
 					}
 					break;
@@ -1306,9 +1449,9 @@ glCopyTexImage2D (GLenum target, GLint level, GLenum internalformat,
 	}
 
 	CopyPixels(state->readSurface->colorBuffer, 
-			   state->readSurface->width, state->readSurface->height, 
-			   x, y, width, height, 
-			   image->data, width, height, 0, 0, internalformat, textureFormat, textureFormat, 1, 1);
+			   state->readSurface->width, state->readSurface->height, 1,
+			   x, y, 0, width, height, 1,
+			   image->data, width, height, 1, 0, 0, 0, internalformat, textureFormat, textureFormat, 1, 1);
 }
 
 GL_API void GL_APIENTRY 
@@ -1378,9 +1521,9 @@ glCopyTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset,
 	}
 
 	CopyPixels(state->readSurface->colorBuffer, 
-			   state->readSurface->width, state->readSurface->height, 
-			   x, y, width, height, 
-			   image->data, image->width, image->height, xoffset, yoffset, baseInternalFormat, 
+			   state->readSurface->width, state->readSurface->height, 1,
+			   x, y, 0, width, height, 1,
+			   image->data, image->width, image->height, 1, xoffset, yoffset, 0, baseInternalFormat, 
 			   textureFormat, image->internalFormat, 1, 1);
 }
 
@@ -1388,6 +1531,75 @@ GL_API void GL_APIENTRY
 glCopyTexSubImage3D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, 
 					 GLint x, GLint y, GLsizei width, GLsizei height) {
 	State * state = GLES_GET_STATE();
+
+	GLenum textureFormat, baseInternalFormat;
+
+	/************************************************************************/
+	/* Determine texture image to load										*/
+	/************************************************************************/
+
+	Image3D * image = GetImage3DForTargetAndLevel(state, target, level);
+
+	if (image == NULL) {
+		return;
+	}
+
+	baseInternalFormat = GetBaseInternalFormat(image->internalFormat);
+
+	if (baseInternalFormat != 
+		GetBaseInternalFormat(state->readSurface->colorFormat)) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	/************************************************************************/
+	/* Determine texture format												*/
+	/************************************************************************/
+
+	textureFormat = state->readSurface->colorFormat;
+
+	/************************************************************************/
+	/* Verify image dimensions												*/
+	/************************************************************************/
+
+	if (width > GLES_MAX_TEXTURE_WIDTH || height > GLES_MAX_TEXTURE_HEIGHT) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (width == 0 || height == 0) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (width + x > state->readSurface->width || height + y > state->readSurface->height) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (xoffset < 0 || yoffset < 0 || zoffset < 0 ||
+		xoffset + width > image->width || 
+		yoffset + height > image->height ||
+		zoffset + 1 > image->depth) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	/************************************************************************/
+	/* Copy the actual image data											*/
+	/************************************************************************/
+
+	if (!image->data) {
+		GlesRecordOutOfMemory(state);
+		return;
+	}
+
+	CopyPixels(state->readSurface->colorBuffer, 
+			   state->readSurface->width, state->readSurface->height, 1, 
+			   x, y, 0, width, height, 1,
+			   image->data, image->width, image->height, image->depth, 
+			   xoffset, yoffset, zoffset, baseInternalFormat, 
+			   textureFormat, image->internalFormat, 1, 1);
 }
 
 GL_API void GL_APIENTRY 
@@ -1457,9 +1669,9 @@ glTexImage2D (GLenum target, GLint level, GLenum internalformat,
 	}
 
 	CopyPixels(pixels, 
-			   width, height, 
-			   0, 0, width, height, 
-			   image->data, width, height, 0, 0, 
+			   width, height, 1, 
+			   0, 0, 0, width, height, 1, 
+			   image->data, width, height, 1, 0, 0, 0,
 			   internalformat, textureFormat, textureFormat, state->packAlignment, 1);
 }
 
@@ -1468,6 +1680,73 @@ glTexImage3D (GLenum target, GLint level, GLenum internalformat,
 			  GLsizei width, GLsizei height, GLsizei depth, GLint border, 
 			  GLenum format, GLenum type, const void *pixels) {
 	State * state = GLES_GET_STATE();
+	GLsizei pixelSize;
+	GLenum textureFormat;
+
+	/************************************************************************/
+	/* Determine texture image to load										*/
+	/************************************************************************/
+
+	Image3D * image = GetImage3DForTargetAndLevel(state, target, level);
+
+	if (image == NULL) {
+		return;
+	}
+
+	/************************************************************************/
+	/* Determine texture format												*/
+	/************************************************************************/
+
+	textureFormat = GetInternalFormat(state, internalformat, type);
+
+	if (textureFormat == GL_NONE) {
+		return;
+	}
+
+	pixelSize = GetPixelSize(textureFormat);
+
+	/************************************************************************/
+	/* Verify image dimensions												*/
+	/************************************************************************/
+
+	if (width > GLES_MAX_TEXTURE_WIDTH || 
+		height > GLES_MAX_TEXTURE_HEIGHT ||
+		depth > GLES_MAX_TEXTURE_DEPTH) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (border != 0) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if ((width == 0 || height == 0 || depth == 0) && pixels != NULL) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (width != 0 && height != 0 && depth != 0 && pixels == NULL) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	/************************************************************************/
+	/* Copy the actual image data											*/
+	/************************************************************************/
+
+	AllocateImage3D(state, image, textureFormat, width, height, depth, pixelSize);
+
+	if (!image->data) {
+		GlesRecordOutOfMemory(state);
+		return;
+	}
+
+	CopyPixels(pixels, 
+			   width, height, depth,
+			   0, 0, 0, width, height, depth,
+			   image->data, width, height, depth, 0, 0, 0,
+			   internalformat, textureFormat, textureFormat, state->packAlignment, 1);
 }
 
 GL_API void GL_APIENTRY 
@@ -1541,9 +1820,9 @@ glTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset,
 	}
 
 	CopyPixels(pixels, 
-			   width, height, 
-			   0, 0, width, height, 
-			   image->data, image->width, image->height, xoffset, yoffset, 
+			   width, height, 1,
+			   0, 0, 0, width, height, 1,
+			   image->data, image->width, image->height, 1, xoffset, yoffset, 0,
 			   format, textureFormat, image->internalFormat, state->packAlignment, 1);
 }
 
@@ -1552,5 +1831,80 @@ glTexSubImage3D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint
 				 GLsizei width, GLsizei height, GLsizei depth, 
 				 GLenum format, GLenum type, const void *pixels) {
 	State * state = GLES_GET_STATE();
+	GLsizei pixelSize;
+	GLenum textureFormat;
+
+	/************************************************************************/
+	/* Determine texture image to load										*/
+	/************************************************************************/
+
+	Image3D * image = GetImage3DForTargetAndLevel(state, target, level);
+
+	if (image == NULL) {
+		return;
+	}
+
+	if (GetBaseInternalFormat(image->internalFormat) != format) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	/************************************************************************/
+	/* Determine texture format												*/
+	/************************************************************************/
+
+	textureFormat = GetInternalFormat(state, format, type);
+
+	if (textureFormat == GL_NONE) {
+		return;
+	}
+
+	pixelSize = GetPixelSize(textureFormat);
+
+	/************************************************************************/
+	/* Verify image dimensions												*/
+	/************************************************************************/
+
+	if (width > GLES_MAX_TEXTURE_WIDTH || 
+		height > GLES_MAX_TEXTURE_HEIGHT ||
+		depth > GLES_MAX_TEXTURE_DEPTH) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if ((width == 0 || height == 0 || depth == 0) && pixels != NULL) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (width != 0 && height != 0 && depth != 0 && pixels == NULL) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	if (xoffset < 0 || yoffset < 0 || zoffset < 0 ||
+		xoffset + width > image->width || 
+		yoffset + height > image->height ||
+		zoffset + depth > image->depth) {
+		GlesRecordInvalidValue(state);
+		return;
+	}
+
+	/************************************************************************/
+	/* Copy the actual image data											*/
+	/************************************************************************/
+
+	if (!image->data) {
+		GlesRecordOutOfMemory(state);
+		return;
+	}
+
+	CopyPixels(pixels, 
+			   width, height, depth,
+			   0, 0, 0, width, height, depth,
+			   image->data, 
+			   image->width, image->height, image->depth, 
+			   xoffset, yoffset, zoffset,
+			   format, textureFormat, image->internalFormat, state->packAlignment, 1);
 }
 
