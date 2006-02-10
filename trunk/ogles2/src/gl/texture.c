@@ -1171,7 +1171,7 @@ GL_API void GL_APIENTRY glGetTexParameteriv (GLenum target, GLenum pname, GLint 
 				return;
 			}
 
-			*params = texture->base.wrapT;
+			*params = texture->base.wrapR;
 			break;
 
 		default:
@@ -1311,7 +1311,7 @@ GL_API void GL_APIENTRY glTexParameteri (GLenum target, GLenum pname, GLint para
 				case GL_REPEAT:
 				case GL_CLAMP_TO_EDGE:
 				case GL_MIRRORED_REPEAT:
-					texture->base.wrapT = param;
+					texture->base.wrapR = param;
 					break;
 
 				default:

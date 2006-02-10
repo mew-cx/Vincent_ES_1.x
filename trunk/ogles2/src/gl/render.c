@@ -83,15 +83,6 @@ GL_API void GL_APIENTRY glDrawArrays (GLenum mode, GLint first, GLsizei count) {
 		return;
 	}
 
-	/*
-	if (!m_VertexArrayEnabled ||
-		(m_MatrixPaletteEnabled && (!m_MatrixIndexArrayEnabled || !m_WeightArrayEnabled))) {
-		GlesRecordError(GL_INVALID_OPERATION);
-		return;
-	}
-
-	*/
-
 	GlesPrepareRendering(state);
 
 	switch (mode) {
@@ -143,31 +134,21 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 		return;
 	}
 
-	/*
-	if (!m_VertexArrayEnabled ||
-		(m_MatrixPaletteEnabled && (!m_MatrixIndexArrayEnabled || !m_WeightArrayEnabled))) {
-		GlesRecordError(GL_INVALID_OPERATION);
-		return;
-	}
-
-	if (m_CurrentElementArrayBuffer) {
-		U8 * bufferBase =
-			static_cast<U8 *>(m_Buffers.GetObject(m_CurrentElementArrayBuffer)->GetData());
+	if (state->elementIndexArray.boundBuffer) {
+		const GLubyte * bufferBase = state->buffers[state->elementIndexArray.boundBuffer].data;
 
 		if (!bufferBase) {
-			GlesRecordError(GL_INVALID_OPERATION);
+			GlesRecordError(state, GL_INVALID_OPERATION);
 			return;
 		}
 
-		size_t offset = static_cast<const U8 *>(indices) - static_cast<const U8 *>(0);
-		indices = bufferBase + offset;
+		indices = bufferBase + (GLsizeiptr) indices;
 	}
 
 	if (!indices) {
 		return;
 	}
 
-	*/
 	GlesPrepareRendering(state);
 
 	switch (mode) {

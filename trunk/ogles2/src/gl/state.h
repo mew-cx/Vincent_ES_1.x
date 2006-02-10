@@ -62,47 +62,69 @@
 ** Geometry Types
 ** --------------------------------------------------------------------------
 */
-typedef struct Vec2f {
-	GLfloat			x;
-	GLfloat			y;
+
+typedef union Vec2f {
+	struct {
+		GLfloat		x;
+		GLfloat		y;
+	};
+	GLfloat			v[2];
 } Vec2f;
 
-typedef struct Vec2i {
-	GLint			x;
-	GLint			y;
+typedef union Vec2i {
+	struct {
+		GLint		x;
+		GLint		y;
+	};
+	GLint			v[2];
 } Vec2i;
 
-typedef struct Vec3f {
-	GLfloat			x;
-	GLfloat			y;
-	GLfloat			z;
+typedef union Vec3f {
+	struct {
+		GLfloat		x;
+		GLfloat		y;
+		GLfloat		z;
+	};
+	GLfloat			v[3];
 } Vec3f;
 
-typedef struct Vec3i {
-	GLint			x;
-	GLint			y;
-	GLint			z;
+typedef union Vec3i {
+	struct {
+		GLint		x;
+		GLint		y;
+		GLint		z;
+	};
+	GLint			v[3];
 } Vec3i;
 
-typedef struct Vec4f {
-	GLfloat			x;
-	GLfloat			y;
-	GLfloat			z;
-	GLfloat			w;
+typedef union Vec4f {
+	struct {
+		GLfloat		x;
+		GLfloat		y;
+		GLfloat		z;
+		GLfloat		w;
+	};
+	GLfloat			v[4];
 } Vec4f;
 
-typedef struct Vec4i {
-	GLint			x;
-	GLint			y;
-	GLint			z;
-	GLint			w;
+typedef union Vec4i {
+	struct {
+		GLint		x;
+		GLint		y;
+		GLint		z;
+		GLint		w;
+	};
+	GLint			v[4];
 } Vec4i;
 
-typedef struct Color {
-	GLclampf		red;				/* red component 0 .. 1				*/
-	GLclampf		green;				/* green component 0 .. 1			*/
-	GLclampf		blue;				/* blue component 0 .. 1			*/
-	GLclampf		alpha;				/* alpha component 0 .. 1			*/
+typedef union Color {
+	struct {
+		GLclampf	red;				/* red component 0 .. 1				*/
+		GLclampf	green;				/* green component 0 .. 1			*/
+		GLclampf	blue;				/* blue component 0 .. 1			*/
+		GLclampf	alpha;				/* alpha component 0 .. 1			*/
+	};
+	GLfloat			rgba[4];
 } Color;
 
 typedef struct ColorMask {
@@ -164,7 +186,11 @@ typedef struct RasterVertex {
 ** --------------------------------------------------------------------------
 */
 
+typedef void (*FetchFunc)(const void * arrayBase, GLsizei elements, Vec4f * result);
+
 typedef struct Array {
+	const void *	effectivePtr;		/* pointer to array data at eval.	*/
+	FetchFunc		fetchFunc;			/* fetch function					*/
 	const void *	ptr;				/* pointer to array data			*/
 	GLuint			boundBuffer;		/* index of bound buffer object		*/
 	GLint			size;				/* number of array elements			*/
@@ -369,9 +395,10 @@ typedef struct State {
 
 	/* array state */
 	Array			vertexAttribArray[GLES_MAX_VERTEX_ATTRIBS];
+	Array			elementIndexArray;
 
 	/* attribute state */
-	Vec4f			vertexAttrib[GLES_MAX_VERTEX_ATTRIBS * GLES_VERTEX_ATTRIB_COMPONENTS];
+	Vec4f			vertexAttrib[GLES_MAX_VERTEX_ATTRIBS];
 	Vec4f			uniform[GLES_MAX_VERTEX_UNIFORM_COMPONENTS];
 
 	/* buffer state */
