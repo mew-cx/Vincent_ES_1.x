@@ -262,6 +262,19 @@ GL_API void GL_APIENTRY glVertexAttribPointer (GLuint index, GLint size, GLenum 
 		return;
 	}
 
+	if (stride == 0) {
+		switch (type) {
+		case GL_BYTE:			stride = size * sizeof(GLbyte);		break;
+		case GL_UNSIGNED_BYTE:	stride = size * sizeof(GLubyte);	break;
+		case GL_SHORT:			stride = size * sizeof(GLshort);	break;
+		case GL_UNSIGNED_SHORT:	stride = size * sizeof(GLushort);	break;
+		case GL_INT:			stride = size * sizeof(GLint);		break;
+		case GL_UNSIGNED_INT:	stride = size * sizeof(GLuint);		break;
+		case GL_FLOAT:			stride = size * sizeof(GLfloat);	break;
+		case GL_FIXED:			stride = size * sizeof(GLfixed);	break;
+		}
+	}
+
 	state->vertexAttribArray[index].size		= size;
 	state->vertexAttribArray[index].type		= type;
 	state->vertexAttribArray[index].normalized	= normalized != GL_FALSE;

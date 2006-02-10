@@ -94,6 +94,8 @@ void GlesInitState(State * state) {
 		state->vertexAttrib[index].w = 1.0f;
 	}
 
+	GlesInitArray(&state->elementIndexArray);
+
 	/* buffer state */
 
 	for (index = 0; index < GLES_MAX_BUFFERS; ++index) {

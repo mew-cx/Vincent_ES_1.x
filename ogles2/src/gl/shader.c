@@ -58,9 +58,6 @@ void InitShader(Shader * shader, GLenum shaderType) {
 ** Public API entry points
 ** --------------------------------------------------------------------------
 */
-GL_API void GL_APIENTRY glCompileShader (GLuint shader) {
-	State * state = GLES_GET_STATE();
-}
 
 GL_API GLuint GL_APIENTRY glCreateShader (GLenum type) {
 
@@ -83,6 +80,25 @@ GL_API GLuint GL_APIENTRY glCreateShader (GLenum type) {
 	}
 }
 
+GL_API GLboolean GL_APIENTRY glIsShader (GLuint shader) {
+
+	State * state = GLES_GET_STATE();
+	return GlesIsBoundObject(state->shaderFreeListHead, state->shaderFreeList, GLES_MAX_SHADERS, shader);
+}
+
+GL_API void GL_APIENTRY glDeleteShader (GLuint shader) {
+	State * state = GLES_GET_STATE();
+}
+
+/* OES_shader_source */
+GL_API void GL_APIENTRY glCompileShader (GLuint shader) {
+	State * state = GLES_GET_STATE();
+}
+
+GL_API void GL_APIENTRY glGetShaderiv (GLuint shader, GLenum pname, GLint *params) {
+	State * state = GLES_GET_STATE();
+}
+
 GL_API void GL_APIENTRY glGetShaderInfoLog (GLuint shader, GLsizei bufsize, GLsizei *length, char *infolog) {
 	State * state = GLES_GET_STATE();
 }
@@ -91,43 +107,20 @@ GL_API void GL_APIENTRY glGetShaderSource (GLuint shader, GLsizei bufsize, GLsiz
 	State * state = GLES_GET_STATE();
 }
 
-GL_API void GL_APIENTRY glGetShaderiv (GLuint shader, GLenum pname, GLint *params) {
+GL_API void GL_APIENTRY glReleaseShaderCompilerOES(void) {
 	State * state = GLES_GET_STATE();
 }
 
-GL_API void GL_APIENTRY glGetShaderPrecisionFormatf(GLenum shadertype, GLenum precisiontype, GLfloat * range, GLfloat * precision) {
+GL_API void GL_APIENTRY glShaderSource(GLuint shader, GLsizei count, const char **string, const GLint *length) {
 	State * state = GLES_GET_STATE();
 }
 
-GL_API void GL_APIENTRY glGetShaderPrecisionFormati(GLenum shadertype, GLenum precisiontype, GLint * range, GLint * precision) {
+/* OES_shader_binary */
+GL_API void GL_APIENTRY glShaderBinaryOES(GLint n, GLuint *shaders, GLenum binaryformat, const void *binary, GLint length) {
 	State * state = GLES_GET_STATE();
 }
 
-GL_API GLboolean GL_APIENTRY glIsShader (GLuint shader) {
-
-	State * state = GLES_GET_STATE();
-	return GlesIsBoundObject(state->shaderFreeListHead, state->shaderFreeList, GLES_MAX_SHADERS, shader);
-}
-
-GL_API GLboolean GL_APIENTRY glIsShaderCompilerAvailable (void) {
-	State * state = GLES_GET_STATE();
-	return GL_FALSE;
-}
-
-GL_API GLboolean GL_APIENTRY glIsShaderPrecisionFormatSupported (GLenum shadertype, GLenum precisiontype) {
-	State * state = GLES_GET_STATE();
-	return GL_FALSE;
-}
-
-GL_API void GL_APIENTRY glReleaseShaderCompiler (void) {
+/* OES_shader_source + OES_shader_binary */
+GL_API void GL_APIENTRY glGetShaderPrecisionFormatOES(GLenum shadertype, GLenum precisiontype, GLint *range, GLint *precision) {
 	State * state = GLES_GET_STATE();
 }
-
-GL_API void GL_APIENTRY glShaderSource (GLuint shader, GLsizei count, const char* *string, const GLint *length) {
-	State * state = GLES_GET_STATE();
-}
-
-GL_API void GL_APIENTRY glShaderBinary (GLuint shader, const void * data, GLint length) {
-	State * state = GLES_GET_STATE();
-}
-
