@@ -43,7 +43,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="glslang;glslang\MachineIndependent;glslang\OSDependent\Windows;OGLCompilersDLL"
-				PreprocessorDefinitions="_DEBUG,WIN32,_CONSOLE,_USRDLL,TEST_EXPORTS,GENERIC_COMPILER"
+				PreprocessorDefinitions="_DEBUG,WIN32,_CONSOLE,_USRDLL,TEST_EXPORTS,GENERIC_COMPILER,_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
