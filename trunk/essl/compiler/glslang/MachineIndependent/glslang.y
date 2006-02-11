@@ -260,8 +260,10 @@ Jutta Degener, 1995
 variable_identifier 
     : IDENTIFIER {
         // The symbol table search was done in the lexical phase
-        const TSymbol* symbol = $1.symbol;
-        const TVariable* variable;
+//        const TSymbol* symbol = $1.symbol; // Changed for ESSL support
+        TSymbol* symbol = $1.symbol;
+//        const TVariable* variable;
+        TVariable* variable;			// Changed for ESSL support
         if (symbol == 0) {
             parseContext.error($1.line, "undeclared identifier", $1.string->c_str(), "");
             parseContext.recover();
@@ -275,8 +277,14 @@ variable_identifier
                 parseContext.error($1.line, "variable expected", $1.string->c_str(), "");
                 parseContext.recover();
             }
-            variable = static_cast<const TVariable*>(symbol);
+//            variable = static_cast<const TVariable*>(symbol);			// Changed for ESSL support
+            variable = static_cast<TVariable*>(symbol);
         }
+
+		// Increase the number of uses on this variable (Added for ESSL support)
+		variable->incNofUses();
+
+		//printf("Variable encountered: %s\n",$1.string->c_str());		
 
         // don't delete $1.string, it's used by error recovery, and the pool
         // pop will reclaim the memory
@@ -285,10 +293,12 @@ variable_identifier
             constUnion* constArray = variable->getConstPointer();
             TType t(variable->getType());
             $$ = parseContext.intermediate.addConstantUnion(constArray, t, $1.line);        
-        } else
+        } else {
             $$ = parseContext.intermediate.addSymbol(variable->getUniqueId(), 
                                                      variable->getName(), 
                                                      variable->getType(), $1.line);
+			((TIntermSymbol*)$$)->setCurrentUsageCount(variable->getNofUses());		// Added for ESSL support
+		}
     }
     ;
 

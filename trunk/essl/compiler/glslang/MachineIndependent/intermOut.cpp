@@ -144,9 +144,10 @@ void OutputSymbol(TIntermSymbol* node, TIntermTraverser* it)
     OutputTreeText(oit->infoSink, node, oit->depth);
 	TQualifier precision = node->getPrecision();
     char buf[100];
-    sprintf(buf, "'%s' (%s)\n",
+	sprintf(buf, "'%s' (%s) [Use #%d]\n",
            node->getSymbol().c_str(),
-           node->getCompleteString().c_str()
+           node->getCompleteString().c_str(),
+		   node->getCurrentUsageCount()
 		   );
 
     oit->infoSink.debug << buf;

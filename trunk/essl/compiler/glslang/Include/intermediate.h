@@ -393,13 +393,16 @@ public:
 	// per process globalpoolallocator, then it causes increased memory usage per compile
 	// it is essential to use "symbol = sym" to assign to symbol
     TIntermSymbol(int i, const TString& sym, const TType& t) :
-        TIntermTyped(t), id(i)  { symbol = sym;}
+        TIntermTyped(t), id(i), currentUsageCount(0)  { symbol = sym;}
     virtual int getId() const { return id; }
     virtual const TString& getSymbol() const { return symbol;  }
     virtual void traverse(TIntermTraverser*);
     virtual TIntermSymbol* getAsSymbolNode() { return this; }
+	void setCurrentUsageCount(int nofUses) { currentUsageCount = nofUses; }
+	int  getCurrentUsageCount() { return currentUsageCount; }
 protected:
     int id;
+	int currentUsageCount;		// Added for ESSL support (tells how many times the variable has been used at this point)
     TString symbol;
 };
 

@@ -138,7 +138,7 @@ protected:
 //
 class TVariable : public TSymbol {
 public:
-    TVariable(const TString *name, const TType& t, bool uT = false ) : TSymbol(name), type(t), userType(uT), unionArray(0), arrayInformationType(0) { }
+    TVariable(const TString *name, const TType& t, bool uT = false ) : TSymbol(name), type(t), userType(uT), unionArray(0), arrayInformationType(0), nofUses(0) { }
     virtual ~TVariable() { }
     virtual bool isVariable() const { return true; }    
     TType& getType() { return type; }    
@@ -166,9 +166,14 @@ public:
     }
 	TVariable(const TVariable&, TStructureMap& remapper); // copy constructor
 	virtual TVariable* clone(TStructureMap& remapper);
-      
+
+	void incNofUses() { nofUses++; }
+	void decNofUses() { nofUses--; }
+	int getNofUses() { return nofUses; }
+
 protected:
-    TType type;
+	int nofUses;
+	TType type;
     bool userType;
     // we are assuming that Pool Allocator will free the memory allocated to unionArray
     // when this object is destroyed

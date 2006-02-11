@@ -224,6 +224,8 @@ TVariable::TVariable(const TVariable& copyOf, TStructureMap& remapper) : TSymbol
 	assert(copyOf.arrayInformationType == 0);
 	arrayInformationType = 0;
 
+	nofUses = copyOf.nofUses;				 // Added for ESSL support
+
 	if (copyOf.unionArray) {
 		assert(!copyOf.type.getStruct());
 		assert(copyOf.type.getObjectSize() == 1);

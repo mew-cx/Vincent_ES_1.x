@@ -1061,7 +1061,7 @@ bool TParseContext::invariantDeclarationErrorCheck(int line, TString& identifier
 
 	// Test not performed, but specified by ESSL spec:
 	//
-	// Is the variable allerady used when invariant declaration appears ?
+	// Is the variable allready used when invariant declaration appears ?
 	//
 
 	// At global scope?
@@ -1096,6 +1096,12 @@ bool TParseContext::invariantDeclarationErrorCheck(int line, TString& identifier
 		error(line, "Only output variables may be declared invariant", identifier.c_str(), "");
 		return true;
 	}
+
+	if (variable->getNofUses()>0) {
+		error(line, "Cannot declare used variables as invariant", identifier.c_str(), "");
+		return true;	
+	}
+
 
 	// No errors: Make the variable invariant
 	variable->getType().makeInvariant();
@@ -1162,6 +1168,11 @@ bool TParseContext::executeInitializer(TSourceLoc line, TString& identifier, TPu
             // pop will take care of the memory
         }
     }
+
+	// Initialization of variables count as usages (Added for ESSL support)
+	variable->incNofUses();
+
+
 
     //
     // identifier must be of type constant, a global, or a temporary
