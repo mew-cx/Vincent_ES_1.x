@@ -970,7 +970,6 @@ void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable)
     // the built-in header files.
     //
 switch(language) {
-	TVariable* temp;
     case EShLangFragment: {
             symbolTable.insert(*new TVariable(NewPoolTString("gl_FrontFacing"), TType(EbtBool,  EvqFace,  EvqNoPrecSpecified, 1 )));
             symbolTable.insert(*new TVariable(NewPoolTString("gl_FragCoord"),   TType(EbtFloat, EvqFragCoord, EvqMediump,   4)));

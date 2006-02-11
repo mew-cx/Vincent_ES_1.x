@@ -95,7 +95,7 @@ TIntermSymbol* TIntermediate::addSymbol(int id, const TString& name, const TType
 {
     TIntermSymbol* node = new TIntermSymbol(id, name, type);
     node->setLine(line);
-
+	
     return node;
 }
 

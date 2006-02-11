@@ -430,9 +430,11 @@ int PaIdentOrType(TString& id, TParseContext& parseContextLocal, TSymbol*& symbo
     symbol = parseContextLocal.symbolTable.find(id);
     if (parseContextLocal.lexAfterType == false && symbol && symbol->isVariable()) {
         TVariable* variable = static_cast<TVariable*>(symbol);
-	    printf("  is Variable \n");
+
+//	    printf("  is Variable \n");
+
         if (variable->isUserType()) {
-		    printf("    is Usertype\n",id.c_str());
+//		    printf("    is Usertype\n",id.c_str());
 				
             parseContextLocal.lexAfterType = true;
             return TYPE_NAME;
