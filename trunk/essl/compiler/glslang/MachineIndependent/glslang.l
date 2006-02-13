@@ -96,6 +96,8 @@ O           [0-7]
 #include "ParseHelper.h"
 #include "glslang_tab.h"
 
+// #define PRAGMA_TABLE
+
 /* windows only pragma */
 #ifdef _MSC_VER
 #pragma warning(disable : 4102)
@@ -581,6 +583,13 @@ void HandlePragma(const char **tokens, int numTokens)
             CPPShInfoLogMsg("\")\" expected to end 'debug' pragma");
             return;
         }
+	// Added for ESSL support '#pragma STDGL invariant(all)'
+	} else if (numTokens==5 && !strcmp(tokens[0], "STDGL") && !strcmp(tokens[1],"invariant") ){
+		if (!strcmp(tokens[2],"(") && !strcmp(tokens[4],")") && !strcmp(tokens[3],"all")) {
+            ((TParseContext *)cpp->pC)->contextPragma.invariantAll = true;				
+		} else {
+            CPPShInfoLogMsg("invariant pragma syntax is incorrect");			
+		}
     } else {
 
 #ifdef PRAGMA_TABLE

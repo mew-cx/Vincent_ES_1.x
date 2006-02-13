@@ -88,9 +88,10 @@ typedef enum {
 } TBehavior;
 
 struct TPragma {
-	TPragma(bool o, bool d) : optimize(o), debug(d) { }
+	TPragma(bool o, bool d) : optimize(o), debug(d), invariantAll(false) { }
 	bool optimize;
 	bool debug;
+	bool invariantAll;
 	TPragmaTable pragmaTable;
 };
 

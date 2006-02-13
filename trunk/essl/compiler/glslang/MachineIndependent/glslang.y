@@ -284,6 +284,16 @@ variable_identifier
 		// Increase the number of uses on this variable (Added for ESSL support)
 		variable->incNofUses();
 
+
+		// Added for ESSL support (invariant all)
+		if (parseContext.contextPragma.invariantAll ){
+			if (!parseContext.outputVariableErrorCheck($1.line,variable->getType())) 		
+			{						
+				variable->getType().makeInvariant();
+			}
+		}
+
+
 		//printf("Variable encountered: %s\n",$1.string->c_str());		
 
         // don't delete $1.string, it's used by error recovery, and the pool
@@ -298,6 +308,7 @@ variable_identifier
                                                      variable->getName(), 
                                                      variable->getType(), $1.line);
 			((TIntermSymbol*)$$)->setCurrentUsageCount(variable->getNofUses());		// Added for ESSL support
+
 		}
     }
     ;
