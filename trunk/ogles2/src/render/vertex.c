@@ -309,9 +309,6 @@ void GlesViewportTransform(State * state, RasterVertex * raster, const Vertex * 
 	// keep this value around for perspective-correct texturing
 	invW = (w != 0.0f) ? 1.0f / w : 0.0f;
 
-	// Scale 1/Z by 2^10 to avoid rounding problems during prespective correct
-	// interpolation
-	// See book by LaMothe for more detailed discussion on this
 	raster->screen.w = invW;
 
 	raster->screen.x = invW * x * state->viewportScale.x + state->viewportOrigin.x;
