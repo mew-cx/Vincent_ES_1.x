@@ -207,7 +207,7 @@ typedef struct Array {
 */
 
 typedef struct Buffer {
-	const void *	data;				/* buffer data pointer				*/
+	void *			data;				/* buffer data pointer				*/
 	GLsizeiptr		size;				/* size of buffer content			*/
 	GLenum			bufferType;			/* type of buffer					*/
 	GLenum			usage;				/* buffer usage mode				*/
@@ -572,6 +572,8 @@ void GlesInitArray(Array * array);
 void GlesInitBuffer(Buffer * buffer);
 void GlesInitProgram(Program * program);
 void GlesInitShader(Shader * shader, GLenum shaderType);
+
+void GlesDeleteBuffer(Buffer * buffer);
 
 void GlesGenObjects(State * state, GLuint freeListHead, GLuint * freeList, GLuint maxElements, GLsizei n, GLuint *objs);
 GLuint GlesBindObject(GLuint freeListHead, GLuint * freeList, GLuint maxElements);
