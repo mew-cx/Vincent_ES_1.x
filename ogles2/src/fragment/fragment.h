@@ -58,5 +58,9 @@ Fragment;
 void GenFragment(FragmentProcessor * fragProc, Fragment * fragment);
 #endif
 
+/*
+** Post-fragment program fragment processing
+*/
+void GlesProcessFragment(State * state, Vec2i coords, GLuint depth, Colorub color, GLfloat coverage, GLboolean backFace);
 
 #endif /* ndef GLES_FRAGMENT_FRAGMENT_H */

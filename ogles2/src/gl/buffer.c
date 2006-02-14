@@ -140,7 +140,7 @@ GL_API void GL_APIENTRY glBufferData (GLenum target, GLsizeiptr size, const void
 	}
 
 	if (buffer->data) {
-		GlesDeleteBuffer(buffer);
+		GlesDeallocateBuffer(buffer);
 	}
 
 	buffer->data = GlesMalloc(size);

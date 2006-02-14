@@ -214,15 +214,15 @@ GL_API void GL_APIENTRY glStencilFuncSeparate (GLenum face, GLenum func, GLint r
 		GlesValidateEnum(state, func, StencilFuncValues, GLES_ELEMENTSOF(StencilFuncValues))) {
 
 		if (face == GL_FRONT || face == GL_FRONT_AND_BACK) {
-			state->stencilFrontFunc = func;
-			state->stencilFrontRef  = ref;
-			state->stencilFrontMask = mask;
+			state->stencilFront.func = func;
+			state->stencilFront.ref  = ref;
+			state->stencilFront.mask = mask;
 		}
 
 		if (face == GL_BACK || face == GL_FRONT_AND_BACK) {
-			state->stencilBackFunc = func;
-			state->stencilBackRef  = ref;
-			state->stencilBackMask = mask;
+			state->stencilBack.func = func;
+			state->stencilBack.ref  = ref;
+			state->stencilBack.mask = mask;
 		}
 	}
 }
@@ -245,15 +245,15 @@ GL_API void GL_APIENTRY glStencilOpSeparate (GLenum face, GLenum fail, GLenum zf
 		GlesValidateEnum(state, zpass, StencilOpValues, GLES_ELEMENTSOF(StencilOpValues))) {
 
 		if (face == GL_FRONT || face == GL_FRONT_AND_BACK) {
-			state->stencilFrontFail = fail;
-			state->stencilFrontZfail = zfail;
-			state->stencilFrontZpass = zpass;
+			state->stencilFront.fail = fail;
+			state->stencilFront.zfail = zfail;
+			state->stencilFront.zpass = zpass;
 		}
 
 		if (face == GL_BACK || face == GL_FRONT_AND_BACK) {
-			state->stencilBackFail = fail;
-			state->stencilBackZfail = zfail;
-			state->stencilBackZpass = zpass;
+			state->stencilBack.fail = fail;
+			state->stencilBack.zfail = zfail;
+			state->stencilBack.zpass = zpass;
 		}
 	}
 }

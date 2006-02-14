@@ -191,18 +191,18 @@ void GlesInitState(State * state) {
 	state->scissorRect.height		= GLES_MAX_VIEWPORT_HEIGHT;
 
 	state->stencilTestEnabled		= GL_FALSE;
-	state->stencilFrontFunc			= GL_ALWAYS;
-	state->stencilFrontRef			= 0;
-	state->stencilFrontMask			= (1 << GLES_MAX_STENCIL_BITS) - 1;
-	state->stencilBackFunc			= GL_ALWAYS;
-	state->stencilBackRef			= 0;
-	state->stencilBackMask			= (1 << GLES_MAX_STENCIL_BITS) - 1;
-	state->stencilFrontFail			= GL_KEEP;
-	state->stencilFrontZfail		= GL_KEEP;
-	state->stencilFrontZpass		= GL_KEEP;
-	state->stencilBackFail			= GL_KEEP;
-	state->stencilBackZfail			= GL_KEEP;
-	state->stencilBackZpass			= GL_KEEP;
+	state->stencilFront.func			= GL_ALWAYS;
+	state->stencilFront.ref			= 0;
+	state->stencilFront.mask			= (1 << GLES_MAX_STENCIL_BITS) - 1;
+	state->stencilBack.func			= GL_ALWAYS;
+	state->stencilBack.ref			= 0;
+	state->stencilBack.mask			= (1 << GLES_MAX_STENCIL_BITS) - 1;
+	state->stencilFront.fail			= GL_KEEP;
+	state->stencilFront.zfail		= GL_KEEP;
+	state->stencilFront.zpass		= GL_KEEP;
+	state->stencilBack.fail			= GL_KEEP;
+	state->stencilBack.zfail			= GL_KEEP;
+	state->stencilBack.zpass			= GL_KEEP;
 	state->stencilMask				= (1 << GLES_MAX_STENCIL_BITS) - 1;
 
 	/* multi-sampling */

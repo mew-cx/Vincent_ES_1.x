@@ -124,8 +124,18 @@ typedef union Color {
 		GLclampf	blue;				/* blue component 0 .. 1			*/
 		GLclampf	alpha;				/* alpha component 0 .. 1			*/
 	};
-	GLfloat			rgba[4];
+	GLclampf		rgba[4];
 } Color;
+
+typedef union Colorub {
+	struct {
+		GLubyte		red;				/* red component 0 .. 1				*/
+		GLubyte		green;				/* green component 0 .. 1			*/
+		GLubyte		blue;				/* blue component 0 .. 1			*/
+		GLubyte		alpha;				/* alpha component 0 .. 1			*/
+	};
+	GLubyte			rgba[4];
+} Colorub;
 
 typedef struct ColorMask {
 	GLboolean		red;				/* red component					*/
@@ -286,6 +296,15 @@ typedef struct FrameBuffer {
 	Image2D		colorBuffer;			/* color buffer piece = 2d image	*/
 	GLuint *	stencilDepthBuffer;		/* stencil & depth buffer			*/
 } FrameBuffer;
+
+typedef struct StencilParams {
+	GLenum			func;				/* stencil function front face	*/
+	GLint			ref;				/* stencil ref. front face		*/
+	GLuint			mask;				/* stencil mask front face		*/
+	GLenum			fail;				/* stencil op. fail front		*/
+	GLenum			zfail;				/* stencil op. zfail front		*/
+	GLenum			zpass;				/* stencil op. zpass front		*/
+} StencilParams;
 
 /*
 ** --------------------------------------------------------------------------
@@ -471,19 +490,9 @@ typedef struct State {
 	Rect			scissorRect;			/* scissor rectangle			*/
 
 	GLboolean		stencilTestEnabled;		/* is the stencil test enabled	*/
-	GLenum			stencilFrontFunc;		/* stencil function front face	*/
-	GLint			stencilFrontRef;		/* stencil ref. front face		*/
-	GLuint			stencilFrontMask;		/* stencil mask front face		*/
-	GLenum			stencilBackFunc;		/* stencil function back face	*/
-	GLint			stencilBackRef;			/* stencil ref. back face		*/
-	GLuint			stencilBackMask;		/* stencil mask back face		*/
-	GLenum			stencilFrontFail;		/* stencil op. fail front		*/
-	GLenum			stencilFrontZfail;		/* stencil op. zfail front		*/
-	GLenum			stencilFrontZpass;		/* stencil op. zpass front		*/
-	GLenum			stencilBackFail;		/* stencil op. fail back		*/
-	GLenum			stencilBackZfail;		/* stencil op. zfail back		*/
-	GLenum			stencilBackZpass;		/* stencil op. zpass back		*/
 	GLuint			stencilMask;			/* stencil write mask			*/
+	StencilParams	stencilFront;			/* front facing parameters		*/
+	StencilParams	stencilBack;			/* back facing parameters		*/
 
 	/* clear values */
 	Color			clearColor;				/* clear color					*/
