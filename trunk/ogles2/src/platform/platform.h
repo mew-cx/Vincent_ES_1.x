@@ -62,6 +62,8 @@
 #define GLES_NIL ((const void *) 4)		/* platform dependent invalid		*/
 										/* pointer != NULL					*/
 
+#define GLES_UBYTE_MAX	255
+
 /*
 ** --------------------------------------------------------------------------
 ** Macros
