@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/libGLESv20d.dll"
+				OutputFile="$(OutDir)\libGLESv20.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/ogles.pdb"
@@ -139,7 +139,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/libGLESv20.dll"
+				OutputFile="$(OutDir)\libGLESv20.dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -362,6 +362,28 @@
 				Name="fragment"
 				>
 				<File
+					RelativePath="..\..\src\fragment\fragfixed.c"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
 					RelativePath="..\..\src\fragment\fragment.h"
 					>
 				</File>
@@ -373,6 +395,14 @@
 			<Filter
 				Name="framebuffer"
 				>
+				<File
+					RelativePath="..\..\src\framebuffer\framebuffer.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\framebuffer\framebuffer.h"
+					>
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
