@@ -837,6 +837,8 @@ bool TIntermUnary::promote(TInfoSink&)
 // Added for ESSL support
 TQualifier getHighestPrecision( TQualifier left, TQualifier right, TInfoSink& infoSink ){
 
+//	return left>right?left:right;
+
 	switch( left ){
 		case EvqHighp:
 			return EvqHighp;
@@ -881,8 +883,13 @@ bool TIntermBinary::promote(TInfoSink& infoSink)
     // operand.  Then only deviations from this need be coded.
     //
 
+	// In addition, the highest precision is chosen. If the types don't match the precision wont count at all.
+
 	// Altered for ESSL support
-	setType(TType(type, EvqTemporary, left->getPrecision(), left->getNominalSize(), left->isMatrix()));
+	setType(TType(	type, EvqTemporary, 
+					getHighestPrecision(left->getPrecision(),right->getPrecision(),infoSink), 
+					left->getNominalSize(), left->isMatrix())
+	);
 
     //
     // Array operations.
@@ -954,7 +961,7 @@ bool TIntermBinary::promote(TInfoSink& infoSink)
         case EOpExclusiveOr:
             if (left->getBasicType() != EbtInt || right->getBasicType() != EbtInt)
                 return false;
-            break;
+			break;
         case EOpModAssign:
         case EOpAndAssign:
         case EOpInclusiveOrAssign:
