@@ -44,6 +44,12 @@
 #include "framebuffer/framebuffer.h"
 
 
+/*
+** -------------------------------------------------------------------------
+** Preferably, the following will be inlined
+** -------------------------------------------------------------------------
+*/
+
 static GLES_INLINE GLubyte clamp(GLushort value) {
 	return (value > GLES_UBYTE_MAX) ? (GLubyte) GLES_UBYTE_MAX : (GLubyte) value;
 }
@@ -55,17 +61,73 @@ static GLES_INLINE GLubyte mul(GLubyte color, GLubyte factor) {
 }
 
 /*
+** -------------------------------------------------------------------------
+** Local functions
+** -------------------------------------------------------------------------
+*/
+
+static GLuint PerformStencilOp(GLenum op, GLuint stencilValue, GLuint ref) {
+	switch (op) {
+		default:
+		case GL_KEEP:
+			break;
+
+		case GL_ZERO:
+			stencilValue = 0;
+			break;
+
+		case GL_REPLACE:
+			stencilValue = ref;
+			break;
+
+		case GL_INCR:
+			if (stencilValue != 0xffffffff) {
+				stencilValue++;
+			}
+
+			break;
+
+		case GL_INCR_WRAP:
+			stencilValue++;
+			break;
+
+		case GL_DECR:
+			if (stencilValue != 0) {
+				stencilValue--;
+			}
+
+			break;
+
+		case GL_DECR_WRAP:
+			stencilValue--;
+			break;
+
+		case GL_INVERT:
+			stencilValue = ~stencilValue;
+			break;
+	}
+
+	return stencilValue;
+}
+
+/*
 ** Post-fragment program fragment processing
 */
 void GlesProcessFragment(State * state, Vec2i coords, GLuint depth, Colorub color, GLfloat coverage, GLboolean backFace) {
-	Colorub dst;
-	GLuint	zBufferValue;
-	GLboolean depthTest;
-	GLint index;
 
-	// fragment level clipping (for now)
+	Colorub		dst;						/* current color of the pixel	*/
+	GLuint		zBufferValue;				/* current depth of the pixel	*/
+	GLboolean	depthTest;					/* depth test result			*/
+	GLint		index;						/* a loop index					*/
+
+	/*
+	** ------------------------------------------------------------------------
+	** Scissor Test
+	** ------------------------------------------------------------------------
+	*/
 	if (state->scissorTestEnabled) {
-		if (coords.x < state->scissorRect.x || coords.x - state->scissorRect.x >= state->scissorRect.width) {
+		if (coords.x < state->scissorRect.x || coords.x - state->scissorRect.x >= state->scissorRect.width ||
+			coords.y < state->scissorRect.y || coords.y - state->scissorRect.y >= state->scissorRect.height) {
 			return;
 		}
 	}
@@ -73,7 +135,9 @@ void GlesProcessFragment(State * state, Vec2i coords, GLuint depth, Colorub colo
 	zBufferValue = GlesFrameFetchDepth(state->writeSurface, coords);
 
 	/*
+	** ------------------------------------------------------------------------
 	** Depth Test
+	** ------------------------------------------------------------------------
 	*/
 
 	switch (state->depthFunc) {
@@ -93,7 +157,9 @@ void GlesProcessFragment(State * state, Vec2i coords, GLuint depth, Colorub colo
 	}
 
 	/*
+	** ------------------------------------------------------------------------
 	** Stencil Test
+	** ------------------------------------------------------------------------
 	*/
 
 	if (state->stencilTestEnabled) {
@@ -117,154 +183,35 @@ void GlesProcessFragment(State * state, Vec2i coords, GLuint depth, Colorub colo
 		}
 
 		if (!stencilTest) {
-
-			switch (stencilParams->fail) {
-				default:
-				case GL_KEEP:
-					break;
-
-				case GL_ZERO:
-					stencilValue = 0;
-					break;
-
-				case GL_REPLACE:
-					stencilValue = stencilParams->ref;
-					break;
-
-				case GL_INCR:
-					if (stencilValue != 0xffffffff) {
-						stencilValue++;
-					}
-
-					break;
-
-				case GL_INCR_WRAP:
-					stencilValue++;
-					break;
-
-				case GL_DECR:
-					if (stencilValue != 0) {
-						stencilValue--;
-					}
-
-					break;
-
-				case GL_DECR_WRAP:
-					stencilValue--;
-					break;
-
-				case GL_INVERT:
-					stencilValue = ~stencilValue;
-					break;
-			}
-
+			PerformStencilOp(stencilParams->fail, stencilValue, stencilParams->ref);
 			GlesFrameWriteStencil(state->writeSurface, coords, stencil & ~state->stencilMask | stencilValue & state->stencilMask);
 			return;
 		}
 
 		if (depthTest) {
-			switch (stencilParams->zpass) {
-				default:
-				case GL_KEEP:
-					break;
-
-				case GL_ZERO:
-					stencilValue = 0;
-					break;
-
-				case GL_REPLACE:
-					stencilValue = stencilParams->ref;
-					break;
-
-				case GL_INCR:
-					if (stencilValue != 0xffffffff) {
-						stencilValue++;
-					}
-
-					break;
-
-				case GL_INCR_WRAP:
-					stencilValue++;
-					break;
-
-				case GL_DECR:
-					if (stencilValue != 0) {
-						stencilValue--;
-					}
-
-					break;
-
-				case GL_DECR_WRAP:
-					stencilValue--;
-					break;
-
-				case GL_INVERT:
-					stencilValue = ~stencilValue;
-					break;
-			}
-
+			PerformStencilOp(stencilParams->zpass, stencilValue, stencilParams->ref);
 			GlesFrameWriteStencil(state->writeSurface, coords, stencil & ~state->stencilMask | stencilValue & state->stencilMask);
 		} else {
-			switch (stencilParams->zfail) {
-				default:
-				case GL_KEEP:
-					break;
-
-				case GL_ZERO:
-					stencilValue = 0;
-					break;
-
-				case GL_REPLACE:
-					stencilValue = stencilParams->ref;
-					break;
-
-				case GL_INCR:
-					if (stencilValue != 0xffffffff) {
-						stencilValue++;
-					}
-
-					break;
-
-				case GL_INCR_WRAP:
-					stencilValue++;
-					break;
-
-				case GL_DECR:
-					if (stencilValue != 0) {
-						stencilValue--;
-					}
-
-					break;
-
-				case GL_DECR_WRAP:
-					stencilValue--;
-					break;
-
-				case GL_INVERT:
-					stencilValue = ~stencilValue;
-					break;
-			}
-
+			PerformStencilOp(stencilParams->zfail, stencilValue, stencilParams->ref);
 			GlesFrameWriteStencil(state->writeSurface, coords, stencil & ~state->stencilMask | stencilValue & state->stencilMask);
 		}
 	}
 
 	if (state->stencilTestEnabled && !depthTest && state->depthTestEnabled) {
-		// otherwise we returned at the top
 		return;
 	}
 
-	dst = GlesFrameFetchColor(state->writeSurface, coords);
-
 	/*
+	** ------------------------------------------------------------------------
 	** Blending
+	** ------------------------------------------------------------------------
 	*/
+
+	dst = GlesFrameFetchColor(state->writeSurface, coords);
 
 	if (state->blendEnabled) {
 
 		Colorub srcCoeff, dstCoeff;
-
-		// need to split RGB and Alpha cases
 
 		switch (state->blendFuncSrcRGB) {
 			default:
@@ -316,7 +263,7 @@ void GlesProcessFragment(State * state, Vec2i coords, GLuint depth, Colorub colo
 		switch (state->blendFuncSrcAlpha) {
 			default:
 			case GL_ZERO:
-				srcCoeff.alpha = 0;;
+				srcCoeff.alpha = 0;
 				break;
 
 			case GL_SRC_ALPHA_SATURATE:
@@ -430,13 +377,14 @@ void GlesProcessFragment(State * state, Vec2i coords, GLuint depth, Colorub colo
 		}
 	}
 
-	// have offset, depth, color
+	/*
+	** ------------------------------------------------------------------------
+	** Masking and write to framebuffer
+	** ------------------------------------------------------------------------
+	*/
 
-	// Masking and write to framebuffer
 	if (state->depthMask) {
-		/* TO DO:
-		rasterInfo->DepthBuffer[offset] = depth;
-		*/
+		GlesFrameWriteDepth(state->writeSurface, coords, depth);
 	}
 
 	if (!state->colorMask.red) {
