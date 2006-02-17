@@ -1097,6 +1097,7 @@ bool TParseContext::invariantDeclarationErrorCheck(int line, TString& identifier
 		return true;
 	}
 
+	// Has the variable been used allready?
 	if (variable->getNofUses()>0) {
 		error(line, "Cannot declare used variables as invariant", identifier.c_str(), "");
 		return true;	
