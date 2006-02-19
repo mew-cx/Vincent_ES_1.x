@@ -4,6 +4,32 @@ Release Notes
 This document collects changes on a release to release base. For open known issues, please refer to
 the bug database on SourceForge. 
 
+Version 1.1.0
+-------------
+
+This version includes all the changes necessary for the submission of Vincent to the
+OpenGL ES conformance procedure. Here are the details for the submitted configuration:
+
+Vincent OpenGL ES 1.1 Common Lite
+---------------------------------
+
+CPUs:		ARMv4
+
+OS:		Windows Mobile 2003
+
+API pipeline:	GL_VENDOR       "Hans-Martin Will"
+		GL_RENDERER	"Software"
+		GL_VERSION	"OpenGL ES-CL 1.1 Software JIT"
+			
+Display configuration:  48 x 48, 16bpp
+
+As a note, even though Vincent implements the API defined by the common profile, it
+is not implemented using floating point arithmetic, but rather converts floats to
+fixed values through a compatibility layer. In external executions, the library
+still passes all but one test for the common profile: The test that verifies 
+retrieval of state variables. This test fails due to loss of precision due to internal storage
+of certain parameters as fixed vs. floating point values.
+
 
 Version 0.99
 ------------
