@@ -49,7 +49,7 @@ namespace EGL {
 	class CodeGenerator;
 
 	class OGLES_API FunctionCache {
-		friend CodeGenerator;
+		friend class CodeGenerator;
 
 	public:
 		enum FunctionType {
@@ -84,3 +84,4 @@ namespace EGL {
 
 
 #endif //ndef EGL_FUNCTION_CACHE_H
+

@@ -49,7 +49,7 @@ namespace EGL {
 
 	class Config {
 
-		friend Context;
+		friend class Context;
 
 	public:
 		Config(
@@ -125,3 +125,4 @@ namespace EGL {
 }
 
 #endif // ndef EGL_CONFIG_H
+
