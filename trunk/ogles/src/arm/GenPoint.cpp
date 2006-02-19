@@ -179,7 +179,7 @@ void CodeGenerator :: GenerateRasterPoint() {
 
 	cg_block_ref_t * blockEndProc = cg_block_ref_create(procedure);
 
-	if (!m_State->m_Point.SpriteEnabled && !m_State->m_Point.CoordReplaceEnabled) {
+	if (!m_State->m_Point.SpriteEnabled) {
 		//	EGL_Fixed tu = point.m_TextureCoords.tu;
 		//	EGL_Fixed tv = point.m_TextureCoords.tv;
 
@@ -251,7 +251,8 @@ void CodeGenerator :: GenerateRasterPoint() {
 		OR			(regDelta, regDelta0, regDelta0);
 
 		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			if (m_State->m_Texture[unit].MipmapFilterMode != RasterizerState::FilterModeNone) {
+			if (m_State->m_Texture[unit].CoordReplaceEnabled &&
+				m_State->m_Texture[unit].MipmapFilterMode != RasterizerState::FilterModeNone) {
 
 				if (m_State->m_Texture[unit].MipmapFilterMode == RasterizerState::FilterModeNearest ||
 					/* remove this */ m_State->m_Texture[unit].MipmapFilterMode == RasterizerState::FilterModeLinear) {
@@ -345,8 +346,13 @@ void CodeGenerator :: GenerateRasterPoint() {
 		info.regX =	regXLoopEnter;
 
 		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			info.regU[unit] =	regULoopEnter;
-			info.regV[unit] = regVLoopEnter;
+			if (m_State->m_Texture[unit].CoordReplaceEnabled) {
+				info.regU[unit] = regULoopEnter;
+				info.regV[unit] = regVLoopEnter;
+			} else {
+				info.regU[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TU + unit * sizeof(TexCoord));
+				info.regV[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TV + unit * sizeof(TexCoord)); 
+			}
 		}
 
 		//			Fragment(x, y, depth, tu, tv, fogDensity, baseColor);
