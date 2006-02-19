@@ -3,7 +3,7 @@ Microsoft eMbedded Visual Tools Workspace File, Format Version 4.00
 
 ###############################################################################
 
-Project: "OGLES"=".\OGLES.VCP" - Package Owner=<4>
+Project: "OGLES"=.\OGLES.VCP - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -18,7 +18,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "StaticLib"=".\StaticLib.vcp" - Package Owner=<4>
+Project: "StaticLib"=.\StaticLib.vcp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -33,7 +33,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "codegen"=".\codegen.vcp" - Package Owner=<4>
+Project: "codegen"=.\codegen.vcp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -45,7 +45,19 @@ Package=<4>
 
 ###############################################################################
 
-Project: "ug"=".\ug.vcp" - Package Owner=<4>
+Project: "etk"=.\etk.vcp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "ug"=.\ug.vcp - Package Owner=<4>
 
 Package=<5>
 {{{
