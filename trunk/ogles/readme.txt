@@ -10,19 +10,40 @@ Overview
 --------
 
 Vincent develops a compliant implementation of the OpenGL (R) ES 1.1 API specification for 
-Pocket PCs and Smartphones. The current target platforms are Windows Mobile and Symbian devices 
-using TI OMAP, Intel (R) StrongARM and XScale PA2xx processors.
+Pocket PCs and Smartphones. The current target platforms are Windows Mobile,Symbian and Linux 
+devices using TI OMAP, Intel (R) StrongARM and XScale PA2xx processors.
 
 As officially registered adopter of the OpenGL ES API, this project has full access to the
-official OpenGL ES 1.0 conformance test. Starting with build 0.8, Vincent fully passes the 
+official OpenGL ES 1.1 conformance test. Starting with build 0.8, Vincent fully passes the 
 conformance test for the Common Light profile, i.e. the fixed point API defined by the standard.
+
+On January 25, 2006, results of executing the conformance test on the following configuration
+have been submitted to Khronos:
+
+Vincent OpenGL ES 1.1 Common Lite
+---------------------------------
+
+CPUs:		ARMv4
+
+OS:		Windows Mobile 2003
+
+API pipeline:	GL_VENDOR       "Hans-Martin Will"
+		GL_RENDERER	"Software"
+		GL_VERSION	"OpenGL ES-CL 1.1 Software JIT"
+			
+Display configuration:  48 x 48, 16bpp
+
+As a note, even though Vincent implements the API defined by the common profile, it
+is not implemented using floating point arithmetic, but rather converts floats to
+fixed values through a compatibility layer. In external executions, the library
+still passes all but one test for the common profile: The test that verifies 
+retrieval of state variables. This test fails due to loss of precision due to internal storage
+of certain parameters as fixed vs. floating point values.
 
 Further builds of the project will focus on addressing performance issues present in the
 current build, as well as adressing issues as reported by users that are not covered by
 the tests we have run so far.
 
-In addition, we have started to incorporate a large part of the additions that were introduced
-with the OpenGL ES 1.1 API specification.
 
 
 
