@@ -333,124 +333,64 @@ void Context :: RenderLineLoop(GLsizei count, const GLushort * indices) {
 
 namespace {
 
-	inline GLfloat Interpolate(GLfloat x0f, GLfloat x1f, GLfloat coeff) {
-		GLfloat complement = 1.0f - coeff;
-		return x1f * complement + x0f * coeff;
+	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed x1, EGL_Fixed num, EGL_Fixed denom) {
+		return x1 + (EGL_Fixed)((((I64)(x0-x1))*num)/denom);
 	}
 
-	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed x1, GLfloat coeff) {
-		return EGL_FixedFromFloat(Interpolate(EGL_FloatFromFixed(x0), EGL_FloatFromFixed(x1), coeff));
-	}
-
-	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, GLfloat coeff) {
-		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), coeff));
-		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), coeff));
-		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), coeff));
-		result.m_ClipCoords.setW(Interpolate(dst.m_ClipCoords.w(), src.m_ClipCoords.w(), coeff));
-		result.m_Color.r = Interpolate(dst.m_Color.r, src.m_Color.r, coeff);
-		result.m_Color.g = Interpolate(dst.m_Color.g, src.m_Color.g, coeff);
-		result.m_Color.b = Interpolate(dst.m_Color.b, src.m_Color.b, coeff);
-		result.m_Color.a = Interpolate(dst.m_Color.a, src.m_Color.a, coeff);
+	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, EGL_Fixed num, EGL_Fixed denom) {
+		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), num, denom));
+		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), num, denom));
+		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), num, denom));
+		result.m_ClipCoords.setW(Interpolate(dst.m_ClipCoords.w(), src.m_ClipCoords.w(), num, denom));
+		result.m_Color.r = Interpolate(dst.m_Color.r, src.m_Color.r, num, denom);
+		result.m_Color.g = Interpolate(dst.m_Color.g, src.m_Color.g, num, denom);
+		result.m_Color.b = Interpolate(dst.m_Color.b, src.m_Color.b, num, denom);
+		result.m_Color.a = Interpolate(dst.m_Color.a, src.m_Color.a, num, denom);
 
 		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
-			result.m_TextureCoords[index].tu = Interpolate(dst.m_TextureCoords[index].tu, src.m_TextureCoords[index].tu, coeff);
-			result.m_TextureCoords[index].tv = Interpolate(dst.m_TextureCoords[index].tv, src.m_TextureCoords[index].tv, coeff);
+			result.m_TextureCoords[index].tu = Interpolate(dst.m_TextureCoords[index].tu, src.m_TextureCoords[index].tu, num, denom);
+			result.m_TextureCoords[index].tv = Interpolate(dst.m_TextureCoords[index].tv, src.m_TextureCoords[index].tv, num, denom);
 		}
 
-		result.m_FogDensity = Interpolate(dst.m_FogDensity, src.m_FogDensity, coeff);
+		result.m_FogDensity = Interpolate(dst.m_FogDensity, src.m_FogDensity, num, denom);
 	}
 
-	inline bool Clip(RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices, size_t coord) {
-		if (from->m_ClipCoords[coord] < -from->m_ClipCoords.w()) {
-			if (to->m_ClipCoords[coord] < -to->m_ClipCoords.w()) {
-				return false;
-			}
-
-			GLfloat c_x = from->m_ClipCoords[coord];
-			GLfloat c_w = -from->m_ClipCoords.w();
-			GLfloat p_x = to->m_ClipCoords[coord];
-			GLfloat p_w = -to->m_ClipCoords.w();
-			
-			GLfloat num = p_w - p_x; 
-			GLfloat denom = (p_w - p_x) - (c_w - c_x);
-
-			Interpolate(*tempVertices, *from, *to, num / denom);
-			from = tempVertices++;
-
-			return true;
-
-		} else if (from->m_ClipCoords[coord] > from->m_ClipCoords.w()) {
-			if (to->m_ClipCoords[coord] > to->m_ClipCoords.w()) {
-				return false;
-			}
-
-			GLfloat c_x = from->m_ClipCoords[coord];
-			GLfloat c_w = from->m_ClipCoords.w();
-			GLfloat p_x = to->m_ClipCoords[coord];
-			GLfloat p_w = to->m_ClipCoords.w();
-			
-			GLfloat num = p_w - p_x; 
-			GLfloat denom = (p_w - p_x) - (c_w - c_x);
-
-			Interpolate(*tempVertices, *from, *to, num / denom);
-			from = tempVertices++;
-
-			return true;
-
-		} else if (to->m_ClipCoords[coord] < -to->m_ClipCoords.w()) {
-
-			GLfloat c_x = to->m_ClipCoords[coord];
-			GLfloat c_w = -to->m_ClipCoords.w();
-			GLfloat p_x = from->m_ClipCoords[coord];
-			GLfloat p_w = -from->m_ClipCoords.w();
-			
-			GLfloat num = p_w - p_x; 
-			GLfloat denom = (p_w - p_x) - (c_w - c_x);
-
-			Interpolate(*tempVertices, *to, *from, num / denom);
-			to = tempVertices++;
-
-			return true;
-
-		} else if (to->m_ClipCoords[coord] > to->m_ClipCoords.w()) {
-
-			GLfloat c_x = to->m_ClipCoords[coord];
-			GLfloat c_w = to->m_ClipCoords.w();
-			GLfloat p_x = from->m_ClipCoords[coord];
-			GLfloat p_w = from->m_ClipCoords.w();
-			
-			GLfloat num = p_w - p_x; 
-			GLfloat denom = (p_w - p_x) - (c_w - c_x);
-
-			Interpolate(*tempVertices, *to, *from, num / denom);
-			to = tempVertices++;
-
-			return true;
-
-		} else {
-			// no clipping
-			return true;
-		}
+	inline bool ClipX(RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices) {
+#		define COORDINATE x()
+#		include "LineClipper.inc"
+#		undef COORDINATE
 	}
 
-	inline bool ClipUser(const Vec4f& plane, RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices) {
+	inline bool ClipY(RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices) {
+#		define COORDINATE y()
+#		include "LineClipper.inc"
+#		undef COORDINATE
+	}
 
-		GLfloat f = Vec4f(from->m_EyeCoords) * plane;
-		GLfloat t = Vec4f(to->m_EyeCoords) * plane;
+	inline bool ClipZ(RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices) {
+#		define COORDINATE z()
+#		include "LineClipper.inc"
+#		undef COORDINATE
+	}
 
-		if (f < 0.0f) {
-			if (t <= 0.0f) {
+	inline bool ClipUser(const Vec4D& plane, RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices) {
+
+		EGL_Fixed f = from->m_EyeCoords * plane;
+		EGL_Fixed t = to->m_EyeCoords * plane;
+
+		if (f < 0) {
+			if (t < 0) {
 				return false;
 			}
 
-			Interpolate(*tempVertices, *from, *to, t / (t - f));
+			Interpolate(*tempVertices, *from, *to, t, t - f);
 			from = tempVertices++;
 
 			return true;
 
-		} else if (t < 0.0f) {
+		} else if (t < 0) {
 
-			Interpolate(*tempVertices, *to, *from, f / (f - t));
+			Interpolate(*tempVertices, *to, *from, f, f - t);
 			to = tempVertices++;
 
 			return true;
@@ -479,9 +419,9 @@ void Context :: RenderLine(RasterPos& from, RasterPos& to) {
 		}
 	}
 
-	if (Clip(pFrom, pTo, tempVertices, 0) &&
-		Clip(pFrom, pTo, tempVertices, 1) &&
-		Clip(pFrom, pTo, tempVertices, 2)) {
+	if (ClipX(pFrom, pTo, tempVertices) &&
+		ClipY(pFrom, pTo, tempVertices) &&
+		ClipZ(pFrom, pTo, tempVertices)) {
 
 		ClipCoordsToWindowCoords(*pFrom);
 		ClipCoordsToWindowCoords(*pTo);

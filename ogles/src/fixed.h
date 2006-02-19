@@ -193,7 +193,7 @@ inline I32 EGL_FixedFromFloat(float value) {
 //					value
 // --------------------------------------------------------------------------
 inline float EGL_FloatFromFixed(EGL_Fixed value) {
-	return static_cast<float>(static_cast<double>(value) * (1.0f/static_cast<float>(EGL_ONE)));
+	return value * (1.0f/static_cast<float>(EGL_ONE));
 }
 
 

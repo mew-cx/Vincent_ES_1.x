@@ -69,15 +69,11 @@
 
 
 #ifndef EGL_RELEASE
-#	define EGL_RELEASE				"1.1.0"
+#	define EGL_RELEASE				"x.yy"
 #endif
 
 #define EGL_CONFIG_VENDOR			"Hans-Martin Will"
-#ifdef COMMON_LITE
-#	define EGL_CONFIG_VERSION			"OpenGL ES-CL 1.1"
-#else
-#	define EGL_CONFIG_VERSION			"OpenGL ES-CM 1.1"
-#endif
+#define EGL_CONFIG_VERSION			"OpenGL ES-CM 1.1"
 #define EGL_CONFIG_EXTENSIONS		"GL_OES_fixed_point "\
 									"GL_OES_single_precision "\
 									"GL_OES_read_format "\
