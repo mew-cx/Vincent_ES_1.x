@@ -88,7 +88,7 @@ namespace EGL {
 
 	struct RasterPos {
 		Vec4D				m_EyeCoords;
-		Vec4D				m_ClipCoords;
+		Vec4f				m_ClipCoords;
 		ScreenCoord			m_WindowCoords;		
 		FractionalColor		m_Color;
 		FractionalColor		m_FrontColor;		// color in range 0..255
