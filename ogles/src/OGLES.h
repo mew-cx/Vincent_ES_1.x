@@ -60,8 +60,12 @@
 #	endif
 #endif
 
+#ifdef EGL_ON_GP2X
+#include <stddef.h>
+# define OGLES_API
+#endif
 
-#if (defined(ARM) || defined(_ARM_) || defined(__MARM__)) && !defined(EGL_NO_COMPILE)
+#if (defined(__arm__) || defined(ARM) || defined(_ARM_) || defined(__MARM__)) && !defined(EGL_NO_COMPILE)
 #	define EGL_USE_JIT	1
 #else
 #	define EGL_USE_JIT  0
@@ -137,6 +141,13 @@ typedef unsigned __int64	U64;
 typedef __int64				I64;
 #endif
 
+#if defined(EGL_ON_GP2X)
+
+typedef unsigned long long	U64;
+typedef long long			I64;
+
+#endif 
+
 #ifdef EGL_ON_SYMBIAN
 
 typedef TInt64X	U64;
@@ -170,6 +181,5 @@ namespace EGL {
 #ifndef offsetof
 #define offsetof(s,m)   (size_t)&(((s *)0)->m)
 #endif
-
 
 #endif // ndef EGL_OGLES_H

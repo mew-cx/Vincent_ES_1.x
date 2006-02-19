@@ -40,6 +40,7 @@
 
 
 #include "stdafx.h"
+#include "GLES/gl.h"
 #include "CodeGenerator.h"
 #include "Rasterizer.h"
 #include "FunctionCache.h"
