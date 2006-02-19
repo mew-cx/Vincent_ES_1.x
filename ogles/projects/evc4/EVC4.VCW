@@ -3,7 +3,7 @@ Microsoft eMbedded Visual Tools Workspace File, Format Version 4.00
 
 ###############################################################################
 
-Project: "OGLES"=.\OGLES.VCP - Package Owner=<4>
+Project: "OGLES_CL"=.\OGLES_CL.VCP - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -78,9 +78,6 @@ Package=<4>
     Project_Dep_Name fixed
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name OGLES
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name platform
     End Project Dependency
 }}}
@@ -102,9 +99,6 @@ Package=<4>
     Project_Dep_Name fixed
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name OGLES
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name platform
     End Project Dependency
 }}}
@@ -120,10 +114,10 @@ Package=<5>
 Package=<4>
 {{{
     Begin Project Dependency
-    Project_Dep_Name OGLES
+    Project_Dep_Name platform
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name platform
+    Project_Dep_Name OGLES_CL
     End Project Dependency
 }}}
 
@@ -140,30 +134,6 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name platform
     End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "lines"=..\..\redbook\evc4\lines.vcp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "model"=..\..\redbook\evc4\model.vcp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
 }}}
 
 ###############################################################################
@@ -195,40 +165,7 @@ Package=<4>
     Project_Dep_Name fixed
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name OGLES
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name platform
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "test"=.\test.vcp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name OGLES
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "ug"=.\ug.vcp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name OGLES
     End Project Dependency
 }}}
 
