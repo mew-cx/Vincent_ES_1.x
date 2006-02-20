@@ -74,3 +74,5 @@ void * cg_heap_allocate(cg_heap_t * heap, size_t amount);
 #endif
 
 #endif //ndef CODEGEN_HEAP_H
+
+

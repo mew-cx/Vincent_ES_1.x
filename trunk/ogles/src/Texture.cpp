@@ -174,3 +174,5 @@ bool MultiTexture :: IsComplete() const {
 
 	return true;
 }
+
+

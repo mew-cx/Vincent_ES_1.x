@@ -77,6 +77,8 @@ FunctionCache :: FunctionCache(size_t totalSize, float percentageKeep) {
 	m_Code = reinterpret_cast<U8 *>(VirtualAlloc(0, totalSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE));
 #elif defined(EGL_ON_SYMBIAN)
     m_Code = reinterpret_cast<U8*>(User::Alloc(totalSize));
+#else
+  m_Code = (U8 *)malloc(totalSize);
 #endif
 }
 
@@ -88,6 +90,8 @@ FunctionCache :: ~FunctionCache() {
 	VirtualFree(m_Code, m_Total, MEM_DECOMMIT);
 #elif defined(EGL_ON_SYMBIAN)
     User::Free(m_Code);
+#else
+  free(m_Code);
 #endif
 }
 
