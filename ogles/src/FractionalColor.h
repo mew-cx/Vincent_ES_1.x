@@ -187,3 +187,5 @@ namespace EGL {
 
 
 #endif //ndef EGL_FRACTIONAL_COLOR_H
+
+
