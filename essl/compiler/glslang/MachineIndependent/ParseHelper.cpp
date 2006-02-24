@@ -1326,9 +1326,11 @@ TIntermTyped* TParseContext::addConstructor(TIntermNode* node, const TType* type
             newNode = constructBuiltIn(type, op, *p, node->getLine(), true);
 
         if (newNode) {
-            sequenceVector.erase(p);
-            sequenceVector.insert(p, newNode);
-        }
+            //sequenceVector.erase(p);
+            //sequenceVector.insert(p, newNode);
+			p = sequenceVector.erase(p);
+            p = sequenceVector.insert(p, newNode);
+		}
     }
 
     TIntermTyped* constructor = intermediate.setAggregateOperator(aggrNode, op, line);
