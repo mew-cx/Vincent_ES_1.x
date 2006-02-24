@@ -69,7 +69,7 @@ void Context :: DepthRangef (GLclampf zNear, GLclampf zFar) {
 void Context :: Fogf (GLenum pname, GLfloat param) {
 	switch (pname) {
 		case GL_FOG_MODE:
-			Fogx(pname, param);
+			Fogx(pname, EGL_FixedFromFloat(param));
 			break;
 
 		case GL_FOG_START:

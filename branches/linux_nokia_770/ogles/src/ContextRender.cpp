@@ -38,10 +38,10 @@
 
 
 #include "stdafx.h"
-#include "context.h"
+#include "Context.h"
 #include <string.h>
 #include "fixed.h"
-#include "surface.h"
+#include "Surface.h"
 
 
 using namespace EGL;

@@ -43,6 +43,12 @@
 
 using namespace EGL;
 
+/* 
+   Added by Valtteri Rahkonen:
+   This is propably legacy (not declared on Context.h) and it wont compile
+   with gcc, so I just if it out.
+*/
+#if !defined(EGL_ON_LINUX)
 
 void Context :: DrawMesh(GLsizei count, GLenum type, GLsizei stride,
 						 GLsizei offsetVertex, GLsizei strideVertex,
@@ -109,3 +115,5 @@ void Context :: DrawMesh(GLsizei count, GLenum type, GLsizei stride,
 		}
 	}
 }
+
+#endif

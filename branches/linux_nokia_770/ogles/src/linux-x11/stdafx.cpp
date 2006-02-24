@@ -1,13 +1,10 @@
-#ifndef EGL_FUNCTION_CACHE_H
-#define EGL_FUNCTION_CACHE_H 1
-
 // ==========================================================================
 //
-// FunctionCache.h		Cache of compiled functions for 3D Rendering Library
+// stdafx.cpp		Precompiled headers for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //
-// 03-08-2004	Hans-Martin Will	initial version
+// 10-15-2003		Hans-Martin Will	initial version
 //
 // --------------------------------------------------------------------------
 //
@@ -38,52 +35,5 @@
 // ==========================================================================
 
 
-#include "OGLES.h"
-#include "RasterizerState.h"
-#include "Rasterizer.h"
+#include "stdafx.h"
 
-
-namespace EGL {
-
-	struct FunctionInfo;
-	class CodeGenerator;
-
-	class OGLES_API FunctionCache {
-#if defined(EGL_ON_LINUX)
-		friend class CodeGenerator;
-#else
-		friend CodeGenerator;
-#endif
-	public:
-		enum FunctionType {
-			FunctionTypeScanline,
-			FunctionTypePoint,
-			FunctionTypeLine,
-			FunctionTypeTriangle
-		};
-
-	public:
-		FunctionCache(size_t totalSize = 65536, float percentageKeep = 0.6);
-		~FunctionCache();
-
-		void * GetFunction(FunctionType type, const RasterizerState & state);
-
-	private:
-		void * AddFunction(FunctionType type, const RasterizerState & state, size_t size);
-		void CompactCode();
-
-	private:
-		U8 *				m_Code;
-		size_t				m_Used;
-		size_t				m_Total;
-		FunctionInfo *		m_Functions;
-		FunctionInfo *		m_MostRecentlyUsed;
-		FunctionInfo *		m_LeastRecentlyUsed;
-		size_t				m_UsedFunctions;
-		size_t				m_MaxFunctions;
-		float				m_PercentageKeep;
-	};
-}
-
-
-#endif //ndef EGL_FUNCTION_CACHE_H

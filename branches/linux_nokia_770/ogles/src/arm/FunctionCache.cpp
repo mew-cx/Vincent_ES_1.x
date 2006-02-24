@@ -39,6 +39,9 @@
 #include "FunctionCache.h"
 #include "CodeGenerator.h"
 
+#ifdef EGL_ON_LINUX
+#include <sys/mman.h>
+#endif
 
 using namespace EGL;
 
@@ -77,6 +80,9 @@ FunctionCache :: FunctionCache(size_t totalSize, float percentageKeep) {
 	m_Code = reinterpret_cast<U8 *>(VirtualAlloc(0, totalSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE));
 #elif defined(EGL_ON_SYMBIAN)
     m_Code = reinterpret_cast<U8*>(User::Alloc(totalSize));
+#elif defined(EGL_ON_LINUX)
+    m_Code = new U8[totalSize];
+    mprotect((void *) m_Code, totalSize, PROT_READ | PROT_WRITE | PROT_EXEC);
 #endif
 }
 
@@ -88,6 +94,8 @@ FunctionCache :: ~FunctionCache() {
 	VirtualFree(m_Code, m_Total, MEM_DECOMMIT);
 #elif defined(EGL_ON_SYMBIAN)
     User::Free(m_Code);
+#elif defined(EGL_ON_LINUX)
+    delete[] m_Code;
 #endif
 }
 

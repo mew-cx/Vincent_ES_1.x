@@ -1,13 +1,10 @@
-#ifndef EGL_FUNCTION_CACHE_H
-#define EGL_FUNCTION_CACHE_H 1
-
 // ==========================================================================
 //
-// FunctionCache.h		Cache of compiled functions for 3D Rendering Library
+// context.cpp	Rendering Context Class for 3D Rendering Library
 //
 // --------------------------------------------------------------------------
 //
-// 03-08-2004	Hans-Martin Will	initial version
+// 08-07-2003	Hans-Martin Will	initial version
 //
 // --------------------------------------------------------------------------
 //
@@ -38,52 +35,40 @@
 // ==========================================================================
 
 
-#include "OGLES.h"
-#include "RasterizerState.h"
+#include "stdafx.h"
+#include "Context.h"
+#include "Surface.h"
 #include "Rasterizer.h"
+#include <pthread.h>
 
+using namespace EGL;
 
-namespace EGL {
+extern pthread_key_t s_TlsIndexContext;
 
-	struct FunctionInfo;
-	class CodeGenerator;
+// --------------------------------------------------------------------------
+// Context Management
+// --------------------------------------------------------------------------
+void Context :: SetCurrentContext(Context * context) 
+{
+    Context * oldContext = GetCurrentContext();
 
-	class OGLES_API FunctionCache {
-#if defined(EGL_ON_LINUX)
-		friend class CodeGenerator;
-#else
-		friend CodeGenerator;
-#endif
-	public:
-		enum FunctionType {
-			FunctionTypeScanline,
-			FunctionTypePoint,
-			FunctionTypeLine,
-			FunctionTypeTriangle
-		};
+    if (oldContext != context) 
+    {
+        if (oldContext != 0) 
+            oldContext->SetCurrent(false);
+        
+        pthread_setspecific(s_TlsIndexContext, 
+                            reinterpret_cast<void *>(context));
 
-	public:
-		FunctionCache(size_t totalSize = 65536, float percentageKeep = 0.6);
-		~FunctionCache();
-
-		void * GetFunction(FunctionType type, const RasterizerState & state);
-
-	private:
-		void * AddFunction(FunctionType type, const RasterizerState & state, size_t size);
-		void CompactCode();
-
-	private:
-		U8 *				m_Code;
-		size_t				m_Used;
-		size_t				m_Total;
-		FunctionInfo *		m_Functions;
-		FunctionInfo *		m_MostRecentlyUsed;
-		FunctionInfo *		m_LeastRecentlyUsed;
-		size_t				m_UsedFunctions;
-		size_t				m_MaxFunctions;
-		float				m_PercentageKeep;
-	};
+        if (context != 0)
+            context->SetCurrent(true);
+    }
 }
 
 
-#endif //ndef EGL_FUNCTION_CACHE_H
+Context * Context :: GetCurrentContext() 
+{
+    return reinterpret_cast<EGLContext> (
+        pthread_getspecific(s_TlsIndexContext));
+}
+

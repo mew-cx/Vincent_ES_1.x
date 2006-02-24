@@ -60,6 +60,10 @@
 #	endif
 #endif
 
+#ifdef EGL_ON_LINUX
+#  define OGLES_API
+#  define APIENTRY
+#endif
 
 #if (defined(ARM) || defined(_ARM_) || defined(__MARM__)) && !defined(EGL_NO_COMPILE)
 #	define EGL_USE_JIT	1
@@ -131,6 +135,12 @@
 #ifdef EGL_ON_WINCE
 typedef unsigned __int64	U64;
 typedef __int64				I64;
+#endif
+
+#ifdef EGL_ON_LINUX
+typedef unsigned long long U64;
+typedef long long          I64;
+#define INVALID_HANDLE_VALUE NULL
 #endif
 
 #ifdef EGL_ON_SYMBIAN
