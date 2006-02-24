@@ -969,27 +969,27 @@ void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable)
     // First, insert some special built-in variables that are not in
     // the built-in header files.
     //
-switch(language) {
-    case EShLangFragment: {
-            symbolTable.insert(*new TVariable(NewPoolTString("gl_FrontFacing"), TType(EbtBool,  EvqFace,  EvqNoPrecSpecified, 1 )));
-            symbolTable.insert(*new TVariable(NewPoolTString("gl_FragCoord"),   TType(EbtFloat, EvqFragCoord, EvqMediump,   4)));
-			symbolTable.insert(*new TVariable(NewPoolTString("gl_FragColor"),   TType(EbtFloat, EvqFragColor, EvqMediump,  4)));
+	switch(language) {
+		case EShLangFragment: {
+				symbolTable.insert(*new TVariable(NewPoolTString("gl_FrontFacing"), TType(EbtBool,  EvqFace,  EvqNoPrecSpecified, 1 )));
+				symbolTable.insert(*new TVariable(NewPoolTString("gl_FragCoord"),   TType(EbtFloat, EvqFragCoord, EvqMediump,   4)));
+				symbolTable.insert(*new TVariable(NewPoolTString("gl_FragColor"),   TType(EbtFloat, EvqFragColor, EvqMediump,  4)));
+				// Removed for ESSL support
+				// symbolTable.insert(*new TVariable(NewPoolTString("gl_FragDepth"),   TType(EbtFloat, EvqFragDepth,   1)));
+
+			}
+			break;
+
+		case EShLangVertex:
+
+
+			symbolTable.insert(*new TVariable(NewPoolTString("gl_Position"),    TType(EbtFloat, EvqPosition,  EvqHighp,   4 )));
+			symbolTable.insert(*new TVariable(NewPoolTString("gl_PointSize"),   TType(EbtFloat, EvqPointSize, EvqMediump, 1 )));
+
 			// Removed for ESSL support
-			// symbolTable.insert(*new TVariable(NewPoolTString("gl_FragDepth"),   TType(EbtFloat, EvqFragDepth,   1)));
-
-        }
-        break;
-
-    case EShLangVertex:
-
-
-		symbolTable.insert(*new TVariable(NewPoolTString("gl_Position"),    TType(EbtFloat, EvqPosition,  EvqHighp,   4 )));
-		symbolTable.insert(*new TVariable(NewPoolTString("gl_PointSize"),   TType(EbtFloat, EvqPointSize, EvqMediump, 1 )));
-
-		// Removed for ESSL support
-		// symbolTable.insert(*new TVariable(NewPoolTString("gl_ClipVertex"),  TType(EbtFloat, EvqClipVertex,  4)));
-        break;
-	default: break;
+			// symbolTable.insert(*new TVariable(NewPoolTString("gl_ClipVertex"),  TType(EbtFloat, EvqClipVertex,  4)));
+			break;
+		default: break;
     }
 
     //
@@ -998,7 +998,9 @@ switch(language) {
     // expected to be resolved through a library of functions, versus as
     // operations.
     //
-    symbolTable.relateToOperator("not",              EOpVectorLogicalNot);
+
+
+	symbolTable.relateToOperator("not",              EOpVectorLogicalNot);
 
     symbolTable.relateToOperator("matrixCompMult",   EOpMul);
     symbolTable.relateToOperator("mod",              EOpMod);
@@ -1052,31 +1054,31 @@ switch(language) {
     symbolTable.relateToOperator("all",          EOpAll);
 
     switch(language) {
+		case EShLangVertex:
+			break;
 
-    case EShLangVertex:
-        break;
+		case EShLangFragment:
+			symbolTable.relateToOperator("dFdx",         EOpDPdx);
+			symbolTable.relateToOperator("dFdy",         EOpDPdy);
+			symbolTable.relateToOperator("fwidth",       EOpFwidth);
 
-    case EShLangFragment:
-        symbolTable.relateToOperator("dFdx",         EOpDPdx);
-        symbolTable.relateToOperator("dFdy",         EOpDPdy);
-        symbolTable.relateToOperator("fwidth",       EOpFwidth);
+			break;
 
-        break;
-
-    case EShLangPack:
-    case EShLangUnpack:
-        symbolTable.relateToOperator("itof",         EOpItof);
-        symbolTable.relateToOperator("ftoi",         EOpFtoi);
-        symbolTable.relateToOperator("skipPixels",   EOpSkipPixels);
-        symbolTable.relateToOperator("readInput",    EOpReadInput);
-        symbolTable.relateToOperator("writePixel",   EOpWritePixel);
-        symbolTable.relateToOperator("bitmapLSB",    EOpBitmapLsb);
-        symbolTable.relateToOperator("bitmapMSB",    EOpBitmapMsb);
-        symbolTable.relateToOperator("writeOutput",  EOpWriteOutput);
-        symbolTable.relateToOperator("readPixel",    EOpReadPixel);
-        break;
-	default: assert(false && "Language not supported");
+		case EShLangPack:
+		case EShLangUnpack:
+			symbolTable.relateToOperator("itof",         EOpItof);
+			symbolTable.relateToOperator("ftoi",         EOpFtoi);
+			symbolTable.relateToOperator("skipPixels",   EOpSkipPixels);
+			symbolTable.relateToOperator("readInput",    EOpReadInput);
+			symbolTable.relateToOperator("writePixel",   EOpWritePixel);
+			symbolTable.relateToOperator("bitmapLSB",    EOpBitmapLsb);
+			symbolTable.relateToOperator("bitmapMSB",    EOpBitmapMsb);
+			symbolTable.relateToOperator("writeOutput",  EOpWriteOutput);
+			symbolTable.relateToOperator("readPixel",    EOpReadPixel);
+			break;
+		default: assert(false && "Language not supported");
     }
+
 }
 
 void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable, const TBuiltInResource &resources)
