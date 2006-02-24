@@ -40,8 +40,6 @@
 #include "Color.h"
 #include <string.h>
 
-extern NativeWindowType native_window;
-
 using namespace EGL;
 
 Surface :: Surface(const Config & config, NativeDisplayType hdc)
@@ -53,52 +51,17 @@ Surface :: Surface(const Config & config, NativeDisplayType hdc)
     U32 width = GetWidth();
     U32 height = GetHeight();
     int shm_major, shm_minor, shm_pixmaps;
-    XWindowAttributes attr;
+    int pbuffer = config.GetConfigAttrib(EGL_SURFACE_TYPE) & EGL_PBUFFER_BIT;
 
-    XGetWindowAttributes(hdc, native_window, &attr);
-
-    m_WindowDepth = attr.depth;
+    m_WindowDepth = DefaultDepth(hdc, 0);
 
 #ifdef HAVE_X11_EXTENSIONS_XSHM_H
     if(XShmQueryVersion(hdc, &shm_major, &shm_minor, &shm_pixmaps))
     {
-        // We can use direct copying only in 16 bpp so let's not use
-        // shm for this (SHMSTD with XImage should be used instead).
-        if ((shm_pixmaps) && (XShmPixmapFormat(hdc) == ZPixmap) && 
-            (m_WindowDepth == 16))
-        {
-            m_SurfaceType = SHMPIXMAP;
-        }
-        else
-        {
-            m_SurfaceType = SHMSTD;
-        }
+        m_SurfaceType = SHMSTD;
     }
 
-    if (m_SurfaceType == SHMPIXMAP)
-    {
-        m_ShmInfo = new XShmSegmentInfo;
-
-        memset(m_ShmInfo, 0, sizeof(XShmSegmentInfo));
-
-        m_ShmInfo->shmid = shmget(IPC_PRIVATE, width*height*sizeof(U16),
-                                   IPC_CREAT|0777);
-
-        m_ShmInfo->shmaddr = (char *) shmat(m_ShmInfo->shmid, 0, 0);
-        m_ColorBuffer = (U16 *) m_ShmInfo->shmaddr;
-        
-        m_ShmInfo->readOnly=False;
-
-        XShmAttach(hdc, m_ShmInfo);
-
-        m_Bitmap = XShmCreatePixmap(hdc, native_window, (char *)m_ColorBuffer,
-                                    m_ShmInfo, width, height, 16);
-
-        XSetWindowBackgroundPixmap(hdc, native_window, m_Bitmap);
-
-        m_Image = NULL;
-    }
-    else if (m_SurfaceType == SHMSTD)
+    if (m_SurfaceType == SHMSTD)
     {
         m_Bitmap = 0;
 
@@ -139,7 +102,9 @@ Surface :: Surface(const Config & config, NativeDisplayType hdc)
 #endif
     {
         m_SurfaceType = NOSHM;
-        m_Bitmap = XCreatePixmap(hdc, native_window, width, height, 16);
+
+        m_Bitmap = XCreatePixmap(hdc, XDefaultRootWindow(hdc), 
+                                 width, height, 16);
 
         m_Image = XGetImage(hdc, m_Bitmap, 0, 0, width, height, AllPlanes, 
                             ZPixmap);
@@ -162,25 +127,6 @@ Surface :: ~Surface()
     if (m_Bitmap)
     {
         XFreePixmap(m_HDC, m_Bitmap);
-#ifdef HAVE_X11_EXTENSIONS_XSHM_H
-        if (m_SurfaceType == SHMPIXMAP)
-        {
-            XShmDetach(m_HDC, m_ShmInfo);
-
-            if(m_ShmInfo->shmaddr)
-            {
-                shmdt(m_ShmInfo->shmaddr);
-            }
-
-            if(m_ShmInfo->shmid >= 0)
-            {
-                shmctl(m_ShmInfo->shmid, IPC_RMID, NULL);
-            }
-
-            delete m_ShmInfo;
-            m_ColorBuffer = 0;
-        }
-#endif
     }
 
     if (m_Image)
