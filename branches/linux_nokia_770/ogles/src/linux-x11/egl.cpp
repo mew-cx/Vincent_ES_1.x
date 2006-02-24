@@ -63,7 +63,6 @@ static void eglRecordError(EGLint error)
     pthread_setspecific(s_TlsIndexError, reinterpret_cast<void *>(error));
 }
 
-
 static NativeDisplayType GetNativeDisplay (EGLDisplay display) 
 {
     return (NativeDisplayType) display;
@@ -263,11 +262,11 @@ eglCreatePbufferSurface (EGLDisplay dpy, EGLConfig config,
                          const EGLint *attrib_list) 
 {
     static const EGLint validAttributes[] = {
-        EGL_WIDTH,
-        EGL_HEIGHT,
+        EGL_WIDTH, 0,
+        EGL_HEIGHT, 0,
         EGL_NONE
     };
-    
+
     Config surfaceConfig(*config, attrib_list, validAttributes);
     surfaceConfig.SetConfigAttrib(EGL_SURFACE_TYPE, EGL_PBUFFER_BIT);
     eglRecordError(EGL_SUCCESS);
@@ -385,29 +384,28 @@ GLAPI EGLBoolean APIENTRY eglSwapBuffers (EGLDisplay dpy, EGLSurface draw)
 {
     NativeDisplayType disp = (NativeDisplayType) dpy;
     Context::GetCurrentContext()->Flush();
-    int depth = DefaultDepth(disp, 0);
     int w = draw->GetWidth();
     int h = draw->GetHeight();
     XImage *img;
     GC gc;
 
+    XWindowAttributes attr;
+
+    XGetWindowAttributes(disp, native_window, &attr);
+
 #ifdef HAVE_X11_EXTENSIONS_XSHM_H
-    if (draw->GetSurfaceType() == SHMPIXMAP)
-    {
-            XClearWindow(disp, native_window);
-    }
-    else if (draw->GetSurfaceType() == SHMSTD)
+    if (draw->GetSurfaceType() == SHMSTD)
     {
         img = draw->GetImage();
 
-        if (depth != 16)
+        if (attr.depth != 16)
         {
             U16 *cb = draw->GetColorBuffer();
             U32 *ib = (U32 *) img->data;
             U32 rgb;
             int x, y;
 
-            if (depth != 24)
+            if (attr.depth != 24)
             {
                 return EGL_FALSE;
             }
@@ -440,13 +438,13 @@ GLAPI EGLBoolean APIENTRY eglSwapBuffers (EGLDisplay dpy, EGLSurface draw)
     {
         gc = XCreateGC(disp, native_window, 0, NULL);
 
-        if (depth != 16)
+        if (attr.depth != 16)
         {
             U16 *cb = draw->GetColorBuffer();
             U32 rgb;
             int x, y;
             
-            if (depth != 24)
+            if (attr.depth != 24)
             {
                 return EGL_FALSE;
             }
@@ -490,7 +488,6 @@ GLAPI EGLBoolean APIENTRY eglSwapBuffers (EGLDisplay dpy, EGLSurface draw)
         }
     }
 
-    //FIXME: should we use XSync(disp, false); instead?
     XFlush(disp);
 
     eglRecordError(EGL_SUCCESS);
@@ -508,58 +505,103 @@ eglCopyBuffers (EGLDisplay dpy, EGLSurface surface, NativePixmapType target)
     XWindowAttributes attr;
     GC gc;
 
-    // FIXME: check that this wont generate errors on pixmaps...
     XGetWindowAttributes(disp, target, &attr);
-    gc = XCreateGC((Display *) dpy, native_window, 0, NULL);
 
-    if (attr.depth != 16)
-    {
-        U16 *cb = surface->GetColorBuffer();
-        U32 rgb;
-        int x, y;
-
-        if (attr.depth != 24)
-        {
-            return EGL_BAD_NATIVE_PIXMAP;
-        }
-
-        img = XGetImage(disp, target, 0, 0, w, h, AllPlanes, ZPixmap);
-
-        /*
-         * Evil slow hack starts, this way we can avoid BadMatch errors
-         */
-
-        for (y = 0; y < h; y++)
-            for (x = 0; x < w; x++)
-            {
-                int rv, gv, bv;
-                rv = (cb[x+y*w] & 0xF800u) >> 8;
-                gv = (cb[x+y*w] & 0x07E0u) >> 3;
-                bv = (cb[x+y*w] & 0x001Fu) << 3;
-                
-                rv |= rv >> 5;
-                gv |= gv >> 6;
-                bv |= bv >> 5;
-                
-                rgb = (rv << 16)|(gv << 8)|bv; 
-                
-                XPutPixel(img, x, y, rgb);
-            }
-
-        XPutImage(disp, target, gc, img, 0, 0, 0, 0, 
-                  surface->GetWidth(), surface->GetHeight());
-
-        XDestroyImage(img);
-    }
-    else // fine, we have 16-bit depth
+#ifdef HAVE_X11_EXTENSIONS_XSHM_H
+    if (surface->GetSurfaceType() == SHMSTD)
     {
         img = surface->GetImage();
 
-        XPutImage(disp, target, gc, img, 0, 0, 0, 0, 
-                  surface->GetWidth(), surface->GetHeight());
+        if (attr.depth != 16)
+        {
+            U16 *cb = surface->GetColorBuffer();
+            U32 *ib = (U32 *) img->data;
+            U32 rgb;
+            int x, y;
+
+            if (attr.depth != 24)
+            {
+                return EGL_FALSE;
+            }
+
+            for (y = 0; y < h; y++)
+                for (x = 0; x < w; x++)
+                {
+                    int rv, gv, bv;
+                    rv = (cb[x+y*w] & 0xF800u) >> 8;
+                    gv = (cb[x+y*w] & 0x07E0u) >> 3;
+                    bv = (cb[x+y*w] & 0x001Fu) << 3;
+                    
+                    rv |= rv >> 5;
+                    gv |= gv >> 6;
+                    bv |= bv >> 5;
+                    
+                    rgb = (rv << 16)|(gv << 8)|bv; 
+                    
+                    ib[x+y*w] = rgb;
+                }
+        }
+
+        gc = XCreateGC(disp, target, 0, NULL);
+        XShmPutImage(disp, target, gc, img, 0, 0, 0, 0, 
+                     surface->GetWidth(), surface->GetHeight(), false);
+        XFreeGC(disp, gc);
+    }
+    else
+#endif
+    {
+        gc = XCreateGC(disp, target, 0, NULL);
+
+        if (attr.depth != 16)
+        {
+            U16 *cb = surface->GetColorBuffer();
+            U32 rgb;
+            int x, y;
+            
+            if (attr.depth != 24)
+            {
+                return EGL_FALSE;
+            }
+
+            /*
+             * Evil slow hack starts, this way we can avoid BadMatch errors
+             */
+
+            img = XGetImage(disp, target, 0, 0, w, h, AllPlanes, ZPixmap);
+            
+            for (y = 0; y < h; y++)
+                for (x = 0; x < w; x++)
+                {
+                    int rv, gv, bv;
+                    rv = (cb[x+y*w] & 0xF800u) >> 8;
+                    gv = (cb[x+y*w] & 0x07E0u) >> 3;
+                    bv = (cb[x+y*w] & 0x001Fu) << 3;
+                    
+                    rv |= rv >> 5;
+                    gv |= gv >> 6;
+                    bv |= bv >> 5;
+                    
+                    rgb = (rv << 16)|(gv << 8)|bv; 
+                    
+                    XPutPixel(img, x, y, rgb);
+                }
+
+            XPutImage(disp, target, gc, img, 0, 0, 0, 0, 
+                      surface->GetWidth(), surface->GetHeight());
+            XDestroyImage(img);
+            XFreeGC(disp, gc);
+        }
+        else // fine, we have 16-bit depth
+        {
+            gc = XCreateGC((Display *) dpy, target, 0, NULL);
+            img = surface->GetImage();
+            XPutImage(disp, target, gc, img, 0, 0, 0, 0, 
+                      surface->GetWidth(), surface->GetHeight());
+            XFreeGC(disp, gc);
+        }
     }
 
-    XSync(disp, false);
+    XFlush(disp);
 
     eglRecordError(EGL_SUCCESS);
     return EGL_TRUE;

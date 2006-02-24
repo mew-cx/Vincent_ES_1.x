@@ -50,11 +50,10 @@ Limitations
 -----------
 
 - This port does not support frame buffer devices
-- Screen size is acquired from a X window 
+- With eglCreateWindowSurface the size is acquired from a X window 
   - X window can be large thus limiting the performance
-  - In future it would be wise to add support for setting the size (at least Nokia 770 pixel 
-    doubling requires that rendering are is less than 400x240)
+  - pbuffer surface with eglCopyBuffers can be used if window size is too 
+    large (i.e. with window managers that resizes windows to full screen)
 - Test programs are not yet included in this port
-- eglCopyBuffers will propably fail when shared memory is used
 - eglSaveSurfaceHM extension generates incorrect bitmap
 - Support for packaging for Maemo (Debian package format) is missing
