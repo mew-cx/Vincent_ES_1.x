@@ -47,6 +47,19 @@ typedef CFbsBitmap * 	NativePixmapType;
 
 #define EGL_DEFAULT_DISPLAY ((NativeDisplayType) 0)
 
+#elif (defined(LINUX) || defined(__linux__))
+#include <stdio.h>
+#include <sys/types.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <pthread.h>
+
+typedef int DWORD;
+typedef Display* NativeDisplayType;
+typedef Window NativeWindowType;
+typedef Pixmap NativePixmapType;
+
+#define EGL_DEFAULT_DISPLAY ((NativeDisplayType) 0)
 #else
 
 #	error "Unsupported Operating System"

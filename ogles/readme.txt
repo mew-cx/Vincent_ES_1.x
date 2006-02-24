@@ -54,6 +54,7 @@ This project has build configurations for the following configurations:
 
 - Visual Studio.NET 2003 for IA32/Windows
 - Embedded Visual C++ 4.0 SP3 (both Emulator, ARM and XScale) for PocketPC 2003 or Smartphone 2003
+- GNU Autotools for ARM Linux
 
 You will need at least one of these environments installed on your computer. Please refer
 to the project home page for links on how to obtain these tools.
@@ -66,10 +67,12 @@ folder structure is as follows:
 	/codegen		- A compiler backend library
 	/epoc			- Symbian platform files (not really maintained at this point)
 	/WinCE			- Windows Mobile platform files
+	/linux-x11		- Linux platform files (uses X11)
 
 /projects			- Visual Studio project files
 	/evc4			- for embedded Visual C++ 4.0
 	/epoc			- for Symbian development 
+	/linux-x11		- for Linux development 
 
 /obj				- Intermediate build files
 	/arm			- for ARM
@@ -121,7 +124,8 @@ How do I build this project from the source?
 
 To build the libraries, open the corresponding project/workspace from the projects
 subtree. If the download is correct, the project should build right away without 
-any further adjustment.
+any further adjustment. For Linux compilations please refer to doc/readme-linux.txt
+for instructions.
 
 The file OGLES.h contains several configuration parameters that you can use to
 fine-tine the library build. The most interesting parameters are:

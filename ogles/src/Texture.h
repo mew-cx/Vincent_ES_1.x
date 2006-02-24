@@ -52,8 +52,13 @@ namespace EGL {
 
 	class Texture { 
 
+#ifdef EGL_ON_LINUX
+		friend class Rasterizer;
+		friend class CodeGenerator;
+#else
 		friend Rasterizer;
 		friend CodeGenerator;
+#endif
 
 	public:
 
@@ -87,7 +92,11 @@ namespace EGL {
 
 	class MultiTexture {
 
+#ifdef EGL_ON_LINUX
+		friend class Rasterizer;
+#else
 		friend Rasterizer;
+#endif
 
 	public:
 		enum {

@@ -51,6 +51,11 @@ extern "C" {
 
 #	define EGL_PLATFORM_HEADER_INCLUDE <windows.h>
 
+#elif (defined(LINUX) || defined(__linux__))
+
+# define GLAPI
+#	define EGL_PLATFORM_HEADER_INCLUDE <stdlib.h>
+
 #else
 
 #	error "Unsupported Operating System"

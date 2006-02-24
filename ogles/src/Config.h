@@ -49,7 +49,11 @@ namespace EGL {
 
 	class Config {
 
+#if defined(EGL_ON_LINUX)
+		friend class Context;
+#else
 		friend Context;
+#endif
 
 	public:
 		Config(
