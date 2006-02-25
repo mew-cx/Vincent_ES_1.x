@@ -268,6 +268,7 @@ public:
     virtual TBasicType getBasicType() const { return type; }
     virtual TQualifier getQualifier() const { return qualifier; }
     virtual TQualifier getPrecision() const { return precision; }		// Added for ESSL support
+    virtual void setPrecision(TQualifier prec) { precision = prec; }	// Added for ESSL support
 	virtual bool	   isInvariant() const { return invariant; }		// Added for ESSL support
 	virtual void	   makeInvariant(){ invariant = true; }				// Added for ESSL support
 	virtual void changeQualifier(TQualifier q) { qualifier = q; }

@@ -341,8 +341,13 @@ public:
     const char* getQualifierString()  const { return type.getQualifierString(); }
     TString getCompleteString() const { return type.getCompleteString(); }
 
+	virtual void ensurePrecision(TQualifier precision) {
+		printf("*** TIntermTyped::ensurePrecision\n");
+	}
+
 protected:
     TType type;
+	void setPrecision(TQualifier prec) { type.setPrecision(prec); }
 };
 
 //
@@ -400,6 +405,9 @@ public:
     virtual TIntermSymbol* getAsSymbolNode() { return this; }
 	void setCurrentUsageCount(int nofUses) { currentUsageCount = nofUses; }
 	int  getCurrentUsageCount() { return currentUsageCount; }
+	virtual void ensurePrecision(TQualifier precision) {
+		printf("*** TIntermSymbol::ensurePrecision (%s)\n",symbol.c_str());
+	}
 protected:
     int id;
 	int currentUsageCount;		// Added for ESSL support (tells how many times the variable has been used at this point)
@@ -414,6 +422,10 @@ public:
     virtual TIntermConstantUnion* getAsConstantUnion()  { return this; }
     virtual void traverse(TIntermTraverser* );
     virtual TIntermTyped* fold(TOperator, TIntermTyped*, TInfoSink&);
+	virtual void ensurePrecision(TQualifier precision) {
+ 		/* no-op: constant unions don't have precision */
+		printf("*** TIntermConstantUnion::ensurePrecision\n");
+	}
 protected:
     constUnion *unionArrayPointer;
 };
@@ -427,6 +439,9 @@ public:
     bool modifiesState() const;
     bool isConstructor() const;
     virtual bool promote(TInfoSink&) { return true; }
+	virtual void ensurePrecision(TQualifier precision) {
+		printf("*** TIntermOperator::ensurePrecision (%d)\n",getOp());
+	}
 protected:
     TIntermOperator(TOperator o) : TIntermTyped(TType(EbtFloat)), op(o) {}
     TIntermOperator(TOperator o, TType& t) : TIntermTyped(t), op(o) {}
@@ -446,6 +461,18 @@ public:
     virtual TIntermTyped* getRight() const { return right; }
     virtual TIntermBinary* getAsBinaryNode() { return this; }
     virtual bool promote(TInfoSink&);
+	virtual void ensurePrecision(TQualifier precision) {
+		printf("*** TIntermBinary::ensurePrecision (%d)\n",getOp());
+		if (getPrecision() == EvqNoPrecSpecified) {		// Only care if the node's precision is undefined
+			setPrecision(precision);
+			// These nodes will only be affected "if they want to"
+			left->ensurePrecision(precision);			
+			right->ensurePrecision(precision);
+		} else { 
+			/* no-op*/
+			// This node has a valid precision, and it's operands have too (this has been ensured previously)
+		}
+	}
 protected:
     TIntermTyped* left;
     TIntermTyped* right;
@@ -463,6 +490,14 @@ public:
     virtual TIntermTyped* getOperand() { return operand; }
     virtual bool promote(TInfoSink&);
 	virtual TIntermUnary* getAsUnaryNode() { return this; }  // Added, not exactly, for ESSL support. This method was missing in the original code.
+	virtual void ensurePrecision(TQualifier precision) {
+		printf("*** TIntermUnary::ensurePrecision (%d)\n",getOp());
+		if (getPrecision() == EvqNoPrecSpecified) {		// Only care if the node's precision is undefined
+			setPrecision(precision);
+			// The operand will only be affected "if it wants to"
+			operand->ensurePrecision(precision);
+		}
+	}
 protected:
     TIntermTyped* operand;
 };
@@ -492,6 +527,12 @@ public:
 	bool getDebug() { return debug; }
 	void addToPragmaTable(const TPragmaTable& pTable);
 	const TPragmaTable& getPragmaTable() const { return *pragmaTable; }
+	virtual void ensurePrecision(TQualifier precision) {
+		printf("*** TIntermAggregate::ensurePrecision (%d)\n",getOp());
+		if (getPrecision() == EvqNoPrecSpecified) {		// Only care if the node's precision is undefined
+			printf("ENSURE THE PRECISION IN AGGREGATE NODE!!\n");
+		}
+	}
 protected:
 	TIntermAggregate(const TIntermAggregate&); // disallow copy constructor
 	TIntermAggregate& operator=(const TIntermAggregate&); // disallow assignment operator
@@ -518,6 +559,9 @@ public:
     virtual TIntermNode* getTrueBlock() const { return trueBlock; }
     virtual TIntermNode* getFalseBlock() const { return falseBlock; }
     virtual TIntermSelection* getAsSelectionNode() { return this; }
+	virtual void ensurePrecision(TQualifier precision) {
+		printf("*** TIntermSelection::ensurePrecision\n");
+	}
 protected:
     TIntermTyped* condition;
     TIntermNode* trueBlock;

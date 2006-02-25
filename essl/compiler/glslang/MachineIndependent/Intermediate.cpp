@@ -99,6 +99,27 @@ TIntermSymbol* TIntermediate::addSymbol(int id, const TString& name, const TType
     return node;
 }
 
+// Added for ESSL support
+TQualifier getHighestPrecision( TQualifier left, TQualifier right){
+
+	switch( left ){
+		case EvqHighp:
+			return EvqHighp;
+		case EvqMediump:
+			if( right == EvqHighp ) return EvqHighp;
+			else return EvqMediump;
+		case EvqLowp:
+			if( right == EvqNoPrecSpecified ) return EvqLowp;
+			else return right;
+		case EvqNoPrecSpecified:
+			if( right == EvqNoPrecSpecified ) return EvqNoPrecSpecified;
+			else return right;
+		default:
+			assert(false && "illegal left precision qualifier");
+			return EvqNoPrecSpecified;
+	}
+}
+
 //
 // Connect two nodes with a new parent that does a binary operation on the nodes.
 //
@@ -834,30 +855,6 @@ bool TIntermUnary::promote(TInfoSink&)
 
 
 
-// Added for ESSL support
-TQualifier getHighestPrecision( TQualifier left, TQualifier right, TInfoSink& infoSink ){
-
-//	return left>right?left:right;
-
-	switch( left ){
-		case EvqHighp:
-			return EvqHighp;
-		case EvqMediump:
-			if( right == EvqHighp ) return EvqHighp;
-			else return EvqMediump;
-		case EvqLowp:
-			if( right == EvqNoPrecSpecified ) return EvqLowp;
-			else return right;
-		case EvqNoPrecSpecified:
-			if( right == EvqNoPrecSpecified ) return EvqNoPrecSpecified;
-			else return right;
-		default:
-            infoSink.info.message(EPrefixInternalError, "Invalid precision for operands", 0);
-			return EvqNoPrecSpecified;
-	}
-}
-
-
 //
 // Establishes the type of the resultant operation, as well as
 // makes the operator the correct one for the operands.
@@ -885,9 +882,18 @@ bool TIntermBinary::promote(TInfoSink& infoSink)
 
 	// In addition, the highest precision is chosen. If the types don't match the precision wont count at all.
 
+	TQualifier prec = getHighestPrecision(left->getPrecision(),right->getPrecision());
+    
+	if (prec!=EvqNoPrecSpecified) {
+		// ensurePrecision only cares if the node have undefined precision
+		left->ensurePrecision(prec);
+		right->ensurePrecision(prec);
+	}
+
+
 	// Altered for ESSL support
 	setType(TType(	type, EvqTemporary, 
-					getHighestPrecision(left->getPrecision(),right->getPrecision(),infoSink), 
+					getHighestPrecision(left->getPrecision(),right->getPrecision()), 
 					left->getNominalSize(), left->isMatrix())
 	);
 
@@ -1004,7 +1010,7 @@ bool TIntermBinary::promote(TInfoSink& infoSink)
 				// Altered for ESSL support
 				setType( TType(	type,
 								EvqTemporary,
-								getHighestPrecision( left->getPrecision(), right->getPrecision(), infoSink ),
+								getHighestPrecision( left->getPrecision(), right->getPrecision()),
 								size,
 								true )
 							);
@@ -1015,7 +1021,7 @@ bool TIntermBinary::promote(TInfoSink& infoSink)
 				// Altered for ESSL support
 				setType( TType(	type,
 								EvqTemporary,
-								getHighestPrecision( left->getPrecision(), right->getPrecision(), infoSink ),
+								getHighestPrecision( left->getPrecision(), right->getPrecision()),
 								size,
 								false )
 							);
@@ -1032,7 +1038,7 @@ bool TIntermBinary::promote(TInfoSink& infoSink)
 				// Altered for ESSL support
 				setType( TType(	type,
 								EvqTemporary,
-								getHighestPrecision( left->getPrecision(), right->getPrecision(), infoSink ),
+								getHighestPrecision( left->getPrecision(), right->getPrecision()),
 								size,
 								false )
 							);
@@ -1067,7 +1073,7 @@ bool TIntermBinary::promote(TInfoSink& infoSink)
 				// Altered for ESSL support
 				setType( TType(	type,
 								EvqTemporary,
-								getHighestPrecision( left->getPrecision(), right->getPrecision(), infoSink ),
+								getHighestPrecision( left->getPrecision(), right->getPrecision()),
 								size,
 								false )
 							);
@@ -1096,7 +1102,7 @@ bool TIntermBinary::promote(TInfoSink& infoSink)
 		// Altered for ESSL support
         setType(TType(	type,
 						EvqTemporary,
-						getHighestPrecision(left->getPrecision(), right->getPrecision(), infoSink),
+						getHighestPrecision(left->getPrecision(), right->getPrecision()),
 						size,
 						left->isMatrix() || right->isMatrix())
 						);
@@ -1105,7 +1111,7 @@ bool TIntermBinary::promote(TInfoSink& infoSink)
 				// Altered for ESSL support
 				setType( TType(	type,
 								EvqTemporary,
-								getHighestPrecision( left->getPrecision(), right->getPrecision(), infoSink ),
+								getHighestPrecision( left->getPrecision(), right->getPrecision()),
 								size,
 								true )
 							);

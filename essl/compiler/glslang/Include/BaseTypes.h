@@ -129,9 +129,9 @@ enum TQualifier {
 
 	// Added for ESSL support
 	EvqNoPrecSpecified,										// Used by all types without precision (bool, void, struct, ...)
-	EvqHighp,
-	EvqMediump,
 	EvqLowp,
+	EvqMediump,
+	EvqHighp,
 
 
     // built-ins read by fragment shader
@@ -145,6 +145,9 @@ enum TQualifier {
     // end of list
     EvqLast,
 };
+
+// Added for ESSL support (defined in intermediate.cpp)
+TQualifier getHighestPrecision( TQualifier left, TQualifier right);
 
 //
 // This is just for debug print out, carried along with the definitions above.
