@@ -601,10 +601,20 @@ function_call
                 //
                 $$ = parseContext.addConstructor($1.intermNode, &type, op, fnCall, $1.line);
 			
-				// Dont treat structs and arrays like this
+				// Dont treat structs and arrays like this, only vec2,3,4 and ivec2,3,4
 				if (type.getBasicType() == EbtFloat || type.getBasicType() == EbtInt) {
-					// do precision stuff
-					printf("Some kind of constructor\n");
+					// Find the highest precision in the parameters and let undefined parameters be valuated at that precision
+					TQualifier highestPrec = EvqNoPrecSpecified;
+					int paramCount = fnCall->getParamCount();
+					for (int i=0;i<paramCount;i++) {
+						TQualifier precCandidate = $$->getAsAggregate()->getSequence()[i]->getAsTyped()->getPrecision();
+						highestPrec = getHighestPrecision(highestPrec, precCandidate);
+					}
+					for (int i=0;i<paramCount;i++) {
+						$$->getAsAggregate()->getSequence()[i]->getAsTyped()->ensurePrecision(highestPrec);
+					}
+					// set precision
+					type.setPrecision(highestPrec);
 				}
             }
             
@@ -850,6 +860,10 @@ function_identifier
                 $1.type = EbtFloat;
                 op = EOpConstructFloat;
             }            
+			if ($1.precision!=EvqNoPrecSpecified) {
+                parseContext.error($1.line, "constructors don't have precision qualifiers", TType::getBasicString($1.type), "");
+                parseContext.recover();			
+			}
             TString tempString = "";
             TType type($1);
             TFunction *function = new TFunction(&tempString, type, op);
@@ -1913,14 +1927,16 @@ type_specifier
 //Altered for ESSL support
 type_specifier_nonarray
 	: type_specifier_nonarray_no_prec{
-		TQualifier prec  = parseContext.symbolTable.getDefaultPrecision( $1.type );
+// The default precision is not going to be set here	
+//		TQualifier prec  = parseContext.symbolTable.getDefaultPrecision( $1.type );
 //		if( !parseContext.symbolTable.atBuiltInLevel() ){
 //			if( parseContext.validPrecisionErrorCheck($1.line, prec, $1.type) ){
 //				parseContext.recover();
 //			}
 //		}		
 		$$ = $1;
-		$$.precision = prec;
+//		$$.precision = prec;
+		$$.precision = EvqNoPrecSpecified;
 	}
 	| precision_qualifier type_specifier_nonarray_no_prec{
 		$$ = $2;
