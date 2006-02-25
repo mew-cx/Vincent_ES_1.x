@@ -533,3 +533,61 @@ void TIntermediate::outputTree(TIntermNode* root)
 
     root->traverse(&it);
 }
+
+//
+// This is just for debug print out, carried along with the definitions above.
+//
+const char* getQualifierString(TQualifier q)
+{
+    switch (q) {
+    case EvqTemporary:      return "Temporary";      break;
+    case EvqGlobal:         return "Global";         break;
+    case EvqConst:          return "const";          break;
+    case EvqConstReadOnly:  return "const";          break;
+    case EvqAttribute:      return "attribute";      break;
+    case EvqVaryingIn:      return "varying";        break;
+    case EvqVaryingOut:     return "varying";        break;
+    case EvqUniform:        return "uniform";        break;
+    case EvqIn:             return "in";             break;
+    case EvqOut:            return "out";            break;
+    case EvqInOut:          return "inout";          break;
+    case EvqInput:          return "input";          break;
+    case EvqOutput:         return "output";         break;
+    case EvqPosition:       return "Position";       break;
+    case EvqPointSize:      return "PointSize";      break;
+    case EvqClipVertex:     return "ClipVertex";     break;
+
+	case EvqHighp:			return "highp";			 break;		// Added for ESSL support
+	case EvqMediump:		return "mediump";		 break;		// Added for ESSL support
+	case EvqLowp:			return "lowp";			 break;		// Added for ESSL support
+	case EvqNoPrecSpecified:return "no precision";	 break;		// Added for ESSL support
+
+	case EvqFace:           return "Face";           break;
+    case EvqFragCoord:      return "FragCoord";      break;
+    case EvqFragColor:      return "FragColor";      break;
+    case EvqFragDepth:      return "FragDepth";      break;
+    default:
+		char *word = new char[40];						// TODO remove this!
+		sprintf(word,"unknown qualifier - %d\0",q);
+		return word;
+    }
+}
+
+char* TType::getBasicString(TBasicType t) {
+	switch (t) {
+	case EbtVoid:              return "void";              break;
+	case EbtFloat:             return "float";             break;
+	case EbtInt:               return "int";               break;
+	case EbtBool:              return "bool";              break;
+	case EbtSampler1D:         return "sampler1D";         break;
+	case EbtSampler2D:         return "sampler2D";         break;
+	case EbtSampler3D:         return "sampler3D";         break;
+	case EbtSamplerCube:       return "samplerCube";       break;
+	case EbtSampler1DShadow:   return "sampler1DShadow";   break;
+	case EbtSampler2DShadow:   return "sampler2DShadow";   break;
+	case EbtSamplerRect:       return "samplerRect";       break; // ARB_texture_rectangle
+	case EbtSamplerRectShadow: return "samplerRectShadow"; break; // ARB_texture_rectangle
+	case EbtStruct:            return "structure";         break;
+	default:                   return "unknown type";
+	}
+}

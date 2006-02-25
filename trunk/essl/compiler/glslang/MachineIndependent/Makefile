@@ -81,78 +81,61 @@ clean :
 	
 # DO NOT DELETE
 
-Gen_glslang.o: ParseHelper.h ../Include/ShHandle.h ../Public/ShaderLang.h
-Gen_glslang.o: ../Include/ResourceLimits.h ../Include/InfoSink.h
-Gen_glslang.o: ../Include/Common.h ../Include/PoolAlloc.h SymbolTable.h
-Gen_glslang.o: ../Include/Common.h ../Include/intermediate.h
-Gen_glslang.o: ../Include/Types.h ../Include/BaseTypes.h
-Gen_glslang.o: ../Include/ConstantUnion.h ../Include/InfoSink.h
-Gen_glslang.o: localintermediate.h ../Include/intermediate.h glslang_tab.h
-Gen_glslang.o: ./unistd.h ./preprocessor/preprocess.h
-Gen_glslang.o: ./preprocessor/slglobals.h ./preprocessor/memory.h
-Gen_glslang.o: ./preprocessor/atom.h ./preprocessor/scanner.h
-Gen_glslang.o: ./preprocessor/parser.h ./preprocessor/cpp.h
-Gen_glslang.o: ./preprocessor/tokens.h ./preprocessor/symbols.h
-Gen_glslang.o: ./preprocessor/compile.h
-Gen_glslang_tab.o: SymbolTable.h ../Include/Common.h
-Gen_glslang_tab.o: ../Include/intermediate.h ../Include/Common.h
-Gen_glslang_tab.o: ../Include/PoolAlloc.h ../Include/Types.h
-Gen_glslang_tab.o: ../Include/BaseTypes.h ../Include/ConstantUnion.h
-Gen_glslang_tab.o: ../Include/InfoSink.h ParseHelper.h ../Include/ShHandle.h
-Gen_glslang_tab.o: ../Public/ShaderLang.h ../Include/ResourceLimits.h
-Gen_glslang_tab.o: ../Include/InfoSink.h localintermediate.h
-Gen_glslang_tab.o: ../Include/intermediate.h
-Initialize.o: ../Include/intermediate.h Initialize.h
-Initialize.o: ../Include/ResourceLimits.h ../Include/Common.h
-Initialize.o: ../Include/PoolAlloc.h ../Include/ShHandle.h
+Initialize.o: ../Include/intermediate.h ../Include/Common.h
+Initialize.o: ../Include/PoolAlloc.h ../Include/Types.h
+Initialize.o: ../Include/BaseTypes.h ../Include/ConstantUnion.h Initialize.h
+Initialize.o: ../Include/ResourceLimits.h ../Include/ShHandle.h
 Initialize.o: ../Public/ShaderLang.h ../Include/ResourceLimits.h
 Initialize.o: ../Include/InfoSink.h SymbolTable.h ../Include/Common.h
-Initialize.o: ../Include/intermediate.h ../Include/Types.h
-Initialize.o: ../Include/BaseTypes.h ../Include/ConstantUnion.h
-Initialize.o: ../Include/InfoSink.h
-IntermTraverse.o: ../Include/intermediate.h
+Initialize.o: ../Include/intermediate.h ../Include/InfoSink.h
+IntermTraverse.o: ../Include/intermediate.h ../Include/Common.h
+IntermTraverse.o: ../Include/PoolAlloc.h ../Include/Types.h
+IntermTraverse.o: ../Include/BaseTypes.h ../Include/ConstantUnion.h
 Intermediate.o: localintermediate.h ../Include/intermediate.h
-Intermediate.o: ../Public/ShaderLang.h ../Include/ResourceLimits.h
-Intermediate.o: SymbolTable.h ../Include/Common.h ../Include/intermediate.h
 Intermediate.o: ../Include/Common.h ../Include/PoolAlloc.h ../Include/Types.h
 Intermediate.o: ../Include/BaseTypes.h ../Include/ConstantUnion.h
+Intermediate.o: ../Public/ShaderLang.h ../Include/ResourceLimits.h
+Intermediate.o: SymbolTable.h ../Include/Common.h ../Include/intermediate.h
 Intermediate.o: ../Include/InfoSink.h QualifierAlive.h RemoveTree.h
 ParseHelper.o: ParseHelper.h ../Include/ShHandle.h ../Public/ShaderLang.h
 ParseHelper.o: ../Include/ResourceLimits.h ../Include/InfoSink.h
 ParseHelper.o: ../Include/Common.h ../Include/PoolAlloc.h SymbolTable.h
 ParseHelper.o: ../Include/Common.h ../Include/intermediate.h
-ParseHelper.o: ../Include/Types.h ../Include/BaseTypes.h
-ParseHelper.o: ../Include/ConstantUnion.h ../Include/InfoSink.h
-ParseHelper.o: localintermediate.h ../Include/intermediate.h
+ParseHelper.o: ../Include/InfoSink.h localintermediate.h
+ParseHelper.o: ../Include/intermediate.h ../Include/Types.h
+ParseHelper.o: ../Include/BaseTypes.h ../Include/ConstantUnion.h
 ParseHelper.o: ../Include/InitializeParseContext.h
 ParseHelper.o: ../OSDependent/Linux/osinclude.h
 ParseHelper.o: ../Include/InitializeGlobals.h ../Include/PoolAlloc.h
-QualifierAlive.o: ../Include/intermediate.h
-RemoveTree.o: ../Include/intermediate.h RemoveTree.h
+QualifierAlive.o: ../Include/intermediate.h ../Include/Common.h
+QualifierAlive.o: ../Include/PoolAlloc.h ../Include/Types.h
+QualifierAlive.o: ../Include/BaseTypes.h ../Include/ConstantUnion.h
+RemoveTree.o: ../Include/intermediate.h ../Include/Common.h
+RemoveTree.o: ../Include/PoolAlloc.h ../Include/Types.h
+RemoveTree.o: ../Include/BaseTypes.h ../Include/ConstantUnion.h RemoveTree.h
 ShaderLang.o: SymbolTable.h ../Include/Common.h ../Include/intermediate.h
-ShaderLang.o: ../Include/Common.h ../Include/PoolAlloc.h ../Include/Types.h
-ShaderLang.o: ../Include/BaseTypes.h ../Include/ConstantUnion.h
 ShaderLang.o: ../Include/InfoSink.h ParseHelper.h ../Include/ShHandle.h
 ShaderLang.o: ../Public/ShaderLang.h ../Include/ResourceLimits.h
-ShaderLang.o: ../Include/InfoSink.h localintermediate.h
-ShaderLang.o: ../Include/intermediate.h ../../OGLCompilersDLL/InitializeDll.h
+ShaderLang.o: ../Include/InfoSink.h ../Include/Common.h
+ShaderLang.o: ../Include/PoolAlloc.h localintermediate.h
+ShaderLang.o: ../Include/intermediate.h ../Include/Types.h
+ShaderLang.o: ../Include/BaseTypes.h ../Include/ConstantUnion.h
+ShaderLang.o: ../../OGLCompilersDLL/InitializeDll.h
 ShaderLang.o: ../OSDependent/Linux/osinclude.h ../Include/InitializeGlobals.h
 ShaderLang.o: ../Include/PoolAlloc.h Initialize.h ../Include/ResourceLimits.h
 SymbolTable.o: SymbolTable.h ../Include/Common.h ../Include/intermediate.h
-SymbolTable.o: ../Include/Common.h ../Include/PoolAlloc.h ../Include/Types.h
-SymbolTable.o: ../Include/BaseTypes.h ../Include/ConstantUnion.h
 SymbolTable.o: ../Include/InfoSink.h
 intermOut.o: localintermediate.h ../Include/intermediate.h
-intermOut.o: ../Public/ShaderLang.h ../Include/ResourceLimits.h SymbolTable.h
-intermOut.o: ../Include/Common.h ../Include/intermediate.h
 intermOut.o: ../Include/Common.h ../Include/PoolAlloc.h ../Include/Types.h
 intermOut.o: ../Include/BaseTypes.h ../Include/ConstantUnion.h
+intermOut.o: ../Public/ShaderLang.h ../Include/ResourceLimits.h SymbolTable.h
+intermOut.o: ../Include/Common.h ../Include/intermediate.h
 intermOut.o: ../Include/InfoSink.h
 parseConst.o: ParseHelper.h ../Include/ShHandle.h ../Public/ShaderLang.h
 parseConst.o: ../Include/ResourceLimits.h ../Include/InfoSink.h
 parseConst.o: ../Include/Common.h ../Include/PoolAlloc.h SymbolTable.h
 parseConst.o: ../Include/Common.h ../Include/intermediate.h
-parseConst.o: ../Include/Types.h ../Include/BaseTypes.h
-parseConst.o: ../Include/ConstantUnion.h ../Include/InfoSink.h
-parseConst.o: localintermediate.h ../Include/intermediate.h
+parseConst.o: ../Include/InfoSink.h localintermediate.h
+parseConst.o: ../Include/intermediate.h ../Include/Types.h
+parseConst.o: ../Include/BaseTypes.h ../Include/ConstantUnion.h
 InfoSink.o: ../Include/InfoSink.h

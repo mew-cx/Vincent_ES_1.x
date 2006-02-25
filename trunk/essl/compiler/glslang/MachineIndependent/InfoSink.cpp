@@ -140,3 +140,15 @@ void TInfoSinkBase::append(const TString& t)
     if (outputStream & EStdOut)
         fprintf(stdout, "%s", t.c_str());
 }
+
+void TInfoSinkBase::prefix(TPrefixType message) {
+	switch(message) {
+	case EPrefixNone:                                      break;
+	case EPrefixWarning:       append("WARNING: ");        break;
+	case EPrefixError:         append("ERROR: ");          break;
+	case EPrefixInternalError: append("INTERNAL ERROR: "); break;
+	case EPrefixUnimplemented: append("UNIMPLEMENTED: ");  break;
+	case EPrefixNote:          append("NOTE: ");           break;
+	default:                   append("UNKOWN ERROR: ");   break;
+	}
+}

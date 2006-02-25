@@ -165,9 +165,9 @@ template <class T, class CMP> class TStlSet : public std::set<T, CMP, pool_alloc
 
 
 template <class K, class D, class CMP = std::less<K> >
-class TMap : public TBaseMap<K, D, CMP, pool_allocator<std::pair<K, D> > > {
+class TMap : public TBaseMap<K, D, CMP, pool_allocator<std::pair<const K, D> > > {
 public:
-    typedef pool_allocator<std::pair <K, D> > tAllocator;
+    typedef pool_allocator<std::pair <const K, D> > tAllocator;
 
     TMap() : TBaseMap<K, D, CMP, tAllocator >() {}
     // use correct two-stage name lookup supported in gcc 3.4 and above

@@ -294,24 +294,7 @@ public:
     void setArrayInformationType(TType* t) { arrayInformationType = t; }
     TType* getArrayInformationType() { return arrayInformationType; }
     virtual bool isVector() const { return size > 1 && !matrix; }
-    static char* getBasicString(TBasicType t) {
-        switch (t) {
-        case EbtVoid:              return "void";              break;
-        case EbtFloat:             return "float";             break;
-        case EbtInt:               return "int";               break;
-        case EbtBool:              return "bool";              break;
-        case EbtSampler1D:         return "sampler1D";         break;
-        case EbtSampler2D:         return "sampler2D";         break;
-        case EbtSampler3D:         return "sampler3D";         break;
-        case EbtSamplerCube:       return "samplerCube";       break;
-        case EbtSampler1DShadow:   return "sampler1DShadow";   break;
-        case EbtSampler2DShadow:   return "sampler2DShadow";   break;
-        case EbtSamplerRect:       return "samplerRect";       break; // ARB_texture_rectangle
-        case EbtSamplerRectShadow: return "samplerRectShadow"; break; // ARB_texture_rectangle
-        case EbtStruct:            return "structure";         break;
-        default:                   return "unknown type";
-        }
-    }
+    static char* getBasicString(TBasicType t);
     const char* getBasicString() const { return TType::getBasicString(type); }
     const char* getQualifierString() const { return ::getQualifierString(qualifier); }
     TTypeList* getStruct() { return structure; }
