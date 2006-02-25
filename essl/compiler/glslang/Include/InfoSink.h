@@ -117,17 +117,7 @@ public:
     TInfoSinkBase& operator<<(const TString& t)        { append(t); return *this; }
     TInfoSinkBase& operator+(const char* s)            { append(s); return *this; }
     const char* c_str() const { return sink.c_str(); }
-    void prefix(TPrefixType message) {
-        switch(message) {
-        case EPrefixNone:                                      break;
-        case EPrefixWarning:       append("WARNING: ");        break;
-        case EPrefixError:         append("ERROR: ");          break;
-        case EPrefixInternalError: append("INTERNAL ERROR: "); break;
-        case EPrefixUnimplemented: append("UNIMPLEMENTED: ");  break;
-        case EPrefixNote:          append("NOTE: ");           break;
-        default:                   append("UNKOWN ERROR: ");   break;
-        }
-    }
+    void prefix(TPrefixType message);
     void location(TSourceLoc loc) {
         append(FormatSourceLoc(loc).c_str());
         append(": ");
