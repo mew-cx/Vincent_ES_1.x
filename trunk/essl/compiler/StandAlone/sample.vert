@@ -66,21 +66,11 @@
 //
 
 
-uniform highp mat4 ModelViewProjectionMatrix;			// Modelviewprojection matrix sent by the OpenGL ES host program
-attribute highp vec4 Vertex;					// Vertices must be sent as attributes by the host program
-attribute mediump vec4 Color;					// Vertex color to be interpolated between the vertices
-
-invariant varying mediump vec4 outColor;			// output color to be read by the fragment shader
-invariant gl_Position;						// output position
-
-
-varying float a,b,c;
-
-invariant a,b,c;
-
 
 void main()
 {
-    outColor = Color * a *b *c;
-    gl_Position = ModelViewProjectionMatrix * Vertex;
+	mediump float a;
+	highp float b;
+	lowp float c;
+	lowp float d = a*b*c;
 }

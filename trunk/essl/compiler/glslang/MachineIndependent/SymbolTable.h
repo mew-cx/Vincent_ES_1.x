@@ -96,7 +96,7 @@
 // ************************************************************************
 // * Added functionality for ESSL support: Pushing and popping of scope,
 //   similar to the original functionality, for dealing with declarations
-//   like "precision float mediump;"
+//   like "precision mediump float;"
 // ************************************************************************
 
 #include "Include/Common.h"

@@ -65,9 +65,13 @@
 //POSSIBILITY OF SUCH DAMAGE.
 //
 
+invariant gl_FragColor;
 varying mediump vec4 outColor;
 
 void main()
 {
-    gl_FragColor = outColor;
+	lowp float a;
+	float b;
+	float c;
+	float d = a*b*c;
 }

@@ -575,7 +575,7 @@ function_call
     : function_call_or_method {
         TFunction* fnCall = $1.function;
         TOperator op = fnCall->getBuiltInOp();
-
+		
         
         if (op == EOpArrayLength) {
             if ($1.intermNode->getAsTyped() == 0 || $1.intermNode->getAsTyped()->getType().getArraySize() == 0) {
@@ -600,6 +600,12 @@ function_call
                 // It's a constructor, of type 'type'.
                 //
                 $$ = parseContext.addConstructor($1.intermNode, &type, op, fnCall, $1.line);
+			
+				// Dont treat structs and arrays like this
+				if (type.getBasicType() == EbtFloat || type.getBasicType() == EbtInt) {
+					// do precision stuff
+					printf("Some kind of constructor\n");
+				}
             }
             
             if ($$ == 0) {        
@@ -626,18 +632,18 @@ function_call
 					parseContext.recover();                
 				}
 				
-				printf("func call line %d - mangledname %s \n",$1.line,fnCandidate->getMangledName().c_str());
 				TSymbol* test = parseContext.symbolTable.findUnmangledName(fnCandidate->getName());
 				if (test) {
 					printf("  test call info: %s\n", test->getMangledName().c_str());
 				}
 
                 op = fnCandidate->getBuiltInOp();
+				printf("func call line %d - mangledname %s builtin %d op %d\n",$1.line,fnCandidate->getMangledName().c_str(),builtIn,op );
                 if (builtIn && op != EOpNull) {
                     //
                     // A function call mapped to a built-in operation.
                     //
-                    if (fnCandidate->getParamCount() == 1) {
+                    if (false && fnCandidate->getParamCount() == 1) {
                         //
                         // Treat it like a built-in unary operator.
                         //
@@ -649,7 +655,23 @@ function_call
                             YYERROR;
                         }
                     } else {
+						// Built-in function calls go here
                         $$ = parseContext.intermediate.setAggregateOperator($1.intermAggregate, op, $1.line);
+						
+						// Find the highest precision in the parameters and let undefined parameters be valuated at that precision
+						TQualifier highestPrec = EvqNoPrecSpecified;
+						int paramCount = fnCandidate->getParamCount();
+						for (int i=0;i<paramCount;i++) {
+							TQualifier precCandidate = $$->getAsAggregate()->getSequence()[i]->getAsTyped()->getPrecision();
+							highestPrec = getHighestPrecision(highestPrec, precCandidate);
+						}
+						for (int i=0;i<paramCount;i++) {
+							$$->getAsAggregate()->getSequence()[i]->getAsTyped()->ensurePrecision(highestPrec);
+						}
+						// Return type
+						TType type = fnCandidate->getReturnType();
+						type.setPrecision(highestPrec);
+						$$->setType(type);
                     }
                 } else {
                     // This is a real function call
@@ -676,8 +698,16 @@ function_call
                         }
                         qualifierList.push_back(qual);
                     }
+
+					// Let the precision of parameters with undefined precision be decided by the precision of the formal parameters
+					int paramCount = fnCandidate->getParamCount();
+					for (int i=0;i<paramCount;i++) {
+						TQualifier prec = (*fnCandidate)[i].type->getPrecision();
+						$$->getAsAggregate()->getSequence()[i]->getAsTyped()->ensurePrecision(prec);
+					}
+					// Return type
+	                $$->setType(fnCandidate->getReturnType());
                 }
-                $$->setType(fnCandidate->getReturnType());
             } else {
                 // error message was put out by PaFindFunction()
                 // Put on a dummy node for error recovery
@@ -1884,11 +1914,11 @@ type_specifier
 type_specifier_nonarray
 	: type_specifier_nonarray_no_prec{
 		TQualifier prec  = parseContext.symbolTable.getDefaultPrecision( $1.type );
-		if( !parseContext.symbolTable.atBuiltInLevel() ){
-			if( parseContext.validPrecisionErrorCheck($1.line, prec, $1.type) ){
-				parseContext.recover();
-			}
-		}		
+//		if( !parseContext.symbolTable.atBuiltInLevel() ){
+//			if( parseContext.validPrecisionErrorCheck($1.line, prec, $1.type) ){
+//				parseContext.recover();
+//			}
+//		}		
 		$$ = $1;
 		$$.precision = prec;
 	}
@@ -2341,6 +2371,7 @@ jump_statement
     }
     | RETURN expression SEMICOLON {        
         $$ = parseContext.intermediate.addBranch(EOpReturn, $2, $1.line);
+        $2->ensurePrecision(parseContext.currentFunctionType->getPrecision()); // Added for ESSL support
         parseContext.functionReturnsValue = true;
         if (parseContext.currentFunctionType->getBasicType() == EbtVoid) {
             parseContext.error($1.line, "void function cannot return a value", "return", "");
