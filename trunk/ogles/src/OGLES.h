@@ -109,6 +109,13 @@
 
 #define EGL_MIPMAP_PER_TEXEL		0
 
+// number of varying variables: RGBA + fog + tu/tv per texture unit
+#define EGL_MAX_NUM_VARYING			(4 + 1 + 2 * EGL_NUM_TEXTURE_UNITS)
+
+// blocks for triangle rasterizer; also granularity for linear interpolation
+#define EGL_LOG_RASTER_BLOCK_SIZE	3
+#define EGL_RASTER_BLOCK_SIZE		(1 << EGL_LOG_RASTER_BLOCK_SIZE)
+
 // --------------------------------------------------------------------------
 // type definitions
 // --------------------------------------------------------------------------

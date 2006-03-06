@@ -475,34 +475,27 @@ namespace {
 		return EGL_FixedFromFloat(Interpolate(EGL_FloatFromFixed(x0), EGL_FloatFromFixed(x1), coeff));
 	}
 
-	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, GLfloat coeff) {
+	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, GLfloat coeff, size_t numVarying) {
 		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), coeff));
 		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), coeff));
 		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), coeff));
 		result.m_ClipCoords.setW(Interpolate(dst.m_ClipCoords.w(), src.m_ClipCoords.w(), coeff));
-		result.m_Color.r = Interpolate(dst.m_Color.r, src.m_Color.r, coeff);
-		result.m_Color.g = Interpolate(dst.m_Color.g, src.m_Color.g, coeff);
-		result.m_Color.b = Interpolate(dst.m_Color.b, src.m_Color.b, coeff);
-		result.m_Color.a = Interpolate(dst.m_Color.a, src.m_Color.a, coeff);
 
-		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
-			result.m_TextureCoords[index].tu = Interpolate(dst.m_TextureCoords[index].tu, src.m_TextureCoords[index].tu, coeff);
-			result.m_TextureCoords[index].tv = Interpolate(dst.m_TextureCoords[index].tv, src.m_TextureCoords[index].tv, coeff);
+		for (size_t index = 0; index < numVarying; ++index) {
+			result.m_Varying[index] = Interpolate(dst.m_Varying[index], src.m_Varying[index], coeff);
 		}
-
-		result.m_FogDensity = Interpolate(dst.m_FogDensity, src.m_FogDensity, coeff);
 	}
 
-	inline void InterpolateWithEye(RasterPos& result, const RasterPos& dst, const RasterPos& src, GLfloat coeff) {
+	inline void InterpolateWithEye(RasterPos& result, const RasterPos& dst, const RasterPos& src, GLfloat coeff, size_t numVarying) {
 		result.m_EyeCoords.setX(Interpolate(dst.m_EyeCoords.x(), src.m_EyeCoords.x(), coeff));
 		result.m_EyeCoords.setY(Interpolate(dst.m_EyeCoords.y(), src.m_EyeCoords.y(), coeff));
 		result.m_EyeCoords.setZ(Interpolate(dst.m_EyeCoords.z(), src.m_EyeCoords.z(), coeff));
 		result.m_EyeCoords.setW(Interpolate(dst.m_EyeCoords.w(), src.m_EyeCoords.w(), coeff));
 
-		Interpolate(result, dst, src, coeff);
+		Interpolate(result, dst, src, coeff, numVarying);
 	}
 
-	inline size_t ClipLow(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary, size_t coord) {
+	inline size_t ClipLow(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary, size_t coord, size_t numVarying) {
 
 		if (inputCount < 3) {
 			return 0;
@@ -535,7 +528,7 @@ namespace {
 					GLfloat num = p_w + p_x; 
 					GLfloat denom = (p_w + p_x) - (c_w + c_x);
 
-					Interpolate(newVertex, *current, *previous, num / denom);
+					Interpolate(newVertex, *current, *previous, num / denom, numVarying);
 					newVertex.m_ClipCoords[coord] = -newVertex.m_ClipCoords.w();
 
 					output[resultCount++] = current;
@@ -555,7 +548,7 @@ namespace {
 					GLfloat num = p_w + p_x; 
 					GLfloat denom = (p_w + p_x) - (c_w + c_x);
 					
-					Interpolate(newVertex, *current, *previous, num / denom);
+					Interpolate(newVertex, *current, *previous, num / denom, numVarying);
 					newVertex.m_ClipCoords[coord] = -newVertex.m_ClipCoords.w();
 
 					//previous = current;
@@ -569,7 +562,7 @@ namespace {
 
 	}
 
-	inline size_t ClipHigh(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary, size_t coord) {
+	inline size_t ClipHigh(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary, size_t coord, size_t numVarying) {
 
 		if (inputCount < 3) {
 			return 0;
@@ -601,7 +594,7 @@ namespace {
 					GLfloat num = p_w - p_x; 
 					GLfloat denom = (p_w - p_x) - (c_w - c_x);
 					
-					Interpolate(newVertex, *current, *previous, num / denom); 
+					Interpolate(newVertex, *current, *previous, num / denom, numVarying); 
 					newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
 
 					output[resultCount++] = current;
@@ -620,7 +613,7 @@ namespace {
 					GLfloat num = p_w - p_x; 
 					GLfloat denom = (p_w - p_x) - (c_w - c_x);
 					
-					Interpolate(newVertex, *current, *previous, num / denom); 
+					Interpolate(newVertex, *current, *previous, num / denom, numVarying); 
 					newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
 				}
 			}
@@ -632,7 +625,7 @@ namespace {
 
 	}
 
-	size_t ClipUser(const Vec4f& plane, RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary) {
+	size_t ClipUser(const Vec4f& plane, RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary, size_t numVarying) {
 		if (inputCount < 3) {
 			return 0;
 		}
@@ -658,7 +651,7 @@ namespace {
 					RasterPos & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 										
-					InterpolateWithEye(newVertex, *current, *previous, p / (p - c)); 
+					InterpolateWithEye(newVertex, *current, *previous, p / (p - c), numVarying); 
 					output[resultCount++] = current;
 				}
 			} else {
@@ -668,7 +661,7 @@ namespace {
 					RasterPos & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 					
-					InterpolateWithEye(newVertex, *current, *previous, p / (p - c)); 
+					InterpolateWithEye(newVertex, *current, *previous, p / (p - c), numVarying); 
 				}
 			}
 
@@ -733,80 +726,67 @@ namespace {
 	}
 }
 
-inline bool Context :: IsCulled(RasterPos& a, RasterPos& b, RasterPos& c) {
 
-	GLfloat x0 = a.m_ClipCoords.w();
-	GLfloat x1 = a.m_ClipCoords.x();
-	GLfloat x2 = a.m_ClipCoords.y();
-								
-	GLfloat y0 = b.m_ClipCoords.w();
-	GLfloat y1 = b.m_ClipCoords.x();
-	GLfloat y2 = b.m_ClipCoords.y();
-								
-	GLfloat z0 = c.m_ClipCoords.w();
-	GLfloat z1 = c.m_ClipCoords.x();
-	GLfloat z2 = c.m_ClipCoords.y();
+void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
 
 	GLfloat sign = 
 		Det3x3(a.m_ClipCoords.w(), a.m_ClipCoords.x(), a.m_ClipCoords.y(),
 			   b.m_ClipCoords.w(), b.m_ClipCoords.x(), b.m_ClipCoords.y(),
 			   c.m_ClipCoords.w(), c.m_ClipCoords.x(), c.m_ClipCoords.y());
 
-	switch (m_CullMode) {
-		case CullModeBack:
-			return (sign < 0.0f) ^ m_ReverseFaceOrientation;
-
-		case CullModeFront:
-			return (sign > 0.0f) ^ m_ReverseFaceOrientation;
-
-		default:
-		case CullModeBackAndFront:
-			return true;
-	}
-}
-
-
-void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
-
-	bool culled = IsCulled(a, b, c);
+	bool cw = (sign < 0.0f);
+	bool backFace = cw ^ m_ReverseFaceOrientation;
 
 	if (m_CullFaceEnabled) {
-		if (culled) {
+		if ((m_CullMode == CullModeFront) ^ backFace)
 			return;
-		}
-	} 
-	
-	if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
-		if (m_TwoSidedLightning && culled) {
-			a.m_Color = a.m_BackColor;
-			b.m_Color = b.m_BackColor;
-			c.m_Color = c.m_BackColor;
+	}
+
+	if (m_VaryingInfo->colorIndex >= 0) {
+		if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
+			if (m_TwoSidedLightning && backFace) {
+				a.m_BackColor.toArray(a.m_Varying + m_VaryingInfo->colorIndex);
+				b.m_BackColor.toArray(b.m_Varying + m_VaryingInfo->colorIndex);
+				c.m_BackColor.toArray(c.m_Varying + m_VaryingInfo->colorIndex);
+			} else {
+				a.m_FrontColor.toArray(a.m_Varying + m_VaryingInfo->colorIndex);
+				b.m_FrontColor.toArray(b.m_Varying + m_VaryingInfo->colorIndex);
+				c.m_FrontColor.toArray(c.m_Varying + m_VaryingInfo->colorIndex);
+			}
 		} else {
-			a.m_Color = a.m_FrontColor;
-			b.m_Color = b.m_FrontColor;
-			c.m_Color = c.m_FrontColor;
-		}
-	} else {
-		if (m_TwoSidedLightning && culled) {
-			a.m_Color =  b.m_Color = c.m_Color = c.m_BackColor;
-		} else {
-			a.m_Color = b.m_Color = c.m_Color = c.m_FrontColor;
+			if (m_TwoSidedLightning && backFace) {
+				c.m_BackColor.toArray(a.m_Varying + m_VaryingInfo->colorIndex);
+				c.m_BackColor.toArray(b.m_Varying + m_VaryingInfo->colorIndex);
+				c.m_BackColor.toArray(c.m_Varying + m_VaryingInfo->colorIndex);
+			} else {
+				c.m_FrontColor.toArray(a.m_Varying + m_VaryingInfo->colorIndex);
+				c.m_FrontColor.toArray(b.m_Varying + m_VaryingInfo->colorIndex);
+				c.m_FrontColor.toArray(c.m_Varying + m_VaryingInfo->colorIndex);
+			}
 		}
 	}
 
 	RasterPos * array1[16];
 	array1[0] = &a;
-	array1[1] = &b;
-	array1[2] = &c;
+
+	if (!cw) {
+		array1[1] = &b;
+		array1[2] = &c;
+	} else {
+		array1[2] = &b;
+		array1[1] = &c;
+	}
+
 	RasterPos * array2[16];
 	RasterPos * tempVertices = m_Temporary;
 
 	size_t numVertices = 3;
+	size_t numVarying = m_VaryingInfo->numVarying;
 
 	if (m_ClipPlaneEnabled) {
 		for (size_t index = 0, mask = 1; index < NUM_CLIP_PLANES; ++index, mask <<= 1) {
 			if (m_ClipPlaneEnabled & mask) {
-				numVertices = ClipUser(m_ClipPlanes[index], array1, numVertices, array2, tempVertices);
+				numVertices = ClipUser(m_ClipPlanes[index], array1, numVertices, array2, tempVertices, numVarying);
 
 				if (!numVertices) {
 					return;
@@ -820,8 +800,8 @@ void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
 	}
 
 	for (size_t coord = 0; coord < 3; ++coord) {
-		numVertices = ClipLow(array1, numVertices, array2, tempVertices, coord);
-		numVertices = ClipHigh(array2, numVertices, array1, tempVertices, coord);
+		numVertices = ClipLow(array1, numVertices, array2, tempVertices, coord, numVarying);
+		numVertices = ClipHigh(array2, numVertices, array1, tempVertices, coord, numVarying);
 	}
 
 	if (numVertices >= 3) {

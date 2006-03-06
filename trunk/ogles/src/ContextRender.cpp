@@ -660,14 +660,18 @@ void Context :: PrepareRendering() {
 
 inline void Context :: CurrentTextureValuesToRasterPos(RasterPos * rasterPos) {
 	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		if (m_TextureMatrixStack[unit].CurrentMatrix().IsIdentity()) {
-			rasterPos->m_TextureCoords[unit].tu = m_CurrentTextureCoords[unit].tu;
-			rasterPos->m_TextureCoords[unit].tv = m_CurrentTextureCoords[unit].tv;
-		} else {
-			Vec3D inCoords(m_CurrentTextureCoords[unit].tu, m_CurrentTextureCoords[unit].tv, 0);
-			Vec4D outCoords = m_TextureMatrixStack[unit].CurrentMatrix() * inCoords;
-			rasterPos->m_TextureCoords[unit].tu = outCoords.x();
-			rasterPos->m_TextureCoords[unit].tv = outCoords.y();
+		if (m_VaryingInfo->textureBase[unit] >= 0) {
+			I32 base = m_VaryingInfo->textureBase[unit];
+
+			if (m_TextureMatrixStack[unit].CurrentMatrix().IsIdentity()) {
+				rasterPos->m_Varying[base] = m_CurrentTextureCoords[unit].tu;
+				rasterPos->m_Varying[base + 1] = m_CurrentTextureCoords[unit].tv;
+			} else {
+				Vec3D inCoords(m_CurrentTextureCoords[unit].tu, m_CurrentTextureCoords[unit].tv, 0);
+				Vec4D outCoords = m_TextureMatrixStack[unit].CurrentMatrix() * inCoords;
+				rasterPos->m_Varying[base] = outCoords.x();
+				rasterPos->m_Varying[base + 1] = outCoords.y();
+			}
 		}
 	}
 }
@@ -705,10 +709,8 @@ void Context :: CurrentValuesToRasterPosNoLight(RasterPos * rasterPos) {
 	rasterPos->m_FrontColor = rasterPos->m_BackColor = m_CurrentRGBA;
 
 	if (m_RasterizerState.IsEnabledFog()) {
-		// populate fog density here...
-		rasterPos->m_FogDensity = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
-	} else {
-		rasterPos->m_FogDensity = 0;
+		assert(m_VaryingInfo->fogIndex >= 0);
+		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
 	}
 
 	CurrentTextureValuesToRasterPos(rasterPos);
@@ -734,7 +736,10 @@ void Context :: CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos) {
 	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
-	rasterPos->m_FogDensity = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+	if (m_RasterizerState.IsEnabledFog()) {
+		assert(m_VaryingInfo->fogIndex >= 0);
+		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+	}
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal;
@@ -792,7 +797,10 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos) {
 	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
-	rasterPos->m_FogDensity = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+	if (m_RasterizerState.IsEnabledFog()) {
+		assert(m_VaryingInfo->fogIndex >= 0);
+		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+	}
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal;
@@ -849,7 +857,10 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos) {
 	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
-	rasterPos->m_FogDensity = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+	if (m_RasterizerState.IsEnabledFog()) {
+		assert(m_VaryingInfo->fogIndex >= 0);
+		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+	}
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal;
@@ -912,7 +923,10 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
-	rasterPos->m_FogDensity = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+	if (m_RasterizerState.IsEnabledFog()) {
+		assert(m_VaryingInfo->fogIndex >= 0);
+		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+	}
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal;
@@ -975,10 +989,10 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 	// keep this value around for perspective-correct texturing
 	GLfloat invDenominator = (w != 0.0f) ? 1.0f / w : 0.0f;
 
-	// Scale 1/Z by 2^10 to avoid rounding problems during prespective correct
+	// Scale 1/Z by 2^12 to avoid rounding problems during prespective correct
 	// interpolation
 	// See book by LaMothe for more detailed discussion on this
-	pos.m_WindowCoords.invZ = EGL_FixedFromFloat(invDenominator) << 10;
+	pos.m_WindowCoords.invW = EGL_FixedFromFloat(invDenominator) << 12;
 
 	pos.m_WindowCoords.x = 
 		EGL_Mul(EGL_FixedFromFloat(x * invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
@@ -987,8 +1001,8 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 	pos.m_WindowCoords.depth = 
 		EGL_CLAMP(EGL_Mul(EGL_FixedFromFloat(z * invDenominator), m_DepthRangeFactor) + m_DepthRangeBase, 0, 0xffff);
 
-	pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x1000) & ~0x1fff);
-	pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x1000) & ~0x1fff);
+	//pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x1000) & ~0x1fff);
+	//pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x1000) & ~0x1fff);
 	//pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x80) & ~0xff);
 	//pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x80) & ~0xff);
 }

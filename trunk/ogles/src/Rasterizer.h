@@ -56,6 +56,23 @@ namespace EGL {
 	class FunctionCache;
 
 	// ----------------------------------------------------------------------
+	// allocation of varying variables within parameter array
+	// ----------------------------------------------------------------------
+
+	struct VaryingInfo {
+		// varying variable will be allocated based on the current state
+		// settings
+		size_t					numVarying;
+
+		// the following variables specify the index base for the different
+		// varying variables; a negative value indicates that there is no
+		// such varying variable in use
+		I32						colorIndex;	
+		I32						fogIndex;		
+		I32						textureBase[EGL_NUM_TEXTURE_UNITS];	
+	};
+
+	// ----------------------------------------------------------------------
 	// u and v coordinates for texture mapping
 	// ----------------------------------------------------------------------
 	struct TexCoord {
@@ -69,17 +86,10 @@ namespace EGL {
 
 	struct ScreenCoord {
 		EGL_Fixed		x, y;		// x, y window coords
-		EGL_Fixed		invZ;		// 1/Z (w) from depth division
+		EGL_Fixed		invW;		// 1/Z (w) from depth division
 
 		// TO DO: once the rasterizer works properly, change this to binary 0..2^n-1
 		EGL_Fixed		depth;		// depth coordinate after transformation
-	};
-
-	struct EdgeCoord {
-		EGL_Fixed		x, invZ;	// x window coords
-
-		// TO DO: once the rasterizer works properly, change this to binary 0..2^n-1
-		EGL_Fixed		depth;		// depth coordinate
 	};
 
 	// ----------------------------------------------------------------------
@@ -87,46 +97,26 @@ namespace EGL {
 	// ----------------------------------------------------------------------
 
 	struct RasterPos {
+		FractionalColor		m_FrontColor;		// color in range 0..255
+		FractionalColor		m_BackColor;		
 		Vec4D				m_EyeCoords;
 		Vec4f				m_ClipCoords;
 		ScreenCoord			m_WindowCoords;		
-		FractionalColor		m_Color;
-		FractionalColor		m_FrontColor;		// color in range 0..255
-		FractionalColor		m_BackColor;		
-		TexCoord			m_TextureCoords[EGL_NUM_TEXTURE_UNITS];	// texture coords 0..1
-		EGL_Fixed			m_FogDensity;		// fog density at this vertex
+		EGL_Fixed			m_Varying[EGL_MAX_NUM_VARYING];
 	};
 
-	// ----------------------------------------------------------------------
-	// Coordinate increments used in various parts of the rasterizer
-	// ----------------------------------------------------------------------
-
-	struct EdgePos {
-		EdgeCoord			m_WindowCoords;								// z over w
-		FractionalColor		m_Color;									// color in range 0..255
-		TexCoord			m_TextureCoords[EGL_NUM_TEXTURE_UNITS];		// texture coords 0..1 over w
-		EGL_Fixed			m_FogDensity;								// fog density at this vertex
+	struct SurfaceInfo {
+		U16 *		DepthBuffer;
+		U16 *		ColorBuffer;
+		U32 *		StencilBuffer;
+		U8 *		AlphaBuffer;
 	};
-
-	// ----------------------------------------------------------------------
-	// Gradient data structure used for triangle rasterization
-	// ----------------------------------------------------------------------
-
-	struct Gradients {
-		EdgePos				dx;
-		EdgePos				dy;
-	};
-
-	struct EdgePos;
 
 	struct RasterInfo {
 		// surface info
 		I32			SurfaceWidth;
 		I32			SurfaceHeight;
-		U16 *		DepthBuffer;
-		U16 *		ColorBuffer;
-		U32 *		StencilBuffer;
-		U8 *		AlphaBuffer;
+		SurfaceInfo	SurfaceInfo;
 		const I32 *	InversionTablePtr;
 
 		// TODO: will need to add a minimum texture level here
@@ -137,11 +127,10 @@ namespace EGL {
 		U32			MipmapLevel[EGL_NUM_TEXTURE_UNITS];
 		U32			MaxMipmapLevel[EGL_NUM_TEXTURE_UNITS];
 
-        void Init(Surface * surface, I32 y);
+        void Init(Surface * surface, I32 y, I32 x = 0);
 	};
 
 	// signature for generated scanline functions
-	typedef void (ScanlineFunction)(const RasterInfo * info, const EdgePos * start, const EdgePos * end);
 	typedef void (LineFunction)(const RasterInfo * info, const RasterPos * from, const RasterPos * to);
 	typedef void (PointFunction)(const RasterInfo * info, const RasterPos * pos, EGL_Fixed size);
 
@@ -179,6 +168,8 @@ namespace EGL {
 		void SetState(RasterizerState * state);
 		RasterizerState * GetState() const;
 
+		const VaryingInfo * GetVaryingInfo() const;
+
 		void SetSurface(Surface * surface);
 		Surface * GetSurface() const;
 
@@ -193,9 +184,6 @@ namespace EGL {
 		// scissor test, scan conversion, texturing, compositing, depth &
 		// stencil test.
 		// ----------------------------------------------------------------------
-
-		typedef void (Rasterizer::*RasterTriangleFunction)(const RasterPos& a, const RasterPos& b,
-			const RasterPos& c);
 
 		void RasterPoint(const RasterPos& point, EGL_Fixed size);
 		void RasterLine(RasterPos& from, RasterPos& to);
@@ -219,9 +207,9 @@ namespace EGL {
 
 	private:
 		// ----------------------------------------------------------------------
-		// Rasterization of triangle scan line
+		// allocate varying variables
 		// ----------------------------------------------------------------------
-		void RasterScanLine(RasterInfo & info, const EdgePos & start, const EdgePos & end);
+		void AllocateVaryings();
 
 		// ----------------------------------------------------------------------
 		// Rasterization of triangle
@@ -229,7 +217,6 @@ namespace EGL {
 		// Variations are: All, +/- color [Cc], +/- texture [Tt], +/- depth [Dd], +/- fog [Ff], +/- scissor [Ss]
 		// combination ct does not exist
 		// ----------------------------------------------------------------------
-		void RasterTriangleAll(const RasterPos& a, const RasterPos& b, const RasterPos& c);
 
 		enum RasterTriangleBits {
 			RasterTriangleColor,
@@ -241,31 +228,6 @@ namespace EGL {
 			RasterTriangleCount,
 		};
 
-		void RasterTriangle_cTdfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_cTdFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_cTDfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_cTDFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_Ctdfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CtdFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CtDfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CtDFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CTdfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CTdFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CTDfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CTDFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_cTdfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_cTdFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_cTDfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_cTDFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CtdfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CtdFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CtDfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CtDFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CTdfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CTdFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CTDfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-		void RasterTriangle_CTDFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-
 		// ----------------------------------------------------------------------
 		// Rasterization of fragment
 		// ----------------------------------------------------------------------
@@ -276,6 +238,18 @@ namespace EGL {
 			// the coordinates are integer coordinates
 
 		void Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed depth, 
+					  EGL_Fixed tu[], EGL_Fixed tv[],
+					  const Color& baseColor, EGL_Fixed fog);
+			// fragment rendering with signature corresponding to function fragment
+			// generated by code generator
+
+		bool FragmentDepthStencil(const SurfaceInfo * surfaceInfo, I32 x, EGL_Fixed depth);
+			// fragment rendering with signature corresponding to function fragment
+			// generated by code generator
+			// return true if the fragment passed depth and stencil tests
+
+		void FragmentColorAlpha(const SurfaceInfo * surfaceInfo, I32 x, 
+					  const Texture * texture[EGL_NUM_TEXTURE_UNITS],
 					  EGL_Fixed tu[], EGL_Fixed tv[],
 					  const Color& baseColor, EGL_Fixed fog);
 			// fragment rendering with signature corresponding to function fragment
@@ -299,13 +273,8 @@ namespace EGL {
 		RasterizerState *		m_State;			// current rasterization settings
 		FunctionCache *			m_FunctionCache;
 
-		ScanlineFunction *		m_ScanlineFunction;
 		LineFunction *			m_LineFunction;		// raster lines function
 		PointFunction *			m_PointFunction;
-
-		RasterTriangleFunction	m_RasterTriangleFunction;
-
-		RasterTriangleFunction	m_RasterTriangleFunctions[1 << RasterTriangleCount];
 
 		// ----------------------------------------------------------------------
 		// internal state
@@ -315,6 +284,7 @@ namespace EGL {
 		EGL_Fixed				m_MinY;
 		EGL_Fixed				m_MaxY;
 
+		VaryingInfo				m_VaryingInfo;
 		bool					m_UseMipmap[EGL_NUM_TEXTURE_UNITS];
 	};
 
@@ -323,6 +293,9 @@ namespace EGL {
 	// Inline member definitions
 	// --------------------------------------------------------------------------
 
+	inline const VaryingInfo * Rasterizer :: GetVaryingInfo() const {
+		return &m_VaryingInfo;
+	}
 
 	inline void Rasterizer :: SetSurface(Surface * surface) {
 		m_Surface = surface;
@@ -334,9 +307,9 @@ namespace EGL {
 	}
 
 
-	inline void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b, const RasterPos& c) {
-		(this->*m_RasterTriangleFunction)(a, b, c);
-	}
+//	inline void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b, const RasterPos& c) {
+//		(this->*m_RasterTriangleFunction)(a, b, c);
+//	}
 
 
 #	if EGL_USE_JIT
@@ -352,10 +325,6 @@ namespace EGL {
 		p_to.m_WindowCoords.y = ((p_to.m_WindowCoords.y + 0x800) & ~0xfff);
 
 		m_LineFunction(&m_RasterInfo, &p_from, &p_to);
-	}
-
-	inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos & start, const EdgePos & end) {
-		m_ScanlineFunction(&rasterInfo, &start, &end);
 	}
 
 #	endif // EGL_USE_JIT

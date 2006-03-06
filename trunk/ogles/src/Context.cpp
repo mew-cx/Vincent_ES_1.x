@@ -139,6 +139,8 @@ Context :: Context(const Config & config)
 	ClearStencil(0);
 
 	m_Rasterizer = new Rasterizer(GetRasterizerState());	
+	m_VaryingInfo = m_Rasterizer->GetVaryingInfo();
+
 	m_Buffers.Allocate();			// default buffer
 
 	m_LightModelAmbient.r = m_LightModelAmbient.g = m_LightModelAmbient.b = F(0.2f);

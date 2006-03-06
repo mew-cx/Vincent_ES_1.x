@@ -76,6 +76,13 @@ namespace EGL {
 			a = rgba[3];
 		}
 
+		void toArray(EGL_Fixed * rgba) {
+			rgba[0] = r;
+			rgba[1] = g;
+			rgba[2] = b;
+			rgba[3] = a;
+		}
+
 		static FractionalColor Clamp(const EGL_Fixed * rgba) {
 			return FractionalColor(
 				EGL_CLAMP(rgba[0], 0, EGL_ONE),
