@@ -49,50 +49,15 @@
 
 using namespace EGL;
 
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
 
 namespace {
-	const I8 Permutation[8][3] = {
-		{ 0, 1, 2 },
-		{ 0, 2, 1 },
-		{ 0, 0, 0 },	// impossible
-		{ 2, 0, 1 },
-		{ 1, 0, 2 },
-		{ 0, 0, 0 },	// impossible
-		{ 1, 2, 0 },
-		{ 2, 1, 0 },
-	};
-
-	inline const I8 * SortPermutation(I32 x0, I32 x1, I32 x2) {
-		U32 y0 = static_cast<U32>(x0);
-		U32 y1 = static_cast<U32>(x1);
-		U32 y2 = static_cast<U32>(x2);
-
-		const I8 * result = Permutation[
-			(((y1 - y0) >> 29) & 4) |
-			(((y2 - y0) >> 30) & 2) |
-			(((y2 - y1) >> 31) & 1)];
-
-		assert(result[0] | result[1] | result[2]);
-
-		return result;
-	}
-
-	inline int Greater(I32 x0, I32 x1) {
-		U32 y0 = static_cast<U32>(x0);
-		U32 y1 = static_cast<U32>(x1);
-
-		return (y1 - y0) >> 31;
-	}
-	
-	inline EGL_Fixed TriangleArea(EGL_Fixed x0, EGL_Fixed y0,
-								  EGL_Fixed x1, EGL_Fixed y1, 
-								  EGL_Fixed x2, EGL_Fixed y2) {
-		return 
-			EGL_Abs(
-				EGL_Mul(x1, y2) + EGL_Mul(x2, y0) + EGL_Mul(x0, y1)
-				- EGL_Mul(x2, y1) - EGL_Mul(x0, y2) - EGL_Mul(x1, y0));
-	}
-
 	inline int Log2(int value) {
 		if (value <= 1) {
 			return 0;
@@ -108,42 +73,17 @@ namespace {
 		return result;
 	}
 
-#define DET_SHIFT 4
-
-	inline EGL_Fixed Det2x2(EGL_Fixed a11, EGL_Fixed a12, EGL_Fixed a21, EGL_Fixed a22) {
-		return EGL_Mul(a11 >> DET_SHIFT, a22 >> DET_SHIFT) -
-			EGL_Mul(a12 >> DET_SHIFT, a21 >> DET_SHIFT);
+	inline I32 min(I32 a, I32 b, I32 c) {
+		I32 d = (a < b) ? a : b;
+		return (d < c) ? d : c;
 	}
 
-	inline EGL_Fixed Det2x2NoShift(EGL_Fixed a11, EGL_Fixed a12, EGL_Fixed a21, EGL_Fixed a22) {
-		I64 first = static_cast<I64>(a11) * static_cast<I64>(a22);
-		I64 second = static_cast<I64>(a12) * static_cast<I64>(a21);
-
-		return (EGL_Fixed) ((first - second)  >> EGL_PRECISION);
+	inline I32 max(I32 a, I32 b, I32 c) {
+		I32 d = (a > b) ? a : b;
+		return (d > c) ? d : c;
 	}
 
-}
-
-
-#define SOLVE_PARAM_XY(val, p1, p2, p3, scale) \
-	grad.dx.val = EGL_Mul(																\
-			Det2x2NoShift(																		\
-				p2 - p1, (pos2.m_WindowCoords.y - pos1.m_WindowCoords.y) >> DET_SHIFT,					\
-				p3 - p1, (pos3.m_WindowCoords.y - pos1.m_WindowCoords.y) >> DET_SHIFT) >> DET_SHIFT,				\
-			scale);	\
-	grad.dy.val = EGL_Mul(																\
-			Det2x2NoShift(																		\
-				(pos2.m_WindowCoords.x - pos1.m_WindowCoords.x) >> DET_SHIFT, p2 - p1,					\
-				(pos3.m_WindowCoords.x - pos1.m_WindowCoords.x) >> DET_SHIFT, p3 - p1) >> DET_SHIFT,				\
-			scale)
-
-
-#define SOLVE_XY(param, scale) \
-	SOLVE_PARAM_XY(param, pos1.param, pos2.param, pos3.param, scale)
-
-
-namespace {
-	bool hasAlpha(RasterizerState::TextureFormat format) {
+	bool HasAlpha(RasterizerState::TextureFormat format) {
 		switch (format) {
 		case RasterizerState::TextureFormatAlpha:
 		case RasterizerState::TextureFormatLuminanceAlpha:
@@ -152,10 +92,62 @@ namespace {
 		case RasterizerState::TextureFormatRGBA5551:
 			return true;
 
-
 		default:
 			return false;
 		}
+	}
+
+	inline I32 Mul24(I32 a, I32 b) {
+		I64 product = static_cast<I64>(a) * static_cast<I64>(b);
+		return static_cast<I32>((product + 0x400000) >> 23);
+	}
+
+	inline I32 MulRoundShift(I32 a, I32 b, I32 shift) {
+		I64 product = static_cast<I64>(a) * static_cast<I64>(b);
+		return static_cast<I32>((product + (1 << (shift - 1))) >> shift);
+	}
+
+# if 0
+	I32 Inverse8q24(I32 a) {
+		I32 x;
+
+		/* 1/(4x) */
+		static const I32 __gl_rcp_tab[] = { /* domain 0.5 .. 1.0-1/16 */
+			0x8000, 0x71c7, 0x6666, 0x5d17, 0x5555, 0x4ec4, 0x4924, 0x4444
+		};
+		bool sign = false;
+
+		if (a == 0) return 0;
+
+		if (a < 0) {
+			sign = true;
+			a = -a;
+		}
+
+		x = __gl_rcp_tab[(a >> 21)&0x7] << 8;
+
+		/* 3 iterations of newton-raphson  x = x(2-ax) */
+		int iter = 3;
+
+		do {
+			x = Mul24(x,(0x1000000 - Mul24(a,x)));
+		} while (--iter);
+
+		if (sign)
+			x = -x;
+
+		return x;
+	}
+#endif
+
+	I32 InvNewtonRaphson4q28(I32 a, I32 x) {
+		int iter = 3;
+
+		do {
+			x = MulRoundShift(x,(0x20000 - MulRoundShift(a, x, 16)), 12);
+		} while (--iter);
+
+		return x;
 	}
 }
 
@@ -167,13 +159,12 @@ namespace {
 void Rasterizer :: PrepareTriangle() {
 	PrepareTexture();
 
-	m_ScanlineFunction = (ScanlineFunction *)
-		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeScanline, 
-									 *m_State);
+	// initialize block rasterization here
 
 	// could be optimized
-	bool needsColor = !m_State->m_Texture[0].Enabled || 
-					  m_State->m_Texture[0].Mode != RasterizerState::TextureModeReplace;
+	bool needsColor = true;
+				//!m_State->m_Texture[0].Enabled || 
+				//  m_State->m_Texture[0].Mode != RasterizerState::TextureModeReplace;
 
 	bool needsTexture = false;
 	
@@ -194,668 +185,416 @@ void Rasterizer :: PrepareTriangle() {
 		((needsScissor	? 1 : 0) << RasterTriangleScissor	) |
 		((needsStencil	? 1 : 0) << RasterTriangleStencil	);
 
-	m_RasterTriangleFunction = m_RasterTriangleFunctions[selector];
-
-	if (m_RasterTriangleFunction == 0)
-        m_RasterTriangleFunction = &Rasterizer::RasterTriangleAll;
-
 	memset(m_RasterInfo.MipmapLevel, 0, sizeof(m_RasterInfo.MipmapLevel));
 }
 
 
-// --------------------------------------------------------------------------
-// number of pixels done with linear interpolation
-// --------------------------------------------------------------------------
+void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
+								  const RasterPos& c) {
 
+	// 16.16 -> 28.4 fixed-point coordinates
+	I32 Y1 = (a.m_WindowCoords.y + (1 << 11)) >> 12;
+	I32 Y2 = (b.m_WindowCoords.y + (1 << 11)) >> 12;
+	I32 Y3 = (c.m_WindowCoords.y + (1 << 11)) >> 12;
 
-#define LOG_LINEAR_SPAN 3					// logarithm of value base 2
-#define LINEAR_SPAN (1 << LOG_LINEAR_SPAN)	// must be power of 2
+	I32 X1 = (a.m_WindowCoords.x + (1 << 11)) >> 12;
+	I32 X2 = (b.m_WindowCoords.x + (1 << 11)) >> 12;
+	I32 X3 = (c.m_WindowCoords.x + (1 << 11)) >> 12;
 
-#if !EGL_USE_JIT
+	I32 IX = (X1 + X2 + X3) / 3;
+	I32 IY = (Y1 + Y2 + Y3) / 3;
 
-inline void Rasterizer :: RasterScanLine(RasterInfo & rasterInfo, const EdgePos & start, const EdgePos & delta) {
+	I32 OX = (IX + 8) >> 4;
+	I32 OY = (IY + 8) >> 4;
 
-	// In the edge buffer, z, tu and tv are actually divided by w
+    // Deltas
+    I32 DX12 = X1 - X2, DX23 = X2 - X3, DX31 = X3 - X1;
+    I32 DY12 = Y1 - Y2, DY23 = Y2 - Y3, DY31 = Y3 - Y1;
 
-	FractionalColor baseColor = start.m_Color;
+    I32 DW12 = a.m_WindowCoords.invW - b.m_WindowCoords.invW;
+    I32 DW23 = b.m_WindowCoords.invW - c.m_WindowCoords.invW;
+    I32 DW31 = c.m_WindowCoords.invW - a.m_WindowCoords.invW;
 
-	if (!(delta.m_WindowCoords.x - start.m_WindowCoords.x)) {
+    I32 DD12 = a.m_WindowCoords.depth - b.m_WindowCoords.depth;
+    I32 DD23 = b.m_WindowCoords.depth - c.m_WindowCoords.depth;
+    I32 DD31 = c.m_WindowCoords.depth - a.m_WindowCoords.depth;
+
+    // 24.8 Fixed-point deltas
+    I32 FDX12 = DX12 << 4, FDX23 = DX23 << 4, FDX31 = DX31 << 4;
+    I32 FDY12 = DY12 << 4, FDY23 = DY23 << 4, FDY31 = DY31 << 4;
+
+    // Bounding rectangle; round lower bound down to block size
+    I32 minx = ((min(X1, X2, X3) + 0x7) >> 4) & ~(EGL_RASTER_BLOCK_SIZE - 1);
+    I32 miny = ((min(Y1, Y2, Y3) + 0x7) >> 4) & ~(EGL_RASTER_BLOCK_SIZE - 1);
+    I32 maxx = (max(X1, X2, X3) + 0x8) >> 4;
+    I32 maxy = (max(Y1, Y2, Y3) + 0x8) >> 4;
+	I32 span = maxx - minx;
+
+	m_RasterInfo.Init(m_Surface, miny, minx);
+	I32 stride = m_RasterInfo.SurfaceWidth - maxx + minx;
+	I32 blockStride = EGL_RASTER_BLOCK_SIZE * m_RasterInfo.SurfaceWidth;
+
+    // Half-edge constants
+    //I32 C1 = DY12 * X1 - DX12 * Y1;
+    //I32 C2 = DY23 * X2 - DX23 * Y2;
+    //I32 C3 = DY31 * X3 - DX31 * Y3;
+    I32 C1 = Y2 * X1 - X2 * Y1;
+    I32 C2 = Y3 * X2 - X3 * Y2;
+    I32 C3 = Y1 * X3 - X1 * Y3;
+
+	I32 x, y, ix, iy; // loop variables
+	U32 index, unit;
+
+	I32 dVaryingInvWdX[EGL_MAX_NUM_VARYING];
+	I32 dVaryingInvWdY[EGL_MAX_NUM_VARYING];
+	I32 dVaryingInvWBlockLine[EGL_MAX_NUM_VARYING];
+	I32 varyingInvW[EGL_MAX_NUM_VARYING];
+
+	I32 dInvWdX, dInvWdY, dInvWBlockLine, invW;
+	I32 dDepthDx, dDepthDy, dDepthBlockLine, depth;
+
+	I32 area, invArea;
+
+	U32 numVarying = m_VaryingInfo.numVarying, usedNumVarying = 0;
+
+    // Correct for fill convention
+	if (DY12 > 0 || (DY12 == 0 && DX12 < 0)) C1++;
+	if (DY23 > 0 || (DY23 == 0 && DX23 < 0)) C2++;
+	if (DY31 > 0 || (DY31 == 0 && DX31 < 0)) C3++;
+
+	GLint CIY1 = C1 + DY12 * IX - DX12 * IY;
+	GLint CIY2 = C2 + DY23 * IX - DX23 * IY;
+	GLint CIY3 = C3 + DY31 * IX - DX31 * IY;
+
+	// setup of interpolation of varying variables goes here
+	// area in 24.8
+	area = DX31 * DY12 - DX12 * DY31;
+	//assert(area >= 0);
+
+	if (area <= 0xf)
 		return;
+
+	//assert(CIY1 >= 0 && CIY2 >= 0 && CIY3 >= 0);
+
+	// inv arera as 8.24
+	invArea = EGL_Inverse(area >> 4);
+
+	dDepthDx = MulRoundShift(EGL_Mul(DY12, DD31) - EGL_Mul(DD12, DY31), invArea, 12); 
+	dDepthDy = MulRoundShift(EGL_Mul(DX12, DD31) - EGL_Mul(DD12, DX31), invArea, 12); 
+	dDepthBlockLine = dDepthDx * EGL_RASTER_BLOCK_SIZE - dDepthDy * span; 
+
+	// dWdX, dWdY is 4.28
+	dInvWdX = MulRoundShift(EGL_Mul(DY12, DW31) - EGL_Mul(DW12, DY31), invArea, 12);
+	dInvWdY = MulRoundShift(EGL_Mul(DX12, DW31) - EGL_Mul(DW12, DX31), invArea, 12);
+	dInvWBlockLine = dInvWdX * EGL_RASTER_BLOCK_SIZE - dInvWdY * span;
+
+	// invW is 4.28
+	{
+		// calculate coordinate of upper left corner incl. 1/2 pixel pre-step
+		I32 XMin1 = (minx << 4) + (1 << 3) - X1;
+		I32 YMin1 = (miny << 4) + (1 << 3) - Y1;
+
+		depth = a.m_WindowCoords.depth 
+				+ MulRoundShift(XMin1, dDepthDx, 4) 
+				+ MulRoundShift(YMin1, dDepthDy, 4);
+
+		invW = a.m_WindowCoords.invW 
+				+ MulRoundShift(XMin1, dInvWdX, 4) 
+				+ MulRoundShift(YMin1, dInvWdY, 4);
 	}
 
-	const FractionalColor& colorIncrement = delta.m_Color;
+    // Loop through blocks
+    for (y = miny; y < maxy; y += EGL_RASTER_BLOCK_SIZE) {
 
-	EGL_Fixed deltaFog = delta.m_FogDensity;
-	EGL_Fixed deltaDepth = delta.m_WindowCoords.depth;
+		SurfaceInfo outerInfo;
 
-	EGL_Fixed deltaInvZ = delta.m_WindowCoords.invZ;
+		outerInfo.ColorBuffer = m_RasterInfo.SurfaceInfo.ColorBuffer;
+		outerInfo.AlphaBuffer = m_RasterInfo.SurfaceInfo.AlphaBuffer;
+		outerInfo.DepthBuffer = m_RasterInfo.SurfaceInfo.DepthBuffer;
+		outerInfo.StencilBuffer = m_RasterInfo.SurfaceInfo.StencilBuffer;
 
-	size_t unit;
-	EGL_Fixed deltaInvU[EGL_NUM_TEXTURE_UNITS],
-		deltaInvV[EGL_NUM_TEXTURE_UNITS],
-		invTu[EGL_NUM_TEXTURE_UNITS],
-		invTv[EGL_NUM_TEXTURE_UNITS];
+        for (x = minx; x < maxx; x += EGL_RASTER_BLOCK_SIZE) {
 
-#if EGL_MIPMAP_PER_TEXEL
-	EGL_Fixed deltaInvDu[EGL_NUM_TEXTURE_UNITS],
-		deltaInvDv[EGL_NUM_TEXTURE_UNITS],
-		dTuDxOverInvZ2[EGL_NUM_TEXTURE_UNITS],
-		dTuDyOverInvZ2[EGL_NUM_TEXTURE_UNITS],
-		dTvDxOverInvZ2[EGL_NUM_TEXTURE_UNITS],
-		dTvDyOverInvZ2[EGL_NUM_TEXTURE_UNITS];
+			// interpolation values for the four corners
+			I32 depth0;
+			I32 w[2][2];				// w in all four corners of block 4.28 (?)
+
+			I32 varying[2][2][EGL_MAX_NUM_VARYING];	//
+			I32 dVaryingDy[2][EGL_MAX_NUM_VARYING]; // gradients along y
+
+			// information to use per block
+			SurfaceInfo surfaceInfo;
+			const Texture *	texture[EGL_NUM_TEXTURE_UNITS];		// texture ptr (potentially 3-linear)
+
+            // Corners of block
+            GLint x0 = (x << 4) | (1 << 3);
+            GLint x1 = ((x + EGL_RASTER_BLOCK_SIZE - 1) << 4) | (1 << 3);
+            GLint y0 = (y << 4) | (1 << 3);
+            GLint y1 = ((y + EGL_RASTER_BLOCK_SIZE - 1) << 4) | (1 << 3);
+
+            // Evaluate half-space functions
+            GLboolean a00 = C1 + DY12 * x0 - DX12 * y0 > 0;
+            GLboolean a10 = C1 + DY12 * x1 - DX12 * y0 > 0;
+            GLboolean a01 = C1 + DY12 * x0 - DX12 * y1 > 0;
+            GLboolean a11 = C1 + DY12 * x1 - DX12 * y1 > 0;
+            GLint eqa = (a00 << 0) | (a10 << 1) | (a01 << 2) | (a11 << 3);
+    
+            GLboolean b00 = C2 + DY23 * x0 - DX23 * y0 > 0;
+            GLboolean b10 = C2 + DY23 * x1 - DX23 * y0 > 0;
+            GLboolean b01 = C2 + DY23 * x0 - DX23 * y1 > 0;
+            GLboolean b11 = C2 + DY23 * x1 - DX23 * y1 > 0;
+            GLint eqb = (b00 << 0) | (b10 << 1) | (b01 << 2) | (b11 << 3);
+    
+            GLboolean c00 = C3 + DY31 * x0 - DX31 * y0 > 0;
+            GLboolean c10 = C3 + DY31 * x1 - DX31 * y0 > 0;
+            GLboolean c01 = C3 + DY31 * x0 - DX31 * y1 > 0;
+            GLboolean c11 = C3 + DY31 * x1 - DX31 * y1 > 0;
+            GLint eqc = (c00 << 0) | (c10 << 1) | (c01 << 2) | (c11 << 3);
+
+#if EGL_RASTER_BLOCK_SIZE <= 8
+			typedef U8 PixelMask;
+#elif EGL_RASTER_BLOCK_SIZE <= 16
+			typedef U16 PixelMask;
+#else
+			typedef U32 PixelMask;
 #endif
+			PixelMask pixelMask[EGL_RASTER_BLOCK_SIZE], *mask;
+			PixelMask totalMask;
 
-	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		deltaInvU[unit] = delta.m_TextureCoords[unit].tu;
-		deltaInvV[unit] = delta.m_TextureCoords[unit].tv;
-
-		invTu[unit] = start.m_TextureCoords[unit].tu;
-		invTv[unit] = start.m_TextureCoords[unit].tv;
-
-#if EGL_MIPMAP_PER_TEXEL
-		deltaInvDu[unit] = delta.m_TextureCoords[unit].dtudy;
-		deltaInvDv[unit] = delta.m_TextureCoords[unit].dtvdy;
-
-		dTuDxOverInvZ2[unit] = start.m_TextureCoords[unit].dtudx;
-		dTuDyOverInvZ2[unit] = start.m_TextureCoords[unit].dtudy;
-		dTvDxOverInvZ2[unit] = start.m_TextureCoords[unit].dtvdx;
-		dTvDyOverInvZ2[unit] = start.m_TextureCoords[unit].dtvdy;
-#endif
-	}
-
-	EGL_Fixed invZ = start.m_WindowCoords.invZ;
-
-	EGL_Fixed fogDensity = start.m_FogDensity;
-	I32 x = EGL_IntFromFixed(start.m_WindowCoords.x);
-	I32 xEnd = EGL_IntFromFixed(delta.m_WindowCoords.x);
-	I32 xLinEnd = x + ((xEnd - x) & ~(LINEAR_SPAN - 1));
-
-	EGL_Fixed z = EGL_Inverse(invZ);
-	EGL_Fixed tu[EGL_NUM_TEXTURE_UNITS], tv[EGL_NUM_TEXTURE_UNITS];
-
-	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		tu[unit] = EGL_Mul(invTu[unit], z);
-		tv[unit] = EGL_Mul(invTv[unit], z);
-	}
-
-	EGL_Fixed depth = start.m_WindowCoords.depth;
-
-	for (; x < xLinEnd;) {
-
-		// to get started, do mipmap selection at beginning of span
-
-#if EGL_MIPMAP_PER_TEXEL
-
-		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			if (m_UseMipmap[unit]) {
-				EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
-				EGL_Fixed maxDu = EGL_Max(EGL_Abs(dTuDxOverInvZ2[unit]), EGL_Abs(dTuDyOverInvZ2[unit])) >> (16 - m_Texture[unit]->GetTexture(0)->GetLogWidth());
-				EGL_Fixed maxDv = EGL_Max(EGL_Abs(dTvDxOverInvZ2[unit]), EGL_Abs(dTvDyOverInvZ2[unit])) >> (16 - m_Texture[unit]->GetTexture(0)->GetLogHeight());
-
-				//EGL_Fixed maxD = EGL_Max(maxDu, maxDv);
-				EGL_Fixed maxD = maxDu + maxDv;
-				//I64 rho64 = ((I64) EGL_Mul(z2, EGL_FixedFromFloat(1/sqrt(2.0f)) + 1)) * ((I64) maxD);
-				EGL_Fixed rho = EGL_Mul(z2, maxD);
-
-				// we start with nearest/minification only selection; will add LINEAR later
-
-				rasterInfo.MipmapLevel[unit] = EGL_Min(Log2(rho), rasterInfo.MaxMipmapLevel[unit]);
-
-				dTuDyOverInvZ2[unit] += deltaInvDu[unit] << LOG_LINEAR_SPAN;
-				dTvDyOverInvZ2[unit] += deltaInvDv[unit] << LOG_LINEAR_SPAN;
-			}
-		}
-#endif
-
-		invZ += deltaInvZ << LOG_LINEAR_SPAN;
-		EGL_Fixed endZ = EGL_Inverse(invZ);
-		EGL_Fixed deltaZ = (endZ - z) >> LOG_LINEAR_SPAN;
-
-		EGL_Fixed endTu[EGL_NUM_TEXTURE_UNITS];
-		EGL_Fixed endTv[EGL_NUM_TEXTURE_UNITS];
-		EGL_Fixed deltaTu[EGL_NUM_TEXTURE_UNITS];
-		EGL_Fixed deltaTv[EGL_NUM_TEXTURE_UNITS];
-
-		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			invTu[unit] += deltaInvU[unit] << LOG_LINEAR_SPAN;
-			invTv[unit] += deltaInvV[unit] << LOG_LINEAR_SPAN;
-
-			endTu[unit] = EGL_Mul(invTu[unit], endZ);
-			endTv[unit] = EGL_Mul(invTv[unit], endZ);
-			deltaTu[unit] = (endTu[unit] - tu[unit]) >> LOG_LINEAR_SPAN; 
-			deltaTv[unit] = (endTv[unit] - tv[unit]) >> LOG_LINEAR_SPAN;
-		}
-
-		int count = LINEAR_SPAN; 
-
-		do {
-			Fragment(&rasterInfo, x, depth, tu, tv, baseColor, fogDensity);
-
-			baseColor += colorIncrement;
-			depth += deltaDepth;
-			fogDensity += deltaFog;
-			z += deltaZ;
-
-			for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-				tu[unit] += deltaTu[unit];
-				tv[unit] += deltaTv[unit];
+            // Skip block when outside an edge
+			if (eqa == 0x0 || eqb == 0x0 || eqc == 0x0) {
+				goto cont;
 			}
 
-			++x;
-		} while (--count);
-	}
+			depth0 = depth;
 
-	if (x != xEnd) {
+			// initialize surface pointers in local info block
+			surfaceInfo.ColorBuffer = outerInfo.ColorBuffer;
+			surfaceInfo.AlphaBuffer = outerInfo.AlphaBuffer;
+			surfaceInfo.DepthBuffer = outerInfo.DepthBuffer;
+			surfaceInfo.StencilBuffer = outerInfo.StencilBuffer;
 
-		I32 deltaX = xEnd - x;
+			totalMask = 0;
+			mask = pixelMask;
 
-#if EGL_MIPMAP_PER_TEXEL
-		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			if (m_UseMipmap[unit]) {
-				EGL_Fixed z2 = EGL_Mul(z << 4, z << 4);
-				EGL_Fixed maxDu = EGL_Max(EGL_Abs(dTuDxOverInvZ2[unit]), EGL_Abs(dTuDyOverInvZ2[unit])) >> (16 - m_Texture[unit]->GetTexture(0)->GetLogWidth());
-				EGL_Fixed maxDv = EGL_Max(EGL_Abs(dTvDxOverInvZ2[unit]), EGL_Abs(dTvDyOverInvZ2[unit])) >> (16 - m_Texture[unit]->GetTexture(0)->GetLogHeight());
+			// Accept whole block when totally covered
+            if (eqa == 0xF && eqb == 0xF && eqc == 0xF) {
+                for (iy = 0; iy < EGL_RASTER_BLOCK_SIZE; iy++) {
 
-				//EGL_Fixed maxD = EGL_Max(maxDu, maxDv);
-				EGL_Fixed maxD = maxDu + maxDv;
-				//I64 rho64 = ((I64) EGL_Mul(z2, EGL_FixedFromFloat(1/sqrt(2.0f)) + 1)) * ((I64) maxD);
-				EGL_Fixed rho = EGL_Mul(z2, maxD);
+					PixelMask rowMask = 0;
 
-				// we start with nearest/minification only selection; will add LINEAR later
+                    for (ix = 0; ix < EGL_RASTER_BLOCK_SIZE; ix++) {
 
-				rasterInfo.MipmapLevel[unit] = EGL_Min(Log2(rho), rasterInfo.MaxMipmapLevel[unit]);
+                        // test and write depth and stencil
+						bool written = FragmentDepthStencil(&surfaceInfo, ix, depth0);
 
-				dTuDyOverInvZ2[unit] += deltaInvDu[unit] << LOG_LINEAR_SPAN;
-				dTvDyOverInvZ2[unit] += deltaInvDv[unit] << LOG_LINEAR_SPAN;
+						rowMask = (rowMask >> 1) | (written ? (1 << (EGL_RASTER_BLOCK_SIZE - 1)) : 0);
+
+						depth0 += dDepthDx;
+                    }
+
+					*mask++ = rowMask;
+					totalMask |= rowMask;
+
+					depth0 += dDepthDy - (dDepthDx << EGL_LOG_RASTER_BLOCK_SIZE);
+
+					surfaceInfo.DepthBuffer += m_RasterInfo.SurfaceWidth;
+					surfaceInfo.StencilBuffer += m_RasterInfo.SurfaceWidth;
+                }
+            }
+            else {
+				// Partially covered block
+                GLint CY1 = C1 + DY12 * x0 - DX12 * y0;
+                GLint CY2 = C2 + DY23 * x0 - DX23 * y0;
+                GLint CY3 = C3 + DY31 * x0 - DX31 * y0;
+
+                for (iy = 0; iy < EGL_RASTER_BLOCK_SIZE; iy++) {
+                    GLint CX1 = CY1, CX2 = CY2, CX3 = CY3;
+					PixelMask rowMask = 0;
+
+                    for(ix = 0; ix < EGL_RASTER_BLOCK_SIZE; ix++) {
+                        if (CX1 > 0 && CX2 > 0 && CX3 > 0) {
+							// test and write depth and stencil
+							bool written = FragmentDepthStencil(&surfaceInfo, ix, depth0);
+							rowMask = (rowMask >> 1) | (written ? (1 << (EGL_RASTER_BLOCK_SIZE - 1)) : 0);
+                        } else {
+							rowMask >>= 1;
+						}
+
+                        CX1 += FDY12; CX2 += FDY23; CX3 += FDY31;
+						depth0 += dDepthDx;
+                    }
+
+					*mask++ = rowMask;
+					totalMask |= rowMask;
+
+                    CY1 -= FDX12; CY2 -= FDX23; CY3 -= FDX31;
+
+					depth0 += dDepthDy - (dDepthDx << EGL_LOG_RASTER_BLOCK_SIZE);
+
+					surfaceInfo.DepthBuffer += m_RasterInfo.SurfaceWidth;
+					surfaceInfo.StencilBuffer += m_RasterInfo.SurfaceWidth;
+                }
+            }
+
+			if (totalMask) {
+				if (numVarying != usedNumVarying) {
+					I32 XMin2 = x0 - X1;
+					I32 YMin2 = y0 - Y1;
+
+					for (index = 0; index < numVarying; ++index) {
+						// 4.28
+						I32 V1OverW = MulRoundShift(a.m_Varying[index], a.m_WindowCoords.invW, 16);
+						I32 V2OverW = MulRoundShift(b.m_Varying[index], b.m_WindowCoords.invW, 16);
+						I32 V3OverW = MulRoundShift(c.m_Varying[index], c.m_WindowCoords.invW, 16);
+
+						I32 IVW12 = V1OverW - V2OverW;
+						I32 IVW31 = V3OverW - V1OverW;
+
+						// dVaryingDx, dVaryingDy is 4.28
+						dVaryingInvWdX[index] = MulRoundShift(EGL_Mul(DY12, IVW31) - EGL_Mul(IVW12, DY31), invArea, 12);
+						dVaryingInvWdY[index] = MulRoundShift(EGL_Mul(DX12, IVW31) - EGL_Mul(IVW12, DX31), invArea, 12);
+						dVaryingInvWBlockLine[index] = dVaryingInvWdY[index] * EGL_RASTER_BLOCK_SIZE - dVaryingInvWdY[index] * span;
+
+						// varyingStart is 4.28
+						varyingInvW[index] = 
+							V1OverW 
+								+ MulRoundShift(XMin2, dInvWdX, 4) 
+								+ MulRoundShift(YMin2, dInvWdY, 4);
+					}
+
+					usedNumVarying = numVarying;
+				}
+
+				// compute w in all four corners
+				w[0][0] = EGL_Inverse(invW >> 12);		// 4.28
+				w[0][1] = InvNewtonRaphson4q28(invW + dInvWdX * EGL_RASTER_BLOCK_SIZE, w[0][0]);
+				w[1][0] = InvNewtonRaphson4q28(invW + dInvWdY * EGL_RASTER_BLOCK_SIZE, w[0][0]);
+				w[1][1] = InvNewtonRaphson4q28(invW + dInvWdX * EGL_RASTER_BLOCK_SIZE
+													+ dInvWdY * EGL_RASTER_BLOCK_SIZE, w[1][0]);
+
+				// compute values of varying at all four corners
+				for (index = 0; index < numVarying; ++index) {
+					varying[0][0][index] = MulRoundShift(varyingInvW[index], w[0][0], 16);
+					varying[0][1][index] = MulRoundShift(varyingInvW[index] + dVaryingInvWdX[index] * EGL_RASTER_BLOCK_SIZE, w[0][1], 16);
+					dVaryingDy[0][index] = (varying[0][1][index] - varying[0][0][index]) >> EGL_LOG_RASTER_BLOCK_SIZE;
+					varying[1][0][index] = MulRoundShift(varyingInvW[index] + dVaryingInvWdY[index] * EGL_RASTER_BLOCK_SIZE, w[1][0], 16);
+					varying[1][1][index] = MulRoundShift(varyingInvW[index] + dVaryingInvWdX[index] * EGL_RASTER_BLOCK_SIZE 
+																			+ dVaryingInvWdY[index] * EGL_RASTER_BLOCK_SIZE, w[1][1], 16);
+					dVaryingDy[1][index] = (varying[1][1][index] - varying[1][0][index]) >> EGL_LOG_RASTER_BLOCK_SIZE;
+				}			
+
+				// perform Mipmap selection; initialize local RasterInfo structure
+				for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+					size_t textureBase = m_VaryingInfo.textureBase[unit];
+
+					if (textureBase >= 0 && m_UseMipmap[unit]) {
+
+						I32 dUdX = (varying[0][1][textureBase] + (dVaryingDy[1][textureBase] << (EGL_LOG_RASTER_BLOCK_SIZE - 1)) -
+									varying[0][0][textureBase] - (dVaryingDy[0][textureBase] << (EGL_LOG_RASTER_BLOCK_SIZE - 1)))
+									<< EGL_LOG_RASTER_BLOCK_SIZE;
+						I32 dUdY = (dVaryingDy[0][textureBase] + dVaryingDy[1][textureBase]) >> 1;
+						I32 dVdX = (varying[0][1][textureBase + 1] + (dVaryingDy[1][textureBase + 1] << (EGL_LOG_RASTER_BLOCK_SIZE - 1)) -
+									varying[0][0][textureBase + 1] - (dVaryingDy[0][textureBase + 1] << (EGL_LOG_RASTER_BLOCK_SIZE - 1)))
+									<< EGL_LOG_RASTER_BLOCK_SIZE;
+						I32 dVdY = (dVaryingDy[0][textureBase + 1] + dVaryingDy[1][textureBase + 1]) >> 1;
+
+						EGL_Fixed maxDu = EGL_Max(EGL_Abs(dUdX), EGL_Abs(dUdY)) >> (16 - m_Texture[unit]->GetTexture(0)->GetLogWidth());
+						EGL_Fixed maxDv = EGL_Max(EGL_Abs(dVdX), EGL_Abs(dVdY)) >> (16 - m_Texture[unit]->GetTexture(0)->GetLogHeight());
+
+						EGL_Fixed rho = EGL_Max(maxDu, maxDv);
+
+						// we start with nearest/minification only selection; will add LINEAR later
+						I32 level = EGL_Min(Log2(rho), m_RasterInfo.MaxMipmapLevel[unit]);
+						texture[unit] = m_RasterInfo.Textures[level];
+					} else {
+						texture[unit] = m_RasterInfo.Textures[0];
+					}
+				}
+
+				mask = pixelMask;
+
+                for (iy = 0; iy < EGL_RASTER_BLOCK_SIZE; iy++) {
+
+					I32 varying0[EGL_MAX_NUM_VARYING];
+					I32 dVarying[EGL_MAX_NUM_VARYING];
+					PixelMask rowMask = *mask++;
+
+					for (index = 0; index < numVarying; ++index) {
+						varying0[index] = varying[0][0][index];
+						dVarying[index] = (varying[0][1][index] - varying[0][0][index]) >> EGL_LOG_RASTER_BLOCK_SIZE;
+					}
+
+                    for (ix = 0; ix < EGL_RASTER_BLOCK_SIZE; ix++) {
+
+						if (rowMask & 1) {
+							I32 tu[EGL_NUM_TEXTURE_UNITS], tv[EGL_NUM_TEXTURE_UNITS];
+							Color baseColor;
+							I32 fog;
+
+							for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+								size_t textureBase = m_VaryingInfo.textureBase[unit];
+
+								if (textureBase >= 0) {
+									tu[unit] = varying0[textureBase];
+									tv[unit] = varying0[textureBase + 1];
+								}
+							}
+
+							if (m_VaryingInfo.colorIndex >= 0) {
+								//baseColor = FractionalColor(varying0 + m_VaryingInfo.colorIndex);
+								baseColor = Color(255, 255, 255, 255);
+							}
+
+							if (m_VaryingInfo.fogIndex >= 0) {
+								fog = varying0[m_VaryingInfo.fogIndex];
+							}
+
+							FragmentColorAlpha(&surfaceInfo, ix, texture, tu, tv, baseColor, fog);
+						}
+
+						rowMask >>= 1;
+
+						for (index = 0; index < usedNumVarying; ++index) {
+							varying0[index] += dVarying[index];
+						}
+                    }
+
+					for (index = 0; index < numVarying; ++index) {
+						varying[0][0][index] += dVaryingDy[0][index];
+						varying[0][1][index] += dVaryingDy[1][index];
+					}
+
+					surfaceInfo.ColorBuffer += m_RasterInfo.SurfaceWidth;
+					surfaceInfo.AlphaBuffer += m_RasterInfo.SurfaceWidth;
+                }
 			}
-		}
-#endif
 
-		EGL_Fixed endZ = EGL_Inverse(invZ + deltaX * deltaInvZ);
-		EGL_Fixed invSpan = EGL_Inverse(EGL_FixedFromInt(xEnd - x));
-		EGL_Fixed deltaZ = EGL_Mul(endZ - z, invSpan);
+cont:
+			depth += dDepthDx << EGL_LOG_RASTER_BLOCK_SIZE;
+			invW += dInvWdX << EGL_LOG_RASTER_BLOCK_SIZE;
 
-		EGL_Fixed endTu[EGL_NUM_TEXTURE_UNITS];
-		EGL_Fixed endTv[EGL_NUM_TEXTURE_UNITS];
-		EGL_Fixed deltaTu[EGL_NUM_TEXTURE_UNITS];
-		EGL_Fixed deltaTv[EGL_NUM_TEXTURE_UNITS];
-
-		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			endTu[unit] = EGL_Mul(invTu[unit] + deltaX * deltaInvU[unit], endZ);
-			endTv[unit] = EGL_Mul(invTv[unit] + deltaX * deltaInvV[unit], endZ);
-			deltaTu[unit] = EGL_Mul(endTu[unit] - tu[unit], invSpan);
-			deltaTv[unit] = EGL_Mul(endTv[unit] - tv[unit], invSpan);
-		}
-
-		for (; x < xEnd; ++x) {
-
-			Fragment(&rasterInfo, x, depth, tu, tv, baseColor, fogDensity);
-
-			baseColor += colorIncrement;
-			depth += deltaDepth;
-
-			for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-				tu[unit] += deltaTu[unit];
-				tv[unit] += deltaTv[unit];
+			for (index = 0; index < usedNumVarying; ++index) {
+				varyingInvW[index] += dVaryingInvWdX[index] << EGL_LOG_RASTER_BLOCK_SIZE;
 			}
 
-			fogDensity += deltaFog;
+			outerInfo.ColorBuffer   += EGL_RASTER_BLOCK_SIZE;
+			outerInfo.DepthBuffer   += EGL_RASTER_BLOCK_SIZE;
+			outerInfo.AlphaBuffer   += EGL_RASTER_BLOCK_SIZE;
+			outerInfo.StencilBuffer += EGL_RASTER_BLOCK_SIZE;
+        }
+
+		depth += dDepthBlockLine;
+		invW += dInvWBlockLine;
+
+		for (index = 0; index < usedNumVarying; ++index) {
+			varyingInvW[index] += dVaryingInvWBlockLine[index];
 		}
-	}
+
+		m_RasterInfo.SurfaceInfo.ColorBuffer   += blockStride;
+		m_RasterInfo.SurfaceInfo.DepthBuffer   += blockStride;
+		m_RasterInfo.SurfaceInfo.AlphaBuffer   += blockStride;
+		m_RasterInfo.SurfaceInfo.StencilBuffer += blockStride;
+    }
 }
-#endif // !EGL_USE_JIT
 
-
-// --------------------------------------------------------------------------
-// Specialized triangle rasterizers go here
-// --------------------------------------------------------------------------
-
-
-//
-// RasterTriangleAll
-//
-
-#define InitScanlineStart		InitScanlineStartAll
-#define InitScanlineDeltas		InitScanlineDeltasAll
-#define RasterTriangle			RasterTriangleAll
-
-#define HasFog		1
-#define HasDepth	1
-#define HasColor	1
-#define HasTexture	1
-#define HasStencil	1
-#define HasScissor	1
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_cTdfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_cTdfs
-#define InitScanlineDeltas		InitScanlineDeltas_cTdfs
-#define RasterTriangle			RasterTriangle_cTdfs
-
-#define HasFog		0
-#define HasDepth	0
-#define HasColor	0
-#define HasTexture	1
-#define HasStencil	0
-#define HasScissor	0
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_cTdFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_cTdFs
-#define InitScanlineDeltas		InitScanlineDeltas_cTdFs
-#define RasterTriangle			RasterTriangle_cTdFs
-
-#define HasFog		1
-#define HasDepth	0
-#define HasColor	0
-#define HasTexture	1
-#define HasStencil	0
-#define HasScissor	0
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_cTDfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_cTDfs
-#define InitScanlineDeltas		InitScanlineDeltas_cTDfs
-#define RasterTriangle			RasterTriangle_cTDfs
-
-#define HasColor	0
-#define HasTexture	1
-#define HasDepth	1
-#define HasFog		0
-#define HasStencil	0
-#define HasScissor	0
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_cTDFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_cTDFs
-#define InitScanlineDeltas		InitScanlineDeltas_cTDFs
-#define RasterTriangle			RasterTriangle_cTDFs
-
-#define HasColor	0
-#define HasTexture	1
-#define HasDepth	1
-#define HasFog		1
-#define HasStencil	0
-#define HasScissor	0
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_Ctdfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_Ctdfs
-#define InitScanlineDeltas		InitScanlineDeltas_Ctdfs
-#define RasterTriangle			RasterTriangle_Ctdfs
-
-#define HasColor	1
-#define HasTexture	0
-#define HasDepth	0
-#define HasFog		0
-#define HasStencil	0
-#define HasScissor	0
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CtdFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CtdFs
-#define InitScanlineDeltas		InitScanlineDeltas_CtdFs
-#define RasterTriangle			RasterTriangle_CtdFs
-
-#define HasColor	1
-#define HasTexture	0
-#define HasDepth	0
-#define HasFog		1
-#define HasStencil	0
-#define HasScissor	0
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CtDfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CtDfs
-#define InitScanlineDeltas		InitScanlineDeltas_CtDfs
-#define RasterTriangle			RasterTriangle_CtDfs
-
-#define HasColor	1
-#define HasTexture	0
-#define HasDepth	1
-#define HasFog		0
-#define HasStencil	0
-#define HasScissor	0
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CtDFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CtDFs
-#define InitScanlineDeltas		InitScanlineDeltas_CtDFs
-#define RasterTriangle			RasterTriangle_CtDFs
-
-#define HasColor	1
-#define HasTexture	0
-#define HasDepth	1
-#define HasFog		1
-#define HasStencil	0
-#define HasScissor	0
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CTdfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CTdfs
-#define InitScanlineDeltas		InitScanlineDeltas_CTdfs
-#define RasterTriangle			RasterTriangle_CTdfs
-
-#define HasColor	1
-#define HasTexture	1
-#define HasDepth	0
-#define HasFog		0
-#define HasStencil	0
-#define HasScissor	0
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CTdFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CTdFs
-#define InitScanlineDeltas		InitScanlineDeltas_CTdFs
-#define RasterTriangle			RasterTriangle_CTdFs
-
-#define HasColor	1
-#define HasTexture	1
-#define HasDepth	0
-#define HasFog		1
-#define HasStencil	0
-#define HasScissor	0
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CTDfs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CTDfs
-#define InitScanlineDeltas		InitScanlineDeltas_CTDfs
-#define RasterTriangle			RasterTriangle_CTDfs
-
-#define HasColor	1
-#define HasTexture	1
-#define HasDepth	1
-#define HasFog		0
-#define HasStencil	0
-#define HasScissor	0
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CTDFs(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CTDFs
-#define InitScanlineDeltas		InitScanlineDeltas_CTDFs
-#define RasterTriangle			RasterTriangle_CTDFs
-
-#define HasColor	1
-#define HasTexture	1
-#define HasDepth	1
-#define HasFog		1
-#define HasStencil	0
-#define HasScissor	0
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_cTdfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_cTdfS
-#define InitScanlineDeltas		InitScanlineDeltas_cTdfS
-#define RasterTriangle			RasterTriangle_cTdfS
-
-#define HasFog		0
-#define HasDepth	0
-#define HasColor	0
-#define HasTexture	1
-#define HasScissor	1
-#define HasStencil	0
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_cTdFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_cTdFS
-#define InitScanlineDeltas		InitScanlineDeltas_cTdFS
-#define RasterTriangle			RasterTriangle_cTdFS
-
-#define HasFog		1
-#define HasDepth	0
-#define HasColor	0
-#define HasTexture	1
-#define HasStencil	0
-#define HasScissor	1
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_cTDfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_cTDfS
-#define InitScanlineDeltas		InitScanlineDeltas_cTDfS
-#define RasterTriangle			RasterTriangle_cTDfS
-
-#define HasColor	0
-#define HasTexture	1
-#define HasDepth	1
-#define HasFog		0
-#define HasStencil	0
-#define HasScissor	1
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_cTDFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_cTDFS
-#define InitScanlineDeltas		InitScanlineDeltas_cTDFS
-#define RasterTriangle			RasterTriangle_cTDFS
-
-#define HasColor	0
-#define HasTexture	1
-#define HasDepth	1
-#define HasFog		1
-#define HasStencil	0
-#define HasScissor	1
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CtdfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CtdfS
-#define InitScanlineDeltas		InitScanlineDeltas_CtdfS
-#define RasterTriangle			RasterTriangle_CtdfS
-
-#define HasColor	1
-#define HasTexture	0
-#define HasDepth	0
-#define HasFog		0
-#define HasStencil	0
-#define HasScissor	1
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CtdFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CtdFS
-#define InitScanlineDeltas		InitScanlineDeltas_CtdFS
-#define RasterTriangle			RasterTriangle_CtdFS
-
-#define HasColor	1
-#define HasTexture	0
-#define HasDepth	0
-#define HasFog		1
-#define HasStencil	0
-#define HasScissor	1
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CtDfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CtDfS
-#define InitScanlineDeltas		InitScanlineDeltas_CtDfS
-#define RasterTriangle			RasterTriangle_CtDfS
-
-#define HasColor	1
-#define HasTexture	0
-#define HasDepth	1
-#define HasFog		0
-#define HasStencil	0
-#define HasScissor	1
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CtDFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CtDFS
-#define InitScanlineDeltas		InitScanlineDeltas_CtDFS
-#define RasterTriangle			RasterTriangle_CtDFS
-
-#define HasColor	1
-#define HasTexture	0
-#define HasDepth	1
-#define HasFog		1
-#define HasStencil	0
-#define HasScissor	1
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CTdfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CTdfS
-#define InitScanlineDeltas		InitScanlineDeltas_CTdfS
-#define RasterTriangle			RasterTriangle_CTdfS
-
-#define HasColor	1
-#define HasTexture	1
-#define HasDepth	0
-#define HasFog		0
-#define HasStencil	0
-#define HasScissor	1
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CTdFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CTdFS
-#define InitScanlineDeltas		InitScanlineDeltas_CTdFS
-#define RasterTriangle			RasterTriangle_CTdFS
-
-#define HasColor	1
-#define HasTexture	1
-#define HasDepth	0
-#define HasFog		1
-#define HasStencil	0
-#define HasScissor	1
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CTDfS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CTDfS
-#define InitScanlineDeltas		InitScanlineDeltas_CTDfS
-#define RasterTriangle			RasterTriangle_CTDfS
-
-#define HasColor	1
-#define HasTexture	1
-#define HasDepth	1
-#define HasFog		0
-#define HasStencil	0
-#define HasScissor	1
-
-#include "RasterizerTriangles.inc"
-
-
-//
-// void RasterTriangle_CTDFS(const RasterPos& a, const RasterPos& b, const RasterPos& c);
-//
-
-#define InitScanlineStart		InitScanlineStart_CTDFS
-#define InitScanlineDeltas		InitScanlineDeltas_CTDFS
-#define RasterTriangle			RasterTriangle_CTDFS
-
-#define HasColor	1
-#define HasTexture	1
-#define HasDepth	1
-#define HasFog		1
-#define HasStencil	0
-#define HasScissor	1
-
-#include "RasterizerTriangles.inc"

@@ -140,7 +140,10 @@ void Context :: RenderPoint(RasterPos& point, EGL_Fixed size) {
 		return;
 
 	ClipCoordsToWindowCoords(point);
-	point.m_Color = point.m_FrontColor;
+
+	if (m_VaryingInfo->colorIndex >= 0) {
+		point.m_FrontColor.toArray(point.m_Varying + m_VaryingInfo->colorIndex);
+	}
 
 	if (m_PointSizeAttenuate) {
 		EGL_Fixed eyeDistance = EGL_Abs(point.m_EyeCoords.z());

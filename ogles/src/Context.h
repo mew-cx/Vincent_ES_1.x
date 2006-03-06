@@ -382,7 +382,6 @@ private:
 		void RenderPoint(RasterPos& point, EGL_Fixed size);
 		void RenderLine(RasterPos& from, RasterPos& to);
 		void RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c);
-		bool IsCulled(RasterPos& a, RasterPos& b, RasterPos& c);
 
 		void ClipCoordsToWindowCoords(RasterPos & pos);
 		EGL_Fixed FogDensity(EGL_Fixed eyeDistance) const;
@@ -529,6 +528,7 @@ private:
 
 		RasterizerState		m_RasterizerState;
 		Rasterizer *		m_Rasterizer;
+		const VaryingInfo * m_VaryingInfo;
 		GeometryFunction	m_GeometryFunction;
 
 		// ----------------------------------------------------------------------

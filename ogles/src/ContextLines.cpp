@@ -342,25 +342,18 @@ namespace {
 		return EGL_FixedFromFloat(Interpolate(EGL_FloatFromFixed(x0), EGL_FloatFromFixed(x1), coeff));
 	}
 
-	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, GLfloat coeff) {
+	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, GLfloat coeff, size_t numVarying) {
 		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), coeff));
 		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), coeff));
 		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), coeff));
 		result.m_ClipCoords.setW(Interpolate(dst.m_ClipCoords.w(), src.m_ClipCoords.w(), coeff));
-		result.m_Color.r = Interpolate(dst.m_Color.r, src.m_Color.r, coeff);
-		result.m_Color.g = Interpolate(dst.m_Color.g, src.m_Color.g, coeff);
-		result.m_Color.b = Interpolate(dst.m_Color.b, src.m_Color.b, coeff);
-		result.m_Color.a = Interpolate(dst.m_Color.a, src.m_Color.a, coeff);
 
-		for (size_t index = 0; index < EGL_NUM_TEXTURE_UNITS; ++index) {
-			result.m_TextureCoords[index].tu = Interpolate(dst.m_TextureCoords[index].tu, src.m_TextureCoords[index].tu, coeff);
-			result.m_TextureCoords[index].tv = Interpolate(dst.m_TextureCoords[index].tv, src.m_TextureCoords[index].tv, coeff);
+		for (size_t index = 0; index < numVarying; ++index) {
+			result.m_Varying[index] = Interpolate(dst.m_Varying[index], src.m_Varying[index], coeff);
 		}
-
-		result.m_FogDensity = Interpolate(dst.m_FogDensity, src.m_FogDensity, coeff);
 	}
 
-	inline bool Clip(RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices, size_t coord) {
+	inline bool Clip(RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices, size_t coord, size_t numVarying) {
 		if (from->m_ClipCoords[coord] < -from->m_ClipCoords.w()) {
 			if (to->m_ClipCoords[coord] < -to->m_ClipCoords.w()) {
 				return false;
@@ -374,7 +367,7 @@ namespace {
 			GLfloat num = p_w - p_x; 
 			GLfloat denom = (p_w - p_x) - (c_w - c_x);
 
-			Interpolate(*tempVertices, *from, *to, num / denom);
+			Interpolate(*tempVertices, *from, *to, num / denom, numVarying);
 			from = tempVertices++;
 
 			return true;
@@ -392,7 +385,7 @@ namespace {
 			GLfloat num = p_w - p_x; 
 			GLfloat denom = (p_w - p_x) - (c_w - c_x);
 
-			Interpolate(*tempVertices, *from, *to, num / denom);
+			Interpolate(*tempVertices, *from, *to, num / denom, numVarying);
 			from = tempVertices++;
 
 			return true;
@@ -407,7 +400,7 @@ namespace {
 			GLfloat num = p_w - p_x; 
 			GLfloat denom = (p_w - p_x) - (c_w - c_x);
 
-			Interpolate(*tempVertices, *to, *from, num / denom);
+			Interpolate(*tempVertices, *to, *from, num / denom, numVarying);
 			to = tempVertices++;
 
 			return true;
@@ -422,7 +415,7 @@ namespace {
 			GLfloat num = p_w - p_x; 
 			GLfloat denom = (p_w - p_x) - (c_w - c_x);
 
-			Interpolate(*tempVertices, *to, *from, num / denom);
+			Interpolate(*tempVertices, *to, *from, num / denom, numVarying);
 			to = tempVertices++;
 
 			return true;
@@ -433,7 +426,7 @@ namespace {
 		}
 	}
 
-	inline bool ClipUser(const Vec4f& plane, RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices) {
+	inline bool ClipUser(const Vec4f& plane, RasterPos*& from, RasterPos*& to, RasterPos *&tempVertices, size_t numVarying) {
 
 		GLfloat f = Vec4f(from->m_EyeCoords) * plane;
 		GLfloat t = Vec4f(to->m_EyeCoords) * plane;
@@ -443,14 +436,14 @@ namespace {
 				return false;
 			}
 
-			Interpolate(*tempVertices, *from, *to, t / (t - f));
+			Interpolate(*tempVertices, *from, *to, t / (t - f), numVarying);
 			from = tempVertices++;
 
 			return true;
 
 		} else if (t < 0.0f) {
 
-			Interpolate(*tempVertices, *to, *from, f / (f - t));
+			Interpolate(*tempVertices, *to, *from, f / (f - t), numVarying);
 			to = tempVertices++;
 
 			return true;
@@ -472,27 +465,30 @@ void Context :: RenderLine(RasterPos& from, RasterPos& to) {
 	if (m_ClipPlaneEnabled) {
 		for (size_t index = 0, mask = 1; index < NUM_CLIP_PLANES; ++index, mask <<= 1) {
 			if (m_ClipPlaneEnabled & mask) {
-				if (!ClipUser(m_ClipPlanes[index], pFrom, pTo, tempVertices)) {
+				if (!ClipUser(m_ClipPlanes[index], pFrom, pTo, tempVertices, m_VaryingInfo->numVarying)) {
 					return;
 				}
 			}
 		}
 	}
 
-	if (Clip(pFrom, pTo, tempVertices, 0) &&
-		Clip(pFrom, pTo, tempVertices, 1) &&
-		Clip(pFrom, pTo, tempVertices, 2)) {
+	if (Clip(pFrom, pTo, tempVertices, 0, m_VaryingInfo->numVarying) &&
+		Clip(pFrom, pTo, tempVertices, 1, m_VaryingInfo->numVarying) &&
+		Clip(pFrom, pTo, tempVertices, 2, m_VaryingInfo->numVarying)) {
 
 		ClipCoordsToWindowCoords(*pFrom);
 		ClipCoordsToWindowCoords(*pTo);
 
-		if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
-			pFrom->m_Color = pFrom->m_FrontColor;
-		} else {
-			pFrom->m_Color = pTo->m_FrontColor;
+		if (m_VaryingInfo->colorIndex >= 0) {
+			if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
+				pFrom->m_FrontColor.toArray(pFrom->m_Varying + m_VaryingInfo->colorIndex);
+			} else {
+				pTo->m_FrontColor.toArray(pFrom->m_Varying + m_VaryingInfo->colorIndex);
+			}
+
+			pTo->m_FrontColor.toArray(pTo->m_Varying + m_VaryingInfo->colorIndex);
 		}
 
-		pTo->m_Color = pTo->m_FrontColor;
 		m_Rasterizer->RasterLine(*pFrom, *pTo);
 	}
 }
