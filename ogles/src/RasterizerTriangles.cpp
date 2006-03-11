@@ -360,7 +360,6 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 						bool written = FragmentDepthStencil(&surfaceInfo, ix, depth0 >> 4);
 
 						rowMask = (rowMask >> 1) | (written ? (1 << (EGL_RASTER_BLOCK_SIZE - 1)) : 0);
-
 						depth0 += dDepthDx;
                     }
 
@@ -389,6 +388,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 							done = true;
                         } else if (done) {
 							rowMask >>= EGL_RASTER_BLOCK_SIZE - ix;
+							depth0 += dDepthDx * (EGL_RASTER_BLOCK_SIZE - ix);
 							break;
 						} else {
 							rowMask >>= 1;
