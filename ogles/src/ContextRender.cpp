@@ -992,7 +992,7 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 	// Scale 1/Z by 2^12 to avoid rounding problems during prespective correct
 	// interpolation
 	// See book by LaMothe for more detailed discussion on this
-	pos.m_WindowCoords.invW = EGL_FixedFromFloat(invDenominator) << 12;
+	pos.m_WindowCoords.invW = static_cast<EGL_Fixed>(invDenominator * static_cast<float>(EGL_ONE << 12));
 
 	pos.m_WindowCoords.x = 
 		EGL_Mul(EGL_FixedFromFloat(x * invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
