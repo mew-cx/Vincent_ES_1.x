@@ -2046,7 +2046,7 @@ void Context :: UpdateMipmaps(void) {
 	if (logWidth < logHeight) {
 		assert(multiTexture->GetTexture(level - 1)->GetWidth() == 1);
 
-		for (; level < logHeight; ++level) {
+		for (; level <= logHeight; ++level) {
 			Texture * outer = multiTexture->GetTexture(level - 1);
 			Texture * inner = multiTexture->GetTexture(level);
 				
@@ -2167,7 +2167,7 @@ void Context :: UpdateMipmaps(void) {
 	} else if (logWidth > logHeight) {
 		assert(multiTexture->GetTexture(level - 1)->GetHeight() == 1);
 
-		for (; level < logWidth; ++level) {
+		for (; level <= logWidth; ++level) {
 			Texture * outer = multiTexture->GetTexture(level - 1);
 			Texture * inner = multiTexture->GetTexture(level);
 				

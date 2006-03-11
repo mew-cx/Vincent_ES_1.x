@@ -36,9 +36,21 @@
 
 #include "stdafx.h"
 #include "fixed.h"
+#include "Utils.h"
+
+
+using namespace EGL;
 
 
 #ifndef EGL_USE_GPP
+
+
+// --------------------------------------------------------------------------
+// lookup table for calculation of inverse
+// --------------------------------------------------------------------------
+static const U16 __gl_rcp_tab[] = { /* domain 0.5 .. 1.0-1/16 */
+	0x8000, 0x71c7, 0x6666, 0x5d17, 0x5555, 0x4ec4, 0x4924, 0x4444
+};
 
 
 // --------------------------------------------------------------------------
@@ -50,11 +62,10 @@
 EGL_Fixed EGL_Inverse(EGL_Fixed a) {
     I32 exp;
     EGL_Fixed x;
-    /* 1/(4x) */
-    static const I32 __gl_rcp_tab[] = { /* domain 0.5 .. 1.0-1/16 */
-		0x8000, 0x71c7, 0x6666, 0x5d17, 0x5555, 0x4ec4, 0x4924, 0x4444
-    };
-    if (a == EGL_ZERO) return 0x7fffffff;
+
+    if (a == EGL_ZERO) 
+		return 0x7fffffff;
+
 	bool sign = false;
 
 	if (a < 0) {
@@ -62,28 +73,48 @@ EGL_Fixed EGL_Inverse(EGL_Fixed a) {
 		a = -a;
 	}
 
-#ifdef EGL_USE_CLZ
-	exp = _CountLeadingZeros(a);
-#else
-    x = a;
-    exp = 31;
-    if (x & 0xffff0000) { exp -= 16; x >>= 16; }
-    if (x & 0xff00) { exp -= 8; x >>= 8; }
-    if (x & 0xf0) { exp -= 4; x >>= 4; }
-    if (x & 0xc) { exp -= 2; x >>= 2; }
-    if (x & 0x2) { exp -= 1; }
-#endif
-    x = __gl_rcp_tab[(a>>(28-exp))&0x7]<<2;
+	exp = CountLeadingZeros(a);
+    x = ((I32)__gl_rcp_tab[(a>>(28-exp))&0x7]) << 2;
     exp -= 16;
+
     if (exp <= 0)
 		x >>= -exp;
     else
 		x <<= exp;
-//printf("est %f\n", __GL_F_2_FLOAT(x));
+
     /* two iterations of newton-raphson  x = x(2-ax) */
 	x = EGL_Mul(x,(EGL_ONE*2 - EGL_Mul(a,x)));
 	x = EGL_Mul(x,(EGL_ONE*2 - EGL_Mul(a,x)));
-//printf("recip %f %f\n", __GL_F_2_FLOAT(a), __GL_F_2_FLOAT(x));
+
+	if (sign)
+		return -x;
+	else
+		return x;
+}
+
+EGL_Fixed EGL_InverseQ(EGL_Fixed a, U32 q) {
+    I32 exp;
+    EGL_Fixed x;
+    
+	bool sign = false;
+
+	if (a < 0) {
+		sign = true;
+		a = -a;
+	}
+
+	exp = CountLeadingZeros(a);
+    x = ((I32)__gl_rcp_tab[(a>>(28-exp))&0x7]);
+    exp -= 14;
+
+    if (exp <= 0)
+		x >>= -exp;
+    else
+		x <<= exp;
+
+    /* two iterations of newton-raphson  x = x(2-ax) */
+	x = EGL_InverseIterQ(a, x, q);
+	x = EGL_InverseIterQ(a, x, q);
 
 	if (sign)
 		return -x;
@@ -109,17 +140,7 @@ EGL_Fixed EGL_InvSqrt(EGL_Fixed a) {
     if (a == EGL_ZERO) return 0x7fffffff;
     if (a == EGL_ONE) return a;
 
-#ifdef EGL_USE_CLZ
-	exp = _CountLeadingZeros(a);
-#else
-    x = a;
-    exp = 31;
-    if (x & 0xffff0000) { exp -= 16; x >>= 16; }
-    if (x & 0xff00) { exp -= 8; x >>= 8; }
-    if (x & 0xf0) { exp -= 4; x >>= 4; }
-    if (x & 0xc) { exp -= 2; x >>= 2; }
-    if (x & 0x2) { exp -= 1; }
-#endif
+	exp = CountLeadingZeros(a);
     x = __gl_rsq_tab[(a>>(28-exp))&0x7]<<1;
 //printf("t %f %x %f %d %d\n", __GL_F_2_FLOAT(a), a, __GL_F_2_FLOAT(x), exp, 28-exp);
     exp -= 16;

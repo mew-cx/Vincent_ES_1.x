@@ -50,6 +50,14 @@ namespace EGL {
 	void CopyVector(const Vec4D & vector, GLfixed *params);
 	void CopyColor(const FractionalColor & color, GLfixed *params);
 	void CopyMatrix(const Matrix4x4& matrix, GLfixed *params);
+
+#ifdef EGL_USE_CLZ
+	inline U32 CountLeadingZeros(U32 x) {
+		return _CountLeadingZeros(x);
+	}
+#else
+	U32 CountLeadingZeros(U32 x);
+#endif
 }
 
 

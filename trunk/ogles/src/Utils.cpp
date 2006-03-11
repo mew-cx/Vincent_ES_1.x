@@ -65,6 +65,39 @@ namespace EGL {
 		params[2] = color.b;
 		params[3] = color.a;
 	}
+
+#ifndef EGL_USE_CLZ
+	U32 CountLeadingZeros(U32 x) {
+		U32 exp = 31;
+
+		if (x & 0xffff0000) { 
+			exp -= 16; 
+			x >>= 16; 
+		}
+
+		if (x & 0xff00) { 
+			exp -= 8; 
+			x >>= 8; 
+		}
+		
+		if (x & 0xf0) { 
+			exp -= 4; 
+			x >>= 4; 
+		}
+
+		if (x & 0xc) { 
+			exp -= 2; 
+			x >>= 2; 
+		}
+		
+		if (x & 0x2) { 
+			exp -= 1; 
+		}
+
+		return exp;
+	}
+#endif
+
 }
 
 

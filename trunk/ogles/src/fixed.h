@@ -208,6 +208,18 @@ inline EGL_Fixed EGL_Mul(EGL_Fixed a, EGL_Fixed b) {
 	return (EGL_Fixed) (((I64) a * (I64) b)  >> EGL_PRECISION);
 }
 
+// --------------------------------------------------------------------------
+// Calculate product of two fixed point numbers
+//
+// Parameters:
+//	a			-	first operand
+//	b			-	second operand
+//  shift		-	amount of right-shift after multiply
+// --------------------------------------------------------------------------
+inline I32 EGL_MulShift(I32 a, I32 b, I32 shift) {
+	I64 product = static_cast<I64>(a) * static_cast<I64>(b);
+	return static_cast<I32>(product >> shift);
+}
 
 #ifndef EGL_USE_GPP
 // ==========================================================================
@@ -223,6 +235,32 @@ inline EGL_Fixed EGL_Mul(EGL_Fixed a, EGL_Fixed b) {
 // --------------------------------------------------------------------------
 EGL_Fixed EGL_Inverse(EGL_Fixed value);
 
+// --------------------------------------------------------------------------
+// Calculate inverse of fixed point number
+//
+// Parameters:
+//	value		-	the number whose inverse should be calculated
+//  q			-	the number of fractional digits of value
+//
+// Returns:
+//	the inverse with fractional digits (32-q) 
+// --------------------------------------------------------------------------
+EGL_Fixed EGL_InverseQ(EGL_Fixed value, U32 q);
+
+// --------------------------------------------------------------------------
+// Calculate inverse of fixed point number with starting value
+//
+// Parameters:
+//	a			-	the number whose inverse should be calculated
+//  x			-   starting value
+//  q			-	the number of fractional digits of value
+//
+// Returns:
+//	the inverse with fractional digits (32-q) 
+// --------------------------------------------------------------------------
+inline I32 EGL_InverseIterQ(I32 a, I32 x, I32 q) {
+	return EGL_MulShift(x, 0x20000000 - EGL_MulShift(a, x, 4), 28);
+}
 
 // --------------------------------------------------------------------------
 // Perform division of two fixed point numbers
