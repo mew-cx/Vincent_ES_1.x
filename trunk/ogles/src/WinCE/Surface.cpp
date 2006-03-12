@@ -80,6 +80,8 @@ Surface :: Surface(const Config & config, HDC hdc)
 	U32 width = GetWidth();
 	U32 height = GetHeight();
 
+	m_Pitch = width;
+
 	m_AlphaBuffer = new U8[width * height];
 	m_DepthBuffer = new U16[width * height];
 	m_StencilBuffer = new U32[width * height];
