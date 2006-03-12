@@ -90,7 +90,7 @@ namespace {
 
 
 
-void CodeGenerator :: GenerateRasterTriangle() {
+void CodeGenerator :: GenerateRasterTriangle(const VaryingInfo * varyingInfo) {
 
 #if 0
 	cg_proc_t * procedure = cg_proc_create(m_Module);
