@@ -88,7 +88,7 @@ namespace {
 }
 
 
-void CodeGenerator :: GenerateRasterPoint() {
+void CodeGenerator :: GenerateRasterPoint(const VaryingInfo * varyingInfo) {
 
 	cg_proc_t * procedure = cg_proc_create(m_Module);
 
@@ -184,8 +184,8 @@ void CodeGenerator :: GenerateRasterPoint() {
 		//	EGL_Fixed tv = point.m_TextureCoords.tv;
 
 		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			info.regU[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TU + unit * sizeof(TexCoord));
-			info.regV[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TV + unit * sizeof(TexCoord)); 
+			info.regU[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TU(unit));
+			info.regV[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TV(unit)); 
 		}
 
 		//	for (I32 y = ymin; y <= ymax; y++) {
@@ -350,8 +350,8 @@ void CodeGenerator :: GenerateRasterPoint() {
 				info.regU[unit] = regULoopEnter;
 				info.regV[unit] = regVLoopEnter;
 			} else {
-				info.regU[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TU + unit * sizeof(TexCoord));
-				info.regV[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TV + unit * sizeof(TexCoord)); 
+				info.regU[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TU(unit));
+				info.regV[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TV(unit)); 
 			}
 		}
 

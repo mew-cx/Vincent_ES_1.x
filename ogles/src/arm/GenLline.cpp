@@ -90,7 +90,7 @@ namespace {
 
 
 
-void CodeGenerator :: GenerateRasterLine() {
+void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 
 	cg_proc_t * procedure = cg_proc_create(m_Module);
 
@@ -293,7 +293,7 @@ void CodeGenerator :: GenerateRasterLine() {
 
 			// -- initialize with starting vertex attributes
 		// 	FractionalColor baseColor = from.m_Color;
-		// 	EGL_Fixed OneOverZ = from.m_WindowCoords.invZ;
+		// 	EGL_Fixed OneOverZ = from.m_WindowCoords.invW;
 		// 	EGL_Fixed tuOverZ = EGL_Mul(from.m_TextureCoords.tu, OneOverZ);
 		// 	EGL_Fixed tvOverZ = EGL_Mul(from.m_TextureCoords.tv, OneOverZ);
 		// 	EGL_Fixed fogDensity = from.m_FogDensity;
@@ -313,8 +313,8 @@ void CodeGenerator :: GenerateRasterLine() {
 		cg_virtual_reg_t * regTvOverZ0[EGL_NUM_TEXTURE_UNITS];
 
 		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			regTu0[unit] = LOAD_DATA(block, regCommonFrom, OFFSET_RASTER_POS_TEX_TU + unit * sizeof(TexCoord));
-			regTv0[unit] = LOAD_DATA(block, regCommonFrom, OFFSET_RASTER_POS_TEX_TV + unit * sizeof(TexCoord));
+			regTu0[unit] = LOAD_DATA(block, regCommonFrom, OFFSET_RASTER_POS_TEX_TU(unit));
+			regTv0[unit] = LOAD_DATA(block, regCommonFrom, OFFSET_RASTER_POS_TEX_TV(unit));
 
 			ALLOC_REG(regTuOverZ0[unit]);
 			ALLOC_REG(regTvOverZ0[unit]);
@@ -328,7 +328,7 @@ void CodeGenerator :: GenerateRasterLine() {
 
 		// 	EGL_Fixed invSpan = EGL_Inverse(deltaX);
 		// 	EGL_Fixed slope = EGL_Mul(EGL_Abs(deltaY), invSpan);
-		// 	EGL_Fixed OneOverZTo = to.m_WindowCoords.invZ;
+		// 	EGL_Fixed OneOverZTo = to.m_WindowCoords.invW;
 		DECL_REG	(regInvSpan);
 		DECL_REG	(regSlope);
 
@@ -349,8 +349,8 @@ void CodeGenerator :: GenerateRasterLine() {
 		cg_virtual_reg_t * regEndTvOverZ0[EGL_NUM_TEXTURE_UNITS];
 
 		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			regEndTu0[unit] = LOAD_DATA(block, regCommonTo, OFFSET_RASTER_POS_TEX_TU + unit * sizeof(TexCoord));
-			regEndTv0[unit] = LOAD_DATA(block, regCommonTo, OFFSET_RASTER_POS_TEX_TV + unit * sizeof(TexCoord));
+			regEndTu0[unit] = LOAD_DATA(block, regCommonTo, OFFSET_RASTER_POS_TEX_TU(unit));
+			regEndTv0[unit] = LOAD_DATA(block, regCommonTo, OFFSET_RASTER_POS_TEX_TV(unit));
 
 			ALLOC_REG(regEndTuOverZ0[unit]);
 			ALLOC_REG(regEndTvOverZ0[unit]);
@@ -634,7 +634,7 @@ void CodeGenerator :: GenerateRasterLine() {
 
 		//-- initialize with from vertex attributes
 	// 	FractionalColor baseColor = from.m_Color;
-	// 	EGL_Fixed OneOverZ = from.m_WindowCoords.invZ;
+	// 	EGL_Fixed OneOverZ = from.m_WindowCoords.invW;
 	// 	EGL_Fixed tuOverZ = EGL_Mul(from.m_TextureCoords.tu, OneOverZ);
 	// 	EGL_Fixed tvOverZ = EGL_Mul(from.m_TextureCoords.tv, OneOverZ);
 	// 	EGL_Fixed fogDensity = from.m_FogDensity;
@@ -643,7 +643,7 @@ void CodeGenerator :: GenerateRasterLine() {
 
 	// 	EGL_Fixed invSpan = EGL_Inverse(deltaY);
 	// 	EGL_Fixed slope = EGL_Mul(EGL_Abs(deltaX), invSpan);
-	// 	EGL_Fixed OneOverZTo = to.m_WindowCoords.invZ;
+	// 	EGL_Fixed OneOverZTo = to.m_WindowCoords.invW;
 
 		// -- increments(to, from, invSpan)
 	// 	FractionalColor colorIncrement = (to.m_Color - from.m_Color) * invSpan;
@@ -827,7 +827,7 @@ void CodeGenerator :: GenerateRasterLine() {
 
 			// -- initialize with starting vertex attributes
 		// 	FractionalColor baseColor = from.m_Color;
-		// 	EGL_Fixed OneOverZ = from.m_WindowCoords.invZ;
+		// 	EGL_Fixed OneOverZ = from.m_WindowCoords.invW;
 		// 	EGL_Fixed tuOverZ = EGL_Mul(from.m_TextureCoords.tu, OneOverZ);
 		// 	EGL_Fixed tvOverZ = EGL_Mul(from.m_TextureCoords.tv, OneOverZ);
 		// 	EGL_Fixed fogDensity = from.m_FogDensity;
@@ -847,8 +847,8 @@ void CodeGenerator :: GenerateRasterLine() {
 		cg_virtual_reg_t * regTvOverZ0[EGL_NUM_TEXTURE_UNITS];
 
 		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			regTu0[unit] = LOAD_DATA(block, regCommonFrom, OFFSET_RASTER_POS_TEX_TU + unit * sizeof(TexCoord));
-			regTv0[unit] = LOAD_DATA(block, regCommonFrom, OFFSET_RASTER_POS_TEX_TV + unit * sizeof(TexCoord));
+			regTu0[unit] = LOAD_DATA(block, regCommonFrom, OFFSET_RASTER_POS_TEX_TU(unit));
+			regTv0[unit] = LOAD_DATA(block, regCommonFrom, OFFSET_RASTER_POS_TEX_TV(unit));
 
 			ALLOC_REG	(regTuOverZ0[unit]);
 			ALLOC_REG	(regTvOverZ0[unit]);
@@ -861,7 +861,7 @@ void CodeGenerator :: GenerateRasterLine() {
 
 		// 	EGL_Fixed invSpan = EGL_Inverse(deltaX);
 		// 	EGL_Fixed slope = EGL_Mul(EGL_Abs(deltaY), invSpan);
-		// 	EGL_Fixed OneOverZTo = to.m_WindowCoords.invZ;
+		// 	EGL_Fixed OneOverZTo = to.m_WindowCoords.invW;
 		DECL_REG	(regInvSpan);
 		DECL_REG	(regSlope);
 
@@ -882,8 +882,8 @@ void CodeGenerator :: GenerateRasterLine() {
 		cg_virtual_reg_t * regEndTvOverZ0[EGL_NUM_TEXTURE_UNITS];
 
 		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-			regEndTu0[unit] = LOAD_DATA(block, regCommonTo, OFFSET_RASTER_POS_TEX_TU + unit * sizeof(TexCoord));
-			regEndTv0[unit] = LOAD_DATA(block, regCommonTo, OFFSET_RASTER_POS_TEX_TV + unit * sizeof(TexCoord));
+			regEndTu0[unit] = LOAD_DATA(block, regCommonTo, OFFSET_RASTER_POS_TEX_TU(unit));
+			regEndTv0[unit] = LOAD_DATA(block, regCommonTo, OFFSET_RASTER_POS_TEX_TV(unit));
 
 			ALLOC_REG	(regEndTuOverZ0[unit]);
 			ALLOC_REG	(regEndTvOverZ0[unit]);

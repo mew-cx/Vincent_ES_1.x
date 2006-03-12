@@ -95,16 +95,15 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		// Code generation of triangle scan line
 		// ----------------------------------------------------------------------
-		void Compile(FunctionCache * target, FunctionCache::FunctionType type,
-			void (CodeGenerator::*function)());
+		void Compile(FunctionCache * target, FunctionCache::FunctionType type, const VaryingInfo * varyingInfo,
+			void (CodeGenerator::*function)(const VaryingInfo * varyingInfo));
 
 		void SetState(const RasterizerState * state)	{ m_State = state; }
 		const RasterizerState * GetState()				{ return m_State; }
 
-		void GenerateRasterScanLine();
-		void GenerateRasterLine();
-		void GenerateRasterPoint();
-		void GenerateRasterTriangle();
+		void GenerateRasterLine(const VaryingInfo * varyingInfo);
+		void GenerateRasterPoint(const VaryingInfo * varyingInfo);
+		void GenerateRasterTriangle(const VaryingInfo * varyingInfo);
 
 	private:
 		void GenerateFragment(cg_proc_t * procedure, cg_block_t * currentBlock,
@@ -162,12 +161,13 @@ namespace EGL {
 	// Offsets of structure members within info structure
 	// -------------------------------------------------------------------------
 
-#	define OFFSET_SURFACE_WIDTH					offsetof(RasterInfo, SurfaceWidth)
-#	define OFFSET_SURFACE_HEIGHT				offsetof(RasterInfo, SurfaceHeight)
-#	define OFFSET_SURFACE_DEPTH_BUFFER			offsetof(RasterInfo, DepthBuffer)
-#	define OFFSET_SURFACE_COLOR_BUFFER			offsetof(RasterInfo, ColorBuffer)
-#	define OFFSET_SURFACE_STENCIL_BUFFER		offsetof(RasterInfo, StencilBuffer)
-#	define OFFSET_SURFACE_ALPHA_BUFFER			offsetof(RasterInfo, AlphaBuffer)
+#	define OFFSET_SURFACE_WIDTH					offsetof(RasterInfo, SurfaceInfo.Width)
+#	define OFFSET_SURFACE_HEIGHT				offsetof(RasterInfo, SurfaceInfo.Height)
+#	define OFFSET_SURFACE_PITCH					offsetof(RasterInfo, SurfaceInfo.Pitch)
+#	define OFFSET_SURFACE_DEPTH_BUFFER			offsetof(RasterInfo, SurfaceInfo.DepthBuffer)
+#	define OFFSET_SURFACE_COLOR_BUFFER			offsetof(RasterInfo, SurfaceInfo.ColorBuffer)
+#	define OFFSET_SURFACE_STENCIL_BUFFER		offsetof(RasterInfo, SurfaceInfo.StencilBuffer)
+#	define OFFSET_SURFACE_ALPHA_BUFFER			offsetof(RasterInfo, SurfaceInfo.AlphaBuffer)
 
 #	define OFFSET_TEXTURES						offsetof(RasterInfo, Textures)
 #	define OFFSET_MIPMAP_LEVEL					offsetof(RasterInfo, MipmapLevel)
@@ -196,7 +196,7 @@ namespace EGL {
 
 #	define OFFSET_SCREEN_X					offsetof(ScreenCoord, x)
 #	define OFFSET_SCREEN_Y					offsetof(ScreenCoord, y)
-#	define OFFSET_SCREEN_INV_Z				offsetof(ScreenCoord, invZ)
+#	define OFFSET_SCREEN_INV_Z				offsetof(ScreenCoord, invW)
 #	define OFFSET_SCREEN_DEPTH				offsetof(ScreenCoord, depth)
 
 	// -------------------------------------------------------------------------
@@ -219,38 +219,13 @@ namespace EGL {
 #	define OFFSET_TEX_COORD_DTVDY			offsetof(TexCoord, dtvdy)
 
 	// -------------------------------------------------------------------------
-	// For EdgeBuffer
-	// -------------------------------------------------------------------------
-
-#	define OFFSET_EDGE_BUFFER_WINDOW		offsetof(EdgePos, m_WindowCoords)
-#	define OFFSET_EDGE_BUFFER_COLOR			offsetof(EdgePos, m_Color)
-#	define OFFSET_EDGE_BUFFER_TEXTURE		offsetof(EdgePos, m_TextureCoords)
-#	define OFFSET_EDGE_BUFFER_FOG			offsetof(EdgePos, m_FogDensity)
-
-#	define OFFSET_EDGE_BUFFER_WINDOW_X		(OFFSET_EDGE_BUFFER_WINDOW + OFFSET_EDGE_COORD_X)
-#	define OFFSET_EDGE_BUFFER_WINDOW_INV_Z	(OFFSET_EDGE_BUFFER_WINDOW + OFFSET_EDGE_COORD_INV_Z)
-#	define OFFSET_EDGE_BUFFER_WINDOW_DEPTH	(OFFSET_EDGE_BUFFER_WINDOW + OFFSET_EDGE_COORD_DEPTH)
-
-#	define OFFSET_EDGE_BUFFER_COLOR_R		(OFFSET_EDGE_BUFFER_COLOR + OFFSET_COLOR_RED)
-#	define OFFSET_EDGE_BUFFER_COLOR_G		(OFFSET_EDGE_BUFFER_COLOR + OFFSET_COLOR_GREEN)
-#	define OFFSET_EDGE_BUFFER_COLOR_B		(OFFSET_EDGE_BUFFER_COLOR + OFFSET_COLOR_BLUE)
-#	define OFFSET_EDGE_BUFFER_COLOR_A		(OFFSET_EDGE_BUFFER_COLOR + OFFSET_COLOR_ALPHA)
-
-#	define OFFSET_EDGE_BUFFER_TEX_TU		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_TU)
-#	define OFFSET_EDGE_BUFFER_TEX_TV		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_TV)
-#	define OFFSET_EDGE_BUFFER_TEX_DTUDX		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_DTUDX)
-#	define OFFSET_EDGE_BUFFER_TEX_DTUDY		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_DTUDY)
-#	define OFFSET_EDGE_BUFFER_TEX_DTVDX		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_DTVDX)
-#	define OFFSET_EDGE_BUFFER_TEX_DTVDY		(OFFSET_EDGE_BUFFER_TEXTURE + OFFSET_TEX_COORD_DTVDY)
-
-	// -------------------------------------------------------------------------
 	// For RasterPos
 	// -------------------------------------------------------------------------
 
 #	define OFFSET_RASTER_POS_WINDOW			offsetof(RasterPos, m_WindowCoords)
-#	define OFFSET_RASTER_POS_COLOR			offsetof(RasterPos, m_Color)
-#	define OFFSET_RASTER_POS_TEXTURE		offsetof(RasterPos, m_TextureCoords)
-#	define OFFSET_RASTER_POS_FOG			offsetof(RasterPos, m_FogDensity)
+#	define OFFSET_RASTER_POS_COLOR			(offsetof(RasterPos, m_Varying) + varyingInfo->colorIndex * sizeof(U32)) 
+#	define OFFSET_RASTER_POS_TEXTURE(unit)	(offsetof(RasterPos, m_Varying) + varyingInfo->textureBase[unit] * sizeof(U32))
+#	define OFFSET_RASTER_POS_FOG			(offsetof(RasterPos, m_Varying) + varyingInfo->fogIndex * sizeof(U32))
 
 #	define OFFSET_RASTER_POS_WINDOW_X		(OFFSET_RASTER_POS_WINDOW + OFFSET_SCREEN_X)
 #	define OFFSET_RASTER_POS_WINDOW_Y		(OFFSET_RASTER_POS_WINDOW + OFFSET_SCREEN_Y)
@@ -262,8 +237,9 @@ namespace EGL {
 #	define OFFSET_RASTER_POS_COLOR_B		(OFFSET_RASTER_POS_COLOR + OFFSET_COLOR_BLUE)
 #	define OFFSET_RASTER_POS_COLOR_A		(OFFSET_RASTER_POS_COLOR + OFFSET_COLOR_ALPHA)
 
-#	define OFFSET_RASTER_POS_TEX_TU			(OFFSET_RASTER_POS_TEXTURE + OFFSET_TEX_COORD_TU)
-#	define OFFSET_RASTER_POS_TEX_TV			(OFFSET_RASTER_POS_TEXTURE + OFFSET_TEX_COORD_TV)
+#	define OFFSET_RASTER_POS_TEX_TU(unit)	(OFFSET_RASTER_POS_TEXTURE(unit) + OFFSET_TEX_COORD_TU)
+#	define OFFSET_RASTER_POS_TEX_TV(unit)	(OFFSET_RASTER_POS_TEXTURE(unit) + OFFSET_TEX_COORD_TV)
+
 #	define OFFSET_RASTER_POS_TEX_DTUDX		(OFFSET_RASTER_POS_TEXTURE + OFFSET_TEX_COORD_DTUDX)
 #	define OFFSET_RASTER_POS_TEX_DTUDY		(OFFSET_RASTER_POS_TEXTURE + OFFSET_TEX_COORD_DTUDY)
 #	define OFFSET_RASTER_POS_TEX_DTVDX		(OFFSET_RASTER_POS_TEXTURE + OFFSET_TEX_COORD_DTVDX)

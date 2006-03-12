@@ -98,15 +98,15 @@ namespace {
 
 }
 
-void CodeGenerator :: Compile(FunctionCache * target, FunctionCache::FunctionType type,
-	void (CodeGenerator::*function)()) {
+void CodeGenerator :: Compile(FunctionCache * target, FunctionCache::FunctionType type, const VaryingInfo * varyingInfo,
+	void (CodeGenerator::*function)(const VaryingInfo * varyingInfo)) {
 
 	cg_heap_t * heap = cg_heap_create(4096);
 	cg_module_t * module = cg_module_create(heap);
 
 	m_Module = module;
 
-	(this->*function)();
+	(this->*function)(varyingInfo);
 
 #ifdef DEBUG
 	Dump("dump1.txt", m_Module);
