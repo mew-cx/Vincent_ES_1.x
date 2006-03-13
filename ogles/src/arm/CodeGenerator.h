@@ -103,12 +103,24 @@ namespace EGL {
 
 		void GenerateRasterLine(const VaryingInfo * varyingInfo);
 		void GenerateRasterPoint(const VaryingInfo * varyingInfo);
-		void GenerateRasterTriangle(const VaryingInfo * varyingInfo);
+		void GenerateRasterBlockDepthStencil(const VaryingInfo * varyingInfo);
+		void GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * varyingInfo);
+		void GenerateRasterBlockColorAlpha(const VaryingInfo * varyingInfo);
 
 	private:
 		void GenerateFragment(cg_proc_t * procedure, cg_block_t * currentBlock,
 			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
 			int weight, bool forceScissor = false);
+
+		cg_block_t * GenerateFragmentDepthStencil(cg_proc_t * procedure, cg_block_t * currentBlock,
+			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
+			int weight, cg_virtual_reg_t * regDepthBuffer = 0,
+			cg_virtual_reg_t * regStencilBuffer = 0, bool forceScissor = false);
+
+		void GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t * currentBlock,
+			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
+			int weight, cg_virtual_reg_t * regColorBuffer = 0,
+			cg_virtual_reg_t * regAlphaBuffer = 0);
 
 		void GenerateFetchTexColor(cg_proc_t * proc, cg_block_t * currentBlock,
 								   size_t unit,
@@ -156,6 +168,39 @@ namespace EGL {
 
 }
 
+
+	// -------------------------------------------------------------------------
+	// Offsets of structure members within Interpolant
+	// -------------------------------------------------------------------------
+
+#	define OFFSET_INTERPOLANT_VALUE			offsetof(Interpolant, Value)
+#	define OFFSET_INTERPOLANT_DX			offsetof(Interpolant, dX)
+#	define OFFSET_INTERPOLANT_DY			offsetof(Interpolant, dY)
+#	define OFFSET_INTERPOLANT_D_BLOCK_LINE	offsetof(Interpolant, dBlockLine)
+
+	// -------------------------------------------------------------------------
+	// Offsets of structure members within Variables
+	// -------------------------------------------------------------------------
+
+#	define OFFSET_VARIABLES_DEPTH			offsetof(Variables, Depth)
+#	define OFFSET_VARIABLES_INV_W			offsetof(Variables, InvW)
+#	define OFFSET_VARIABLES_VARYING_INV_W	offsetof(Variables, VaryingInvW)
+
+	// -------------------------------------------------------------------------
+	// Offsets of structure members within Edge
+	// -------------------------------------------------------------------------
+
+#	define OFFSET_EDGE_CY					offsetof(Edge, CY)
+#	define OFFSET_EDGE_FDX					offsetof(Edge, FDX)
+#	define OFFSET_EDGE_FDY					offsetof(Edge, FDY)
+
+	// -------------------------------------------------------------------------
+	// Offsets of structure members within Edges
+	// -------------------------------------------------------------------------
+
+#	define OFFSET_EDGES_EDGE_12				offsetof(Edges, edge12)
+#	define OFFSET_EDGES_EDGE_23				offsetof(Edges, edge23)
+#	define OFFSET_EDGES_EDGE_31				offsetof(Edges, edge31)
 
 	// -------------------------------------------------------------------------
 	// Offsets of structure members within info structure

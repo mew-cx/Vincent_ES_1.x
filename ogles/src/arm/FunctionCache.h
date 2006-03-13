@@ -55,7 +55,9 @@ namespace EGL {
 		enum FunctionType {
 			FunctionTypePoint,
 			FunctionTypeLine,
-			FunctionTypeTriangle
+			FunctionTypeBlockDepthStencil,
+			FunctionTypeBlockEdgeDepthStencil,
+			FunctionTypeBlockColorAlpha
 		};
 
 	public:

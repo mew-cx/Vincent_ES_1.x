@@ -552,15 +552,24 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 	}
 }
 
+void CodeGenerator :: GenerateFragment(cg_proc_t * procedure, cg_block_t * currentBlock,
+	cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
+	int weight, bool forceScissor) {
+	currentBlock = 
+		GenerateFragmentDepthStencil(procedure, currentBlock, continuation,
+			fragmentInfo, weight, 0, 0, forceScissor);
 
-// Actually, we could extract the scaling of the texture coordinates into the outer driving loop, 
-// and have the adjusted clipping range for tu and tv be stored in the rasterizer.
+	GenerateFragmentColorAlpha(procedure, currentBlock, continuation,
+		fragmentInfo, weight, 0, 0);
+}
 
-void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * currentBlock,
-			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
-			int weight, bool forceScissor) {
+cg_block_t * CodeGenerator :: GenerateFragmentDepthStencil(cg_proc_t * procedure, cg_block_t * currentBlock,
+	cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
+	int weight, cg_virtual_reg_t * regDepthBuffer,
+	cg_virtual_reg_t * regStencilBuffer, bool forceScissor) {
 
 	cg_block_t * block = currentBlock;
+
 
 	// Signature of generated function is:
 	// (I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu, EGL_Fixed tv, EGL_Fixed fogDensity, const Color& baseColor);
@@ -620,7 +629,8 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		regOffset = fragmentInfo.regX;
 	}
 
-	cg_virtual_reg_t * regDepthBuffer =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_DEPTH_BUFFER);
+	if (!regDepthBuffer) 
+		regDepthBuffer = LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_DEPTH_BUFFER);
 
 	DECL_FLAGS	(regDepthTest);
 	DECL_REG	(regScaledY);
@@ -718,6 +728,427 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		} else {
 			cg_create_inst_branch_cond(block, branchOnDepthTestFailed, regDepthTest, continuation CG_INST_DEBUG_ARGS);
 		}
+	}
+
+	if (m_State->m_Stencil.Enabled) {
+
+		//bool stencilTest;
+		//U32 stencilRef = m_State->m_Stencil.Reference & m_State->ComparisonMask;
+		//U32 stencilValue = m_Surface->GetStencilBuffer()[offset];
+		//U32 stencil = stencilValue & m_State->m_Stencil.ComparisonMask;
+		DECL_REG	(regStencilRef);
+		DECL_REG	(regStencilMask);
+		DECL_REG	(regStencilAddr);
+		DECL_REG	(regStencilValue);
+		DECL_REG	(regStencil);
+		DECL_FLAGS	(regStencilTest);
+
+		if (!regStencilBuffer)
+			regStencilBuffer = LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_STENCIL_BUFFER);
+
+		LDI		(regStencilRef, m_State->m_Stencil.Reference & m_State->m_Stencil.ComparisonMask);
+		LDI		(regStencilMask, m_State->m_Stencil.ComparisonMask);
+		ADD		(regStencilAddr, regStencilBuffer, regOffset4);
+		LDW		(regStencilValue, regStencilAddr);
+		AND		(regStencil, regStencilValue, regStencilMask);
+		CMP		(regStencilTest, regStencil, regStencilRef);
+
+		cg_opcode_t passedTest;
+
+		switch (m_State->m_Stencil.Func) {
+			default:
+			case RasterizerState::CompFuncNever:	
+				//stencilTest = false;				
+				passedTest = cg_op_nop;
+				break;
+
+			case RasterizerState::CompFuncLess:		
+				//stencilTest = stencilRef < stencil;	
+				passedTest = cg_op_bgt;
+				break;
+
+			case RasterizerState::CompFuncEqual:	
+				//stencilTest = stencilRef == stencil;
+				passedTest = cg_op_beq;
+				break;
+
+			case RasterizerState::CompFuncLEqual:	
+				//stencilTest = stencilRef <= stencil;
+				passedTest = cg_op_bge;
+				break;
+
+			case RasterizerState::CompFuncGreater:	
+				//stencilTest = stencilRef > stencil;	
+				passedTest = cg_op_blt;
+				break;
+
+			case RasterizerState::CompFuncNotEqual:	
+				//stencilTest = stencilRef != stencil;
+				passedTest = cg_op_bne;
+				break;
+
+			case RasterizerState::CompFuncGEqual:	
+				//stencilTest = stencilRef >= stencil;
+				passedTest = cg_op_ble;
+				break;
+
+			case RasterizerState::CompFuncAlways:	
+				//stencilTest = true;					
+				passedTest = cg_op_bra;
+				break;
+		}
+
+		// branch on stencil test
+		cg_block_ref_t * labelStencilPassed = cg_block_ref_create(procedure);
+		cg_block_ref_t * labelStencilBypassed = cg_block_ref_create(procedure);
+
+		if (passedTest != cg_op_nop) {
+			cg_create_inst_branch_cond(block, passedTest,	regStencilTest, labelStencilPassed CG_INST_DEBUG_ARGS);
+		}
+
+		//if (!stencilTest) {
+		{
+			cg_virtual_reg_t * regNewStencilValue;
+
+			switch (m_State->m_Stencil.Fail) {
+				default:
+				case RasterizerState::StencilOpKeep: 
+					goto no_write;
+
+				case RasterizerState::StencilOpZero: 
+					//stencilValue = 0; 
+					regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+					LDI		(regNewStencilValue, 0);
+					break;
+
+				case RasterizerState::StencilOpReplace: 
+					//stencilValue = m_State->m_StencilReference; 
+					regNewStencilValue = regStencilRef;
+					break;
+
+				case RasterizerState::StencilOpIncr: 
+					//if (stencilValue != 0xffffffff) {
+					//	stencilValue++; 
+					//}
+					{
+						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						DECL_REG	(regConstant1);
+						DECL_FLAGS	(regFlag);
+
+						LDI		(regConstant1, 1);
+						ADD_S	(regNewStencilValue, regFlag, regStencilValue, regConstant1);
+						BEQ		(regFlag, continuation);
+					}
+					
+					break;
+
+				case RasterizerState::StencilOpDecr: 
+					//if (stencilValue != 0) {
+					//	stencilValue--; 
+					//}
+					{
+						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						DECL_REG	(regConstant0);
+						DECL_REG	(regConstant1);
+						DECL_FLAGS	(regFlag);
+
+						LDI		(regConstant0, 0);
+						CMP		(regFlag, regStencilValue, regConstant0);
+						BEQ		(regFlag, continuation);
+						LDI		(regConstant1, 1);
+						SUB		(regNewStencilValue, regStencilValue, regConstant1);
+					}
+					
+					break;
+
+				case RasterizerState::StencilOpInvert: 
+					//stencilValue = ~stencilValue; 
+					regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+					NOT		(regNewStencilValue, regStencilValue);
+					break;
+			}
+
+			if (m_State->m_Stencil.Mask == ~0) {
+				STW		(regNewStencilValue, regStencilAddr);
+			} else {
+				DECL_REG	(regMaskedOriginal);
+				DECL_REG	(regMaskedNewValue);
+				DECL_REG	(regWriteValue);
+
+				DECL_CONST_REG	(regStencilWriteMask, m_State->m_Stencil.Mask);
+				DECL_REG	(regInverseWriteMask);
+
+				AND			(regMaskedNewValue, regNewStencilValue, regStencilWriteMask);
+				NOT			(regInverseWriteMask, regStencilWriteMask);
+				AND			(regMaskedOriginal, regStencilValue, regInverseWriteMask);
+				OR			(regWriteValue, regMaskedOriginal, regMaskedNewValue);
+				STW			(regWriteValue, regStencilAddr);
+			}
+
+no_write:
+			if (passedTest == cg_op_nop) {
+				return block;
+			} else {
+				BRA		(continuation);
+			}
+		//}
+		}
+
+		cg_block_ref_t * labelStencilZTestPassed = cg_block_ref_create(procedure);
+
+		// stencil test passed
+		block = cg_block_create(procedure, weight);
+		labelStencilPassed->block = block;
+
+		//if (!depthTest) {
+			if (branchOnDepthTestPassed == cg_op_nop) {
+				// nothing
+			} else if (branchOnDepthTestPassed == cg_op_bra) {
+				BRA		(labelStencilZTestPassed);
+			} else {
+				DECL_FLAGS(regDepthTest1);
+
+				CMP	(regDepthTest1, fragmentInfo.regDepth, regZBufferValue);
+				cg_create_inst_branch_cond(block, branchOnDepthTestPassed, regDepthTest1, labelStencilZTestPassed CG_INST_DEBUG_ARGS);
+			}
+
+			{
+				cg_virtual_reg_t * regNewStencilValue;
+
+				switch (m_State->m_Stencil.ZFail) {
+					default:
+					case RasterizerState::StencilOpKeep: 
+						regNewStencilValue = regStencilValue;
+						break;
+
+					case RasterizerState::StencilOpZero: 
+						//stencilValue = 0; 
+						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						LDI		(regNewStencilValue, 0);
+						break;
+
+					case RasterizerState::StencilOpReplace: 
+						//stencilValue = m_State->m_StencilReference; 
+						regNewStencilValue = regStencilRef;
+						break;
+
+					case RasterizerState::StencilOpIncr: 
+						//if (stencilValue != 0xffffffff) {
+						//	stencilValue++; 
+						//}
+						{
+							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regConstant1);
+							DECL_FLAGS	(regFlag);
+
+							LDI		(regConstant1, 1);
+							ADD_S	(regNewStencilValue, regFlag, regStencilValue, regConstant1);
+
+							if (m_State->m_DepthTest.Enabled) {
+								BEQ		(regFlag, continuation);
+							} else {
+								BEQ		(regFlag, labelStencilBypassed);
+							}
+						}
+						
+						break;
+
+					case RasterizerState::StencilOpDecr: 
+						//if (stencilValue != 0) {
+						//	stencilValue--; 
+						//}
+						{
+							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regConstant0);
+							DECL_REG	(regConstant1);
+							DECL_FLAGS	(regFlag);
+
+							LDI		(regConstant0, 0);
+							CMP		(regFlag, regStencilValue, regConstant0);
+
+							if (m_State->m_DepthTest.Enabled) {
+								BEQ		(regFlag, continuation);
+							} else {
+								BEQ		(regFlag, labelStencilBypassed);
+							}
+
+							LDI		(regConstant1, 1);
+							SUB		(regNewStencilValue, regStencilValue, regConstant1);
+						}
+						
+						break;
+
+					case RasterizerState::StencilOpInvert: 
+						//stencilValue = ~stencilValue; 
+						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						NOT		(regNewStencilValue, regStencilValue);
+						break;
+				}
+
+				//m_Surface->GetStencilBuffer()[offset] = stencilValue;
+				//STW		(regNewStencilValue, regStencilAddr);
+			//}
+				if (m_State->m_Stencil.Mask == ~0) {
+					STW		(regNewStencilValue, regStencilAddr);
+				} else {
+					DECL_REG	(regMaskedOriginal);
+					DECL_REG	(regMaskedNewValue);
+					DECL_REG	(regWriteValue);
+
+					DECL_CONST_REG	(regStencilWriteMask, m_State->m_Stencil.Mask);
+					DECL_REG	(regInverseWriteMask);
+
+					AND			(regMaskedNewValue, regNewStencilValue, regStencilWriteMask);
+					NOT			(regInverseWriteMask, regStencilWriteMask);
+					AND			(regMaskedOriginal, regStencilValue, regInverseWriteMask);
+					OR			(regWriteValue, regMaskedOriginal, regMaskedNewValue);
+					STW			(regWriteValue, regStencilAddr);
+				}
+			}
+
+			if (m_State->m_DepthTest.Enabled) {
+				// return;
+				BRA		(continuation);
+			} else {
+				BRA		(labelStencilBypassed);
+			}
+		//} else {
+		// stencil nad z-test passed
+		block = cg_block_create(procedure, weight);
+		labelStencilZTestPassed->block = block;
+
+			{
+				cg_virtual_reg_t * regNewStencilValue;
+
+				switch (m_State->m_Stencil.ZPass) {
+					default:
+					case RasterizerState::StencilOpKeep: 
+						regNewStencilValue = regStencilValue;
+						break;
+
+					case RasterizerState::StencilOpZero: 
+						//stencilValue = 0; 
+						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						LDI		(regNewStencilValue, 0);
+						break;
+
+					case RasterizerState::StencilOpReplace: 
+						//stencilValue = m_State->m_StencilReference; 
+						regNewStencilValue = regStencilRef;
+						break;
+
+					case RasterizerState::StencilOpIncr: 
+						//if (stencilValue != 0xffffffff) {
+						//	stencilValue++; 
+						//}
+						{
+							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regConstant1);
+							DECL_FLAGS	(regFlag);
+
+							LDI		(regConstant1, 1);
+							ADD_S	(regNewStencilValue, regFlag, regStencilValue, regConstant1);
+							BEQ		(regFlag, labelStencilBypassed);
+						}
+						
+						break;
+
+					case RasterizerState::StencilOpDecr: 
+						//if (stencilValue != 0) {
+						//	stencilValue--; 
+						//}
+						{
+							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+							DECL_REG	(regConstant0);
+							DECL_REG	(regConstant1);
+							DECL_FLAGS	(regFlag);
+
+							LDI		(regConstant0, 0);
+							CMP		(regFlag, regStencilValue, regConstant0);
+							BEQ		(regFlag, labelStencilBypassed);
+							LDI		(regConstant1, 1);
+							SUB		(regNewStencilValue, regStencilValue, regConstant1);
+						}
+						
+						break;
+
+					case RasterizerState::StencilOpInvert: 
+						//stencilValue = ~stencilValue; 
+						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+						NOT		(regNewStencilValue, regStencilValue);
+						break;
+				}
+
+				//m_Surface->GetStencilBuffer()[offset] = stencilValue;
+				//STW		(regNewStencilValue, regStencilAddr);
+			//}
+				if (m_State->m_Stencil.Mask == ~0) {
+					STW		(regNewStencilValue, regStencilAddr);
+				} else {
+					DECL_REG	(regMaskedOriginal);
+					DECL_REG	(regMaskedNewValue);
+					DECL_REG	(regWriteValue);
+
+					DECL_CONST_REG	(regStencilWriteMask, m_State->m_Stencil.Mask);
+					DECL_REG	(regInverseWriteMask);
+
+					AND			(regMaskedNewValue, regNewStencilValue, regStencilWriteMask);
+					NOT			(regInverseWriteMask, regStencilWriteMask);
+					AND			(regMaskedOriginal, regStencilValue, regInverseWriteMask);
+					OR			(regWriteValue, regMaskedOriginal, regMaskedNewValue);
+					STW			(regWriteValue, regStencilAddr);
+				}
+			}
+
+		// stencil test bypassed
+		block = cg_block_create(procedure, weight);
+		labelStencilBypassed->block = block;
+	}
+
+	// Masking and write to framebuffer
+	if (m_State->m_Mask.Depth) {
+		//m_Surface->GetDepthBuffer()[offset] = depth;
+		STH		(fragmentInfo.regDepth, regZBufferAddr);
+	}
+
+	return block;
+}
+
+void CodeGenerator :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t * currentBlock,
+	cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
+	int weight, cg_virtual_reg_t * regColorBuffer,
+	cg_virtual_reg_t * regAlphaBuffer) {
+
+	cg_block_t * block = currentBlock;
+
+	//bool depthTest;
+	//U32 offset = x + y * m_Surface->GetWidth();
+	//I32 zBufferValue = m_Surface->GetDepthBuffer()[offset];
+	cg_virtual_reg_t * regOffset;
+	
+	if (fragmentInfo.regY) {
+		regOffset = cg_virtual_reg_create(procedure, cg_reg_type_general);
+
+		cg_virtual_reg_t * regPitch = LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_PITCH);
+
+		DECL_REG	(regScaledY);
+
+		MUL		(regScaledY, fragmentInfo.regY, regPitch);
+		ADD		(regOffset, regScaledY, fragmentInfo.regX);
+	} else {
+		regOffset = fragmentInfo.regX;
 	}
 
 	//Color color = baseColor;
@@ -1382,395 +1813,12 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		}
 	}
 
-	if (m_State->m_Stencil.Enabled) {
-
-		//bool stencilTest;
-		//U32 stencilRef = m_State->m_Stencil.Reference & m_State->ComparisonMask;
-		//U32 stencilValue = m_Surface->GetStencilBuffer()[offset];
-		//U32 stencil = stencilValue & m_State->m_Stencil.ComparisonMask;
-		DECL_REG	(regStencilRef);
-		DECL_REG	(regStencilMask);
-		DECL_REG	(regStencilAddr);
-		DECL_REG	(regStencilValue);
-		DECL_REG	(regStencil);
-		DECL_FLAGS	(regStencilTest);
-
-		cg_virtual_reg_t * regStencilBuffer =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_STENCIL_BUFFER);
-
-		LDI		(regStencilRef, m_State->m_Stencil.Reference & m_State->m_Stencil.ComparisonMask);
-		LDI		(regStencilMask, m_State->m_Stencil.ComparisonMask);
-		ADD		(regStencilAddr, regStencilBuffer, regOffset4);
-		LDW		(regStencilValue, regStencilAddr);
-		AND		(regStencil, regStencilValue, regStencilMask);
-		CMP		(regStencilTest, regStencil, regStencilRef);
-
-		cg_opcode_t passedTest;
-
-		switch (m_State->m_Stencil.Func) {
-			default:
-			case RasterizerState::CompFuncNever:	
-				//stencilTest = false;				
-				passedTest = cg_op_nop;
-				break;
-
-			case RasterizerState::CompFuncLess:		
-				//stencilTest = stencilRef < stencil;	
-				passedTest = cg_op_bgt;
-				break;
-
-			case RasterizerState::CompFuncEqual:	
-				//stencilTest = stencilRef == stencil;
-				passedTest = cg_op_beq;
-				break;
-
-			case RasterizerState::CompFuncLEqual:	
-				//stencilTest = stencilRef <= stencil;
-				passedTest = cg_op_bge;
-				break;
-
-			case RasterizerState::CompFuncGreater:	
-				//stencilTest = stencilRef > stencil;	
-				passedTest = cg_op_blt;
-				break;
-
-			case RasterizerState::CompFuncNotEqual:	
-				//stencilTest = stencilRef != stencil;
-				passedTest = cg_op_bne;
-				break;
-
-			case RasterizerState::CompFuncGEqual:	
-				//stencilTest = stencilRef >= stencil;
-				passedTest = cg_op_ble;
-				break;
-
-			case RasterizerState::CompFuncAlways:	
-				//stencilTest = true;					
-				passedTest = cg_op_bra;
-				break;
-		}
-
-		// branch on stencil test
-		cg_block_ref_t * labelStencilPassed = cg_block_ref_create(procedure);
-		cg_block_ref_t * labelStencilBypassed = cg_block_ref_create(procedure);
-
-		if (passedTest != cg_op_nop) {
-			cg_create_inst_branch_cond(block, passedTest,	regStencilTest, labelStencilPassed CG_INST_DEBUG_ARGS);
-		}
-
-		//if (!stencilTest) {
-		{
-			cg_virtual_reg_t * regNewStencilValue;
-
-			switch (m_State->m_Stencil.Fail) {
-				default:
-				case RasterizerState::StencilOpKeep: 
-					goto no_write;
-
-				case RasterizerState::StencilOpZero: 
-					//stencilValue = 0; 
-					regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-
-					LDI		(regNewStencilValue, 0);
-					break;
-
-				case RasterizerState::StencilOpReplace: 
-					//stencilValue = m_State->m_StencilReference; 
-					regNewStencilValue = regStencilRef;
-					break;
-
-				case RasterizerState::StencilOpIncr: 
-					//if (stencilValue != 0xffffffff) {
-					//	stencilValue++; 
-					//}
-					{
-						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-
-						DECL_REG	(regConstant1);
-						DECL_FLAGS	(regFlag);
-
-						LDI		(regConstant1, 1);
-						ADD_S	(regNewStencilValue, regFlag, regStencilValue, regConstant1);
-						BEQ		(regFlag, continuation);
-					}
-					
-					break;
-
-				case RasterizerState::StencilOpDecr: 
-					//if (stencilValue != 0) {
-					//	stencilValue--; 
-					//}
-					{
-						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-
-						DECL_REG	(regConstant0);
-						DECL_REG	(regConstant1);
-						DECL_FLAGS	(regFlag);
-
-						LDI		(regConstant0, 0);
-						CMP		(regFlag, regStencilValue, regConstant0);
-						BEQ		(regFlag, continuation);
-						LDI		(regConstant1, 1);
-						SUB		(regNewStencilValue, regStencilValue, regConstant1);
-					}
-					
-					break;
-
-				case RasterizerState::StencilOpInvert: 
-					//stencilValue = ~stencilValue; 
-					regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-
-					NOT		(regNewStencilValue, regStencilValue);
-					break;
-			}
-
-			if (m_State->m_Stencil.Mask == ~0) {
-				STW		(regNewStencilValue, regStencilAddr);
-			} else {
-				DECL_REG	(regMaskedOriginal);
-				DECL_REG	(regMaskedNewValue);
-				DECL_REG	(regWriteValue);
-
-				DECL_CONST_REG	(regStencilWriteMask, m_State->m_Stencil.Mask);
-				DECL_REG	(regInverseWriteMask);
-
-				AND			(regMaskedNewValue, regNewStencilValue, regStencilWriteMask);
-				NOT			(regInverseWriteMask, regStencilWriteMask);
-				AND			(regMaskedOriginal, regStencilValue, regInverseWriteMask);
-				OR			(regWriteValue, regMaskedOriginal, regMaskedNewValue);
-				STW			(regWriteValue, regStencilAddr);
-			}
-
-no_write:
-			if (passedTest == cg_op_nop) {
-				return;
-			} else {
-				BRA		(continuation);
-			}
-		//}
-		}
-
-		cg_block_ref_t * labelStencilZTestPassed = cg_block_ref_create(procedure);
-
-		// stencil test passed
-		block = cg_block_create(procedure, weight);
-		labelStencilPassed->block = block;
-
-		//if (!depthTest) {
-			if (branchOnDepthTestPassed == cg_op_nop) {
-				// nothing
-			} else if (branchOnDepthTestPassed == cg_op_bra) {
-				BRA		(labelStencilZTestPassed);
-			} else {
-				DECL_FLAGS(regDepthTest1);
-
-				CMP	(regDepthTest1, fragmentInfo.regDepth, regZBufferValue);
-				cg_create_inst_branch_cond(block, branchOnDepthTestPassed, regDepthTest1, labelStencilZTestPassed CG_INST_DEBUG_ARGS);
-			}
-
-			{
-				cg_virtual_reg_t * regNewStencilValue;
-
-				switch (m_State->m_Stencil.ZFail) {
-					default:
-					case RasterizerState::StencilOpKeep: 
-						regNewStencilValue = regStencilValue;
-						break;
-
-					case RasterizerState::StencilOpZero: 
-						//stencilValue = 0; 
-						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-
-						LDI		(regNewStencilValue, 0);
-						break;
-
-					case RasterizerState::StencilOpReplace: 
-						//stencilValue = m_State->m_StencilReference; 
-						regNewStencilValue = regStencilRef;
-						break;
-
-					case RasterizerState::StencilOpIncr: 
-						//if (stencilValue != 0xffffffff) {
-						//	stencilValue++; 
-						//}
-						{
-							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-
-							DECL_REG	(regConstant1);
-							DECL_FLAGS	(regFlag);
-
-							LDI		(regConstant1, 1);
-							ADD_S	(regNewStencilValue, regFlag, regStencilValue, regConstant1);
-
-							if (m_State->m_DepthTest.Enabled) {
-								BEQ		(regFlag, continuation);
-							} else {
-								BEQ		(regFlag, labelStencilBypassed);
-							}
-						}
-						
-						break;
-
-					case RasterizerState::StencilOpDecr: 
-						//if (stencilValue != 0) {
-						//	stencilValue--; 
-						//}
-						{
-							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-
-							DECL_REG	(regConstant0);
-							DECL_REG	(regConstant1);
-							DECL_FLAGS	(regFlag);
-
-							LDI		(regConstant0, 0);
-							CMP		(regFlag, regStencilValue, regConstant0);
-
-							if (m_State->m_DepthTest.Enabled) {
-								BEQ		(regFlag, continuation);
-							} else {
-								BEQ		(regFlag, labelStencilBypassed);
-							}
-
-							LDI		(regConstant1, 1);
-							SUB		(regNewStencilValue, regStencilValue, regConstant1);
-						}
-						
-						break;
-
-					case RasterizerState::StencilOpInvert: 
-						//stencilValue = ~stencilValue; 
-						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-
-						NOT		(regNewStencilValue, regStencilValue);
-						break;
-				}
-
-				//m_Surface->GetStencilBuffer()[offset] = stencilValue;
-				//STW		(regNewStencilValue, regStencilAddr);
-			//}
-				if (m_State->m_Stencil.Mask == ~0) {
-					STW		(regNewStencilValue, regStencilAddr);
-				} else {
-					DECL_REG	(regMaskedOriginal);
-					DECL_REG	(regMaskedNewValue);
-					DECL_REG	(regWriteValue);
-
-					DECL_CONST_REG	(regStencilWriteMask, m_State->m_Stencil.Mask);
-					DECL_REG	(regInverseWriteMask);
-
-					AND			(regMaskedNewValue, regNewStencilValue, regStencilWriteMask);
-					NOT			(regInverseWriteMask, regStencilWriteMask);
-					AND			(regMaskedOriginal, regStencilValue, regInverseWriteMask);
-					OR			(regWriteValue, regMaskedOriginal, regMaskedNewValue);
-					STW			(regWriteValue, regStencilAddr);
-				}
-			}
-
-			if (m_State->m_DepthTest.Enabled) {
-				// return;
-				BRA		(continuation);
-			} else {
-				BRA		(labelStencilBypassed);
-			}
-		//} else {
-		// stencil nad z-test passed
-		block = cg_block_create(procedure, weight);
-		labelStencilZTestPassed->block = block;
-
-			{
-				cg_virtual_reg_t * regNewStencilValue;
-
-				switch (m_State->m_Stencil.ZPass) {
-					default:
-					case RasterizerState::StencilOpKeep: 
-						regNewStencilValue = regStencilValue;
-						break;
-
-					case RasterizerState::StencilOpZero: 
-						//stencilValue = 0; 
-						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-
-						LDI		(regNewStencilValue, 0);
-						break;
-
-					case RasterizerState::StencilOpReplace: 
-						//stencilValue = m_State->m_StencilReference; 
-						regNewStencilValue = regStencilRef;
-						break;
-
-					case RasterizerState::StencilOpIncr: 
-						//if (stencilValue != 0xffffffff) {
-						//	stencilValue++; 
-						//}
-						{
-							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-
-							DECL_REG	(regConstant1);
-							DECL_FLAGS	(regFlag);
-
-							LDI		(regConstant1, 1);
-							ADD_S	(regNewStencilValue, regFlag, regStencilValue, regConstant1);
-							BEQ		(regFlag, labelStencilBypassed);
-						}
-						
-						break;
-
-					case RasterizerState::StencilOpDecr: 
-						//if (stencilValue != 0) {
-						//	stencilValue--; 
-						//}
-						{
-							regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-
-							DECL_REG	(regConstant0);
-							DECL_REG	(regConstant1);
-							DECL_FLAGS	(regFlag);
-
-							LDI		(regConstant0, 0);
-							CMP		(regFlag, regStencilValue, regConstant0);
-							BEQ		(regFlag, labelStencilBypassed);
-							LDI		(regConstant1, 1);
-							SUB		(regNewStencilValue, regStencilValue, regConstant1);
-						}
-						
-						break;
-
-					case RasterizerState::StencilOpInvert: 
-						//stencilValue = ~stencilValue; 
-						regNewStencilValue = cg_virtual_reg_create(procedure, cg_reg_type_general);
-
-						NOT		(regNewStencilValue, regStencilValue);
-						break;
-				}
-
-				//m_Surface->GetStencilBuffer()[offset] = stencilValue;
-				//STW		(regNewStencilValue, regStencilAddr);
-			//}
-				if (m_State->m_Stencil.Mask == ~0) {
-					STW		(regNewStencilValue, regStencilAddr);
-				} else {
-					DECL_REG	(regMaskedOriginal);
-					DECL_REG	(regMaskedNewValue);
-					DECL_REG	(regWriteValue);
-
-					DECL_CONST_REG	(regStencilWriteMask, m_State->m_Stencil.Mask);
-					DECL_REG	(regInverseWriteMask);
-
-					AND			(regMaskedNewValue, regNewStencilValue, regStencilWriteMask);
-					NOT			(regInverseWriteMask, regStencilWriteMask);
-					AND			(regMaskedOriginal, regStencilValue, regInverseWriteMask);
-					OR			(regWriteValue, regMaskedOriginal, regMaskedNewValue);
-					STW			(regWriteValue, regStencilAddr);
-				}
-			}
-
-		// stencil test bypassed
-		block = cg_block_create(procedure, weight);
-		labelStencilBypassed->block = block;
-	}
-
 	// surface color buffer, depth buffer, alpha buffer, stencil buffer
-	cg_virtual_reg_t * regColorBuffer =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_COLOR_BUFFER);
-	cg_virtual_reg_t * regAlphaBuffer =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_ALPHA_BUFFER);
+	if (!regColorBuffer)
+		regColorBuffer = LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_COLOR_BUFFER);
+
+	if (!regAlphaBuffer)
+		regAlphaBuffer = LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_ALPHA_BUFFER);
 
 	//U16 dstValue = m_Surface->GetColorBuffer()[offset];
 	//U8 dstAlpha = m_Surface->GetAlphaBuffer()[offset];
@@ -1778,6 +1826,12 @@ no_write:
 	DECL_REG	(regDstAlpha);
 	DECL_REG	(regColorAddr);
 	DECL_REG	(regAlphaAddr);
+
+	DECL_REG	(regConstant1);
+	DECL_REG	(regOffset2);
+
+	LDI		(regConstant1, 1);
+	LSL		(regOffset2, regOffset, regConstant1);
 
 	ADD		(regColorAddr, regColorBuffer, regOffset2);
 	ADD		(regAlphaAddr, regAlphaBuffer, regOffset);
@@ -2063,12 +2117,6 @@ no_write:
 		regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
 	}
 
-	// Masking and write to framebuffer
-	if (m_State->m_Mask.Depth) {
-		//m_Surface->GetDepthBuffer()[offset] = depth;
-		STH		(fragmentInfo.regDepth, regZBufferAddr);
-	}
-
 	if (m_State->m_LogicOp.Enabled) {
 
 		//U32 newValue = maskedColor.ConvertToRGBA();
@@ -2263,5 +2311,4 @@ no_write:
 		STB		(regColorA, regAlphaAddr);
 	}
 }
-
 

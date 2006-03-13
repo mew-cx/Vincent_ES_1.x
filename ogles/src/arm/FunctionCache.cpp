@@ -109,7 +109,9 @@ void * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & s
 		comparison = &RasterizerState::CompareLine;
 		break;
 
-	case FunctionTypeTriangle:
+	case FunctionTypeBlockDepthStencil:
+	case FunctionTypeBlockEdgeDepthStencil:
+	case FunctionTypeBlockColorAlpha:
 		comparison = &RasterizerState::ComparePolygon;
 		break;
 
@@ -144,15 +146,24 @@ void * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & s
 
 	switch (type) {
 	case FunctionTypePoint:
-		generator.Compile(this, FunctionTypePoint, varyingInfo, &CodeGenerator::GenerateRasterPoint);
+		generator.Compile(this, type, varyingInfo, &CodeGenerator::GenerateRasterPoint);
 		break;
 
 	case FunctionTypeLine:
-		generator.Compile(this, FunctionTypeLine, varyingInfo, &CodeGenerator::GenerateRasterLine);
+		generator.Compile(this, type, varyingInfo, &CodeGenerator::GenerateRasterLine);
 		break;
 
-	case FunctionTypeTriangle:
-		generator.Compile(this, FunctionTypeTriangle, varyingInfo, &CodeGenerator::GenerateRasterTriangle);
+	case FunctionTypeBlockDepthStencil:
+		generator.Compile(this, type, varyingInfo, &CodeGenerator::GenerateRasterBlockDepthStencil);
+		break;
+
+	case FunctionTypeBlockEdgeDepthStencil:
+		generator.Compile(this, type, varyingInfo, &CodeGenerator::GenerateRasterBlockEdgeDepthStencil);
+		break;
+
+	case FunctionTypeBlockColorAlpha:
+		generator.Compile(this, type, varyingInfo, &CodeGenerator::GenerateRasterBlockColorAlpha);
+		break;
 
 	default:
 		;
