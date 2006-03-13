@@ -111,8 +111,11 @@ void * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & s
 
 	case FunctionTypeBlockDepthStencil:
 	case FunctionTypeBlockEdgeDepthStencil:
+		comparison = &RasterizerState::ComparePolygonDepthStencil;
+		break;
+
 	case FunctionTypeBlockColorAlpha:
-		comparison = &RasterizerState::ComparePolygon;
+		comparison = &RasterizerState::ComparePolygonColorAlpha;
 		break;
 
 	}
