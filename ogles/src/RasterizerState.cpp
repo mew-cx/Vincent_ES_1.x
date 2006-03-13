@@ -91,8 +91,40 @@ bool RasterizerState :: CompareLine(const RasterizerState& other) const {
 }
 
 
-bool RasterizerState :: ComparePolygon(const RasterizerState& other) const {
-	return m_Polygon == other.m_Polygon &&
-		CompareCommon(other);
+bool RasterizerState :: ComparePolygonDepthStencil(const RasterizerState& other) const {
+	if (!(m_Polygon == other.m_Polygon))
+		return false;
+
+	return
+		m_DepthTest == other.m_DepthTest &&
+		m_ScissorTest == other.m_ScissorTest &&
+		m_Stencil == other.m_Stencil &&
+
+		m_SampleCoverage == other.m_SampleCoverage &&
+		m_InvertSampleCoverage == other.m_InvertSampleCoverage;
 }
 
+
+bool RasterizerState :: ComparePolygonColorAlpha(const RasterizerState& other) const {
+	//return !(m_Polygon == other.m_Polygon)
+	//	return false;
+
+	if (!(m_ShadingModel == other.m_ShadingModel)  ||
+		!(m_Fog == other.m_Fog)) {
+		return false;
+	}
+
+	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		if (!(m_Texture[unit] == other.m_Texture[unit]))
+			return false;
+	}
+
+	return
+		m_Mask == other.m_Mask &&
+		m_Alpha == other.m_Alpha &&
+		m_Blend == other.m_Blend &&
+		m_LogicOp == other.m_LogicOp &&
+
+		m_SampleCoverage == other.m_SampleCoverage &&
+		m_InvertSampleCoverage == other.m_InvertSampleCoverage;
+}

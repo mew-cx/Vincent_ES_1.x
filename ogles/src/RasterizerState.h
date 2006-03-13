@@ -202,7 +202,8 @@ namespace EGL {
 		bool CompareCommon(const RasterizerState& other) const;
 		bool ComparePoint(const RasterizerState& other) const;
 		bool CompareLine(const RasterizerState& other) const;
-		bool ComparePolygon(const RasterizerState& other) const;
+		bool ComparePolygonDepthStencil(const RasterizerState& other) const;
+		bool ComparePolygonColorAlpha(const RasterizerState& other) const;
 
 		typedef bool (RasterizerState::*CompareFunction)(const RasterizerState& other) const;
 

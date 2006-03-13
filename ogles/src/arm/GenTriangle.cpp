@@ -73,7 +73,7 @@ namespace {
 
 		LDI(offset, constant);
 		ADD(addr, base, offset);
-		STW(addr, value);
+		STW(value, addr);
 
 	}
 
@@ -236,11 +236,11 @@ void CodeGenerator :: GenerateRasterBlockDepthStencil(const VaryingInfo * varyin
 
 	//	*mask++ = rowMask;
 #if EGL_RASTER_BLOCK_SIZE <= 8
-	STB			(regMask0, regRowMask1);
+	STB			(regRowMask1, regMask0);
 #elif EGL_RASTER_BLOCK_SIZE <= 16
-	STH			(regMask0, regRowMask1);
+	STH			(regRowMask1, regMask0);
 #else
-	ST			(regMask0, regRowMask1);
+	ST			(regRowMask1, regMask0);
 #endif
 
 	ADD			(regMask1,		regMask0, maskSize);
@@ -480,11 +480,11 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 
 	//	*mask++ = rowMask;
 #if EGL_RASTER_BLOCK_SIZE <= 8
-	STB			(regMask0, regRowMask1);
+	STB			(regRowMask1, regMask0);
 #elif EGL_RASTER_BLOCK_SIZE <= 16
-	STH			(regMask0, regRowMask1);
+	STH			(regRowMask1, regMask0);
 #else
-	ST			(regMask0, regRowMask1);
+	ST			(regRowMask1, regMask0);
 #endif
 
 	ADD			(regMask1,		regMask0, maskSize);
