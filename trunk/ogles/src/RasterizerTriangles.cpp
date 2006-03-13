@@ -133,8 +133,6 @@ namespace {
 void Rasterizer :: PrepareTriangle() {
 	PrepareTexture();
 
-	// initialize block rasterization here
-
 	// could be optimized
 	bool needsColor = true;
 				//!m_State->m_Texture[0].Enabled ||
@@ -162,6 +160,20 @@ void Rasterizer :: PrepareTriangle() {
 		((needsStencil	? 1 : 0) << RasterTriangleStencil	);
 
 	memset(m_RasterInfo.MipmapLevel, 0, sizeof(m_RasterInfo.MipmapLevel));
+
+	// initialize block rasterization here
+
+	m_BlockDepthStencilFunction = (BlockDepthStencilFunction *)
+		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockDepthStencil,
+									 *m_State, &m_VaryingInfo);
+
+	m_BlockEdgeDepthStencilFunction = (BlockEdgeDepthStencilFunction *)
+		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockEdgeDepthStencil,
+									 *m_State, &m_VaryingInfo);
+
+	m_BlockColorAlphaFunction = (BlockColorAlphaFunction *)
+		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockColorAlpha,
+									 *m_State, &m_VaryingInfo);
 }
 
 PixelMask Rasterizer :: RasterBlockDepthStencil(const Variables * vars, 
@@ -320,7 +332,6 @@ void Rasterizer :: RasterBlockColorAlpha(I32 varying[][2][2],
 		surfaceInfo.ColorBuffer += surfaceInfo.Pitch;
 		surfaceInfo.AlphaBuffer += surfaceInfo.Pitch;
     }
-
 }
 
 void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,

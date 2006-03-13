@@ -168,7 +168,7 @@ namespace EGL {
 	typedef void (PointFunction)(const RasterInfo * info, const RasterPos * pos, EGL_Fixed size);
 	typedef PixelMask (BlockDepthStencilFunction)(const RasterInfo * info, const Variables * variables, PixelMask * pixelMask);
 	typedef PixelMask (BlockEdgeDepthStencilFunction)(const RasterInfo * info, const Variables * variables, const Edges * edges, PixelMask * pixelMask);
-	typedef void (BlockColorAlphaFunction)(const RasterInfo * info, const Variables * variables, const PixelMask * pixelMask);
+	typedef void (BlockColorAlphaFunction)(const RasterInfo * info, I32 varying[][2][2], const PixelMask * pixelMask);
 
 	class Rasterizer {
 
@@ -314,8 +314,12 @@ namespace EGL {
 		RasterizerState *		m_State;			// current rasterization settings
 		FunctionCache *			m_FunctionCache;
 
-		LineFunction *			m_LineFunction;		// raster lines function
-		PointFunction *			m_PointFunction;
+		// compiled inner loops for various raster operations
+		LineFunction *					m_LineFunction;
+		PointFunction *					m_PointFunction;
+		BlockDepthStencilFunction *		m_BlockDepthStencilFunction;
+		BlockEdgeDepthStencilFunction *	m_BlockEdgeDepthStencilFunction;
+		BlockColorAlphaFunction *		m_BlockColorAlphaFunction;
 
 		// ----------------------------------------------------------------------
 		// internal state
