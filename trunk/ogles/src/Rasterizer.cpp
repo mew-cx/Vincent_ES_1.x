@@ -43,6 +43,7 @@
 #include "Rasterizer.h"
 #include "Surface.h"
 #include "Texture.h"
+#include "Utils.h"
 #include "arm/FunctionCache.h"
 
 using namespace EGL;
@@ -95,7 +96,7 @@ namespace {
 	}
 
 	inline U8 Dot3U8(const Color& arg0, const Color& arg1) {
-		
+
 		// each product is in the range of -2^14 .. +2^14
 		I32 prodR = SignedVal(arg0.r) * SignedVal(arg1.r);
 		I32 prodG = SignedVal(arg0.g) * SignedVal(arg1.g);
@@ -105,7 +106,7 @@ namespace {
 
 		if (sum <= 0)
 			return 0;
-		else if (sum >= 0x10000) 
+		else if (sum >= 0x10000)
 			return 0xff;
 		else
 			return (sum >> 8) - (sum >> 15);
@@ -174,7 +175,7 @@ namespace {
 
 void RasterInfo::Init(Surface * surface, I32 y, I32 x) {
 	size_t offset = y * surface->GetWidth() + x;
-	
+
 	SurfaceInfo.Width = surface->GetWidth();
 	SurfaceInfo.Height = surface->GetHeight();
 	SurfaceInfo.Pitch = surface->GetPitch();
@@ -194,8 +195,6 @@ Rasterizer :: Rasterizer(RasterizerState * state):
 	m_State(state)
 {
 	m_FunctionCache = new FunctionCache();
-
-	AllocateVaryings();			// TO DO: eventually, this will be done dynamically based on settings in Prepare...
 }
 
 
@@ -226,15 +225,200 @@ void Rasterizer :: SetTexture(size_t unit, MultiTexture * texture) {
 
 
 void Rasterizer :: AllocateVaryings() {
+
+	size_t unit;							// index variable
+
+	// determine uses features and allocate varying variables
+
+	bool needsRGB = false;				// primary RGB used directly
+	bool needsAlpha = false;			// primary alpha used directly
+	bool needsPrevRGB = true;			// primary RGB propagated
+	bool needsPrevAlpha = true;			// primary alpha propagated
+
+	// determine if texture units either use primary fragment color
+	// directly or indirectly propagated through combine operations
+
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		if (m_State->m_Texture[unit].Enabled && m_Texture[unit]) {
+			bool usesPrevRGB = false;
+			bool usesPrevAlpha = false;
+
+			switch (m_State->m_Texture[unit].Mode) {
+			case RasterizerState::TextureModeDecal:
+				usesPrevAlpha = true;
+				break;
+
+			case RasterizerState::TextureModeReplace:
+				switch (m_Texture[unit]->GetInternalFormat()) {
+				case RasterizerState::TextureFormatAlpha:
+					usesPrevRGB = true;
+					break;
+
+				case RasterizerState::TextureFormatLuminance:
+				case RasterizerState::TextureFormatRGB8:
+				case RasterizerState::TextureFormatRGB565:
+					usesPrevAlpha = true;
+					break;
+
+				case RasterizerState::TextureFormatLuminanceAlpha:
+				case RasterizerState::TextureFormatRGBA8:
+				case RasterizerState::TextureFormatRGBA4444:
+				case RasterizerState::TextureFormatRGBA5551:
+					break;
+				}
+
+				break;
+
+			case RasterizerState::TextureModeBlend:
+			case RasterizerState::TextureModeAdd:
+			case RasterizerState::TextureModeModulate:
+				usesPrevRGB = usesPrevAlpha = true;
+				break;
+
+			case RasterizerState::TextureModeCombine:
+				switch (m_State->m_Texture[unit].CombineFuncRGB) {
+				case RasterizerState::TextureModeCombineInterpolate:
+					usesPrevRGB |=
+						m_State->m_Texture[unit].CombineSrcRGB[2] == RasterizerState::TextureCombineSrcPrevious &&
+						(m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpSrcColor ||
+						 m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpOneMinusSrcColor);
+					needsRGB |=
+						m_State->m_Texture[unit].CombineSrcRGB[2] == RasterizerState::TextureCombineSrcPrimaryColor &&
+						(m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpSrcColor ||
+						 m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpOneMinusSrcColor);
+
+					usesPrevAlpha |=
+						m_State->m_Texture[unit].CombineSrcRGB[2] == RasterizerState::TextureCombineSrcPrevious &&
+						(m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpSrcAlpha ||
+						 m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
+					needsAlpha |=
+						m_State->m_Texture[unit].CombineSrcRGB[2] == RasterizerState::TextureCombineSrcPrimaryColor &&
+						(m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpSrcAlpha ||
+						 m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
+
+				case RasterizerState::TextureModeCombineModulate:
+				case RasterizerState::TextureModeCombineAdd:
+				case RasterizerState::TextureModeCombineAddSigned:
+				case RasterizerState::TextureModeCombineSubtract:
+				case RasterizerState::TextureModeCombineDot3RGB:
+				case RasterizerState::TextureModeCombineDot3RGBA:
+					usesPrevRGB |=
+						m_State->m_Texture[unit].CombineSrcRGB[1] == RasterizerState::TextureCombineSrcPrevious &&
+						(m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpSrcColor ||
+						 m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpOneMinusSrcColor);
+					needsRGB |=
+						m_State->m_Texture[unit].CombineSrcRGB[1] == RasterizerState::TextureCombineSrcPrimaryColor &&
+						(m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpSrcColor ||
+						 m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpOneMinusSrcColor);
+
+					usesPrevAlpha |=
+						m_State->m_Texture[unit].CombineSrcRGB[1] == RasterizerState::TextureCombineSrcPrevious &&
+						(m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpSrcAlpha ||
+						 m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
+					needsAlpha |=
+						m_State->m_Texture[unit].CombineSrcRGB[1] == RasterizerState::TextureCombineSrcPrimaryColor &&
+						(m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpSrcAlpha ||
+						 m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
+
+				case RasterizerState::TextureModeCombineReplace:
+					usesPrevRGB |=
+						m_State->m_Texture[unit].CombineSrcRGB[0] == RasterizerState::TextureCombineSrcPrevious &&
+						(m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpSrcColor ||
+						 m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpOneMinusSrcColor);
+					needsRGB |=
+						m_State->m_Texture[unit].CombineSrcRGB[0] == RasterizerState::TextureCombineSrcPrimaryColor &&
+						(m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpSrcColor ||
+						 m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpOneMinusSrcColor);
+
+					usesPrevAlpha |=
+						m_State->m_Texture[unit].CombineSrcRGB[0] == RasterizerState::TextureCombineSrcPrevious &&
+						(m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpSrcAlpha ||
+						 m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
+					needsAlpha |=
+						m_State->m_Texture[unit].CombineSrcRGB[0] == RasterizerState::TextureCombineSrcPrimaryColor &&
+						(m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpSrcAlpha ||
+						 m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
+				}
+
+				switch (m_State->m_Texture[unit].CombineFuncAlpha) {
+				case RasterizerState::TextureModeCombineInterpolate:
+					usesPrevAlpha |=
+						m_State->m_Texture[unit].CombineSrcAlpha[2] == RasterizerState::TextureCombineSrcPrevious &&
+						(m_State->m_Texture[unit].CombineOpAlpha[2] == RasterizerState::TextureCombineOpSrcAlpha ||
+						 m_State->m_Texture[unit].CombineOpAlpha[2] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
+					needsAlpha |=
+						m_State->m_Texture[unit].CombineSrcAlpha[2] == RasterizerState::TextureCombineSrcPrimaryColor &&
+						(m_State->m_Texture[unit].CombineOpAlpha[2] == RasterizerState::TextureCombineOpSrcAlpha ||
+						 m_State->m_Texture[unit].CombineOpAlpha[2] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
+
+				case RasterizerState::TextureModeCombineModulate:
+				case RasterizerState::TextureModeCombineAdd:
+				case RasterizerState::TextureModeCombineAddSigned:
+				case RasterizerState::TextureModeCombineSubtract:
+					usesPrevAlpha |=
+						m_State->m_Texture[unit].CombineSrcAlpha[1] == RasterizerState::TextureCombineSrcPrevious &&
+						(m_State->m_Texture[unit].CombineOpAlpha[1] == RasterizerState::TextureCombineOpSrcAlpha ||
+						 m_State->m_Texture[unit].CombineOpAlpha[1] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
+					needsAlpha |=
+						m_State->m_Texture[unit].CombineSrcAlpha[1] == RasterizerState::TextureCombineSrcPrimaryColor &&
+						(m_State->m_Texture[unit].CombineOpAlpha[1] == RasterizerState::TextureCombineOpSrcAlpha ||
+						 m_State->m_Texture[unit].CombineOpAlpha[1] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
+
+				case RasterizerState::TextureModeCombineReplace:
+					usesPrevAlpha |=
+						m_State->m_Texture[unit].CombineSrcAlpha[0] == RasterizerState::TextureCombineSrcPrevious &&
+						(m_State->m_Texture[unit].CombineOpAlpha[0] == RasterizerState::TextureCombineOpSrcAlpha ||
+						 m_State->m_Texture[unit].CombineOpAlpha[0] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
+					needsAlpha |=
+						m_State->m_Texture[unit].CombineSrcAlpha[0] == RasterizerState::TextureCombineSrcPrimaryColor &&
+						(m_State->m_Texture[unit].CombineOpAlpha[0] == RasterizerState::TextureCombineOpSrcAlpha ||
+						 m_State->m_Texture[unit].CombineOpAlpha[0] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
+				}
+
+				break;
+
+			}
+
+			needsPrevRGB   &= usesPrevRGB;
+			needsPrevAlpha &= usesPrevAlpha;
+		}
+	}
+
+	needsRGB		  |= needsPrevRGB;
+	needsAlpha		  |= needsPrevAlpha;
+
+	bool needsColor   = needsRGB | needsAlpha;
+
+	bool needsFog 	  = m_State->m_Fog.Enabled;
+	bool needsDepth   = m_State->m_DepthTest.Enabled ||
+						m_State->m_Mask.Depth 		 ||
+						m_State->m_Stencil.Enabled;
+	bool needsStencil = m_State->m_Stencil.Enabled;
+
+	// now allocate slots
+
 	I32 nextIndex = 0;
 
-	m_VaryingInfo.colorIndex = nextIndex;
-	nextIndex += 4;							// RGBA
-	m_VaryingInfo.fogIndex = nextIndex++;
+	if (needsColor) {
+		m_VaryingInfo.colorIndex = nextIndex;
+		nextIndex += 4;							// RGBA
+	} else {
+		m_VaryingInfo.colorIndex = -1;
+	}
 
-	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		m_VaryingInfo.textureBase[unit] = nextIndex;
-		nextIndex += 2;						// u, v
+	if (needsFog) {
+		m_VaryingInfo.fogIndex = nextIndex++;
+	} else {
+		m_VaryingInfo.fogIndex = nextIndex++;
+	}
+
+	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		if (m_State->m_Texture[unit].Enabled && m_Texture[unit]) {
+			m_VaryingInfo.textureBase[unit] = nextIndex;
+			nextIndex += 2;						// u, v
+		} else {
+			m_VaryingInfo.textureBase[unit] = -1;
+		}
 	}
 
 	m_VaryingInfo.numVarying = nextIndex;
@@ -263,6 +447,10 @@ void Rasterizer :: PrepareTexture() {
 	}
 }
 
+void Rasterizer :: Prepare() {
+	PrepareTexture();
+	AllocateVaryings();
+}
 
 #if !EGL_USE_JIT
 
@@ -414,8 +602,8 @@ inline Color Rasterizer :: GetTexColor(const RasterizerState::TextureState * sta
 }
 
 
-bool Rasterizer::FragmentDepthStencil(const RasterInfo * rasterInfo, 
-									  const SurfaceInfo * surfaceInfo, 
+bool Rasterizer::FragmentDepthStencil(const RasterInfo * rasterInfo,
+									  const SurfaceInfo * surfaceInfo,
 									  I32 x, EGL_Fixed depth)
 	// fragment rendering with signature corresponding to function fragment
 	// generated by code generator
@@ -499,7 +687,7 @@ bool Rasterizer::FragmentDepthStencil(const RasterInfo * rasterInfo,
 					break;
 			}
 
-			surfaceInfo->StencilBuffer[offset] = 
+			surfaceInfo->StencilBuffer[offset] =
 				surfaceInfo->StencilBuffer[offset] & ~m_State->m_Stencil.Mask |
 				stencilValue & m_State->m_Stencil.Mask;
 
@@ -539,7 +727,7 @@ bool Rasterizer::FragmentDepthStencil(const RasterInfo * rasterInfo,
 					break;
 			}
 
-			surfaceInfo->StencilBuffer[offset] = 
+			surfaceInfo->StencilBuffer[offset] =
 				surfaceInfo->StencilBuffer[offset] & ~m_State->m_Stencil.Mask |
 				stencilValue & m_State->m_Stencil.Mask;
 		} else {
@@ -575,7 +763,7 @@ bool Rasterizer::FragmentDepthStencil(const RasterInfo * rasterInfo,
 					break;
 			}
 
-			surfaceInfo->StencilBuffer[offset] = 
+			surfaceInfo->StencilBuffer[offset] =
 				surfaceInfo->StencilBuffer[offset] & ~m_State->m_Stencil.Mask |
 				stencilValue & m_State->m_Stencil.Mask;
 		}
@@ -594,8 +782,8 @@ bool Rasterizer::FragmentDepthStencil(const RasterInfo * rasterInfo,
 	return true;
 }
 
-void Rasterizer::FragmentColorAlpha(const RasterInfo * rasterInfo, 
-									const SurfaceInfo * surfaceInfo, 
+void Rasterizer::FragmentColorAlpha(const RasterInfo * rasterInfo,
+									const SurfaceInfo * surfaceInfo,
 									I32 x, EGL_Fixed tu[], EGL_Fixed tv[],
 									const Color& baseColor, EGL_Fixed fog)
 	// fragment rendering with signature corresponding to function fragment
@@ -717,37 +905,37 @@ void Rasterizer::FragmentColorAlpha(const RasterInfo * rasterInfo,
 				switch (m_State->m_Texture[unit].CombineFuncRGB) {
 				case RasterizerState::TextureModeCombineReplace:
 					color = Color(
-							MulU8(arg[0].r, 0xFF, scaleRGB), 
-							MulU8(arg[0].g, 0xFF, scaleRGB), 
-							MulU8(arg[0].b, 0xFF, scaleRGB), 
-							combineAlpha); 
+							MulU8(arg[0].r, 0xFF, scaleRGB),
+							MulU8(arg[0].g, 0xFF, scaleRGB),
+							MulU8(arg[0].b, 0xFF, scaleRGB),
+							combineAlpha);
 					break;
 
 				case RasterizerState::TextureModeCombineModulate:
-					color = 
+					color =
 						Color(
-							MulU8(arg[0].r, arg[1].r, scaleRGB), 
-							MulU8(arg[0].g, arg[1].g, scaleRGB), 
-							MulU8(arg[0].b, arg[1].b, scaleRGB), 
-							combineAlpha); 
+							MulU8(arg[0].r, arg[1].r, scaleRGB),
+							MulU8(arg[0].g, arg[1].g, scaleRGB),
+							MulU8(arg[0].b, arg[1].b, scaleRGB),
+							combineAlpha);
 					break;
 
 				case RasterizerState::TextureModeCombineAdd:
-					color = 
+					color =
 						Color(
-							AddU8(arg[0].r, arg[1].r, scaleRGB), 
-							AddU8(arg[0].g, arg[1].g, scaleRGB), 
-							AddU8(arg[0].b, arg[1].b, scaleRGB), 
-							combineAlpha); 
+							AddU8(arg[0].r, arg[1].r, scaleRGB),
+							AddU8(arg[0].g, arg[1].g, scaleRGB),
+							AddU8(arg[0].b, arg[1].b, scaleRGB),
+							combineAlpha);
 					break;
 
 				case RasterizerState::TextureModeCombineAddSigned:
-					color = 
+					color =
 						Color(
-							AddSignedU8(arg[0].r, arg[1].r, scaleRGB), 
-							AddSignedU8(arg[0].g, arg[1].g, scaleRGB), 
-							AddSignedU8(arg[0].b, arg[1].b, scaleRGB), 
-							combineAlpha); 
+							AddSignedU8(arg[0].r, arg[1].r, scaleRGB),
+							AddSignedU8(arg[0].g, arg[1].g, scaleRGB),
+							AddSignedU8(arg[0].b, arg[1].b, scaleRGB),
+							combineAlpha);
 					break;
 
 				case RasterizerState::TextureModeCombineInterpolate:
@@ -756,16 +944,16 @@ void Rasterizer::FragmentColorAlpha(const RasterInfo * rasterInfo,
 							InterpolateU8(arg[0].r, arg[1].r, arg[2].r, scaleRGB),
 							InterpolateU8(arg[0].g, arg[1].g, arg[2].g, scaleRGB),
 							InterpolateU8(arg[0].b, arg[1].b, arg[2].b, scaleRGB),
-							combineAlpha); 
+							combineAlpha);
 					break;
 
 				case RasterizerState::TextureModeCombineSubtract:
-					color = 
+					color =
 						Color(
-							SubU8(arg[0].r, arg[1].r, scaleRGB), 
-							SubU8(arg[0].g, arg[1].g, scaleRGB), 
-							SubU8(arg[0].b, arg[1].b, scaleRGB), 
-							combineAlpha); 
+							SubU8(arg[0].r, arg[1].r, scaleRGB),
+							SubU8(arg[0].g, arg[1].g, scaleRGB),
+							SubU8(arg[0].b, arg[1].b, scaleRGB),
+							combineAlpha);
 					break;
 
 				case RasterizerState::TextureModeCombineDot3RGB:
@@ -1175,7 +1363,7 @@ void Rasterizer::FragmentColorAlpha(const RasterInfo * rasterInfo,
 
 		surfaceInfo->ColorBuffer[offset] = value;
 		surfaceInfo->AlphaBuffer[offset] = alpha;
-	
+
 	} else {
 		surfaceInfo->ColorBuffer[offset] = maskedColor.ConvertTo565();
 
@@ -1210,7 +1398,7 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 
 void Rasterizer :: PreparePoint() {
 
-	PrepareTexture();
+	Prepare();
 
 	m_PointFunction = (PointFunction *)
 		m_FunctionCache->GetFunction(FunctionCache::FunctionTypePoint,
@@ -1222,7 +1410,7 @@ void Rasterizer :: PreparePoint() {
 
 
 void Rasterizer :: PrepareLine() {
-	PrepareTexture();
+	Prepare();
 
 	m_LineFunction = (LineFunction *)
 		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeLine,
@@ -1239,7 +1427,7 @@ void Rasterizer :: Finish() {
 
 #if !EGL_USE_JIT
 
-void Rasterizer :: RasterLine(RasterPos& p_from, RasterPos& p_to) {
+void Rasterizer :: RasterLine(Vertex& p_from, Vertex& p_to) {
 
 	if (EGL_Round(p_from.m_WindowCoords.x) == EGL_Round(p_to.m_WindowCoords.x) &&
 		EGL_Round(p_from.m_WindowCoords.y) == EGL_Round(p_to.m_WindowCoords.y)) {
@@ -1254,7 +1442,7 @@ void Rasterizer :: RasterLine(RasterPos& p_from, RasterPos& p_to) {
 	if (EGL_Abs(deltaX) > EGL_Abs(deltaY)) {
 		// Bresenham along x-axis
 
-		const RasterPos *start, *end;
+		const Vertex *start, *end;
 
 		I32 x;
 		I32 endX;
@@ -1278,14 +1466,14 @@ void Rasterizer :: RasterLine(RasterPos& p_from, RasterPos& p_to) {
 			endX = EGL_IntFromFixed(p_to.m_WindowCoords.x + ((EGL_ONE)/2-1));
 		}
 
-		const RasterPos& from = *start;
-		const RasterPos& to = *end;
+		const Vertex& from = *start;
+		const Vertex& to = *end;
 
 		FractionalColor baseColor(from.m_Varying + m_VaryingInfo.colorIndex);
 		EGL_Fixed OneOverZ = from.m_WindowCoords.invW;
 		EGL_Fixed tuOverZ[EGL_NUM_TEXTURE_UNITS];
 		EGL_Fixed tvOverZ[EGL_NUM_TEXTURE_UNITS];
-		
+
 		size_t unit;
 
 		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
@@ -1302,7 +1490,7 @@ void Rasterizer :: RasterLine(RasterPos& p_from, RasterPos& p_to) {
 		EGL_Fixed slope = EGL_Mul(EGL_Abs(deltaY), invSpan);
 
 		// -- increments(to, from, invSpan)
-		FractionalColor colorIncrement = (FractionalColor(to.m_Varying + m_VaryingInfo.colorIndex) - 
+		FractionalColor colorIncrement = (FractionalColor(to.m_Varying + m_VaryingInfo.colorIndex) -
 			FractionalColor(from.m_Varying + m_VaryingInfo.colorIndex)) * invSpan;
 		EGL_Fixed deltaFog = EGL_Mul(to.m_Varying[m_VaryingInfo.fogIndex] - from.m_Varying[m_VaryingInfo.fogIndex], invSpan);
 
@@ -1378,7 +1566,7 @@ void Rasterizer :: RasterLine(RasterPos& p_from, RasterPos& p_to) {
 	} else {
 		// Bresenham along y-axis
 
-		const RasterPos *start, *end;
+		const Vertex *start, *end;
 
 		I32 y;
 		I32 endY;
@@ -1402,14 +1590,14 @@ void Rasterizer :: RasterLine(RasterPos& p_from, RasterPos& p_to) {
 			endY = EGL_IntFromFixed(p_to.m_WindowCoords.y + ((EGL_ONE)/2-1));
 		}
 
-		const RasterPos& from = *start;
-		const RasterPos& to = *end;
+		const Vertex& from = *start;
+		const Vertex& to = *end;
 
 		FractionalColor baseColor(from.m_Varying + m_VaryingInfo.colorIndex);
 		EGL_Fixed OneOverZ = from.m_WindowCoords.invW;
 		EGL_Fixed tuOverZ[EGL_NUM_TEXTURE_UNITS];
 		EGL_Fixed tvOverZ[EGL_NUM_TEXTURE_UNITS];
-		
+
 		size_t unit;
 
 		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
@@ -1426,7 +1614,7 @@ void Rasterizer :: RasterLine(RasterPos& p_from, RasterPos& p_to) {
 		EGL_Fixed slope = EGL_Mul(EGL_Abs(deltaX), invSpan);
 
 		// -- increments(to, from, invSpan)
-		FractionalColor colorIncrement = (FractionalColor(to.m_Varying + m_VaryingInfo.colorIndex) 
+		FractionalColor colorIncrement = (FractionalColor(to.m_Varying + m_VaryingInfo.colorIndex)
 			- FractionalColor(from.m_Varying + m_VaryingInfo.colorIndex)) * invSpan;
 		EGL_Fixed deltaFog = EGL_Mul(to.m_Varying[m_VaryingInfo.fogIndex] - from.m_Varying[m_VaryingInfo.fogIndex], invSpan);
 
@@ -1499,30 +1687,14 @@ void Rasterizer :: RasterLine(RasterPos& p_from, RasterPos& p_to) {
 				tuOverZ[unit] += deltaU[unit];
 				tvOverZ[unit] += deltaV[unit];
 			}
-			
+
 			fogDensity += deltaFog;
 		}
 	}
 }
 
-namespace {
-	inline int Log2(int value) {
-		if (value <= 1) {
-			return 0;
-		}
 
-		int result = 0;
-
-		while (value > 1) {
-			result++;
-			value >>= 1;
-		}
-
-		return result;
-	}
-}
-
-void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
+void Rasterizer :: RasterPoint(const Vertex& point, EGL_Fixed size) {
 
 	EGL_Fixed halfSize = size / 2;
 
@@ -1577,7 +1749,7 @@ void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
 
 				if (m_State->m_Texture[unit].CoordReplaceEnabled)
 					tv[unit] = tv0;
-				else 
+				else
 					tv[unit] = point.m_Varying[textureBase + 1];
 			}
 
@@ -1587,7 +1759,7 @@ void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
 
 					if (m_State->m_Texture[unit].CoordReplaceEnabled)
 						tu[unit] = tu0;
-					else 
+					else
 						tu[unit] = point.m_Varying[textureBase];
 				}
 

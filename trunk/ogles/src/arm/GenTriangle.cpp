@@ -314,19 +314,11 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	//I32 depth0 = vars->Depth.Value;
 	cg_virtual_reg_t *	regDepthInit = LOAD_DATA(block, regVars, OFFSET_VARIABLES_DEPTH + OFFSET_INTERPOLANT_VALUE);
 	cg_virtual_reg_t *	regDepthDx = LOAD_DATA(block, regVars, OFFSET_VARIABLES_DEPTH + OFFSET_INTERPOLANT_DX);
-	cg_virtual_reg_t *	regDepthDy = LOAD_DATA(block, regVars, OFFSET_VARIABLES_DEPTH + OFFSET_INTERPOLANT_DY);
 
 	DECL_REG	(regDepth0);		// beginning of y loop
 	DECL_REG	(regDepth1);		// end of y loop
 	DECL_REG	(regDepth2);		// end of x loop
 	DECL_REG	(regDepth3);		// beginning of x loop
-	DECL_REG	(regDepthStepY);
-
-	//vars->Depth.dY - (vars->Depth.dX << EGL_LOG_RASTER_BLOCK_SIZE);
-	DECL_REG	(regShiftedDx);
-
-	LSL			(regShiftedDx, regDepthDx, logBlockSize);
-	SUB			(regDepthStepY, regDepthDy, regShiftedDx);
 
 	// initialize surface pointers in local info block
 	//SurfaceInfo surfaceInfo = m_RasterInfo.SurfaceInfo;
@@ -391,6 +383,7 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
     //    for (I32 ix = 0; ix < EGL_RASTER_BLOCK_SIZE; ix++) {
 
 	cg_block_ref_t * xLoopTop = cg_block_ref_create(procedure);
+	cg_block_ref_t * xLoopEnd = cg_block_ref_create(procedure);
 	block = cg_block_create(procedure, 4);
 	xLoopTop->block = block;
 
@@ -404,33 +397,45 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	DECL_REG	(regIX0);			// beginning of x loop
 	DECL_REG	(regIX1);			// end of x loop
 
+	DECL_REG	(regDone0);			// beginning of x loop
+	DECL_REG	(regDone1);			// end of x loop
+
 	PHI			(regCX10, cg_create_virtual_reg_list(procedure->module->heap, regCX11, regCX1Init, NULL));
 	PHI			(regCX20, cg_create_virtual_reg_list(procedure->module->heap, regCX21, regCX2Init, NULL));
 	PHI			(regCX30, cg_create_virtual_reg_list(procedure->module->heap, regCX31, regCX3Init, NULL));
 	PHI			(regIX0, cg_create_virtual_reg_list(procedure->module->heap, regIX1, zero, NULL));
 	PHI			(regRowMask0, cg_create_virtual_reg_list(procedure->module->heap, regRowMask1, zero, NULL));
+	PHI			(regDone0, cg_create_virtual_reg_list(procedure->module->heap, regDone1, zero, NULL));
+
+	// I32 depth1 = depth0;
+	PHI			(regDepth3, cg_create_virtual_reg_list(procedure->module->heap, regDepth2, regDepth0, NULL));
 
 	DECL_REG	(regRowMask2);		// shifted mask
 	DECL_REG	(regRowMask3);		// modified mask if written
+	DECL_REG	(regRowMask4);		// if shifted during abortion of loop
 
 	// rowMask >>= 1
 	LSR			(regRowMask2, regRowMask0, one);
 
     //        if (CX1 > 0 && CX2 > 0 && CX3 > 0) {
 	cg_block_ref_t * notWritten = cg_block_ref_create(procedure);
+	cg_block_ref_t * notInside = cg_block_ref_create(procedure);
 
 	DECL_FLAGS	(regCmp1);
 	DECL_FLAGS	(regCmp2);
 	DECL_FLAGS	(regCmp3);
 
 	CMP			(regCmp1, regCX10, zero);
-	BLE			(regCmp1, notWritten);
+	BLE			(regCmp1, notInside);
 	CMP			(regCmp2, regCX20, zero);
-	BLE			(regCmp2, notWritten);
+	BLE			(regCmp2, notInside);
 	CMP			(regCmp3, regCX30, zero);
-	BLE			(regCmp3, notWritten);
+	BLE			(regCmp3, notInside);
 
-	//		bool written = FragmentDepthStencil(&m_RasterInfo, &surfaceInfo, ix, depth0 >> 4);
+	//		done = true;
+	LDI			(regDone1, 1);
+
+	//		bool written = FragmentDepthStencil(&m_RasterInfo, &surfaceInfo, ix, depth1 >> 4);
 
 	info.regX = regIX0;
 	info.regDepth = regDepth3;
@@ -444,12 +449,33 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	DECL_CONST_REG	(shiftedOne, (1 << (EGL_RASTER_BLOCK_SIZE - 1)));
 
 	OR			(regRowMask3, regRowMask2, shiftedOne);
+	BRA			(notWritten);
+
+	// interior test not passed
+	block = cg_block_create(procedure, 4);
+	notInside->block = block;
+
+    //        } else if (done) {
+	//			rowMask >>= EGL_RASTER_BLOCK_SIZE - ix - 1;
+	//			break;
+	DECL_FLAGS	(flagsDone);
+	DECL_REG	(regDummy1);
+	OR_S		(regDummy1, flagsDone, regDone0, regDone0);
+	BNE			(flagsDone, xLoopEnd);
+	BRA			(notWritten);
+
+	block = cg_block_create(procedure, 4);
+	DECL_CONST_REG	(blockSizeMinus1, EGL_RASTER_BLOCK_SIZE - 1);
+	DECL_REG	(regToShift);
+
+	SUB			(regToShift, blockSizeMinus1, regIX0);
+	LSR			(regRowMask4, regRowMask2, one);
 
 	// stencil test passed
 	block = cg_block_create(procedure, 4);
 	notWritten->block = block;
 
-	PHI			(regRowMask1, cg_create_virtual_reg_list(procedure->module->heap, regRowMask2, regRowMask3, NULL));
+	PHI			(regRowMask1, cg_create_virtual_reg_list(procedure->module->heap, regRowMask2, regRowMask3, regRowMask4, NULL));
 
     //      CX1 += edges->edge12.FDY; 
 	//		CX2 += edges->edge23.FDY; 
@@ -457,7 +483,7 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 
 	cg_virtual_reg_t * regCX1FDY = LOAD_DATA(block, regEdges, OFFSET_EDGES_EDGE_12 + OFFSET_EDGE_FDY);
 
-	//		depth0 += vars->Depth.dX;
+	//		depth1 += vars->Depth.dX;
 	ADD			(regDepth2, regDepth3, regDepthDx);
 
 	cg_virtual_reg_t * regCX2FDY = LOAD_DATA(block, regEdges, OFFSET_EDGES_EDGE_23 + OFFSET_EDGE_FDY);
@@ -477,6 +503,7 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	BNE			(regReachedXLoopEnd, xLoopTop);
 
 	block = cg_block_create(procedure, 2);
+	xLoopEnd->block = block;
 
 	//	*mask++ = rowMask;
 #if EGL_RASTER_BLOCK_SIZE <= 8
@@ -503,10 +530,11 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	//	CY2 -= edges->edge23.FDX; 
 	//	CY3 -= edges->edge31.FDX;
 
+	cg_virtual_reg_t *regDepthDy = LOAD_DATA(block, regVars, OFFSET_VARIABLES_DEPTH + OFFSET_INTERPOLANT_DY);
 	cg_virtual_reg_t * regCY1FDX = LOAD_DATA(block, regEdges, OFFSET_EDGES_EDGE_12 + OFFSET_EDGE_FDX);
 
-	//	depth0 += vars->Depth.dY - (vars->Depth.dX << EGL_LOG_RASTER_BLOCK_SIZE);
-	ADD			(regDepth1, regDepth2, regDepthStepY);
+	//	depth0 += vars->Depth.dY;
+	ADD			(regDepth1, regDepth0, regDepthDy);
 
 	cg_virtual_reg_t * regCY2FDX = LOAD_DATA(block, regEdges, OFFSET_EDGES_EDGE_23 + OFFSET_EDGE_FDX);
 

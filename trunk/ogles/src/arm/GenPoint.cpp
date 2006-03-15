@@ -13,27 +13,27 @@
 // --------------------------------------------------------------------------
 //
 // Copyright (c) 2004, Hans-Martin Will. All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without 
-// modification, are permitted provided that the following conditions are 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 //	 *  Redistributions of source code must retain the above copyright
-// 		notice, this list of conditions and the following disclaimer. 
+// 		notice, this list of conditions and the following disclaimer.
 //   *	Redistributions in binary form must reproduce the above copyright
-// 		notice, this list of conditions and the following disclaimer in the 
-// 		documentation and/or other materials provided with the distribution. 
-// 
+// 		notice, this list of conditions and the following disclaimer in the
+// 		documentation and/or other materials provided with the distribution.
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 // SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
 // ==========================================================================
@@ -93,7 +93,7 @@ void CodeGenerator :: GenerateRasterPoint(const VaryingInfo * varyingInfo) {
 	cg_proc_t * procedure = cg_proc_create(m_Module);
 
 	// The signature of the generated function is:
-	//	(const RasterInfo * info, const RasterPos& pos);
+	//	(const RasterInfo * info, const Vertex& pos);
 
 	DECL_REG	(regInfo);		// virtual register containing info structure pointer
 	DECL_REG	(regPos);		// virtual register containing vertex coordinate pointer
@@ -185,7 +185,7 @@ void CodeGenerator :: GenerateRasterPoint(const VaryingInfo * varyingInfo) {
 
 		for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 			info.regU[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TU(unit));
-			info.regV[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TV(unit)); 
+			info.regV[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TV(unit));
 		}
 
 		//	for (I32 y = ymin; y <= ymax; y++) {
@@ -273,7 +273,7 @@ void CodeGenerator :: GenerateRasterPoint(const VaryingInfo * varyingInfo) {
 					cg_virtual_reg_t * regLogHeight = LOAD_DATA(block, info.regTexture[unit], OFFSET_TEXTURE_LOG_HEIGHT);
 					SUB			(regShiftDv, regConstant16, regLogHeight);
 					ASR			(regMaxDv, regDelta, regShiftDv);
-					
+
 					//	EGL_Fixed rho = maxDu + maxDv;
 
 					DECL_REG	(regRho);
@@ -286,9 +286,9 @@ void CodeGenerator :: GenerateRasterPoint(const VaryingInfo * varyingInfo) {
 					DECL_REG	(regMipmapLevel);
 
 					LOG2		(regLog2, regRho);
-					
+
 					cg_virtual_reg_t * regMaxMipmapLevel = LOAD_DATA(block, regInfo, OFFSET_MAX_MIPMAP_LEVEL + unit * sizeof(I32));
-					
+
 					MIN			(regMipmapLevel, regLog2, regMaxMipmapLevel);
 
 					// now multiply the texture block size by the mipmap level and add this to the texture base
@@ -351,7 +351,7 @@ void CodeGenerator :: GenerateRasterPoint(const VaryingInfo * varyingInfo) {
 				info.regV[unit] = regVLoopEnter;
 			} else {
 				info.regU[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TU(unit));
-				info.regV[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TV(unit)); 
+				info.regV[unit] = LOAD_DATA(block, regPos, OFFSET_RASTER_POS_TEX_TV(unit));
 			}
 		}
 

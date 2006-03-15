@@ -11,27 +11,27 @@
 // --------------------------------------------------------------------------
 //
 // Copyright (c) 2004, Hans-Martin Will. All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without 
-// modification, are permitted provided that the following conditions are 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 //	 *  Redistributions of source code must retain the above copyright
-// 		notice, this list of conditions and the following disclaimer. 
+// 		notice, this list of conditions and the following disclaimer.
 //   *	Redistributions in binary form must reproduce the above copyright
-// 		notice, this list of conditions and the following disclaimer in the 
-// 		documentation and/or other materials provided with the distribution. 
-// 
+// 		notice, this list of conditions and the following disclaimer in the
+// 		documentation and/or other materials provided with the distribution.
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 // SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
 // ==========================================================================
@@ -57,7 +57,7 @@ void Context :: RenderTriangles(GLint first, GLsizei count) {
 	while (count >= 3) {
 		count -= 3;
 
-		RasterPos pos0, pos1, pos2;
+		Vertex pos0, pos1, pos2;
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos0);
 		SelectArrayElement(first++);
@@ -77,7 +77,7 @@ void Context :: RenderTriangles(GLsizei count, const GLubyte * indices) {
 	while (count >= 3) {
 		count -= 3;
 
-		RasterPos pos0, pos1, pos2;
+		Vertex pos0, pos1, pos2;
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
 		SelectArrayElement(*indices++);
@@ -97,7 +97,7 @@ void Context :: RenderTriangles(GLsizei count, const GLushort * indices) {
 	while (count >= 3) {
 		count -= 3;
 
-		RasterPos pos0, pos1, pos2;
+		Vertex pos0, pos1, pos2;
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
 		SelectArrayElement(*indices++);
@@ -123,7 +123,7 @@ void Context :: RenderTriangleStrip(GLint first, GLsizei count) {
 
 	m_Rasterizer->PrepareTriangle();
 
-	RasterPos pos0, pos1, pos2;
+	Vertex pos0, pos1, pos2;
 
 	SelectArrayElement(first++);
 	CurrentValuesToRasterPos(&pos0);
@@ -201,7 +201,7 @@ void Context :: RenderTriangleStrip(GLsizei count, const GLubyte * indices) {
 
 	m_Rasterizer->PrepareTriangle();
 
-	RasterPos pos0, pos1, pos2;
+	Vertex pos0, pos1, pos2;
 
 	SelectArrayElement(*indices++);
 	CurrentValuesToRasterPos(&pos0);
@@ -279,7 +279,7 @@ void Context :: RenderTriangleStrip(GLsizei count, const GLushort * indices) {
 
 	m_Rasterizer->PrepareTriangle();
 
-	RasterPos pos0, pos1, pos2;
+	Vertex pos0, pos1, pos2;
 
 	SelectArrayElement(*indices++);
 	CurrentValuesToRasterPos(&pos0);
@@ -362,7 +362,7 @@ void Context :: RenderTriangleFan(GLint first, GLsizei count) {
 
 	m_Rasterizer->PrepareTriangle();
 
-	RasterPos pos0, pos1, pos2;
+	Vertex pos0, pos1, pos2;
 
 	SelectArrayElement(first++);
 	CurrentValuesToRasterPos(&pos0);
@@ -399,7 +399,7 @@ void Context :: RenderTriangleFan(GLsizei count, const GLubyte * indices) {
 
 	m_Rasterizer->PrepareTriangle();
 
-	RasterPos pos0, pos1, pos2;
+	Vertex pos0, pos1, pos2;
 
 	SelectArrayElement(*indices++);
 	CurrentValuesToRasterPos(&pos0);
@@ -436,7 +436,7 @@ void Context :: RenderTriangleFan(GLsizei count, const GLushort * indices) {
 
 	m_Rasterizer->PrepareTriangle();
 
-	RasterPos pos0, pos1, pos2;
+	Vertex pos0, pos1, pos2;
 
 	SelectArrayElement(*indices++);
 	CurrentValuesToRasterPos(&pos0);
@@ -475,7 +475,7 @@ namespace {
 		return EGL_FixedFromFloat(Interpolate(EGL_FloatFromFixed(x0), EGL_FloatFromFixed(x1), coeff));
 	}
 
-	inline void Interpolate(RasterPos& result, const RasterPos& dst, const RasterPos& src, GLfloat coeff, size_t numVarying) {
+	inline void Interpolate(Vertex& result, const Vertex& dst, const Vertex& src, GLfloat coeff, size_t numVarying) {
 		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), coeff));
 		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), coeff));
 		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), coeff));
@@ -486,7 +486,7 @@ namespace {
 		}
 	}
 
-	inline void InterpolateWithEye(RasterPos& result, const RasterPos& dst, const RasterPos& src, GLfloat coeff, size_t numVarying) {
+	inline void InterpolateWithEye(Vertex& result, const Vertex& dst, const Vertex& src, GLfloat coeff, size_t numVarying) {
 		result.m_EyeCoords.setX(Interpolate(dst.m_EyeCoords.x(), src.m_EyeCoords.x(), coeff));
 		result.m_EyeCoords.setY(Interpolate(dst.m_EyeCoords.y(), src.m_EyeCoords.y(), coeff));
 		result.m_EyeCoords.setZ(Interpolate(dst.m_EyeCoords.z(), src.m_EyeCoords.z(), coeff));
@@ -495,14 +495,14 @@ namespace {
 		Interpolate(result, dst, src, coeff, numVarying);
 	}
 
-	inline size_t ClipLow(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary, size_t coord, size_t numVarying) {
+	inline size_t ClipLow(Vertex * input[], size_t inputCount, Vertex * output[], Vertex *& nextTemporary, size_t coord, size_t numVarying) {
 
 		if (inputCount < 3) {
 			return 0;
 		}
 
-		RasterPos * previous = input[inputCount - 1];
-		RasterPos * current;
+		Vertex * previous = input[inputCount - 1];
+		Vertex * current;
 		int resultCount = 0;
 
 		for (size_t index = 0; index < inputCount; ++index) {
@@ -518,14 +518,14 @@ namespace {
 				} else {
 					// line segment between previous and current is intersected;
 					// create vertex at intersection, then add current
-					RasterPos & newVertex = *nextTemporary++;
+					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
-					
+
 					GLfloat c_x = current->m_ClipCoords[coord];
 					GLfloat c_w = current->m_ClipCoords.w();
 					GLfloat p_x = previous->m_ClipCoords[coord];
 					GLfloat p_w = previous->m_ClipCoords.w();
-					GLfloat num = p_w + p_x; 
+					GLfloat num = p_w + p_x;
 					GLfloat denom = (p_w + p_x) - (c_w + c_x);
 
 					Interpolate(newVertex, *current, *previous, num / denom, numVarying);
@@ -538,16 +538,16 @@ namespace {
 				if (previous->m_ClipCoords[coord] >= -previous->m_ClipCoords.w()) {
 					// line segment between previous and current is intersected;
 					// create vertex at intersection and add it
-					RasterPos & newVertex = *nextTemporary++;
+					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
-					
+
 					GLfloat c_x = current->m_ClipCoords[coord];
 					GLfloat c_w = current->m_ClipCoords.w();
 					GLfloat p_x = previous->m_ClipCoords[coord];
 					GLfloat p_w = previous->m_ClipCoords.w();
-					GLfloat num = p_w + p_x; 
+					GLfloat num = p_w + p_x;
 					GLfloat denom = (p_w + p_x) - (c_w + c_x);
-					
+
 					Interpolate(newVertex, *current, *previous, num / denom, numVarying);
 					newVertex.m_ClipCoords[coord] = -newVertex.m_ClipCoords.w();
 
@@ -562,14 +562,14 @@ namespace {
 
 	}
 
-	inline size_t ClipHigh(RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary, size_t coord, size_t numVarying) {
+	inline size_t ClipHigh(Vertex * input[], size_t inputCount, Vertex * output[], Vertex *& nextTemporary, size_t coord, size_t numVarying) {
 
 		if (inputCount < 3) {
 			return 0;
 		}
 
-		RasterPos * previous = input[inputCount - 1];
-		RasterPos * current;
+		Vertex * previous = input[inputCount - 1];
+		Vertex * current;
 		int resultCount = 0;
 
 		for (size_t index = 0; index < inputCount; ++index) {
@@ -584,17 +584,17 @@ namespace {
 				} else {
 					// line segment between previous and current is intersected;
 					// create vertex at intersection, then add current
-					RasterPos & newVertex = *nextTemporary++;
+					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
-					
+
 					GLfloat c_x = current->m_ClipCoords[coord];
 					GLfloat c_w = current->m_ClipCoords.w();
 					GLfloat p_x = previous->m_ClipCoords[coord];
 					GLfloat p_w = previous->m_ClipCoords.w();
-					GLfloat num = p_w - p_x; 
+					GLfloat num = p_w - p_x;
 					GLfloat denom = (p_w - p_x) - (c_w - c_x);
-					
-					Interpolate(newVertex, *current, *previous, num / denom, numVarying); 
+
+					Interpolate(newVertex, *current, *previous, num / denom, numVarying);
 					newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
 
 					output[resultCount++] = current;
@@ -603,17 +603,17 @@ namespace {
 				if (previous->m_ClipCoords[coord] < previous->m_ClipCoords.w()) {
 					// line segment between previous and current is intersected;
 					// create vertex at intersection and add it
-					RasterPos & newVertex = *nextTemporary++;
+					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
-					
+
 					GLfloat c_x = current->m_ClipCoords[coord];
 					GLfloat c_w = current->m_ClipCoords.w();
 					GLfloat p_x = previous->m_ClipCoords[coord];
 					GLfloat p_w = previous->m_ClipCoords.w();
-					GLfloat num = p_w - p_x; 
+					GLfloat num = p_w - p_x;
 					GLfloat denom = (p_w - p_x) - (c_w - c_x);
-					
-					Interpolate(newVertex, *current, *previous, num / denom, numVarying); 
+
+					Interpolate(newVertex, *current, *previous, num / denom, numVarying);
 					newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
 				}
 			}
@@ -625,13 +625,13 @@ namespace {
 
 	}
 
-	size_t ClipUser(const Vec4f& plane, RasterPos * input[], size_t inputCount, RasterPos * output[], RasterPos *& nextTemporary, size_t numVarying) {
+	size_t ClipUser(const Vec4f& plane, Vertex * input[], size_t inputCount, Vertex * output[], Vertex *& nextTemporary, size_t numVarying) {
 		if (inputCount < 3) {
 			return 0;
 		}
 
-		RasterPos * previous = input[inputCount - 1];
-		RasterPos * current;
+		Vertex * previous = input[inputCount - 1];
+		Vertex * current;
 		int resultCount = 0;
 
 		for (size_t index = 0; index < inputCount; ++index) {
@@ -648,20 +648,20 @@ namespace {
 				} else {
 					// line segment between previous and current is intersected;
 					// create vertex at intersection, then add current
-					RasterPos & newVertex = *nextTemporary++;
+					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
-										
-					InterpolateWithEye(newVertex, *current, *previous, p / (p - c), numVarying); 
+
+					InterpolateWithEye(newVertex, *current, *previous, p / (p - c), numVarying);
 					output[resultCount++] = current;
 				}
 			} else {
 				if (p > 0.0f) {
 					// line segment between previous and current is intersected;
 					// create vertex at intersection and add it
-					RasterPos & newVertex = *nextTemporary++;
+					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
-					
-					InterpolateWithEye(newVertex, *current, *previous, p / (p - c), numVarying); 
+
+					InterpolateWithEye(newVertex, *current, *previous, p / (p - c), numVarying);
 				}
 			}
 
@@ -674,7 +674,7 @@ namespace {
 }
 
 
-void Context :: FrontFace(GLenum mode) { 
+void Context :: FrontFace(GLenum mode) {
 
 	switch (mode) {
 		case GL_CW:
@@ -691,9 +691,9 @@ void Context :: FrontFace(GLenum mode) {
 	}
 }
 
-void Context :: CullFace(GLenum mode) { 
+void Context :: CullFace(GLenum mode) {
 
-	switch (mode) { 
+	switch (mode) {
 		case GL_FRONT:
 			m_CullMode = CullModeFront;
 			break;
@@ -716,7 +716,7 @@ namespace {
 	inline GLfloat Det3x3(GLfloat x0, GLfloat x1, GLfloat x2,
 						GLfloat y0, GLfloat y1, GLfloat y2,
 						GLfloat z0, GLfloat z1, GLfloat z2) {
-		return 
+		return
 			  x0 * y1 * z2
 			+ x1 * y2 * z0
 			+ x2 * y0 * z1
@@ -727,9 +727,9 @@ namespace {
 }
 
 
-void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
+void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 
-	GLfloat sign = 
+	GLfloat sign =
 		Det3x3(a.m_ClipCoords.w(), a.m_ClipCoords.x(), a.m_ClipCoords.y(),
 			   b.m_ClipCoords.w(), b.m_ClipCoords.x(), b.m_ClipCoords.y(),
 			   c.m_ClipCoords.w(), c.m_ClipCoords.x(), c.m_ClipCoords.y());
@@ -766,7 +766,7 @@ void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
 		}
 	}
 
-	RasterPos * array1[16];
+	Vertex * array1[16];
 	array1[0] = &a;
 
 	if (!cw) {
@@ -777,8 +777,8 @@ void Context :: RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c) {
 		array1[1] = &c;
 	}
 
-	RasterPos * array2[16];
-	RasterPos * tempVertices = m_Temporary;
+	Vertex * array2[16];
+	Vertex * tempVertices = m_Temporary;
 
 	size_t numVertices = 3;
 	size_t numVarying = m_VaryingInfo->numVarying;

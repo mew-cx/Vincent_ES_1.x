@@ -11,27 +11,27 @@
 // --------------------------------------------------------------------------
 //
 // Copyright (c) 2004, Hans-Martin Will. All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without 
-// modification, are permitted provided that the following conditions are 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 //	 *  Redistributions of source code must retain the above copyright
-// 		notice, this list of conditions and the following disclaimer. 
+// 		notice, this list of conditions and the following disclaimer.
 //   *	Redistributions in binary form must reproduce the above copyright
-// 		notice, this list of conditions and the following disclaimer in the 
-// 		documentation and/or other materials provided with the distribution. 
-// 
+// 		notice, this list of conditions and the following disclaimer in the
+// 		documentation and/or other materials provided with the distribution.
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 // SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
 // ==========================================================================
@@ -51,7 +51,7 @@ using namespace EGL;
 // Setup mesh arrays
 // --------------------------------------------------------------------------
 
-void Context :: ToggleClientState(GLenum array, bool value) { 
+void Context :: ToggleClientState(GLenum array, bool value) {
 	switch (array) {
 	case GL_TEXTURE_COORD_ARRAY:
 		m_TexCoordArrayEnabled[m_ClientActiveTexture] = value;
@@ -86,15 +86,15 @@ void Context :: ToggleClientState(GLenum array, bool value) {
 	}
 }
 
-void Context :: DisableClientState(GLenum array) { 
+void Context :: DisableClientState(GLenum array) {
 	ToggleClientState(array, false);
 }
 
-void Context :: EnableClientState(GLenum array) { 
+void Context :: EnableClientState(GLenum array) {
 	ToggleClientState(array, true);
 }
 
-void Context :: ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) { 
+void Context :: ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
 
 	if (type != GL_UNSIGNED_BYTE && type != GL_FIXED && type != GL_FLOAT) {
 		RecordError(GL_INVALID_ENUM);
@@ -134,7 +134,7 @@ void Context :: ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvo
 	m_ColorArray.boundBuffer = m_CurrentArrayBuffer;
 }
 
-void Context :: NormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer) { 
+void Context :: NormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer) {
 
 	if (type != GL_BYTE && type != GL_SHORT && type != GL_FIXED && type != GL_FLOAT) {
 		RecordError(GL_INVALID_ENUM);
@@ -176,7 +176,7 @@ void Context :: NormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer
 	m_NormalArray.boundBuffer = m_CurrentArrayBuffer;
 }
 
-void Context :: VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) { 
+void Context :: VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
 
 	if (type != GL_BYTE && type != GL_SHORT && type != GL_FIXED && type != GL_FLOAT) {
 		RecordError(GL_INVALID_ENUM);
@@ -221,7 +221,7 @@ void Context :: VertexPointer(GLint size, GLenum type, GLsizei stride, const GLv
 	m_VertexArray.boundBuffer = m_CurrentArrayBuffer;
 }
 
-void Context :: TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) { 
+void Context :: TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
 
 	if (type != GL_BYTE && type != GL_SHORT && type != GL_FIXED && type != GL_FLOAT) {
 		RecordError(GL_INVALID_ENUM);
@@ -272,7 +272,7 @@ void Context :: TexCoordPointer(GLint size, GLenum type, GLsizei stride, const G
 // --------------------------------------------------------------------------
 
 
-void Context :: Color4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha) { 
+void Context :: Color4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha) {
 	m_DefaultRGBA.r = red;
 	m_DefaultRGBA.g = green;
 	m_DefaultRGBA.b = blue;
@@ -280,8 +280,8 @@ void Context :: Color4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
 }
 
 
-void Context :: MultiTexCoord4x(GLenum target, GLfixed s, GLfixed t, GLfixed r, GLfixed q) { 
-	
+void Context :: MultiTexCoord4x(GLenum target, GLfixed s, GLfixed t, GLfixed r, GLfixed q) {
+
 	if (target < GL_TEXTURE0 || target >= GL_TEXTURE0 + EGL_NUM_TEXTURE_UNITS) {
 		// only have one texture unit
 		RecordError(GL_INVALID_VALUE);
@@ -298,7 +298,7 @@ void Context :: MultiTexCoord4x(GLenum target, GLfixed s, GLfixed t, GLfixed r, 
 }
 
 
-void Context :: Normal3x(GLfixed nx, GLfixed ny, GLfixed nz) { 
+void Context :: Normal3x(GLfixed nx, GLfixed ny, GLfixed nz) {
 	m_DefaultNormal = Vec3D(nx, ny, nz);
 }
 
@@ -308,7 +308,7 @@ void Context :: Normal3x(GLfixed nx, GLfixed ny, GLfixed nz) {
 // --------------------------------------------------------------------------
 
 
-void Context :: DrawArrays(GLenum mode, GLint first, GLsizei count) { 
+void Context :: DrawArrays(GLenum mode, GLint first, GLsizei count) {
 
 	if (count < 0) {
 		RecordError(GL_INVALID_VALUE);
@@ -359,8 +359,8 @@ void Context :: DrawArrays(GLenum mode, GLint first, GLsizei count) {
 }
 
 
-void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices) { 
-	
+void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices) {
+
 	if (count < 0) {
 		RecordError(GL_INVALID_VALUE);
 		return;
@@ -593,7 +593,7 @@ void Context :: PrepareArray(VertexArray & array, bool enabled, bool isColor) {
 
 				size_t offset = static_cast<const U8 *>(array.pointer) - static_cast<const U8 *>(0);
 				array.effectivePointer = bufferBase + offset;
-			} 
+			}
 		} else {
 			array.effectivePointer = array.pointer;
 		}
@@ -658,7 +658,7 @@ void Context :: PrepareRendering() {
 }
 
 
-inline void Context :: CurrentTextureValuesToRasterPos(RasterPos * rasterPos) {
+inline void Context :: CurrentTextureValuesToRasterPos(Vertex * rasterPos) {
 	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		if (m_VaryingInfo->textureBase[unit] >= 0) {
 			I32 base = m_VaryingInfo->textureBase[unit];
@@ -688,11 +688,11 @@ inline void Context :: CurrentTextureValuesToRasterPos(RasterPos * rasterPos) {
 // --------------------------------------------------------------------------
 
 
-void Context :: CurrentValuesToRasterPosNoLight(RasterPos * rasterPos) {
+void Context :: CurrentValuesToRasterPosNoLight(Vertex * rasterPos) {
 	FractionalColor color;
 	FractionalColor backColor;
 
-	// apply projection matrix to eye coordinates 
+	// apply projection matrix to eye coordinates
 	if (!m_MatrixPaletteEnabled) {
 		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	} else {
@@ -717,12 +717,12 @@ void Context :: CurrentValuesToRasterPosNoLight(RasterPos * rasterPos) {
 }
 
 
-void Context :: CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos) {
+void Context :: CurrentValuesToRasterPosOneSidedNoTrack(Vertex * rasterPos) {
 
 	FractionalColor color;
 	FractionalColor backColor;
 
-	// apply projection matrix to eye coordinates 
+	// apply projection matrix to eye coordinates
 	if (!m_MatrixPaletteEnabled) {
 		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	} else {
@@ -743,7 +743,7 @@ void Context :: CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos) {
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal;
-	
+
 	if (!m_MatrixPaletteEnabled) {
 		eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
 	} else {
@@ -767,7 +767,7 @@ void Context :: CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos) {
 
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, eyeNormal, 
+			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, eyeNormal,
 				m_FrontMaterial, color);
 		}
 	}
@@ -779,11 +779,11 @@ void Context :: CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos) {
 }
 
 
-void Context :: CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos) {
+void Context :: CurrentValuesToRasterPosOneSidedTrack(Vertex * rasterPos) {
 	FractionalColor color;
 	FractionalColor backColor;
 
-	// apply projection matrix to eye coordinates 
+	// apply projection matrix to eye coordinates
 	if (!m_MatrixPaletteEnabled) {
 		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	} else {
@@ -804,7 +804,7 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos) {
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal;
-	
+
 	if (!m_MatrixPaletteEnabled) {
 		eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
 	} else {
@@ -827,7 +827,7 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos) {
 
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, eyeNormal, 
+			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, eyeNormal,
 				m_FrontMaterial, m_CurrentRGBA, color);
 		}
 	}
@@ -839,11 +839,11 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos) {
 }
 
 
-void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos) {
+void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(Vertex * rasterPos) {
 	FractionalColor color;
 	FractionalColor backColor;
 
-	// apply projection matrix to eye coordinates 
+	// apply projection matrix to eye coordinates
 	if (!m_MatrixPaletteEnabled) {
 		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	} else {
@@ -864,7 +864,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos) {
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal;
-	
+
 	if (!m_MatrixPaletteEnabled) {
 		eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
 	} else {
@@ -886,18 +886,18 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos) {
 	color.a = m_FrontMaterial.GetDiffuseColor().a;
 	color += m_FrontMaterial.GetEmissiveColor();
 
-	backColor = color;		
+	backColor = color;
 
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight2(rasterPos->m_EyeCoords, eyeNormal, 
+			m_Lights[index].AccumulateLight2(rasterPos->m_EyeCoords, eyeNormal,
 				m_FrontMaterial, color, backColor);
 		}
 	}
 
 	color.Clamp();
 	backColor.Clamp();
-	
+
 	rasterPos->m_FrontColor = color;
 	rasterPos->m_BackColor = backColor;
 
@@ -905,11 +905,11 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos) {
 }
 
 
-void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
+void Context :: CurrentValuesToRasterPosTwoSidedTrack(Vertex * rasterPos) {
 	FractionalColor color;
 	FractionalColor backColor;
 
-	// apply projection matrix to eye coordinates 
+	// apply projection matrix to eye coordinates
 	if (!m_MatrixPaletteEnabled) {
 		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	} else {
@@ -930,7 +930,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
 	Vec3D eyeNormal;
-	
+
 	if (!m_MatrixPaletteEnabled) {
 		eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
 	} else {
@@ -951,18 +951,18 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 	color = m_CurrentRGBA * m_LightModelAmbient;
 	color += m_FrontMaterial.GetEmissiveColor();
 
-	backColor = color;		
+	backColor = color;
 
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight2(rasterPos->m_EyeCoords, eyeNormal, 
+			m_Lights[index].AccumulateLight2(rasterPos->m_EyeCoords, eyeNormal,
 				m_FrontMaterial, m_CurrentRGBA, color, backColor);
 		}
 	}
 
 	color.Clamp();
 	backColor.Clamp();
-	
+
 	rasterPos->m_FrontColor = color;
 	rasterPos->m_BackColor = backColor;
 
@@ -970,7 +970,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos) {
 }
 
 
-void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
+void Context :: ClipCoordsToWindowCoords(Vertex & pos) {
 
 	// perform depth division
 	GLfloat x = pos.m_ClipCoords.x();
@@ -994,11 +994,11 @@ void Context :: ClipCoordsToWindowCoords(RasterPos & pos) {
 	// See book by LaMothe for more detailed discussion on this
 	pos.m_WindowCoords.invW = static_cast<EGL_Fixed>(invDenominator * static_cast<float>(EGL_ONE << 12));
 
-	pos.m_WindowCoords.x = 
+	pos.m_WindowCoords.x =
 		EGL_Mul(EGL_FixedFromFloat(x * invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
-	pos.m_WindowCoords.y = 
+	pos.m_WindowCoords.y =
 		EGL_Mul(EGL_FixedFromFloat(y * invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
-	pos.m_WindowCoords.depth = 
+	pos.m_WindowCoords.depth =
 		EGL_CLAMP(EGL_Mul(EGL_FixedFromFloat(z * invDenominator), m_DepthRangeFactor) + m_DepthRangeBase, 0, 0xffff);
 
 	//pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x1000) & ~0x1fff);
@@ -1021,7 +1021,7 @@ void Context :: GetClipPlanex(GLenum plane, GLfixed eqn[4]) {
 }
 
 void Context :: ClipPlanex(GLenum plane, const GLfixed *equation) {
-	
+
 	if (plane < GL_CLIP_PLANE0 || plane >= GL_CLIP_PLANE0 + NUM_CLIP_PLANES) {
 		RecordError(GL_INVALID_ENUM);
 		return;

@@ -13,27 +13,27 @@
 // --------------------------------------------------------------------------
 //
 // Copyright (c) 2004, Hans-Martin Will. All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without 
-// modification, are permitted provided that the following conditions are 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 //	 *  Redistributions of source code must retain the above copyright
-// 		notice, this list of conditions and the following disclaimer. 
+// 		notice, this list of conditions and the following disclaimer.
 //   *	Redistributions in binary form must reproduce the above copyright
-// 		notice, this list of conditions and the following disclaimer in the 
-// 		documentation and/or other materials provided with the distribution. 
-// 
+// 		notice, this list of conditions and the following disclaimer in the
+// 		documentation and/or other materials provided with the distribution.
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 // SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
 // ==========================================================================
@@ -101,8 +101,8 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 	// In the edge buffers, z, tu and tv are actually divided by w
 
 	DECL_REG	(regInfo);		// virtual register containing info structure pointer
-	DECL_REG	(regFrom);		// virtual register containing start RasterPos pointer
-	DECL_REG	(regTo);		// virtual register containing end RasterPos pointer
+	DECL_REG	(regFrom);		// virtual register containing start Vertex pointer
+	DECL_REG	(regTo);		// virtual register containing end Vertex pointer
 
 	procedure->num_args = 3;	// the previous three declarations make up the arguments
 
@@ -159,7 +159,7 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 	block = cg_block_create(procedure, 1);
 
 	{
-		// 	const RasterPos *start, *end;
+		// 	const Vertex *start, *end;
 
 		// 	I32 x;
 		// 	I32 endX;
@@ -168,7 +168,7 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 		// 	if (deltaX < 0) {
 		DECL_FLAGS		(regSignX);
 		DECL_CONST_REG	(regZero, 0);
-		
+
 		FCMP		(regSignX, regDeltaX, regZero);
 
 		cg_block_ref_t * blockRefPositiveDeltaX = cg_block_ref_create(procedure);
@@ -254,8 +254,8 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 		PHI			(regCommonX, cg_create_virtual_reg_list(procedure->module->heap, regX0, regX1, NULL));
 		PHI			(regCommonEndX, cg_create_virtual_reg_list(procedure->module->heap, regEndX0, regEndX1, NULL));
 
-		// 	const RasterPos& from = *start;
-		// 	const RasterPos& to = *end;
+		// 	const Vertex& from = *start;
+		// 	const Vertex& to = *end;
 
 		DECL_REG	(regCommonFrom);
 		DECL_REG	(regCommonTo);
@@ -265,7 +265,7 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 
 		// 	I32 yIncrement = (deltaY > 0) ? 1 : -1;
 		DECL_FLAGS		(regSignY);
-		
+
 		FCMP		(regSignY, regCommonDeltaY, regZero);
 
 		cg_block_ref_t * blockRefPositiveDeltaY = cg_block_ref_create(procedure);
@@ -502,7 +502,7 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 			PHI				(regLoopTuOverZ[unit], cg_create_virtual_reg_list(procedure->module->heap, regEndLoopTuOverZ[unit], regTuOverZ0[unit], NULL));
 			PHI				(regLoopTvOverZ[unit], cg_create_virtual_reg_list(procedure->module->heap, regEndLoopTvOverZ[unit], regTvOverZ0[unit], NULL));
 		}
-		
+
 		// 		EGL_Fixed z = EGL_Inverse(OneOverZ);
 		// 		OneOverZ += deltaZ;
 
@@ -527,7 +527,7 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 			FADD			(regEndLoopTvOverZ[unit], regLoopTvOverZ[unit], regDeltaTvOverZ[unit]);
 
 			info.regU[unit] = regLoopTu[unit];
-			info.regV[unit] = regLoopTv[unit]; 
+			info.regV[unit] = regLoopTv[unit];
 		}
 
 
@@ -607,7 +607,7 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 	block = cg_block_create(procedure, 1);
 	blockRefRasterY->block = block;
 
-	// 	const RasterPos *start, *end;
+	// 	const Vertex *start, *end;
 
 	// 	I32 y;
 	// 	I32 endY;
@@ -629,8 +629,8 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 	// 		endY = EGL_IntFromFixed(p_to.m_WindowCoords.y + ((EGL_ONE)/2-1));
 	// 	}
 
-	// 	const RasterPos& from = *start;
-	// 	const RasterPos& to = *end;
+	// 	const Vertex& from = *start;
+	// 	const Vertex& to = *end;
 
 		//-- initialize with from vertex attributes
 	// 	FractionalColor baseColor = from.m_Color;
@@ -693,7 +693,7 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 	// }
 
 	{
-		// 	const RasterPos *start, *end;
+		// 	const Vertex *start, *end;
 
 		// 	I32 x;
 		// 	I32 endX;
@@ -702,7 +702,7 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 		// 	if (deltaX < 0) {
 		DECL_FLAGS		(regSignY);
 		DECL_CONST_REG	(regZero, 0);
-		
+
 		FCMP		(regSignY, regDeltaY, regZero);
 
 		cg_block_ref_t * blockRefPositiveDeltaY = cg_block_ref_create(procedure);
@@ -788,8 +788,8 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 		PHI			(regCommonY, cg_create_virtual_reg_list(procedure->module->heap, regY0, regY1, NULL));
 		PHI			(regCommonEndY, cg_create_virtual_reg_list(procedure->module->heap, regEndY0, regEndY1, NULL));
 
-		// 	const RasterPos& from = *start;
-		// 	const RasterPos& to = *end;
+		// 	const Vertex& from = *start;
+		// 	const Vertex& to = *end;
 
 		DECL_REG	(regCommonFrom);
 		DECL_REG	(regCommonTo);
@@ -799,7 +799,7 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 
 		// 	I32 yIncrement = (deltaY > 0) ? 1 : -1;
 		DECL_FLAGS		(regSignX);
-		
+
 		FCMP		(regSignX, regCommonDeltaX, regZero);
 
 		cg_block_ref_t * blockRefPositiveDeltaX = cg_block_ref_create(procedure);
@@ -1021,7 +1021,7 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 
 		PHI				(regLoopDepth, cg_create_virtual_reg_list(procedure->module->heap, regEndLoopDepth, regDepth0, NULL));
 		PHI				(regLoopFog, cg_create_virtual_reg_list(procedure->module->heap, regEndLoopFog, regFog0, NULL));
-		
+
 		cg_virtual_reg_t * regLoopTuOverZ[EGL_NUM_TEXTURE_UNITS];
 		cg_virtual_reg_t * regLoopTvOverZ[EGL_NUM_TEXTURE_UNITS];
 		cg_virtual_reg_t * regEndLoopTuOverZ[EGL_NUM_TEXTURE_UNITS];
@@ -1036,7 +1036,7 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 			PHI				(regLoopTuOverZ[unit], cg_create_virtual_reg_list(procedure->module->heap, regEndLoopTuOverZ[unit], regTuOverZ0[unit], NULL));
 			PHI				(regLoopTvOverZ[unit], cg_create_virtual_reg_list(procedure->module->heap, regEndLoopTvOverZ[unit], regTvOverZ0[unit], NULL));
 		}
-		
+
 		// 		EGL_Fixed z = EGL_Inverse(OneOverZ);
 		// 		OneOverZ += deltaZ;
 
@@ -1061,7 +1061,7 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 			FADD			(regEndLoopTvOverZ[unit], regLoopTvOverZ[unit], regDeltaTvOverZ[unit]);
 
 			info.regU[unit] = regLoopTu[unit];
-			info.regV[unit] = regLoopTv[unit]; 
+			info.regV[unit] = regLoopTv[unit];
 		}
 
 		// 		Fragment(x, y, depth, tu, tv, fogDensity, baseColor);

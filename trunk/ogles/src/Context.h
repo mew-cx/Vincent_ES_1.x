@@ -12,27 +12,27 @@
 // --------------------------------------------------------------------------
 //
 // Copyright (c) 2004, Hans-Martin Will. All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without 
-// modification, are permitted provided that the following conditions are 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 //	 *  Redistributions of source code must retain the above copyright
-// 		notice, this list of conditions and the following disclaimer. 
+// 		notice, this list of conditions and the following disclaimer.
 //   *	Redistributions in binary form must reproduce the above copyright
-// 		notice, this list of conditions and the following disclaimer in the 
-// 		documentation and/or other materials provided with the distribution. 
-// 
+// 		notice, this list of conditions and the following disclaimer in the
+// 		documentation and/or other materials provided with the distribution.
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 // SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
 // ==========================================================================
@@ -359,31 +359,31 @@ private:
 		void SelectArrayElement(int index);
 		EGL_Fixed SelectPointSizeArrayElement(int index);
 
-		void CurrentValuesToRasterPos(RasterPos * rasterPos);
-		void CurrentTextureValuesToRasterPos(RasterPos * rasterPos);
+		void CurrentValuesToRasterPos(Vertex * rasterPos);
+		void CurrentTextureValuesToRasterPos(Vertex * rasterPos);
 
-		typedef void (Context::*GeometryFunction)(RasterPos * rasterPos);
+		typedef void (Context::*GeometryFunction)(Vertex * rasterPos);
 
 		void PrepareRendering();
 		void PrepareArray(VertexArray & array, bool enabled, bool isColor = false);
 
-		void CurrentValuesToRasterPosNoLight(RasterPos * rasterPos);
-		void CurrentValuesToRasterPosOneSidedNoTrack(RasterPos * rasterPos);
-		void CurrentValuesToRasterPosOneSidedTrack(RasterPos * rasterPos);
-		void CurrentValuesToRasterPosTwoSidedNoTrack(RasterPos * rasterPos);
-		void CurrentValuesToRasterPosTwoSidedTrack(RasterPos * rasterPos);
+		void CurrentValuesToRasterPosNoLight(Vertex * rasterPos);
+		void CurrentValuesToRasterPosOneSidedNoTrack(Vertex * rasterPos);
+		void CurrentValuesToRasterPosOneSidedTrack(Vertex * rasterPos);
+		void CurrentValuesToRasterPosTwoSidedNoTrack(Vertex * rasterPos);
+		void CurrentValuesToRasterPosTwoSidedTrack(Vertex * rasterPos);
 
-		void InterpolateRasterPos(RasterPos * a, RasterPos * b, GLfixed x, RasterPos * result);
+		void InterpolateRasterPos(Vertex * a, Vertex * b, GLfixed x, Vertex * result);
 
 private:
 		// ----------------------------------------------------------------------
 		// Perform clipping, depth division & actual call into rasterizer
 		// ----------------------------------------------------------------------
-		void RenderPoint(RasterPos& point, EGL_Fixed size);
-		void RenderLine(RasterPos& from, RasterPos& to);
-		void RenderTriangle(RasterPos& a, RasterPos& b, RasterPos& c);
+		void RenderPoint(Vertex& point, EGL_Fixed size);
+		void RenderLine(Vertex& from, Vertex& to);
+		void RenderTriangle(Vertex& a, Vertex& b, Vertex& c);
 
-		void ClipCoordsToWindowCoords(RasterPos & pos);
+		void ClipCoordsToWindowCoords(Vertex & pos);
 		EGL_Fixed FogDensity(EGL_Fixed eyeDistance) const;
 
 		void InitFogTable();
@@ -460,7 +460,7 @@ private:
 		// Current values for setup
 		// ----------------------------------------------------------------------
 
-		Vec4D				m_CurrentVertex;	
+		Vec4D				m_CurrentVertex;
 		Vec3D				m_CurrentNormal;
 		FractionalColor		m_CurrentRGBA;
 		TexCoord			m_CurrentTextureCoords[EGL_NUM_TEXTURE_UNITS];
@@ -556,12 +556,12 @@ private:
 		bool				m_Current;			// this context has been selected
 												// as a current context
 		bool				m_Disposed;			// this context has been deleted,
-												// but is stil selected into a 
+												// but is stil selected into a
 												// thread
 		bool				m_ViewportInitialized;	// if true, the viewport has been
 													// initialized
 
-		RasterPos			m_Temporary[16];	// temporary coordinates
+		Vertex			m_Temporary[16];	// temporary coordinates
 	};
 
 
@@ -585,7 +585,7 @@ private:
 	}
 
 
-	inline void Context :: CurrentValuesToRasterPos(RasterPos * rasterPos) {
+	inline void Context :: CurrentValuesToRasterPos(Vertex * rasterPos) {
 		(this->*m_GeometryFunction)(rasterPos);
 /*		if ((rasterPos->m_ClipCoords.x() >= 0x10000000 || rasterPos->m_ClipCoords.x() < - 0x10000000 ||
 			 rasterPos->m_ClipCoords.y() >= 0x10000000 || rasterPos->m_ClipCoords.y() < - 0x10000000 ||
