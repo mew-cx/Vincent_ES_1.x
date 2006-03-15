@@ -5,7 +5,7 @@
 //
 // Rasterizer.h		Rasterizer Class for 3D Rendering Library
 //
-//					The rasterizer converts transformed and lit 
+//					The rasterizer converts transformed and lit
 //					primitives and creates a raster image in the
 //					current rendering surface.
 //
@@ -16,27 +16,27 @@
 // --------------------------------------------------------------------------
 //
 // Copyright (c) 2004, Hans-Martin Will. All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without 
-// modification, are permitted provided that the following conditions are 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 //	 *  Redistributions of source code must retain the above copyright
-// 		notice, this list of conditions and the following disclaimer. 
+// 		notice, this list of conditions and the following disclaimer.
 //   *	Redistributions in binary form must reproduce the above copyright
-// 		notice, this list of conditions and the following disclaimer in the 
-// 		documentation and/or other materials provided with the distribution. 
-// 
+// 		notice, this list of conditions and the following disclaimer in the
+// 		documentation and/or other materials provided with the distribution.
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 // SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
 // ==========================================================================
@@ -67,9 +67,9 @@ namespace EGL {
 		// the following variables specify the index base for the different
 		// varying variables; a negative value indicates that there is no
 		// such varying variable in use
-		I32						colorIndex;	
-		I32						fogIndex;		
-		I32						textureBase[EGL_NUM_TEXTURE_UNITS];	
+		I32						colorIndex;
+		I32						fogIndex;
+		I32						textureBase[EGL_NUM_TEXTURE_UNITS];
 	};
 
 	// ----------------------------------------------------------------------
@@ -96,12 +96,25 @@ namespace EGL {
 	// Vertex information as input for rasterizer
 	// ----------------------------------------------------------------------
 
-	struct RasterPos {
+	struct Vertex {
+		// ----------------------------------------------------------------------
+		// Current values for setup
+		// ----------------------------------------------------------------------
+
+		Vec4D				m_CurrentVertex;
+		Vec3D				m_CurrentNormal;
+		FractionalColor		m_CurrentRGBA;
+		TexCoord			m_CurrentTextureCoords[EGL_NUM_TEXTURE_UNITS];
+
+		// ----------------------------------------------------------------------
+		// Current values for setup
+		// ----------------------------------------------------------------------
+
 		FractionalColor		m_FrontColor;		// color in range 0..255
-		FractionalColor		m_BackColor;		
+		FractionalColor		m_BackColor;
 		Vec4D				m_EyeCoords;
 		Vec4f				m_ClipCoords;
-		ScreenCoord			m_WindowCoords;		
+		ScreenCoord			m_WindowCoords;
 		EGL_Fixed			m_Varying[EGL_MAX_NUM_VARYING];
 	};
 
@@ -121,7 +134,7 @@ namespace EGL {
 		const I32 *	InversionTablePtr;
 
 		// TODO: will need to add a minimum texture level here
-		// TODO: 
+		// TODO:
 
 		// texture info
 		Texture *	Textures[EGL_NUM_TEXTURE_UNITS];
@@ -164,8 +177,8 @@ namespace EGL {
 #endif
 
 	// signature for generated scanline functions
-	typedef void (LineFunction)(const RasterInfo * info, const RasterPos * from, const RasterPos * to);
-	typedef void (PointFunction)(const RasterInfo * info, const RasterPos * pos, EGL_Fixed size);
+	typedef void (LineFunction)(const RasterInfo * info, const Vertex * from, const Vertex * to);
+	typedef void (PointFunction)(const RasterInfo * info, const Vertex * pos, EGL_Fixed size);
 	typedef PixelMask (BlockDepthStencilFunction)(const RasterInfo * info, const Variables * variables, PixelMask * pixelMask);
 	typedef PixelMask (BlockEdgeDepthStencilFunction)(const RasterInfo * info, const Variables * variables, const Edges * edges, PixelMask * pixelMask);
 	typedef void (BlockColorAlphaFunction)(const RasterInfo * info, I32 varying[][2][2], const PixelMask * pixelMask);
@@ -175,7 +188,7 @@ namespace EGL {
 	public:
 		enum {
 			PolygonOffsetUnitSize = 1,		// how to determine this?
-			DepthRangeMax = 0xffff			// 31 bits 
+			DepthRangeMax = 0xffff			// 31 bits
 		};
 
 		enum PixelFormat {
@@ -221,10 +234,10 @@ namespace EGL {
 		// stencil test.
 		// ----------------------------------------------------------------------
 
-		void RasterPoint(const RasterPos& point, EGL_Fixed size);
-		void RasterLine(RasterPos& from, RasterPos& to);
-		void RasterTriangle(const RasterPos& a, const RasterPos& b,
-			const RasterPos& c);
+		void RasterPoint(const Vertex& point, EGL_Fixed size);
+		void RasterLine(Vertex& from, Vertex& to);
+		void RasterTriangle(const Vertex& a, const Vertex& b,
+			const Vertex& c);
 
 		// inner loops of rasterization of triangles
 		PixelMask RasterBlockDepthStencil(const Variables * variables, PixelMask * pixelMask);
@@ -235,6 +248,7 @@ namespace EGL {
 		// State management
 		// ----------------------------------------------------------------------
 
+		void Prepare();
 		void PreparePoint();
 		void PrepareLine();
 		void PrepareTriangle();
@@ -273,18 +287,18 @@ namespace EGL {
 		// Rasterization of fragment
 		// ----------------------------------------------------------------------
 
-		void Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu[], EGL_Fixed tv[], 
+		void Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu[], EGL_Fixed tv[],
 			EGL_Fixed fogDensity, const Color& baseColor);
 			// will have special cases based on settings
 			// the coordinates are integer coordinates
 
-		void Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed depth, 
+		void Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed depth,
 					  EGL_Fixed tu[], EGL_Fixed tv[],
 					  const Color& baseColor, EGL_Fixed fog);
 			// fragment rendering with signature corresponding to function fragment
 			// generated by code generator
 
-		bool FragmentDepthStencil(const RasterInfo * rasterInfo, const SurfaceInfo * surfaceInfo, 
+		bool FragmentDepthStencil(const RasterInfo * rasterInfo, const SurfaceInfo * surfaceInfo,
 								  I32 x, EGL_Fixed depth);
 			// fragment rendering with signature corresponding to function fragment
 			// generated by code generator
@@ -296,13 +310,13 @@ namespace EGL {
 			// fragment rendering with signature corresponding to function fragment
 			// generated by code generator
 
-		Color GetTexColor(const RasterizerState::TextureState * state, const Texture * texture, EGL_Fixed tu, EGL_Fixed tv, 
+		Color GetTexColor(const RasterizerState::TextureState * state, const Texture * texture, EGL_Fixed tu, EGL_Fixed tv,
 						  RasterizerState::FilterMode filterMode);
-			// retrieve the texture color from a texture plane 
-						  
+			// retrieve the texture color from a texture plane
+
 		Color GetRawTexColor(const RasterizerState::TextureState * state, const Texture * texture, EGL_Fixed tu, EGL_Fixed tv);
 			// retrieve the texture color from a texture plane
-						  
+
 	private:
 		// ----------------------------------------------------------------------
 		// other settings
@@ -310,7 +324,7 @@ namespace EGL {
 
 		RasterInfo				m_RasterInfo;
 		Surface *				m_Surface;			// rendering surface
-		MultiTexture *			m_Texture[EGL_NUM_TEXTURE_UNITS];	// current texture 
+		MultiTexture *			m_Texture[EGL_NUM_TEXTURE_UNITS];	// current texture
 		RasterizerState *		m_State;			// current rasterization settings
 		FunctionCache *			m_FunctionCache;
 
@@ -352,18 +366,18 @@ namespace EGL {
 	}
 
 
-//	inline void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b, const RasterPos& c) {
+//	inline void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b, const Vertex& c) {
 //		(this->*m_RasterTriangleFunction)(a, b, c);
 //	}
 
 
 #	if EGL_USE_JIT
 
-	inline void Rasterizer :: RasterPoint(const RasterPos& point, EGL_Fixed size) {
+	inline void Rasterizer :: RasterPoint(const Vertex& point, EGL_Fixed size) {
 		m_PointFunction(&m_RasterInfo, &point, size);
 	}
 
-	inline void Rasterizer :: RasterLine(RasterPos& p_from, RasterPos& p_to) {
+	inline void Rasterizer :: RasterLine(Vertex& p_from, Vertex& p_to) {
 		p_from.m_WindowCoords.x = ((p_from.m_WindowCoords.x + 0x800) & ~0xfff);
 		p_from.m_WindowCoords.y = ((p_from.m_WindowCoords.y + 0x800) & ~0xfff);
 		p_to.m_WindowCoords.x = ((p_to.m_WindowCoords.x + 0x800) & ~0xfff);

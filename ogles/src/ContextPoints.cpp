@@ -11,27 +11,27 @@
 // --------------------------------------------------------------------------
 //
 // Copyright (c) 2004, Hans-Martin Will. All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without 
-// modification, are permitted provided that the following conditions are 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 //	 *  Redistributions of source code must retain the above copyright
-// 		notice, this list of conditions and the following disclaimer. 
+// 		notice, this list of conditions and the following disclaimer.
 //   *	Redistributions in binary form must reproduce the above copyright
-// 		notice, this list of conditions and the following disclaimer in the 
-// 		documentation and/or other materials provided with the distribution. 
-// 
+// 		notice, this list of conditions and the following disclaimer in the
+// 		documentation and/or other materials provided with the distribution.
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 // SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
 // ==========================================================================
@@ -45,7 +45,7 @@
 using namespace EGL;
 
 
-void Context :: PointSizex(GLfixed size) { 
+void Context :: PointSizex(GLfixed size) {
 
 	if (size <= 0) {
 		RecordError(GL_INVALID_VALUE);
@@ -76,7 +76,7 @@ void Context :: RenderPoints(GLint first, GLsizei count) {
 	while (count >= 1) {
 		count -= 1;
 
-		RasterPos pos0;
+		Vertex pos0;
 		EGL_Fixed size = SelectPointSizeArrayElement(first);
 		SelectArrayElement(first++);
 		CurrentValuesToRasterPos(&pos0);
@@ -92,7 +92,7 @@ void Context :: RenderPoints(GLsizei count, const GLubyte * indices) {
 	while (count >= 1) {
 		count -= 1;
 
-		RasterPos pos0;
+		Vertex pos0;
 		EGL_Fixed size = SelectPointSizeArrayElement(*indices);
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
@@ -108,7 +108,7 @@ void Context :: RenderPoints(GLsizei count, const GLushort * indices) {
 	while (count >= 1) {
 		count -= 1;
 
-		RasterPos pos0;
+		Vertex pos0;
 		EGL_Fixed size = SelectPointSizeArrayElement(*indices);
 		SelectArrayElement(*indices++);
 		CurrentValuesToRasterPos(&pos0);
@@ -117,7 +117,7 @@ void Context :: RenderPoints(GLsizei count, const GLushort * indices) {
 }
 
 
-void Context :: RenderPoint(RasterPos& point, EGL_Fixed size) {
+void Context :: RenderPoint(Vertex& point, EGL_Fixed size) {
 
 	// any user defined clip planes?
 	if (m_ClipPlaneEnabled) {
@@ -129,14 +129,14 @@ void Context :: RenderPoint(RasterPos& point, EGL_Fixed size) {
 			}
 		}
 	}
-	
+
 	// in principle, the scissor test can be included in here
 	if (point.m_ClipCoords.x() < -point.m_ClipCoords.w() ||
 		point.m_ClipCoords.x() >  point.m_ClipCoords.w() ||
 		point.m_ClipCoords.y() < -point.m_ClipCoords.w() ||
 		point.m_ClipCoords.y() >  point.m_ClipCoords.w() ||
 		point.m_ClipCoords.z() < -point.m_ClipCoords.w() ||
-		point.m_ClipCoords.z() >  point.m_ClipCoords.w()) 
+		point.m_ClipCoords.z() >  point.m_ClipCoords.w())
 		return;
 
 	ClipCoordsToWindowCoords(point);

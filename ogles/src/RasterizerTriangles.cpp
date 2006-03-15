@@ -45,6 +45,7 @@
 #include "Rasterizer.h"
 #include "Surface.h"
 #include "Texture.h"
+#include "Utils.h"
 #include "arm/FunctionCache.h"
 
 using namespace EGL;
@@ -58,21 +59,6 @@ using namespace EGL;
 #endif
 
 namespace {
-	inline int Log2(int value) {
-		if (value <= 1) {
-			return 0;
-		}
-
-		int result = 0;
-
-		while (value > 1) {
-			result++;
-			value >>= 1;
-		}
-
-		return result;
-	}
-
 	inline I32 min(I32 a, I32 b, I32 c) {
 		I32 d = (a < b) ? a : b;
 		return (d < c) ? d : c;
@@ -131,33 +117,7 @@ namespace {
 // ---------------------------------------------------------------------------
 
 void Rasterizer :: PrepareTriangle() {
-	PrepareTexture();
-
-	// could be optimized
-	bool needsColor = true;
-				//!m_State->m_Texture[0].Enabled ||
-				//  m_State->m_Texture[0].Mode != RasterizerState::TextureModeReplace;
-
-	bool needsTexture = false;
-
-	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		needsTexture |= m_State->m_Texture[unit].Enabled;
-	}
-
-	bool needsFog 	  = m_State->m_Fog.Enabled;
-	bool needsDepth   = m_State->m_DepthTest.Enabled ||
-						m_State->m_Mask.Depth 		 ||
-						m_State->m_Stencil.Enabled;
-	bool needsScissor = m_State->m_ScissorTest.Enabled;
-	bool needsStencil = m_State->m_Stencil.Enabled;
-
-	U32 selector =
-		((needsColor	? 1 : 0) << RasterTriangleColor		) |
-		((needsTexture	? 1 : 0) << RasterTriangleTexture	) |
-		((needsFog		? 1 : 0) << RasterTriangleFog		) |
-		((needsDepth	? 1 : 0) << RasterTriangleDepth		) |
-		((needsScissor	? 1 : 0) << RasterTriangleScissor	) |
-		((needsStencil	? 1 : 0) << RasterTriangleStencil	);
+	Prepare();
 
 	memset(m_RasterInfo.MipmapLevel, 0, sizeof(m_RasterInfo.MipmapLevel));
 
@@ -176,7 +136,7 @@ void Rasterizer :: PrepareTriangle() {
 									 *m_State, &m_VaryingInfo);
 }
 
-PixelMask Rasterizer :: RasterBlockDepthStencil(const Variables * vars, 
+PixelMask Rasterizer :: RasterBlockDepthStencil(const Variables * vars,
 												PixelMask * pixelMask) {
 
 	PixelMask * mask = pixelMask, totalMask = 0;
@@ -210,8 +170,8 @@ PixelMask Rasterizer :: RasterBlockDepthStencil(const Variables * vars,
 	return totalMask;
 }
 
-PixelMask Rasterizer :: RasterBlockEdgeDepthStencil(const Variables * vars, 
-													const Edges * edges, 
+PixelMask Rasterizer :: RasterBlockEdgeDepthStencil(const Variables * vars,
+													const Edges * edges,
 													PixelMask * pixelMask) {
 
 	PixelMask * mask = pixelMask, totalMask = 0;
@@ -226,38 +186,38 @@ PixelMask Rasterizer :: RasterBlockEdgeDepthStencil(const Variables * vars,
 
     for (I32 iy = 0; iy < EGL_RASTER_BLOCK_SIZE; iy++) {
         GLint CX1 = CY1, CX2 = CY2, CX3 = CY3;
+		I32 depth1 = depth0;
 		PixelMask rowMask = 0;
 		bool done = false;
 
         for(I32 ix = 0; ix < EGL_RASTER_BLOCK_SIZE; ix++) {
             if (CX1 > 0 && CX2 > 0 && CX3 > 0) {
 				// test and write depth and stencil
-				bool written = FragmentDepthStencil(&m_RasterInfo, &surfaceInfo, ix, depth0 >> 4);
+				bool written = FragmentDepthStencil(&m_RasterInfo, &surfaceInfo, ix, depth1 >> 4);
 				rowMask >>= 1;
 				rowMask |= written ? (1 << (EGL_RASTER_BLOCK_SIZE - 1)) : 0;
 				done = true;
             } else if (done) {
 				rowMask >>= EGL_RASTER_BLOCK_SIZE - ix;
-				depth0 += vars->Depth.dX * (EGL_RASTER_BLOCK_SIZE - ix);
 				break;
 			} else {
 				rowMask >>= 1;
 			}
 
-            CX1 += edges->edge12.FDY; 
-			CX2 += edges->edge23.FDY; 
+            CX1 += edges->edge12.FDY;
+			CX2 += edges->edge23.FDY;
 			CX3 += edges->edge31.FDY;
-			depth0 += vars->Depth.dX;
+			depth1 += vars->Depth.dX;
         }
 
 		*mask++ = rowMask;
 		totalMask |= rowMask;
 
-        CY1 -= edges->edge12.FDX; 
-		CY2 -= edges->edge23.FDX; 
+        CY1 -= edges->edge12.FDX;
+		CY2 -= edges->edge23.FDX;
 		CY3 -= edges->edge31.FDX;
 
-		depth0 += vars->Depth.dY - (vars->Depth.dX << EGL_LOG_RASTER_BLOCK_SIZE);
+		depth0 += vars->Depth.dY;
 
 		surfaceInfo.DepthBuffer += surfaceInfo.Pitch;
 		surfaceInfo.StencilBuffer += surfaceInfo.Pitch;
@@ -266,7 +226,7 @@ PixelMask Rasterizer :: RasterBlockEdgeDepthStencil(const Variables * vars,
 	return totalMask;
 }
 
-void Rasterizer :: RasterBlockColorAlpha(I32 varying[][2][2], 
+void Rasterizer :: RasterBlockColorAlpha(I32 varying[][2][2],
 										 const PixelMask * pixelMask) {
 	const PixelMask * mask = pixelMask;
 
@@ -303,8 +263,8 @@ void Rasterizer :: RasterBlockColorAlpha(I32 varying[][2][2],
 				if (m_VaryingInfo.colorIndex >= 0) {
 					//baseColor = FractionalColor(varying0 + m_VaryingInfo.colorIndex);
 					baseColor = FractionalColor(
-						varying0[m_VaryingInfo.colorIndex][0], 
-						varying0[m_VaryingInfo.colorIndex + 1][0], 
+						varying0[m_VaryingInfo.colorIndex][0],
+						varying0[m_VaryingInfo.colorIndex + 1][0],
 						varying0[m_VaryingInfo.colorIndex + 2][0],
 						varying0[m_VaryingInfo.colorIndex + 3][0]);
 				}
@@ -334,8 +294,8 @@ void Rasterizer :: RasterBlockColorAlpha(I32 varying[][2][2],
     }
 }
 
-void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
-								  const RasterPos& c) {
+void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
+								  const Vertex& c) {
 
 	// 16.16 -> 28.4 fixed-point coordinates
 	I32 Y1 = (a.m_WindowCoords.y + (1 << 11)) >> 12;
@@ -453,21 +413,21 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
             GLint pass1 = edges.edge12.CY > 0;
             pass1 += edges.edge12.CY + (edges.edge12.FDY << EGL_LOG_RASTER_BLOCK_SIZE) > 0;
             pass1 += edges.edge12.CY - (edges.edge12.FDX << EGL_LOG_RASTER_BLOCK_SIZE) > 0;
-            pass1 += edges.edge12.CY + (edges.edge12.FDY << EGL_LOG_RASTER_BLOCK_SIZE) 
+            pass1 += edges.edge12.CY + (edges.edge12.FDY << EGL_LOG_RASTER_BLOCK_SIZE)
 						 - (edges.edge12.FDX << EGL_LOG_RASTER_BLOCK_SIZE) > 0;
 
             edges.edge23.CY = C2 + DY23 * x0 - DX23 * y0;
             GLint pass2 = edges.edge23.CY > 0;
             pass2 += edges.edge23.CY + (edges.edge23.FDY << EGL_LOG_RASTER_BLOCK_SIZE) > 0;
             pass2 += edges.edge23.CY - (edges.edge23.FDX << EGL_LOG_RASTER_BLOCK_SIZE) > 0;
-            pass2 += edges.edge23.CY + (edges.edge23.FDY << EGL_LOG_RASTER_BLOCK_SIZE) 
+            pass2 += edges.edge23.CY + (edges.edge23.FDY << EGL_LOG_RASTER_BLOCK_SIZE)
 						 - (edges.edge23.FDX << EGL_LOG_RASTER_BLOCK_SIZE) > 0;
 
             edges.edge31.CY = C3 + DY31 * x0 - DX31 * y0;
             GLint pass3 = edges.edge31.CY > 0;
             pass3 += edges.edge31.CY + (edges.edge31.FDY << EGL_LOG_RASTER_BLOCK_SIZE) > 0;
             pass3 += edges.edge31.CY - (edges.edge31.FDX << EGL_LOG_RASTER_BLOCK_SIZE) > 0;
-            pass3 += edges.edge31.CY + (edges.edge31.FDY << EGL_LOG_RASTER_BLOCK_SIZE) 
+            pass3 += edges.edge31.CY + (edges.edge31.FDY << EGL_LOG_RASTER_BLOCK_SIZE)
 						 - (edges.edge31.FDX << EGL_LOG_RASTER_BLOCK_SIZE) > 0;
 
 			PixelMask pixelMask[EGL_RASTER_BLOCK_SIZE];
@@ -504,7 +464,7 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 						// dVaryingDx, dVaryingDy is 4.28
 						vars.VaryingInvW[index].dX =  MulRoundShift(det2x2(DY12, IVW12, DY31, IVW31), invArea, 28);
 						vars.VaryingInvW[index].dY = -MulRoundShift(det2x2(DX12, IVW12, DX31, IVW31), invArea, 28);
-						vars.VaryingInvW[index].dBlockLine = 
+						vars.VaryingInvW[index].dBlockLine =
 							vars.VaryingInvW[index].dY * EGL_RASTER_BLOCK_SIZE - vars.VaryingInvW[index].dX * span;
 
 						// varyingStart is 4.28
@@ -532,16 +492,16 @@ void Rasterizer :: RasterTriangle(const RasterPos& a, const RasterPos& b,
 				// compute values of varying at all four corners
 				for (index = 0; index < numVarying; ++index) {
 					varying[index][0][0] = MulRoundShift(vars.VaryingInvW[index].Value, w[0][0], 16);
-					varying[index][0][1] = 
-						(MulRoundShift(vars.VaryingInvW[index].Value 
-										+ (vars.VaryingInvW[index].dY << EGL_LOG_RASTER_BLOCK_SIZE), w[1][0], 16) 
+					varying[index][0][1] =
+						(MulRoundShift(vars.VaryingInvW[index].Value
+										+ (vars.VaryingInvW[index].dY << EGL_LOG_RASTER_BLOCK_SIZE), w[1][0], 16)
 						 - varying[index][0][0]) >> EGL_LOG_RASTER_BLOCK_SIZE;
 
-					varying[index][1][0] = 
-						MulRoundShift(vars.VaryingInvW[index].Value 
+					varying[index][1][0] =
+						MulRoundShift(vars.VaryingInvW[index].Value
 										+ (vars.VaryingInvW[index].dX << EGL_LOG_RASTER_BLOCK_SIZE), w[0][1], 16);
-					varying[index][1][1] = 
-						(MulRoundShift(vars.VaryingInvW[index].Value 
+					varying[index][1][1] =
+						(MulRoundShift(vars.VaryingInvW[index].Value
 										+ (vars.VaryingInvW[index].dX << EGL_LOG_RASTER_BLOCK_SIZE)
 										+ (vars.VaryingInvW[index].dY << EGL_LOG_RASTER_BLOCK_SIZE), w[1][1], 16)
 						 - varying[index][1][0]) >> EGL_LOG_RASTER_BLOCK_SIZE;

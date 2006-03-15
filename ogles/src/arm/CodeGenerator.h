@@ -16,27 +16,27 @@
 // --------------------------------------------------------------------------
 //
 // Copyright (c) 2004, Hans-Martin Will. All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without 
-// modification, are permitted provided that the following conditions are 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 //	 *  Redistributions of source code must retain the above copyright
-// 		notice, this list of conditions and the following disclaimer. 
+// 		notice, this list of conditions and the following disclaimer.
 //   *	Redistributions in binary form must reproduce the above copyright
-// 		notice, this list of conditions and the following disclaimer in the 
-// 		documentation and/or other materials provided with the distribution. 
-// 
+// 		notice, this list of conditions and the following disclaimer in the
+// 		documentation and/or other materials provided with the distribution.
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 // SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
 // ==========================================================================
@@ -74,12 +74,12 @@ namespace EGL {
 		cg_virtual_reg_t * regY;
 		cg_virtual_reg_t * regDepth;
 		cg_virtual_reg_t * regU[EGL_NUM_TEXTURE_UNITS];
-		cg_virtual_reg_t * regV[EGL_NUM_TEXTURE_UNITS]; 
+		cg_virtual_reg_t * regV[EGL_NUM_TEXTURE_UNITS];
 		cg_virtual_reg_t * regFog;
 		cg_virtual_reg_t * regR;
 		cg_virtual_reg_t * regG;
-		cg_virtual_reg_t * regB; 
-		cg_virtual_reg_t * regA;	
+		cg_virtual_reg_t * regB;
+		cg_virtual_reg_t * regA;
 
 		cg_virtual_reg_t * regInfo;
 		cg_virtual_reg_t * regTexture[EGL_NUM_TEXTURE_UNITS];
@@ -126,18 +126,18 @@ namespace EGL {
 								   size_t unit,
 								   FragmentGenerationInfo & fragmentInfo,
 								   cg_virtual_reg_t *& regTexColorR,
-								   cg_virtual_reg_t *& regTexColorG,			
-								   cg_virtual_reg_t *& regTexColorB,			
+								   cg_virtual_reg_t *& regTexColorG,
+								   cg_virtual_reg_t *& regTexColorB,
 								   cg_virtual_reg_t *& regTexColorA,
 								   cg_virtual_reg_t *& regTexColor565);
 
 		void FetchTexColor(cg_proc_t * proc, cg_block_t * currentBlock,
 								   const RasterizerState::TextureState * textureState,
-								   cg_virtual_reg_t * regTexData, 
+								   cg_virtual_reg_t * regTexData,
 								   cg_virtual_reg_t * regTexOffset,
 								   cg_virtual_reg_t *& regTexColorR,
-								   cg_virtual_reg_t *& regTexColorG,			
-								   cg_virtual_reg_t *& regTexColorB,			
+								   cg_virtual_reg_t *& regTexColorG,
+								   cg_virtual_reg_t *& regTexColorB,
 								   cg_virtual_reg_t *& regTexColorA,
 								   cg_virtual_reg_t *& regTexColor565);
 
@@ -264,13 +264,13 @@ namespace EGL {
 #	define OFFSET_TEX_COORD_DTVDY			offsetof(TexCoord, dtvdy)
 
 	// -------------------------------------------------------------------------
-	// For RasterPos
+	// For Vertex
 	// -------------------------------------------------------------------------
 
-#	define OFFSET_RASTER_POS_WINDOW			offsetof(RasterPos, m_WindowCoords)
-#	define OFFSET_RASTER_POS_COLOR			(offsetof(RasterPos, m_Varying) + varyingInfo->colorIndex * sizeof(U32)) 
-#	define OFFSET_RASTER_POS_TEXTURE(unit)	(offsetof(RasterPos, m_Varying) + varyingInfo->textureBase[unit] * sizeof(U32))
-#	define OFFSET_RASTER_POS_FOG			(offsetof(RasterPos, m_Varying) + varyingInfo->fogIndex * sizeof(U32))
+#	define OFFSET_RASTER_POS_WINDOW			offsetof(Vertex, m_WindowCoords)
+#	define OFFSET_RASTER_POS_COLOR			(offsetof(Vertex, m_Varying) + varyingInfo->colorIndex * sizeof(U32))
+#	define OFFSET_RASTER_POS_TEXTURE(unit)	(offsetof(Vertex, m_Varying) + varyingInfo->textureBase[unit] * sizeof(U32))
+#	define OFFSET_RASTER_POS_FOG			(offsetof(Vertex, m_Varying) + varyingInfo->fogIndex * sizeof(U32))
 
 #	define OFFSET_RASTER_POS_WINDOW_X		(OFFSET_RASTER_POS_WINDOW + OFFSET_SCREEN_X)
 #	define OFFSET_RASTER_POS_WINDOW_Y		(OFFSET_RASTER_POS_WINDOW + OFFSET_SCREEN_Y)
