@@ -46,12 +46,13 @@ cg_bitset_t * cg_bitset_create(cg_heap_t * heap, size_t elements)
 void cg_bitset_assign(cg_bitset_t * target, cg_bitset_t * source) 
 {
 	size_t index;
+	size_t words = (target->elements + CG_BITSET_BITS_PER_WORD - 1) / CG_BITSET_BITS_PER_WORD;
 	
 	assert(target);
 	assert(source);
 	assert(target->elements == source->elements);
 	
-	for (index = 0; index < target->elements / CG_BITSET_BITS_PER_WORD; ++index)
+	for (index = 0; index < words; ++index)
 	{
 		target->bits[index] = source->bits[index];
 	}
@@ -64,6 +65,7 @@ int cg_bitset_union_minus(cg_bitset_t * target, cg_bitset_t * source,
 {
 	size_t index;
 	int result = 0;
+	size_t words = (target->elements + CG_BITSET_BITS_PER_WORD - 1) / CG_BITSET_BITS_PER_WORD;
 	
 	assert(target);
 	assert(source);
@@ -71,7 +73,7 @@ int cg_bitset_union_minus(cg_bitset_t * target, cg_bitset_t * source,
 	assert(target->elements == source->elements);
 	assert(target->elements == minus->elements);
 	
-	for (index = 0; index < target->elements / CG_BITSET_BITS_PER_WORD; ++index)
+	for (index = 0; index < words; ++index)
 	{
 		U32 old = target->bits[index];
 		target->bits[index] |= source->bits[index] & ~minus->bits[index];
@@ -87,12 +89,13 @@ int cg_bitset_union(cg_bitset_t * target, cg_bitset_t * source)
 {
 	size_t index;
 	int result = 0;
+	size_t words = (target->elements + CG_BITSET_BITS_PER_WORD - 1) / CG_BITSET_BITS_PER_WORD;
 	
 	assert(target);
 	assert(source);
 	assert(target->elements == source->elements);
 	
-	for (index = 0; index < target->elements / CG_BITSET_BITS_PER_WORD; ++index)
+	for (index = 0; index < words; ++index)
 	{
 		U32 old = target->bits[index];
 		target->bits[index] |= source->bits[index];
@@ -107,12 +110,13 @@ int cg_bitset_union(cg_bitset_t * target, cg_bitset_t * source)
 int cg_bitset_intersects(const cg_bitset_t * first, const cg_bitset_t * second) 
 {
 	size_t index;
+	size_t words = (first->elements + CG_BITSET_BITS_PER_WORD - 1) / CG_BITSET_BITS_PER_WORD;
 
 	assert(first);
 	assert(second);
 	assert(first->elements == second->elements);
 	
-	for (index = 0; index < first->elements / CG_BITSET_BITS_PER_WORD; ++index)
+	for (index = 0; index < words; ++index)
 	{
 		if (first->bits[index] & second->bits[index])
 			return 1;

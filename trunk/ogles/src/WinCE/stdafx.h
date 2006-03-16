@@ -36,7 +36,7 @@
 
 
 #define EGL_ON_WINCE
-#define EGL_NO_COMPILE
+//#define EGL_NO_COMPILE
 
 
 // --------------------------------------------------------------------------
