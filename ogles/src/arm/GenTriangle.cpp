@@ -166,18 +166,25 @@ void CodeGenerator :: GenerateRasterBlockDepthStencil(const VaryingInfo * varyin
 	cg_block_ref_t * yLoopTop = cg_block_ref_create(procedure);
 	cg_block_ref_t * yLoopEnd = cg_block_ref_create(procedure);
 
+	DECL_CONST_REG(initRegIY0, EGL_RASTER_BLOCK_SIZE);		
+	DECL_CONST_REG(initMask, 0);
+
 	// stencil test passed
 	block = cg_block_create(procedure, 2);
 	yLoopTop->block = block;
 
-	PHI			(regIY0, cg_create_virtual_reg_list(procedure->module->heap, regIY1, blockSize, NULL));
+	PHI			(regIY0, cg_create_virtual_reg_list(procedure->module->heap, regIY1, initRegIY0, NULL));
 	PHI			(regMask0, cg_create_virtual_reg_list(procedure->module->heap, regPixelMask, regMask1, NULL));
-	PHI			(regTotalMask0, cg_create_virtual_reg_list(procedure->module->heap, zero, regTotalMask1, NULL));
+	PHI			(regTotalMask0, cg_create_virtual_reg_list(procedure->module->heap, initMask, regTotalMask1, NULL));
 	PHI			(regDepth0, cg_create_virtual_reg_list(procedure->module->heap, regDepthInit, regDepth1, regDepth2, NULL));
 	PHI			(regDepthBuffer0, cg_create_virtual_reg_list(procedure->module->heap, regDepthBuffer, regDepthBuffer1, NULL));
 	PHI			(regStencilBuffer0, cg_create_virtual_reg_list(procedure->module->heap, regStencilBuffer, regStencilBuffer1, NULL));
 
 	//	PixelMask rowMask = 0;
+
+	DECL_CONST_REG	(initIX0, 0);
+	DECL_CONST_REG	(initRowMask, 0);
+
 	DECL_REG	(regRowMask0);		// beginning of x loop
 	DECL_REG	(regRowMask1);		// end of x loop
 
@@ -190,9 +197,9 @@ void CodeGenerator :: GenerateRasterBlockDepthStencil(const VaryingInfo * varyin
 	DECL_REG	(regIX0);			// beginning of x loop
 	DECL_REG	(regIX1);			// end of x loop
 
-	PHI			(regIX0, cg_create_virtual_reg_list(procedure->module->heap, regIX1, zero, NULL));
+	PHI			(regIX0, cg_create_virtual_reg_list(procedure->module->heap, regIX1, initIX0, NULL));
 	PHI			(regDepth3, cg_create_virtual_reg_list(procedure->module->heap, regDepth0, regDepth2, NULL));
-	PHI			(regRowMask0, cg_create_virtual_reg_list(procedure->module->heap, regRowMask1, zero, NULL));
+	PHI			(regRowMask0, cg_create_virtual_reg_list(procedure->module->heap, regRowMask1, initRowMask, NULL));
 
 	DECL_REG	(regRowMask2);		// shifted mask
 	DECL_REG	(regRowMask3);		// modified mask if written
@@ -204,8 +211,12 @@ void CodeGenerator :: GenerateRasterBlockDepthStencil(const VaryingInfo * varyin
 	//		bool written = FragmentDepthStencil(&m_RasterInfo, &surfaceInfo, ix, depth0 >> 4);
 	cg_block_ref_t * notWritten = cg_block_ref_create(procedure);
 
+	DECL_REG(regShiftedDepth);
+
+	LSR		(regShiftedDepth, regDepth3, four);
+
 	info.regX = regIX0;
-	info.regDepth = regDepth3;
+	info.regDepth = regShiftedDepth;
 
 	GenerateFragmentDepthStencil(procedure, block, notWritten, 
 		info, 4, regDepthBuffer0, regStencilBuffer0, false);
@@ -350,6 +361,9 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	DECL_REG	(regCY30);				// begin y loop
 	DECL_REG	(regCY31);				// end y loop
 
+	DECL_CONST_REG(initRegIY0, EGL_RASTER_BLOCK_SIZE);		
+	DECL_CONST_REG(initMask, 0);
+
 	cg_block_ref_t * yLoopTop = cg_block_ref_create(procedure);
 	cg_block_ref_t * yLoopEnd = cg_block_ref_create(procedure);
 
@@ -360,9 +374,9 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	PHI			(regCY10, cg_create_virtual_reg_list(procedure->module->heap, regCY11, regCY1Init, NULL)); 
 	PHI			(regCY20, cg_create_virtual_reg_list(procedure->module->heap, regCY21, regCY2Init, NULL)); 
 	PHI			(regCY30, cg_create_virtual_reg_list(procedure->module->heap, regCY31, regCY3Init, NULL)); 
-	PHI			(regIY0, cg_create_virtual_reg_list(procedure->module->heap, regIY1, blockSize, NULL));
+	PHI			(regIY0, cg_create_virtual_reg_list(procedure->module->heap, regIY1, initRegIY0, NULL));
 	PHI			(regMask0, cg_create_virtual_reg_list(procedure->module->heap, regPixelMask, regMask1, NULL));
-	PHI			(regTotalMask0, cg_create_virtual_reg_list(procedure->module->heap, zero, regTotalMask1, NULL));
+	PHI			(regTotalMask0, cg_create_virtual_reg_list(procedure->module->heap, initMask, regTotalMask1, NULL));
 	PHI			(regDepth0, cg_create_virtual_reg_list(procedure->module->heap, regDepthInit, regDepth1, regDepth2, NULL));
 	PHI			(regDepthBuffer0, cg_create_virtual_reg_list(procedure->module->heap, regDepthBuffer, regDepthBuffer1, NULL));
 	PHI			(regStencilBuffer0, cg_create_virtual_reg_list(procedure->module->heap, regStencilBuffer, regStencilBuffer1, NULL));
@@ -376,9 +390,17 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	ADD			(regCX2Init, regCY20, zero);
 	ADD			(regCX3Init, regCY30, zero);
 
+	DECL_CONST_REG	(initIX0, 0);
+	DECL_CONST_REG	(initRowMask, 0);
+	DECL_CONST_REG	(initDone, 0);
+
 	//	PixelMask rowMask = 0;
 	DECL_REG	(regRowMask0);		// beginning of x loop
 	DECL_REG	(regRowMask1);		// end of x loop
+
+	DECL_REG	(regInitInnerDepth);
+
+	ADD			(regInitInnerDepth, regDepth0, zero);
 
     //    for (I32 ix = 0; ix < EGL_RASTER_BLOCK_SIZE; ix++) {
 
@@ -403,12 +425,12 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	PHI			(regCX10, cg_create_virtual_reg_list(procedure->module->heap, regCX11, regCX1Init, NULL));
 	PHI			(regCX20, cg_create_virtual_reg_list(procedure->module->heap, regCX21, regCX2Init, NULL));
 	PHI			(regCX30, cg_create_virtual_reg_list(procedure->module->heap, regCX31, regCX3Init, NULL));
-	PHI			(regIX0, cg_create_virtual_reg_list(procedure->module->heap, regIX1, zero, NULL));
-	PHI			(regRowMask0, cg_create_virtual_reg_list(procedure->module->heap, regRowMask1, zero, NULL));
-	PHI			(regDone0, cg_create_virtual_reg_list(procedure->module->heap, regDone1, zero, NULL));
+	PHI			(regIX0, cg_create_virtual_reg_list(procedure->module->heap, regIX1, initIX0, NULL));
+	PHI			(regRowMask0, cg_create_virtual_reg_list(procedure->module->heap, regRowMask1, initRowMask, NULL));
+	PHI			(regDone0, cg_create_virtual_reg_list(procedure->module->heap, regDone1, initDone, NULL));
 
 	// I32 depth1 = depth0;
-	PHI			(regDepth3, cg_create_virtual_reg_list(procedure->module->heap, regDepth2, regDepth0, NULL));
+	PHI			(regDepth3, cg_create_virtual_reg_list(procedure->module->heap, regDepth2, regInitInnerDepth, NULL));
 
 	DECL_REG	(regRowMask2);		// shifted mask
 	DECL_REG	(regRowMask3);		// modified mask if written
@@ -436,9 +458,12 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	LDI			(regDone1, 1);
 
 	//		bool written = FragmentDepthStencil(&m_RasterInfo, &surfaceInfo, ix, depth1 >> 4);
+	DECL_REG(regShiftedDepth);
+
+	LSR		(regShiftedDepth, regDepth3, four);
 
 	info.regX = regIX0;
-	info.regDepth = regDepth3;
+	info.regDepth = regShiftedDepth;
 
 	GenerateFragmentDepthStencil(procedure, block, notWritten, 
 		info, 4, regDepthBuffer0, regStencilBuffer0, false);
@@ -461,15 +486,17 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	DECL_FLAGS	(flagsDone);
 	DECL_REG	(regDummy1);
 	OR_S		(regDummy1, flagsDone, regDone0, regDone0);
-	BNE			(flagsDone, xLoopEnd);
-	BRA			(notWritten);
+	BEQ			(flagsDone, notWritten);
 
 	block = cg_block_create(procedure, 4);
 	DECL_CONST_REG	(blockSizeMinus1, EGL_RASTER_BLOCK_SIZE - 1);
 	DECL_REG	(regToShift);
+	DECL_FLAGS	(zeroShift);
 
-	SUB			(regToShift, blockSizeMinus1, regIX0);
-	LSR			(regRowMask4, regRowMask2, one);
+	SUB_S		(regToShift, zeroShift, blockSizeMinus1, regIX0);
+	BEQ			(zeroShift, xLoopEnd);
+	LSR			(regRowMask4, regRowMask2, regToShift);
+	BRA			(xLoopEnd);
 
 	// stencil test passed
 	block = cg_block_create(procedure, 4);
@@ -632,6 +659,8 @@ void CodeGenerator :: GenerateRasterBlockColorAlpha(const VaryingInfo * varyingI
 	DECL_REG	(regIY0);				// begin y loop
 	DECL_REG	(regIY1);				// end y loop
 
+	DECL_CONST_REG(initIY1, EGL_RASTER_BLOCK_SIZE);
+
 	cg_block_ref_t * yLoopTop = cg_block_ref_create(procedure);
 	cg_block_ref_t * yLoopEnd = cg_block_ref_create(procedure);
 
@@ -639,7 +668,7 @@ void CodeGenerator :: GenerateRasterBlockColorAlpha(const VaryingInfo * varyingI
 	block = cg_block_create(procedure, 2);
 	yLoopTop->block = block;
 
-	PHI			(regIY0, cg_create_virtual_reg_list(procedure->module->heap, regIY1, blockSize, NULL));
+	PHI			(regIY0, cg_create_virtual_reg_list(procedure->module->heap, regIY1, initIY1, NULL));
 	PHI			(regMask0, cg_create_virtual_reg_list(procedure->module->heap, regPixelMask, regMask1, NULL));
 	PHI			(regColorBuffer0, cg_create_virtual_reg_list(procedure->module->heap, regColorBuffer, regColorBuffer1, NULL));
 	PHI			(regAlphaBuffer0, cg_create_virtual_reg_list(procedure->module->heap, regAlphaBuffer, regAlphaBuffer1, NULL));
@@ -687,6 +716,8 @@ void CodeGenerator :: GenerateRasterBlockColorAlpha(const VaryingInfo * varyingI
 	DECL_REG		(regRowMask0);								// begin of x loop
 	DECL_REG		(regRowMask1);								// begin of x loop
 
+	DECL_CONST_REG	(initIX0, 0);
+
     //    for (I32 ix = 0; ix < EGL_RASTER_BLOCK_SIZE; ix++) {
 	cg_block_ref_t * xLoopTop = cg_block_ref_create(procedure);
 	cg_block_ref_t * xLoopEnd = cg_block_ref_create(procedure);
@@ -700,7 +731,7 @@ void CodeGenerator :: GenerateRasterBlockColorAlpha(const VaryingInfo * varyingI
 		PHI		(regVarying0[index], cg_create_virtual_reg_list(procedure->module->heap, regVaryingInit[index], regVarying1[index], NULL));
 	}
 
-	PHI		(regIX0, cg_create_virtual_reg_list(procedure->module->heap, zero, regIX1, NULL));
+	PHI		(regIX0, cg_create_virtual_reg_list(procedure->module->heap, initIX0, regIX1, NULL));
 	PHI		(regRowMask0, cg_create_virtual_reg_list(procedure->module->heap, regRowMask, regRowMask1, NULL));
 
 	//		if (rowMask & 1) {	
@@ -777,18 +808,30 @@ void CodeGenerator :: GenerateRasterBlockColorAlpha(const VaryingInfo * varyingI
 	block = cg_block_create(procedure, 2);
 	xLoopEnd->block = block;
 
+	// <---- loop termination goes here
+	DECL_FLAGS	(regReachedYLoopEnd);
+	SUB_S		(regIY1, regReachedYLoopEnd, regIY0, one);
+	BEQ			(regReachedYLoopEnd, yLoopEnd);
+
+	block = cg_block_create(procedure, 2);
+
 	//	for (index = 0; index < m_VaryingInfo.numVarying; ++index) {
 	DECL_REG	(regCounter0);
 	DECL_REG	(regCounter1);
 	DECL_REG	(regPointer0);
 	DECL_REG	(regPointer1);
 
+	DECL_CONST_REG	(initCounter0, varyingInfo->numVarying);
+	DECL_REG		(initPointer0);
+
+	OR			(initPointer0, regVarying, zero);
+
 	cg_block_ref_t * incrLoopTop = cg_block_ref_create(procedure);
-	block = cg_block_create(procedure, 2);
+	block = cg_block_create(procedure, 4);
 	incrLoopTop->block = block;
 
-	PHI			(regCounter0, cg_create_virtual_reg_list(procedure->module->heap, regCounter1, numVarying, NULL));
-	PHI			(regPointer0, cg_create_virtual_reg_list(procedure->module->heap, regPointer1, regVarying, NULL));
+	PHI			(regCounter0, cg_create_virtual_reg_list(procedure->module->heap, regCounter1, initCounter0, NULL));
+	PHI			(regPointer0, cg_create_virtual_reg_list(procedure->module->heap, regPointer1, initPointer0, NULL));
 
 	//		varying[index][0][0] += varying[index][0][1];
 	//		varying[index][1][0] += varying[index][1][1];

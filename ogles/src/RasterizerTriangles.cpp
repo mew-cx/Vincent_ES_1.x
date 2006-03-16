@@ -136,6 +136,8 @@ void Rasterizer :: PrepareTriangle() {
 									 *m_State, &m_VaryingInfo);
 }
 
+#if !EGL_USE_JIT
+
 PixelMask Rasterizer :: RasterBlockDepthStencil(const Variables * vars,
 												PixelMask * pixelMask) {
 
@@ -294,6 +296,8 @@ void Rasterizer :: RasterBlockColorAlpha(I32 varying[][2][2],
     }
 }
 
+#endif
+
 void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 								  const Vertex& c) {
 
@@ -440,11 +444,19 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 
 			// Accept whole block when totally covered
             if (pass1 + pass2 + pass3 == 12) {
+#if !EGL_USE_JIT
 				totalMask = RasterBlockDepthStencil(&vars, pixelMask);
+#else
+				totalMask = m_BlockDepthStencilFunction(&m_RasterInfo, &vars, pixelMask);
+#endif
             } else {
 				// Partially covered block
 				// initialize surface pointers in local info block
+#if !EGL_USE_JIT
 				totalMask = RasterBlockEdgeDepthStencil(&vars, &edges, pixelMask);
+#else
+				totalMask = m_BlockEdgeDepthStencilFunction(&m_RasterInfo, &vars, &edges, pixelMask);
+#endif
             }
 
 			if (totalMask) {
@@ -538,7 +550,11 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 					}
 				}
 
+#if !EGL_USE_JIT
 				RasterBlockColorAlpha(varying, pixelMask);
+#else
+				m_BlockColorAlphaFunction(&m_RasterInfo, varying, pixelMask);
+#endif
 			}
 cont:
 			vars.Depth.Value += vars.Depth.dX << EGL_LOG_RASTER_BLOCK_SIZE;
