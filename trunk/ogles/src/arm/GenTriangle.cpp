@@ -176,7 +176,7 @@ void CodeGenerator :: GenerateRasterBlockDepthStencil(const VaryingInfo * varyin
 	PHI			(regIY0, cg_create_virtual_reg_list(procedure->module->heap, regIY1, initRegIY0, NULL));
 	PHI			(regMask0, cg_create_virtual_reg_list(procedure->module->heap, regPixelMask, regMask1, NULL));
 	PHI			(regTotalMask0, cg_create_virtual_reg_list(procedure->module->heap, initMask, regTotalMask1, NULL));
-	PHI			(regDepth0, cg_create_virtual_reg_list(procedure->module->heap, regDepthInit, regDepth1, regDepth2, NULL));
+	PHI			(regDepth0, cg_create_virtual_reg_list(procedure->module->heap, regDepthInit, regDepth1, NULL));
 	PHI			(regDepthBuffer0, cg_create_virtual_reg_list(procedure->module->heap, regDepthBuffer, regDepthBuffer1, NULL));
 	PHI			(regStencilBuffer0, cg_create_virtual_reg_list(procedure->module->heap, regStencilBuffer, regStencilBuffer1, NULL));
 
@@ -377,7 +377,7 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	PHI			(regIY0, cg_create_virtual_reg_list(procedure->module->heap, regIY1, initRegIY0, NULL));
 	PHI			(regMask0, cg_create_virtual_reg_list(procedure->module->heap, regPixelMask, regMask1, NULL));
 	PHI			(regTotalMask0, cg_create_virtual_reg_list(procedure->module->heap, initMask, regTotalMask1, NULL));
-	PHI			(regDepth0, cg_create_virtual_reg_list(procedure->module->heap, regDepthInit, regDepth1, regDepth2, NULL));
+	PHI			(regDepth0, cg_create_virtual_reg_list(procedure->module->heap, regDepthInit, regDepth1, NULL));
 	PHI			(regDepthBuffer0, cg_create_virtual_reg_list(procedure->module->heap, regDepthBuffer, regDepthBuffer1, NULL));
 	PHI			(regStencilBuffer0, cg_create_virtual_reg_list(procedure->module->heap, regStencilBuffer, regStencilBuffer1, NULL));
 
@@ -480,6 +480,7 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	block = cg_block_create(procedure, 4);
 	notInside->block = block;
 
+#if 0
     //        } else if (done) {
 	//			rowMask >>= EGL_RASTER_BLOCK_SIZE - ix - 1;
 	//			break;
@@ -500,6 +501,8 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 
 	// stencil test passed
 	block = cg_block_create(procedure, 4);
+
+#endif
 	notWritten->block = block;
 
 	PHI			(regRowMask1, cg_create_virtual_reg_list(procedure->module->heap, regRowMask2, regRowMask3, regRowMask4, NULL));
