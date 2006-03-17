@@ -69,51 +69,11 @@ inline EGL_Fixed Context :: SelectPointSizeArrayElement(int index) {
 }
 
 
-void Context :: RenderPoints(GLint first, GLsizei count) {
-
-	m_Rasterizer->PreparePoint();
-
-	while (count >= 1) {
-		count -= 1;
-
-		Vertex pos0;
-		EGL_Fixed size = SelectPointSizeArrayElement(first);
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderPoint(pos0, size);
-	}
-}
-
-
-void Context :: RenderPoints(GLsizei count, const GLubyte * indices) {
-
-	m_Rasterizer->PreparePoint();
-
-	while (count >= 1) {
-		count -= 1;
-
-		Vertex pos0;
-		EGL_Fixed size = SelectPointSizeArrayElement(*indices);
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderPoint(pos0, size);
-	}
-}
-
-
-void Context :: RenderPoints(GLsizei count, const GLushort * indices) {
-
-	m_Rasterizer->PreparePoint();
-
-	while (count >= 1) {
-		count -= 1;
-
-		Vertex pos0;
-		EGL_Fixed size = SelectPointSizeArrayElement(*indices);
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderPoint(pos0, size);
-	}
+void Context :: DrawPoint(int index) {
+	EGL_Fixed size = SelectPointSizeArrayElement(index);
+	SelectArrayElement(index);
+	CurrentValuesToRasterPos(&m_Input[0]);
+	RenderPoint(m_Input[0], size);
 }
 
 

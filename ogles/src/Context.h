@@ -323,34 +323,16 @@ namespace EGL {
 		// Private Functions - Rendering of collections
 		// ----------------------------------------------------------------------
 
-		void RenderPoints(GLint first, GLsizei count);
-		void RenderPoints(GLsizei count, const GLubyte * indices);
-		void RenderPoints(GLsizei count, const GLushort * indices);
+		void DrawPoint(int index);
+		void DrawLine(int index);
+		void DrawLineStrip(int index);
+		void DrawLineLoop(int index);
+		void DrawTriangle(int index);
+		void DrawTriangleStrip(int index);
+		void DrawTriangleFan(int index);
 
-		void RenderLines(GLint first, GLsizei count);
-		void RenderLines(GLsizei count, const GLubyte * indices);
-		void RenderLines(GLsizei count, const GLushort * indices);
-
-		void RenderLineStrip(GLint first, GLsizei count);
-		void RenderLineStrip(GLsizei count, const GLubyte * indices);
-		void RenderLineStrip(GLsizei count, const GLushort * indices);
-
-		void RenderLineLoop(GLint first, GLsizei count);
-		void RenderLineLoop(GLsizei count, const GLubyte * indices);
-		void RenderLineLoop(GLsizei count, const GLushort * indices);
-
-		void RenderTriangles(GLint first, GLsizei count);
-		void RenderTriangles(GLsizei count, const GLubyte * indices);
-		void RenderTriangles(GLsizei count, const GLushort * indices);
-
-		void RenderTriangleStrip(GLint first, GLsizei count);
-		void RenderTriangleStrip(GLsizei count, const GLubyte * indices);
-		void RenderTriangleStrip(GLsizei count, const GLushort * indices);
-
-		void RenderTriangleFan(GLint first, GLsizei count);
-		void RenderTriangleFan(GLsizei count, const GLubyte * indices);
-		void RenderTriangleFan(GLsizei count, const GLushort * indices);
-
+		void EndLineLoop();
+		
 		// ----------------------------------------------------------------------
 		// Private Functions - Rendering of individual elements
 		// ----------------------------------------------------------------------
@@ -363,9 +345,14 @@ private:
 		void CurrentTextureValuesToRasterPos(Vertex * rasterPos);
 
 		typedef void (Context::*GeometryFunction)(Vertex * rasterPos);
+		typedef void (Context::*DrawPrimitiveFunction)(int index);
+		typedef void (Context::*EndPrimitiveFunction)();
 
 		void PrepareRendering();
 		void PrepareArray(VertexArray & array, bool enabled, bool isColor = false);
+
+		bool Begin(GLenum mode);
+		void End();
 
 		void CurrentValuesToRasterPosNoLight(Vertex * rasterPos);
 		void CurrentValuesToRasterPosOneSidedNoTrack(Vertex * rasterPos);
@@ -526,10 +513,14 @@ private:
 
 		CullMode			m_CullMode;
 
-		RasterizerState		m_RasterizerState;
-		Rasterizer *		m_Rasterizer;
-		const VaryingInfo * m_VaryingInfo;
-		GeometryFunction	m_GeometryFunction;
+		RasterizerState			m_RasterizerState;
+		Rasterizer *			m_Rasterizer;
+		const VaryingInfo *		m_VaryingInfo;
+		GeometryFunction		m_GeometryFunction;
+		DrawPrimitiveFunction	m_DrawPrimitiveFunction;
+		EndPrimitiveFunction	m_EndPrimitiveFunction;
+		U32						m_PrimitiveState;	// primitive state machine state
+		U32						m_NextIndex;		// next index to fill in m_Input
 
 		// ----------------------------------------------------------------------
 		// texturing related state
@@ -561,6 +552,7 @@ private:
 		bool				m_ViewportInitialized;	// if true, the viewport has been
 													// initialized
 
+		Vertex			m_Input[3];			// for primtive rendering
 		Vertex			m_Temporary[16];	// temporary coordinates
 	};
 

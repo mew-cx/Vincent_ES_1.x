@@ -308,6 +308,69 @@ void Context :: Normal3x(GLfixed nx, GLfixed ny, GLfixed nz) {
 // --------------------------------------------------------------------------
 
 
+bool Context :: Begin(GLenum mode) {
+	m_PrimitiveState = 0;
+	m_NextIndex = 0;
+
+	switch (mode) {
+	case GL_POINTS:
+		m_Rasterizer->PreparePoint();
+		m_DrawPrimitiveFunction = &Context::DrawPoint;
+		m_EndPrimitiveFunction = 0;
+		break;
+
+	case GL_LINES:
+		m_Rasterizer->PrepareLine();
+		m_DrawPrimitiveFunction = &Context::DrawLine;
+		m_EndPrimitiveFunction = 0;
+		break;
+
+	case GL_LINE_STRIP:
+		m_Rasterizer->PrepareLine();
+		m_DrawPrimitiveFunction = &Context::DrawLineStrip;
+		m_EndPrimitiveFunction = 0;
+		break;
+
+	case GL_LINE_LOOP:
+		m_Rasterizer->PrepareLine();
+		m_DrawPrimitiveFunction = &Context::DrawLineLoop;
+		m_EndPrimitiveFunction = &Context::EndLineLoop;
+		break;
+
+	case GL_TRIANGLES:
+		m_Rasterizer->PrepareTriangle();
+		m_DrawPrimitiveFunction = &Context::DrawTriangle;
+		m_EndPrimitiveFunction = 0;
+		break;
+
+	case GL_TRIANGLE_STRIP:
+		m_Rasterizer->PrepareTriangle();
+		m_DrawPrimitiveFunction = &Context::DrawTriangleStrip;
+		m_EndPrimitiveFunction = 0;
+		break;
+
+	case GL_TRIANGLE_FAN:
+		m_Rasterizer->PrepareTriangle();
+		m_DrawPrimitiveFunction = &Context::DrawTriangleFan;
+		m_EndPrimitiveFunction = 0;
+		break;
+
+	default:
+		RecordError(GL_INVALID_ENUM);
+		return false;
+	}
+
+	return true;
+}
+
+void Context :: End() {
+	if (m_EndPrimitiveFunction)
+		(this->*m_EndPrimitiveFunction)();
+
+	m_DrawPrimitiveFunction = 0;
+	m_EndPrimitiveFunction = 0;
+}
+
 void Context :: DrawArrays(GLenum mode, GLint first, GLsizei count) {
 
 	if (count < 0) {
@@ -322,39 +385,13 @@ void Context :: DrawArrays(GLenum mode, GLint first, GLsizei count) {
 	}
 
 	PrepareRendering();
+	
+	if (Begin(mode)) {
+		while (count-- > 0) {
+			(this->*m_DrawPrimitiveFunction)(first++);
+		}
 
-	switch (mode) {
-	case GL_POINTS:
-		RenderPoints(first, count);
-		break;
-
-	case GL_LINES:
-		RenderLines(first, count);
-		break;
-
-	case GL_LINE_STRIP:
-		RenderLineStrip(first, count);
-		break;
-
-	case GL_LINE_LOOP:
-		RenderLineLoop(first, count);
-		break;
-
-	case GL_TRIANGLES:
-		RenderTriangles(first, count);
-		break;
-
-	case GL_TRIANGLE_STRIP:
-		RenderTriangleStrip(first, count);
-		break;
-
-	case GL_TRIANGLE_FAN:
-		RenderTriangleFan(first, count);
-		break;
-
-	default:
-		RecordError(GL_INVALID_ENUM);
-		return;
+		End();
 	}
 }
 
@@ -391,87 +428,28 @@ void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
 
 	PrepareRendering();
 
-	switch (mode) {
-	case GL_POINTS:
-		if (type == GL_UNSIGNED_BYTE) {
-			RenderPoints(count, reinterpret_cast<const GLubyte *>(indices));
-		} else if (type == GL_UNSIGNED_SHORT) {
-			RenderPoints(count, reinterpret_cast<const GLushort *>(indices));
-		} else {
-			RecordError(GL_INVALID_ENUM);
+	if (type == GL_UNSIGNED_BYTE) {
+		const GLubyte * ptr = reinterpret_cast<const GLubyte *>(indices);
+
+		if (Begin(mode)) {
+			while (count-- > 0) {
+				(this->*m_DrawPrimitiveFunction)(*ptr++);
+			}
+
+			End();
 		}
+	} else if (type == GL_UNSIGNED_SHORT) {
+		const GLushort * ptr = reinterpret_cast<const GLushort *>(indices);
 
-		break;
+		if (Begin(mode)) {
+			while (count-- > 0) {
+				(this->*m_DrawPrimitiveFunction)(*ptr++);
+			}
 
-	case GL_LINES:
-		if (type == GL_UNSIGNED_BYTE) {
-			RenderLines(count, reinterpret_cast<const GLubyte *>(indices));
-		} else if (type == GL_UNSIGNED_SHORT) {
-			RenderLines(count, reinterpret_cast<const GLushort *>(indices));
-		} else {
-			RecordError(GL_INVALID_ENUM);
+			End();
 		}
-
-		break;
-
-	case GL_LINE_STRIP:
-		if (type == GL_UNSIGNED_BYTE) {
-			RenderLineStrip(count, reinterpret_cast<const GLubyte *>(indices));
-		} else if (type == GL_UNSIGNED_SHORT) {
-			RenderLineStrip(count, reinterpret_cast<const GLushort *>(indices));
-		} else {
-			RecordError(GL_INVALID_ENUM);
-		}
-
-		break;
-
-	case GL_LINE_LOOP:
-		if (type == GL_UNSIGNED_BYTE) {
-			RenderLineLoop(count, reinterpret_cast<const GLubyte *>(indices));
-		} else if (type == GL_UNSIGNED_SHORT) {
-			RenderLineLoop(count, reinterpret_cast<const GLushort *>(indices));
-		} else {
-			RecordError(GL_INVALID_ENUM);
-		}
-
-		break;
-
-	case GL_TRIANGLES:
-		if (type == GL_UNSIGNED_BYTE) {
-			RenderTriangles(count, reinterpret_cast<const GLubyte *>(indices));
-		} else if (type == GL_UNSIGNED_SHORT) {
-			RenderTriangles(count, reinterpret_cast<const GLushort *>(indices));
-		} else {
-			RecordError(GL_INVALID_ENUM);
-		}
-
-		break;
-
-	case GL_TRIANGLE_STRIP:
-		if (type == GL_UNSIGNED_BYTE) {
-			RenderTriangleStrip(count, reinterpret_cast<const GLubyte *>(indices));
-		} else if (type == GL_UNSIGNED_SHORT) {
-			RenderTriangleStrip(count, reinterpret_cast<const GLushort *>(indices));
-		} else {
-			RecordError(GL_INVALID_ENUM);
-		}
-
-		break;
-
-	case GL_TRIANGLE_FAN:
-		if (type == GL_UNSIGNED_BYTE) {
-			RenderTriangleFan(count, reinterpret_cast<const GLubyte *>(indices));
-		} else if (type == GL_UNSIGNED_SHORT) {
-			RenderTriangleFan(count, reinterpret_cast<const GLushort *>(indices));
-		} else {
-			RecordError(GL_INVALID_ENUM);
-		}
-
-		break;
-
-	default:
+	} else {
 		RecordError(GL_INVALID_ENUM);
-		return;
 	}
 }
 
