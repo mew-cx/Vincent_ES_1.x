@@ -132,7 +132,13 @@ Context :: Context(const Config & config)
 	m_PointSmoothHint(GL_DONT_CARE),
 	m_LineSmoothHint(GL_DONT_CARE),
 	m_FogHint(GL_DONT_CARE),
-	m_GenerateMipmapHint(GL_DONT_CARE)
+	m_GenerateMipmapHint(GL_DONT_CARE),
+
+	// primitive state
+	m_DrawPrimitiveFunction(0),
+	m_EndPrimitiveFunction(0),
+	m_PrimitiveState(0),
+	m_NextIndex(0)
 {
 	DepthRangex(VIEWPORT_NEAR, VIEWPORT_FAR);
 	ClearDepthx(EGL_ONE);

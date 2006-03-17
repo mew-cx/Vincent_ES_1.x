@@ -55,282 +55,6 @@ void Context :: LineWidthx(GLfixed width) {
 }
 
 
-// --------------------------------------------------------------------------
-// Lines
-// --------------------------------------------------------------------------
-
-
-void Context :: RenderLines(GLint first, GLsizei count) {
-
-	m_Rasterizer->PrepareLine();
-
-	while (count >= 2) {
-		count -= 2;
-
-		Vertex pos0, pos1;
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos0);
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos1);
-
-		RenderLine(pos0, pos1);
-	}
-}
-
-
-void Context :: RenderLines(GLsizei count, const GLubyte * indices) {
-
-	m_Rasterizer->PrepareLine();
-
-	while (count >= 2) {
-		count -= 2;
-
-		Vertex pos0, pos1;
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos1);
-
-		RenderLine(pos0, pos1);
-	}
-}
-
-
-void Context :: RenderLines(GLsizei count, const GLushort * indices) {
-
-	m_Rasterizer->PrepareLine();
-
-	while (count >= 2) {
-		count -= 2;
-
-		Vertex pos0, pos1;
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos1);
-
-		RenderLine(pos0, pos1);
-	}
-}
-
-
-// --------------------------------------------------------------------------
-// Line Strips
-// --------------------------------------------------------------------------
-
-
-void Context :: RenderLineStrip(GLint first, GLsizei count) {
-
-	if (count >= 2) {
-		m_Rasterizer->PrepareLine();
-
-		Vertex pos0, pos1;
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos0);
-		--count;
-
-		while (count >= 2) {
-			count -= 2;
-
-			SelectArrayElement(first++);
-			CurrentValuesToRasterPos(&pos1);
-			RenderLine(pos0, pos1);
-
-			SelectArrayElement(first++);
-			CurrentValuesToRasterPos(&pos0);
-			RenderLine(pos1, pos0);
-		}
-
-		if (count >= 1) {
-			SelectArrayElement(first++);
-			CurrentValuesToRasterPos(&pos1);
-			RenderLine(pos0, pos1);
-		}
-	}
-}
-
-
-void Context :: RenderLineStrip(GLsizei count, const GLubyte * indices) {
-
-	if (count >= 2) {
-		m_Rasterizer->PrepareLine();
-
-		Vertex pos0, pos1;
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		--count;
-
-		while (count >= 2) {
-			count -= 2;
-
-			SelectArrayElement(*indices++);
-			CurrentValuesToRasterPos(&pos1);
-			RenderLine(pos0, pos1);
-
-			SelectArrayElement(*indices++);
-			CurrentValuesToRasterPos(&pos0);
-			RenderLine(pos1, pos0);
-		}
-
-		if (count >= 1) {
-			SelectArrayElement(*indices++);
-			CurrentValuesToRasterPos(&pos1);
-			RenderLine(pos0, pos1);
-		}
-	}
-}
-
-
-void Context :: RenderLineStrip(GLsizei count, const GLushort * indices) {
-
-	if (count >= 2) {
-		m_Rasterizer->PrepareLine();
-
-		Vertex pos0, pos1;
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		--count;
-
-		while (count >= 2) {
-			count -= 2;
-
-			SelectArrayElement(*indices++);
-			CurrentValuesToRasterPos(&pos1);
-			RenderLine(pos0, pos1);
-
-			SelectArrayElement(*indices++);
-			CurrentValuesToRasterPos(&pos0);
-			RenderLine(pos1, pos0);
-		}
-
-		if (count >= 1) {
-			SelectArrayElement(*indices++);
-			CurrentValuesToRasterPos(&pos1);
-			RenderLine(pos0, pos1);
-		}
-	}
-}
-
-
-// --------------------------------------------------------------------------
-// Line Loops
-// --------------------------------------------------------------------------
-
-
-void Context :: RenderLineLoop(GLint first, GLsizei count) {
-
-	if (count >= 2) {
-		m_Rasterizer->PrepareLine();
-
-		Vertex pos0, pos1, start;
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&start);
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderLine(start, pos0);
-
-		count -= 2;
-
-		while (count >= 2) {
-			count -= 2;
-
-			SelectArrayElement(first++);
-			CurrentValuesToRasterPos(&pos1);
-			RenderLine(pos0, pos1);
-
-			SelectArrayElement(first++);
-			CurrentValuesToRasterPos(&pos0);
-			RenderLine(pos1, pos0);
-		}
-
-		if (count >= 1) {
-			SelectArrayElement(first++);
-			CurrentValuesToRasterPos(&pos1);
-			RenderLine(pos0, pos1);
-			RenderLine(pos1, start);
-		} else {
-			RenderLine(pos0, start);
-		}
-	}
-}
-
-
-void Context :: RenderLineLoop(GLsizei count, const GLubyte * indices) {
-
-	if (count >= 2) {
-		m_Rasterizer->PrepareLine();
-
-		Vertex pos0, pos1, start;
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&start);
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderLine(start, pos0);
-
-		count -= 2;
-
-		while (count >= 2) {
-			count -= 2;
-
-			SelectArrayElement(*indices++);
-			CurrentValuesToRasterPos(&pos1);
-			RenderLine(pos0, pos1);
-
-			SelectArrayElement(*indices++);
-			CurrentValuesToRasterPos(&pos0);
-			RenderLine(pos1, pos0);
-		}
-
-		if (count >= 1) {
-			SelectArrayElement(*indices++);
-			CurrentValuesToRasterPos(&pos1);
-			RenderLine(pos0, pos1);
-			RenderLine(pos1, start);
-		} else {
-			RenderLine(pos0, start);
-		}
-	}
-}
-
-
-void Context :: RenderLineLoop(GLsizei count, const GLushort * indices) {
-
-	if (count >= 2) {
-		m_Rasterizer->PrepareLine();
-
-		Vertex pos0, pos1, start;
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&start);
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderLine(start, pos0);
-
-		count -= 2;
-
-		while (count >= 2) {
-			count -= 2;
-
-			SelectArrayElement(*indices++);
-			CurrentValuesToRasterPos(&pos1);
-			RenderLine(pos0, pos1);
-
-			SelectArrayElement(*indices++);
-			CurrentValuesToRasterPos(&pos0);
-			RenderLine(pos1, pos0);
-		}
-
-		if (count >= 1) {
-			SelectArrayElement(*indices++);
-			CurrentValuesToRasterPos(&pos1);
-			RenderLine(pos0, pos1);
-			RenderLine(pos1, start);
-		} else {
-			RenderLine(pos0, start);
-		}
-	}
-}
-
-
 namespace {
 
 	inline GLfloat Interpolate(GLfloat x0f, GLfloat x1f, GLfloat coeff) {
@@ -494,3 +218,69 @@ void Context :: RenderLine(Vertex& from, Vertex& to) {
 }
 
 
+void Context :: DrawLine(int index) {
+	SelectArrayElement(index);
+	CurrentValuesToRasterPos(&m_Input[m_NextIndex++]);
+
+	if (m_NextIndex == 2) {
+		RenderLine(m_Input[0], m_Input[1]);
+		m_NextIndex = 0;
+	}
+}
+
+void Context :: DrawLineStrip(int index) {
+	SelectArrayElement(index);
+	CurrentValuesToRasterPos(&m_Input[m_NextIndex++]);
+
+	if (m_PrimitiveState != 0) {
+		// determine line orienation based on parity
+		if (m_NextIndex & 1) {
+			RenderLine(m_Input[1], m_Input[0]);
+		} else {
+			RenderLine(m_Input[0], m_Input[1]);
+		}
+	} else {
+		// remember that we have seen the first vertex
+		m_PrimitiveState = 1;
+	}
+
+	if (m_NextIndex == 2) {
+		m_NextIndex = 0;
+	}
+}
+
+void Context :: DrawLineLoop(int index) {
+	SelectArrayElement(index);
+	CurrentValuesToRasterPos(&m_Input[m_NextIndex++]);
+
+	if (m_PrimitiveState == 2) {
+		// we have seen at least 3 vertices
+		if (m_NextIndex & 1) {
+			RenderLine(m_Input[1], m_Input[2]);
+		} else {
+			RenderLine(m_Input[2], m_Input[1]);
+		}
+	} else if (m_PrimitiveState == 1) {
+		// determine line orienation based on parity
+		RenderLine(m_Input[0], m_Input[1]);
+
+		// we have seen at least 2 vertices
+		m_PrimitiveState = 2;
+	} else {
+		// remember that we have seen the first vertex
+		m_PrimitiveState = 1;
+	}
+
+	if (m_NextIndex == 3) {
+		m_NextIndex = 1;
+	}
+}
+
+void Context :: EndLineLoop() {
+	if (m_PrimitiveState == 2) {
+		// index of last vertex written
+		I32 prevIndex = 3 - m_NextIndex;
+
+		RenderLine(m_Input[prevIndex], m_Input[0]);
+	}
+}

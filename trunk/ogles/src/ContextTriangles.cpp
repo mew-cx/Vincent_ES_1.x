@@ -45,426 +45,6 @@
 using namespace EGL;
 
 
-// --------------------------------------------------------------------------
-// Triangles
-// --------------------------------------------------------------------------
-
-
-void Context :: RenderTriangles(GLint first, GLsizei count) {
-
-	m_Rasterizer->PrepareTriangle();
-
-	while (count >= 3) {
-		count -= 3;
-
-		Vertex pos0, pos1, pos2;
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos0);
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos1);
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos2);
-
-		RenderTriangle(pos0, pos1, pos2);
-	}
-}
-
-
-void Context :: RenderTriangles(GLsizei count, const GLubyte * indices) {
-
-	m_Rasterizer->PrepareTriangle();
-
-	while (count >= 3) {
-		count -= 3;
-
-		Vertex pos0, pos1, pos2;
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos1);
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos2);
-
-		RenderTriangle(pos0, pos1, pos2);
-	}
-}
-
-
-void Context :: RenderTriangles(GLsizei count, const GLushort * indices) {
-
-	m_Rasterizer->PrepareTriangle();
-
-	while (count >= 3) {
-		count -= 3;
-
-		Vertex pos0, pos1, pos2;
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos1);
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos2);
-
-		RenderTriangle(pos0, pos1, pos2);
-	}
-}
-
-
-// --------------------------------------------------------------------------
-// Triangle Strips
-// --------------------------------------------------------------------------
-
-
-void Context :: RenderTriangleStrip(GLint first, GLsizei count) {
-
-	if (count < 3) {
-		return;
-	}
-
-	m_Rasterizer->PrepareTriangle();
-
-	Vertex pos0, pos1, pos2;
-
-	SelectArrayElement(first++);
-	CurrentValuesToRasterPos(&pos0);
-	SelectArrayElement(first++);
-	CurrentValuesToRasterPos(&pos1);
-
-	count -= 2;
-
-	while (count >= 6) {
-		count -= 6;
-
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos0, pos1, pos2);
-
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderTriangle(pos2, pos1, pos0);
-
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos1);
-		RenderTriangle(pos2, pos0, pos1);
-
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos1, pos0, pos2);
-
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderTriangle(pos1, pos2, pos0);
-
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos1);
-		RenderTriangle(pos0, pos2, pos1);
-	}
-
-	if (count >= 1) {
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos0, pos1, pos2);
-	}
-
-	if (count >= 2) {
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderTriangle(pos2, pos1, pos0);
-	}
-
-	if (count >= 3) {
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos1);
-		RenderTriangle(pos2, pos0, pos1);
-	}
-
-	if (count >= 4) {
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos1, pos0, pos2);
-	}
-
-	if (count >= 5) {
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderTriangle(pos1, pos2, pos0);
-	}
-
-}
-
-
-void Context :: RenderTriangleStrip(GLsizei count, const GLubyte * indices) {
-
-	if (count < 3) {
-		return;
-	}
-
-	m_Rasterizer->PrepareTriangle();
-
-	Vertex pos0, pos1, pos2;
-
-	SelectArrayElement(*indices++);
-	CurrentValuesToRasterPos(&pos0);
-	SelectArrayElement(*indices++);
-	CurrentValuesToRasterPos(&pos1);
-
-	count -= 2;
-
-	while (count >= 6) {
-		count -= 6;
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos0, pos1, pos2);
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderTriangle(pos2, pos1, pos0);
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos1);
-		RenderTriangle(pos2, pos0, pos1);
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos1, pos0, pos2);
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderTriangle(pos1, pos2, pos0);
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos1);
-		RenderTriangle(pos0, pos2, pos1);
-	}
-
-	if (count >= 1) {
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos0, pos1, pos2);
-	}
-
-	if (count >= 2) {
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderTriangle(pos2, pos1, pos0);
-	}
-
-	if (count >= 3) {
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos1);
-		RenderTriangle(pos2, pos0, pos1);
-	}
-
-	if (count >= 4) {
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos1, pos0, pos2);
-	}
-
-	if (count >= 5) {
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderTriangle(pos1, pos2, pos0);
-	}
-
-}
-
-
-void Context :: RenderTriangleStrip(GLsizei count, const GLushort * indices) {
-
-	if (count < 3) {
-		return;
-	}
-
-	m_Rasterizer->PrepareTriangle();
-
-	Vertex pos0, pos1, pos2;
-
-	SelectArrayElement(*indices++);
-	CurrentValuesToRasterPos(&pos0);
-	SelectArrayElement(*indices++);
-	CurrentValuesToRasterPos(&pos1);
-
-	count -= 2;
-
-	while (count >= 6) {
-		count -= 6;
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos0, pos1, pos2);
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderTriangle(pos2, pos1, pos0);
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos1);
-		RenderTriangle(pos2, pos0, pos1);
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos1, pos0, pos2);
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderTriangle(pos1, pos2, pos0);
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos1);
-		RenderTriangle(pos0, pos2, pos1);
-	}
-
-	if (count >= 1) {
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos0, pos1, pos2);
-	}
-
-	if (count >= 2) {
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderTriangle(pos2, pos1, pos0);
-	}
-
-	if (count >= 3) {
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos1);
-		RenderTriangle(pos2, pos0, pos1);
-	}
-
-	if (count >= 4) {
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos1, pos0, pos2);
-	}
-
-	if (count >= 5) {
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos0);
-		RenderTriangle(pos1, pos2, pos0);
-	}
-
-}
-
-
-// --------------------------------------------------------------------------
-// Triangle Fans
-// --------------------------------------------------------------------------
-
-
-void Context :: RenderTriangleFan(GLint first, GLsizei count) {
-
-	if (count < 3) {
-		return;
-	}
-
-	m_Rasterizer->PrepareTriangle();
-
-	Vertex pos0, pos1, pos2;
-
-	SelectArrayElement(first++);
-	CurrentValuesToRasterPos(&pos0);
-	SelectArrayElement(first++);
-	CurrentValuesToRasterPos(&pos1);
-
-	count -= 2;
-
-	while (count >= 2) {
-		count -= 2;
-
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos0, pos1, pos2);
-
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos1);
-		RenderTriangle(pos0, pos2, pos1);
-	}
-
-	if (count >= 1) {
-		SelectArrayElement(first++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos0, pos1, pos2);
-	}
-}
-
-
-void Context :: RenderTriangleFan(GLsizei count, const GLubyte * indices) {
-
-	if (count < 3) {
-		return;
-	}
-
-	m_Rasterizer->PrepareTriangle();
-
-	Vertex pos0, pos1, pos2;
-
-	SelectArrayElement(*indices++);
-	CurrentValuesToRasterPos(&pos0);
-	SelectArrayElement(*indices++);
-	CurrentValuesToRasterPos(&pos1);
-
-	count -= 2;
-
-	while (count >= 2) {
-		count -= 2;
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos0, pos1, pos2);
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos1);
-		RenderTriangle(pos0, pos2, pos1);
-	}
-
-	if (count >= 1) {
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos0, pos1, pos2);
-	}
-}
-
-
-void Context :: RenderTriangleFan(GLsizei count, const GLushort * indices) {
-
-	if (count < 3) {
-		return;
-	}
-
-	m_Rasterizer->PrepareTriangle();
-
-	Vertex pos0, pos1, pos2;
-
-	SelectArrayElement(*indices++);
-	CurrentValuesToRasterPos(&pos0);
-	SelectArrayElement(*indices++);
-	CurrentValuesToRasterPos(&pos1);
-
-	count -= 2;
-
-	while (count >= 2) {
-		count -= 2;
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos0, pos1, pos2);
-
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos1);
-		RenderTriangle(pos0, pos2, pos1);
-	}
-
-	if (count >= 1) {
-		SelectArrayElement(*indices++);
-		CurrentValuesToRasterPos(&pos2);
-		RenderTriangle(pos0, pos1, pos2);
-	}
-}
-
-
 namespace {
 
 	inline GLfloat Interpolate(GLfloat x0f, GLfloat x1f, GLfloat coeff) {
@@ -816,4 +396,58 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 }
 
 
+void Context :: DrawTriangle(int index) {
+	SelectArrayElement(index);
+	CurrentValuesToRasterPos(&m_Input[m_NextIndex++]);
+
+	if (m_NextIndex == 3) {
+		RenderTriangle(m_Input[0], m_Input[1], m_Input[2]);
+		m_NextIndex = 0;
+	}
+}
+
+void Context :: DrawTriangleStrip(int index) {
+	SelectArrayElement(index);
+	CurrentValuesToRasterPos(&m_Input[m_NextIndex++]);
+
+	if (m_PrimitiveState == 3) {
+		// even triangle
+		RenderTriangle(m_Input[0], m_Input[2], m_Input[1]);
+		m_PrimitiveState = 2;
+	} else if (m_PrimitiveState == 2) {
+		// odd triangle
+		RenderTriangle(m_Input[0], m_Input[1], m_Input[2]);
+		m_PrimitiveState = 3;
+	} else {
+		// remember seen a vertex
+		++m_PrimitiveState;
+	}
+
+	if (m_NextIndex == 3)
+		m_NextIndex = 0;
+}
+
+void Context :: DrawTriangleFan(int index) {
+	SelectArrayElement(index);
+	CurrentValuesToRasterPos(&m_Input[m_NextIndex++]);
+
+	if (m_PrimitiveState == 3) {
+		// even triangle
+		RenderTriangle(m_Input[0], m_Input[2], m_Input[1]);
+		m_PrimitiveState = 2;
+	} else if (m_PrimitiveState == 2) {
+		// odd triangle
+		RenderTriangle(m_Input[0], m_Input[1], m_Input[2]);
+		m_PrimitiveState = 3;
+	} else if (m_PrimitiveState == 1) {
+		// remember seen second vertex
+		m_PrimitiveState = 2;
+	} else if (m_PrimitiveState == 0) {
+		// remember seen first vertex
+		m_PrimitiveState = 1;
+	}
+
+	if (m_NextIndex == 3)
+		m_NextIndex = 1;
+}
 
