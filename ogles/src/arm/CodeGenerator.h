@@ -206,13 +206,13 @@ namespace EGL {
 	// Offsets of structure members within info structure
 	// -------------------------------------------------------------------------
 
-#	define OFFSET_SURFACE_WIDTH					offsetof(RasterInfo, SurfaceInfo.Width)
-#	define OFFSET_SURFACE_HEIGHT				offsetof(RasterInfo, SurfaceInfo.Height)
-#	define OFFSET_SURFACE_PITCH					offsetof(RasterInfo, SurfaceInfo.Pitch)
-#	define OFFSET_SURFACE_DEPTH_BUFFER			offsetof(RasterInfo, SurfaceInfo.DepthBuffer)
-#	define OFFSET_SURFACE_COLOR_BUFFER			offsetof(RasterInfo, SurfaceInfo.ColorBuffer)
-#	define OFFSET_SURFACE_STENCIL_BUFFER		offsetof(RasterInfo, SurfaceInfo.StencilBuffer)
-#	define OFFSET_SURFACE_ALPHA_BUFFER			offsetof(RasterInfo, SurfaceInfo.AlphaBuffer)
+#	define OFFSET_SURFACE_WIDTH					offsetof(RasterInfo, RasterSurface.Width)
+#	define OFFSET_SURFACE_HEIGHT				offsetof(RasterInfo, RasterSurface.Height)
+#	define OFFSET_SURFACE_PITCH					offsetof(RasterInfo, RasterSurface.Pitch)
+#	define OFFSET_SURFACE_DEPTH_BUFFER			offsetof(RasterInfo, RasterSurface.DepthBuffer)
+#	define OFFSET_SURFACE_COLOR_BUFFER			offsetof(RasterInfo, RasterSurface.ColorBuffer)
+#	define OFFSET_SURFACE_STENCIL_BUFFER		offsetof(RasterInfo, RasterSurface.StencilBuffer)
+#	define OFFSET_SURFACE_ALPHA_BUFFER			offsetof(RasterInfo, RasterSurface.AlphaBuffer)
 
 #	define OFFSET_TEXTURES						offsetof(RasterInfo, Textures)
 #	define OFFSET_MIPMAP_LEVEL					offsetof(RasterInfo, MipmapLevel)

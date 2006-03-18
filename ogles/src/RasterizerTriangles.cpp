@@ -11,6 +11,7 @@
 // --------------------------------------------------------------------------
 //
 // 05-22-2004		Hans-Martin Will	initial version
+// 02-19-2006		Hans-Martin Will	rewrite using edge equations
 //
 // --------------------------------------------------------------------------
 //
@@ -116,6 +117,23 @@ namespace {
 // Prepare rasterizer object for triangles
 // ---------------------------------------------------------------------------
 
+namespace EGL {
+	PixelMask RBDepthTestLess(const RasterInfo * rasterInfo, 
+							  const Variables * vars,
+							  PixelMask * pixelMask);
+
+	
+	PixelMask RBEdgeDepthTestLess(const RasterInfo * rasterInfo, 
+								  const Variables * vars,
+								  const Edges * edges,
+								  PixelMask * pixelMask);
+
+	void RBTextureReplace(const RasterInfo * rasterInfo, 
+						  I32 varying[][2][2],
+						  const PixelMask * pixelMask);
+
+}
+
 void Rasterizer :: PrepareTriangle() {
 	Prepare();
 
@@ -123,15 +141,15 @@ void Rasterizer :: PrepareTriangle() {
 
 	// initialize block rasterization here
 
-	m_BlockDepthStencilFunction = (BlockDepthStencilFunction *)
+	m_BlockDepthStencilFunction = (BlockDepthStencilFunction *) //&RBDepthTestLess;
 		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockDepthStencil,
 									 *m_State, &m_VaryingInfo);
 
-	m_BlockEdgeDepthStencilFunction = (BlockEdgeDepthStencilFunction *)
+	m_BlockEdgeDepthStencilFunction = (BlockEdgeDepthStencilFunction *) //&RBEdgeDepthTestLess;
 		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockEdgeDepthStencil,
 									 *m_State, &m_VaryingInfo);
 
-	m_BlockColorAlphaFunction = (BlockColorAlphaFunction *)
+	m_BlockColorAlphaFunction = (BlockColorAlphaFunction *) //&RBTextureReplace;
 		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockColorAlpha,
 									 *m_State, &m_VaryingInfo);
 }
@@ -145,7 +163,7 @@ PixelMask Rasterizer :: RasterBlockDepthStencil(const Variables * vars,
 	I32 depth0 = vars->Depth.Value;
 
 	// initialize surface pointers in local info block
-	SurfaceInfo surfaceInfo = m_RasterInfo.SurfaceInfo;
+	SurfaceInfo surfaceInfo = m_RasterInfo.RasterSurface;
 
     for (I32 iy = 0; iy < EGL_RASTER_BLOCK_SIZE; iy++) {
 
@@ -180,7 +198,7 @@ PixelMask Rasterizer :: RasterBlockEdgeDepthStencil(const Variables * vars,
 	I32 depth0 = vars->Depth.Value;
 
 	// initialize surface pointers in local info block
-	SurfaceInfo surfaceInfo = m_RasterInfo.SurfaceInfo;
+	SurfaceInfo surfaceInfo = m_RasterInfo.RasterSurface;
 
 	I32 CY1 = edges->edge12.CY;
 	I32 CY2 = edges->edge23.CY;
@@ -233,7 +251,7 @@ void Rasterizer :: RasterBlockColorAlpha(I32 varying[][2][2],
 	const PixelMask * mask = pixelMask;
 
 	// initialize surface pointers in local info block
-	SurfaceInfo surfaceInfo = m_RasterInfo.SurfaceInfo;
+	SurfaceInfo surfaceInfo = m_RasterInfo.RasterSurface;
 
     for (I32 iy = 0; iy < EGL_RASTER_BLOCK_SIZE; iy++) {
 
@@ -347,8 +365,7 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 	I32 span = maxx - minx;
 
 	m_RasterInfo.Init(m_Surface, miny, minx);
-	I32 stride = m_RasterInfo.SurfaceInfo.Width - maxx + minx;
-	I32 blockStride = EGL_RASTER_BLOCK_SIZE * m_RasterInfo.SurfaceInfo.Pitch - span;
+	I32 blockStride = EGL_RASTER_BLOCK_SIZE * m_RasterInfo.RasterSurface.Pitch - span;
 
     // Half-edge constants
     I32 C1 = Y2 * X1 - X2 * Y1;
@@ -564,10 +581,10 @@ cont:
 				vars.VaryingInvW[index].Value += vars.VaryingInvW[index].dX << EGL_LOG_RASTER_BLOCK_SIZE;
 			}
 
-			m_RasterInfo.SurfaceInfo.ColorBuffer   += EGL_RASTER_BLOCK_SIZE;
-			m_RasterInfo.SurfaceInfo.DepthBuffer   += EGL_RASTER_BLOCK_SIZE;
-			m_RasterInfo.SurfaceInfo.AlphaBuffer   += EGL_RASTER_BLOCK_SIZE;
-			m_RasterInfo.SurfaceInfo.StencilBuffer += EGL_RASTER_BLOCK_SIZE;
+			m_RasterInfo.RasterSurface.ColorBuffer   += EGL_RASTER_BLOCK_SIZE;
+			m_RasterInfo.RasterSurface.DepthBuffer   += EGL_RASTER_BLOCK_SIZE;
+			m_RasterInfo.RasterSurface.AlphaBuffer   += EGL_RASTER_BLOCK_SIZE;
+			m_RasterInfo.RasterSurface.StencilBuffer += EGL_RASTER_BLOCK_SIZE;
         }
 
 		vars.Depth.Value += vars.Depth.dBlockLine;
@@ -577,10 +594,10 @@ cont:
 			vars.VaryingInvW[index].Value += vars.VaryingInvW[index].dBlockLine;
 		}
 
-		m_RasterInfo.SurfaceInfo.ColorBuffer   += blockStride;
-		m_RasterInfo.SurfaceInfo.DepthBuffer   += blockStride;
-		m_RasterInfo.SurfaceInfo.AlphaBuffer   += blockStride;
-		m_RasterInfo.SurfaceInfo.StencilBuffer += blockStride;
+		m_RasterInfo.RasterSurface.ColorBuffer   += blockStride;
+		m_RasterInfo.RasterSurface.DepthBuffer   += blockStride;
+		m_RasterInfo.RasterSurface.AlphaBuffer   += blockStride;
+		m_RasterInfo.RasterSurface.StencilBuffer += blockStride;
     }
 }
 
