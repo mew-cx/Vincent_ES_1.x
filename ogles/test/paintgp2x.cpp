@@ -9,99 +9,72 @@
 // ==========================================================================
 
 
-#include "stdafx.h"
-#include "UIHelper.h"
-
-// --------------------------------------------------------------------------
-// Avoid name conflict with GdiPlus
-// --------------------------------------------------------------------------
-#ifdef PixelFormatAlpha
-#undef PixelFormatAlpha
-#endif
-
 #include "fixed.h"
 
-#include "test.h"
 #include "GLES/egl.h"
 #include "GLES/gl.h"
 #include "GLES/glext.h"
 #include "Color.h"
+#include <stdio.h>
 
 #define USE_BUFFERS 0
 
-GLAPI EGLBoolean APIENTRY eglSaveSurfaceHM(EGLSurface surface, const TCHAR * filename);
-
-#ifndef _WIN32_WCE
-using namespace Gdiplus;
-
 namespace {
-	bool LoadTexture(const WCHAR *filename) {
-		//
-		Bitmap* bitmap = new Bitmap(filename);
+	bool LoadTexture(const char *filename)
+  {
+    int width = 256;
+    int height = 256;
+    FILE *fp = fopen(filename, "rb");
+    unsigned char *data = new unsigned char[width * height * 3];
+    fread(data, 1, 56, fp);
+    fread(data, 1, width * height * 3, fp);
+    U16 *texture = new U16[width * height];
 
-		if (!bitmap)
-			return false;
+    U16 *tex = texture;
+    U8 *d = data;
+    int pixels = width * height;
+    while (pixels--)
+    {
+      unsigned char r = *d;
+      unsigned char g = *(d + 2);
+      unsigned char b = *(d + 1);
+      *tex++ = ((r & 0xf8) << 8) | ((g & 0xf8) << 3) | ((b & 0xf8) >> 3);
+      d += 3;
+    }
+    delete[] data;
 
-		BitmapData* bitmapData = new BitmapData;
-		Rect rect(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
-
-		bitmap->LockBits(
-			&rect,
-			ImageLockModeRead,
-			PixelFormat16bppRGB565,
-			bitmapData);
-
-		U16 * texture = new U16[rect.Width * rect.Height];
-		U16 * pixels = (U16*) bitmapData->Scan0;
-
-		for(UINT row = 0; row < rect.Height; ++row)
-		{
-			UINT sourceRow = rect.Height - row - 1;
-			for(UINT col = 0; col < rect.Width; ++col)
-			{
-				texture[row * rect.Width + col] = pixels[sourceRow * bitmapData->Stride / 2 + col];
-			}
-		}
-
-		bitmap->UnlockBits(bitmapData);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, bitmap->GetWidth(), bitmap->GetHeight(), 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, texture);
 
 		// create mipmaps
-		if (bitmap->GetWidth() != 1 && bitmap->GetHeight() != 1) {
+		int level = 0;
 
-			int width = bitmap->GetWidth();
-			int height= bitmap->GetHeight();
-			int level = 0;
+		// OK, for simplicity, assume square bitmap
+		while (width > 1 || height > 1)
+    {
+			width = width >> 1;
+			height = height >> 1;
+			++level;
 
-			// OK, for simplicity, assume square bitmap
-
-			while (width > 1 || height > 1) {
-				width = width >> 1;
-				height = height >> 1;
-				++level;
-
-				for(UINT row = 0; row < height; ++row)
+			for(int row = 0; row < height; ++row)
+			{
+				for(int col = 0; col < width; ++col)
 				{
-					for(UINT col = 0; col < width; ++col)
-					{
-						EGL::Color p00 = EGL::Color::From565(texture[2 * row * (width * 2) + 2 * col]);
-						EGL::Color p01 = EGL::Color::From565(texture[2 * row * (width * 2) + 2 * col + 1]);
-						EGL::Color p10 = EGL::Color::From565(texture[(2 * row + 1) * (width * 2) + 2 * col]);
-						EGL::Color p11 = EGL::Color::From565(texture[(2 * row + 1) * (width * 2) + 2 * col + 1]);
+					EGL::Color p00 = EGL::Color::From565(texture[2 * row * (width * 2) + 2 * col]);
+					EGL::Color p01 = EGL::Color::From565(texture[2 * row * (width * 2) + 2 * col + 1]);
+					EGL::Color p10 = EGL::Color::From565(texture[(2 * row + 1) * (width * 2) + 2 * col]);
+					EGL::Color p11 = EGL::Color::From565(texture[(2 * row + 1) * (width * 2) + 2 * col + 1]);
 
-						EGL::Color result =
-							EGL::Color((p00.R() + p01.R() + p10.R() + p11.R()) / 4,
-									   (p00.G() + p01.G() + p10.G() + p11.G()) / 4,
-									   (p00.B() + p01.B() + p10.B() + p11.B()) / 4,
-									   (p00.A() + p01.A() + p10.A() + p11.A()) / 4);
+					EGL::Color result =
+						EGL::Color((p00.R() + p01.R() + p10.R() + p11.R()) / 4,
+								   (p00.G() + p01.G() + p10.G() + p11.G()) / 4,
+								   (p00.B() + p01.B() + p10.B() + p11.B()) / 4,
+								   (p00.A() + p01.A() + p10.A() + p11.A()) / 4);
 
-						texture[row * width + col] = result.ConvertTo565();
-					}
+					texture[row * width + col] = result.ConvertTo565();
 				}
-
-				glTexImage2D(GL_TEXTURE_2D, level, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, texture);
-
 			}
+
+			glTexImage2D(GL_TEXTURE_2D, level, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, texture);
 		}
 
 		delete[] texture;
@@ -109,121 +82,6 @@ namespace {
 	}
 }
 
-#else
-namespace {
-	struct DIBINFO : public BITMAPINFO
-	{
-		RGBQUAD	 arColors[255];    // Color table info - adds an extra 255 entries to palette
-
-		operator LPBITMAPINFO()          { return (LPBITMAPINFO) this; }
-		operator LPBITMAPINFOHEADER()    { return &bmiHeader;          }
-		RGBQUAD* ColorTable()            { return bmiColors;           }
-	};
-
-	bool LoadTexture(const WCHAR *filename) {
-		//
-		HBITMAP hSourceBitmap  = SHLoadImageFile(filename);
-
-		if (!hSourceBitmap)
-			return false;
-
-		BITMAP bm;
-		GetObject(hSourceBitmap , sizeof(BITMAP), &bm);
-
-		HBITMAP hTargetBitmap;
-		void *pBuffer;
-
-		//3.1 Initilize DIBINFO structure
-		DIBINFO  dibInfo;
-		dibInfo.bmiHeader.biBitCount = 24;
-		dibInfo.bmiHeader.biClrImportant = 0;
-		dibInfo.bmiHeader.biClrUsed = 0;
-		dibInfo.bmiHeader.biCompression = 0;
-		dibInfo.bmiHeader.biHeight = bm.bmHeight;
-		dibInfo.bmiHeader.biPlanes = 1;
-		dibInfo.bmiHeader.biSize = 40;
-		dibInfo.bmiHeader.biSizeImage = bm.bmWidth*bm.bmHeight*3;
-		dibInfo.bmiHeader.biWidth = bm.bmWidth;
-		dibInfo.bmiHeader.biXPelsPerMeter = 3780;
-		dibInfo.bmiHeader.biYPelsPerMeter = 3780;
-		dibInfo.bmiColors[0].rgbBlue = 0;
-		dibInfo.bmiColors[0].rgbGreen = 0;
-		dibInfo.bmiColors[0].rgbRed = 0;
-		dibInfo.bmiColors[0].rgbReserved = 0;
-
-		//3.2 Create bitmap and receive pointer to points into pBuffer
-		HDC hDC = ::GetDC(NULL);
-		ASSERT(hDC);
-		hTargetBitmap = CreateDIBSection(
-			hDC,
-			(const BITMAPINFO*)dibInfo,
-			DIB_RGB_COLORS,
-			(void**)&pBuffer,
-			NULL,
-			0);
-
-		::ReleaseDC(NULL, hDC);
-
-
-		//4. Copy source bitmap into the target bitmap.
-
-		//4.1 Create 2 device contexts
-		HDC memDC = CreateCompatibleDC(NULL);
-
-		HDC targetDC = CreateCompatibleDC(NULL);
-
-		//4.2 Select source bitmap into one DC, target into another
-		HBITMAP hOldBitmap1 = (HBITMAP) SelectObject(memDC, hSourceBitmap);
-		HBITMAP hOldBitmap2 = (HBITMAP) SelectObject(targetDC, hTargetBitmap);
-
-		//4.3 Copy source bitmap into the target one
-		BitBlt(targetDC, 0, 0, bm.bmWidth, bm.bmHeight, memDC, 0, 0, SRCCOPY);
-
-		//4.4 Restore device contexts
-		SelectObject(memDC, hOldBitmap1);
-		SelectObject(targetDC, hOldBitmap2);
-		DeleteDC(memDC);
-		DeleteDC(targetDC);
-
-#ifdef GL_GENERATE_MIPMAP
-		glTexParameterx(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-#endif
-
-#if 1
-		//Here we can bitmap bits: pBuffer. Note:
-		// 1. pBuffer contains 3 bytes per point
-		// 2. Lines ane from the bottom to the top!
-		// 3. Points in the line are from the left to the right
-		// 4. Bytes in one point are BGR (blue, green, red) not RGB
-		// 5. Don't delete pBuffer, it will be automatically deleted
-		//    when delete hTargetBitmap
-		U16 * transformedMap = new U16[bm.bmWidth * bm.bmHeight];
-		U8 * bytes = reinterpret_cast<U8 *> (pBuffer);
-
-		for (int x = 0; x < bm.bmWidth; ++x) {
-			for (int y = 0; y < bm.bmHeight; ++y) {
-				U8 * pByte = bytes + (x + y * bm.bmWidth) * 3;
-				U8 r = pByte[0];
-				U8 g = pByte[1];
-				U8 b = pByte[2];
-
-				U16 pixel = r >> 3 | (g & 0xFC) << 3 | (b & 0xF8) << 8;
-				transformedMap[x + bm.bmWidth * y] = pixel;
-			}
-		}
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, bm.bmWidth, bm.bmHeight, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, transformedMap);
-		delete[] transformedMap;
-#else
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, bm.bmWidth, bm.bmHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, pBuffer);
-#endif
-
-		DeleteObject(hSourceBitmap);
-		DeleteObject(hTargetBitmap);
-
-		return true;
-	}
-}
-#endif
 
 
 // OpenGL variables
@@ -233,28 +91,6 @@ EGLContext			g_context;				// EGL rendering context
 
 
 // --------- BEGIN OF INCLUDED SNIPPET
-
-struct sample_MATERIAL{
- GLfloat ambient[3];
- GLfloat diffuse[3];
- GLfloat specular[3];
- GLfloat emission[3];
- GLfloat alpha;
- GLfloat phExp;
- int   texture;
-};
-struct sample_TEXTURE{
- char * name;
- GLint  id;
-};
-
-static sample_MATERIAL materials [1] = {
- {{1.0f,1.0f,1.0f},	{1.0f,1.0f,1.0f},	{1.0f,1.0f,1.0f},	{1.0f,1.0f,1.0f},	1.0f,11.3137f,0} //Material #1
-};
-
-static sample_TEXTURE texture_maps [1] = {
-{"dodge.bmp_0.bmp",0}
-};
 
 // 376 Verticies
 // 822 Texture Coordinates
@@ -1212,20 +1048,6 @@ static int material_ref [1][2] = {
 
 
 
-struct DIB2D{
- BITMAPINFOHEADER *Info;
- RGBQUAD *palette;
- BYTE    *bits;
-};
-struct GLTXTLOAD{
- GLint format;
- GLint perpixel;
- GLint Width;
- GLint Height;
- BYTE* bits;
-};
-
-
 #define VERTEX_BUFFER 0
 #define NORMAL_BUFFER 1
 #define TEXTURE_BUFFER 2
@@ -1233,7 +1055,8 @@ struct GLTXTLOAD{
 
 GLuint buffers[3];
 
-void SetArrays(GLfixed vertexArray[][3], GLfixed normalArray[][3], GLfixed textureArray[][2]) {
+void SetArrays(GLfixed vertexArray[][3], GLfixed normalArray[][3], GLfixed textureArray[][2])
+{
 	int index = 0;
 
 	for(int i=sizeof(face_indicies)/sizeof(face_indicies[0]);i--;)
@@ -1269,7 +1092,7 @@ void SetArrays(GLfixed vertexArray[][3], GLfixed normalArray[][3], GLfixed textu
 		}
 	}
 
-#if USE_BUFFERS
+#ifdef USE_BUFFERS
 
 	glGenBuffers(3, buffers);
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[VERTEX_BUFFER]);
@@ -1297,76 +1120,54 @@ GLfixed egl_normals[SIZE][3];
 GLfixed egl_textures[SIZE][2];
 
 
-extern "C" BOOL InitOpenGL(HWND hWnd) {
-
-	HIDPI_InitScaling();
-
-
+extern "C" bool InitOpenGL()
+{
 	// Initialize OGL
-    HDC hdc = GetWindowDC(hWnd);
-
-	//g_display = eglGetDisplay(hdc);
 	g_display = eglGetDisplay(0);
-
+	
 	EGLint major, minor;
 
-	if (!eglInitialize(g_display, &major, &minor)) {
-		return FALSE;
-	}
+	if (!eglInitialize(g_display, &major, &minor))
+		return false;
 
-    EGLConfig configs[10];
+  EGLConfig configs[10];
 	EGLint matchingConfigs;
-	EGLint attribList[] = {EGL_NONE };	// extend this
+	EGLint attribList[] = { 0 };	// extend this
 
-	if (!eglChooseConfig(g_display, attribList, &configs[0], 10, &matchingConfigs)) {
-		return FALSE;
-	}
+	if (!eglChooseConfig(g_display, attribList, &configs[0], 10, &matchingConfigs))
+		return false;
 
-	if (matchingConfigs < 1) {
-		return FALSE;
-	}
+	if (matchingConfigs < 1)
+		return false;
 
 	EGLConfig config = configs[0];	// pick any
 
-	g_surface = eglCreateWindowSurface(g_display, config, hWnd, attribList);
-
-	// test for error
-
+	g_surface = eglCreateWindowSurface(g_display, config, (NativeWindowType)0, attribList);
+	
+	// test for error 
 	g_context = eglCreateContext(g_display, config, 0, attribList);
 	eglMakeCurrent(g_display, g_surface, g_surface, g_context);
-
+	
 	// TO DO: test for error
-	bool success = LoadTexture(L"\\dodge.jpg");
-
-	if (!success) {
-		MessageBoxW(hWnd, L"Cannot load texture image. Terminating application", L"Error", MB_OK);
-		return FALSE;
-	}
+	if (!LoadTexture("dodge.raw"))
+		return false;
 
 	// Initialize the car data
 	SetArrays(egl_vertices, egl_normals, egl_textures);
 
-	return TRUE;
+	return true;
 }
 
 
-extern "C" void PaintProc(HWND hWnd) {
+extern "C" void PaintProc() {
 	// the actual painting code will go here
-	HDC hdc;
-	PAINTSTRUCT ps;
-	DWORD startTicks = GetTickCount();
 
 	// rendering preamble
-	RECT rt;
-	hdc = BeginPaint(hWnd, &ps);
-	EGLDisplay display = eglGetDisplay(hdc);
-	//EGLDisplay display = eglGetDisplay(0);
-
-	GetClientRect(hWnd, &rt);
-
+	EGLDisplay display = eglGetDisplay((NativeDisplayType)0);
+	
 	eglMakeCurrent(display, g_surface, g_surface, g_context);
 
-
+#if 0
 	glViewport(rt.left, rt.top, rt.right - rt.left, rt.bottom - rt.top);
 	glDepthRangex(EGL_FixedFromInt(0), EGL_FixedFromInt(1));
 	glMatrixMode(GL_PROJECTION);
@@ -1383,14 +1184,30 @@ extern "C" void PaintProc(HWND hWnd) {
 	glScalex(EGL_FixedFromInt(220), EGL_FixedFromInt(220), EGL_FixedFromInt(220));
 	glRotatex(EGL_FixedFromFloat(angle), 0, EGL_FixedFromInt(1), 0);
 	glRotatex(EGL_FixedFromFloat(280.0f), EGL_FixedFromInt(1), 0, 0);
+#endif
+
+	glViewport(0, 0, 320, 240);
+	glDepthRangex(EGL_FixedFromInt(0), EGL_FixedFromInt(1));
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glFrustumx(EGL_FixedFromInt((-320) / 2), 
+		EGL_FixedFromInt((320) / 2), 
+		EGL_FixedFromInt((-240) / 2), 
+		EGL_FixedFromInt((240) / 2), 
+		EGL_FixedFromInt(450), 
+		EGL_FixedFromInt(1000));
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatex(EGL_FixedFromFloat(x), EGL_FixedFromFloat(y), EGL_FixedFromFloat(x - 600));
+	glScalex(EGL_FixedFromInt(220), EGL_FixedFromInt(220), EGL_FixedFromInt(220));
+	glRotatex(EGL_FixedFromFloat(angle), 0, EGL_FixedFromInt(1), 0);
+	glRotatex(EGL_FixedFromFloat(280.0f), EGL_FixedFromInt(1), 0, 0);
 
 	// actual GL rendering goes here
-	glClearColorx(0, 0, 0, 0);		// black background
+	glClearColorx(0, 0, 0, 0);		
 	glClearDepthx(EGL_ONE);
-	//glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	DWORD clearTicks = GetTickCount();
 
 	//glShadeModel(GL_SMOOTH);
 	glShadeModel(GL_FLAT);
@@ -1406,39 +1223,38 @@ extern "C" void PaintProc(HWND hWnd) {
 	glEnable(GL_DEPTH_TEST);
 	//glDisable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHT1);
-	GLfixed lightPosition[] = { EGL_FixedFromInt(-44), EGL_FixedFromInt(200), EGL_FixedFromInt(100), EGL_FixedFromInt(1) };
+	GLfixed lightPosition[] = { EGL_FixedFromInt(-44), EGL_FixedFromInt(200), EGL_FixedFromInt(100), EGL_FixedFromInt(1) }; 
 	glLightxv(GL_LIGHT1, GL_DIFFUSE, materialColor);
 	glLightxv(GL_LIGHT1, GL_POSITION, lightPosition);
 	//glEnable(GL_RESCALE_NORMAL);
 	GLfixed fogColor[] = { EGL_ONE/10, EGL_ONE/10, 0, 0 };
 	glFogxv(GL_FOG_COLOR, fogColor);
 	glFogx(GL_FOG_MODE, GL_LINEAR);
-	glFogx(GL_FOG_END, EGL_FixedFromInt(600));
+	glFogx(GL_FOG_END, EGL_FixedFromInt(600)); 
 	glDisable(GL_FOG);
 	//glEnable(GL_FOG);
 
 	//glLineWidth(0x10000);
 
-	glDisable(GL_TEXTURE_2D);
-	//glEnable(GL_TEXTURE_2D);
-	glTexEnvx(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	//glDisable(GL_TEXTURE_2D);
+	glEnable(GL_TEXTURE_2D);
+	glTexEnvx(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE); 
 
 	glEnable(GL_CULL_FACE);
 	//glDisable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	//glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	//glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	//glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_NORMAL_ARRAY);
+	//glEnableClientState(GL_NORMAL_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	// Test Code until we have full OpenGL pipeline
-#if USE_BUFFERS
+#ifdef USE_BUFFERS
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[VERTEX_BUFFER]);
 	glVertexPointer(3, GL_FIXED, 0, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[NORMAL_BUFFER]);
@@ -1461,27 +1277,5 @@ extern "C" void PaintProc(HWND hWnd) {
 	glFinish();
 	eglWaitGL();
 
-	DWORD endRaster = GetTickCount();
-	//eglSaveSurfaceHM(g_surface, L"image.bmp");
-    eglSwapBuffers(display, g_surface);
-	DWORD endSwap = GetTickCount();
-
-	if (endSwap == startTicks)
-		endSwap = startTicks + 1;
-
-	int fps = 1000 / (endSwap - startTicks);
-	int clear = clearTicks - startTicks;
-	int render = endRaster - clearTicks;
-	int blit = endSwap - endRaster;
-
-	wchar_t buffer[500];
-	wsprintfW(buffer, L"fps=%d c=%3d[ms] r=%3d[ms] s=%3d[ms]", fps, clear, render, blit);
-	RECT rect;
-	DrawTextW(hdc, buffer, -1, &rect, DT_CALCRECT | DT_LEFT | DT_SINGLELINE);
-	rect.top = 20;
-	rect.left = 20;
-	SetBkColor(hdc, 0);
-	SetTextColor(hdc, 0xffffff);
-	DrawTextW(hdc, buffer, -1, &rect, DT_LEFT | DT_SINGLELINE);
-	EndPaint(hWnd, &ps);
+  eglSwapBuffers(display, g_surface);
 }

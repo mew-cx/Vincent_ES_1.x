@@ -200,6 +200,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             memset (&s_sai, 0, sizeof (s_sai));
             s_sai.cbSize = sizeof (s_sai);
 			break;
+		case WM_CLEAR:
+			break;
+
 		case WM_PAINT:
 			PaintProc(hWnd);
 			break; 

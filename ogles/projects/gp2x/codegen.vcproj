@@ -98,57 +98,72 @@
 				Name="VCPreBuildEventTool"
 			/>
 			<Tool
-				Name="arm-linux-link"
-			/>
-			<Tool
 				Name="VCCustomBuildTool"
+				ExecutionBucket="2"
 			/>
 			<Tool
 				Name="arm-linux-gcc"
 				OptimizationLevel="5"
 			/>
 			<Tool
-				Name="arm-linux-ar"
-			/>
-			<Tool
 				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"
+				ExecutionBucket="4"
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				ExecutionBucket="5"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				ExecutionBucket="6"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
+				ExecutionBucket="7"
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				ExecutionBucket="8"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
+				ExecutionBucket="9"
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				ExecutionBucket="10"
 				OutputFile="$(OutDir)\lib$(ProjectName).a"
 			/>
 			<Tool
+				Name="arm-linux-ar"
+				ExecutionBucket="11"
+			/>
+			<Tool
 				Name="VCALinkTool"
+				ExecutionBucket="12"
+			/>
+			<Tool
+				Name="arm-linux-link"
+				ExecutionBucket="13"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
+				ExecutionBucket="14"
 			/>
 			<Tool
 				Name="VCBscMakeTool"
+				ExecutionBucket="15"
 			/>
 			<Tool
 				Name="VCFxCopTool"
+				ExecutionBucket="16"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				ExecutionBucket="17"
 			/>
 		</Configuration>
 	</Configurations>
