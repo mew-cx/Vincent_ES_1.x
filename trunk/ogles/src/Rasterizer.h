@@ -130,7 +130,7 @@ namespace EGL {
 
 	struct RasterInfo {
 		// surface info
-		SurfaceInfo	SurfaceInfo;
+		SurfaceInfo	RasterSurface;
 		const I32 *	InversionTablePtr;
 
 		// TODO: will need to add a minimum texture level here

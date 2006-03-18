@@ -174,15 +174,24 @@ namespace {
 }
 
 void RasterInfo::Init(Surface * surface, I32 y, I32 x) {
-	size_t offset = y * surface->GetWidth() + x;
 
-	SurfaceInfo.Width = surface->GetWidth();
-	SurfaceInfo.Height = surface->GetHeight();
-	SurfaceInfo.Pitch = surface->GetPitch();
-	SurfaceInfo.DepthBuffer = surface->GetDepthBuffer() + offset;
-	SurfaceInfo.ColorBuffer = surface->GetColorBuffer() + offset;
-	SurfaceInfo.StencilBuffer = surface->GetStencilBuffer() + offset;
-	SurfaceInfo.AlphaBuffer = surface->GetAlphaBuffer() + offset;
+	RasterSurface.Width = surface->GetWidth();
+	RasterSurface.Height = surface->GetHeight();
+	RasterSurface.Pitch = surface->GetPitch();
+
+	size_t offset;
+
+	if (surface->GetPitch() >= 0) {
+		offset = y * surface->GetPitch() + x;
+	} else {
+		offset = (y + 1 - (I32) surface->GetHeight()) * surface->GetPitch() + x;
+	}
+
+	RasterSurface.DepthBuffer = surface->GetDepthBuffer() + offset;
+	RasterSurface.ColorBuffer = surface->GetColorBuffer() + offset;
+	RasterSurface.StencilBuffer = surface->GetStencilBuffer() + offset;
+	RasterSurface.AlphaBuffer = surface->GetAlphaBuffer() + offset;
+
 	InversionTablePtr = InversionTable;
 }
 
@@ -1385,8 +1394,8 @@ void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed dept
 		}
 	}
 
-	if (FragmentDepthStencil(rasterInfo, &rasterInfo->SurfaceInfo, x, depth)) {
-		FragmentColorAlpha(rasterInfo, &rasterInfo->SurfaceInfo, x, tu, tv, baseColor, fogDensity);
+	if (FragmentDepthStencil(rasterInfo, &rasterInfo->RasterSurface, x, depth)) {
+		FragmentColorAlpha(rasterInfo, &rasterInfo->RasterSurface, x, tu, tv, baseColor, fogDensity);
 	}
 }
 

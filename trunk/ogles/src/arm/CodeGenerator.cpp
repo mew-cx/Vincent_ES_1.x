@@ -77,6 +77,19 @@ extern "C" {
 
 #endif
 
+#if defined(ARM) && defined(__gnu_linux__)
+#define CLEAR_INSN_CACHE(BEG, END)									\
+{																	\
+  register unsigned long _beg __asm ("a1") = (unsigned long) (BEG);	\
+  register unsigned long _end __asm ("a2") = (unsigned long) (END);	\
+  register unsigned long _flg __asm ("a3") = 0;						\
+  register unsigned long _scno __asm ("r7") = 0xf0002;				\
+  __asm __volatile ("swi 0x9f0002		@ sys_cacheflush"			\
+		    : "=r" (_beg)											\
+		    : "0" (_beg), "r" (_end), "r" (_flg), "r" (_scno));		\
+}
+#endif
+
 using namespace EGL;
 
 
@@ -184,6 +197,8 @@ void CodeGenerator :: Compile(FunctionCache * target, FunctionCache::FunctionTyp
 #if defined(EGL_ON_WINCE) && (defined(ARM) || defined(_ARM_))
 	// flush data cache and clear instruction cache to make new code visible to execution unit
 	CacheSync(CACHE_SYNC_INSTRUCTIONS | CACHE_SYNC_WRITEBACK);		
+#elif defined(ARM) && defined(__gnu_linux__)
+	CLEAR_INSN_CACHE(targetBuffer, (U8 *) targetBuffer + cg_segment_size(cseg))
 #endif
 
 	cg_codegen_destroy(codegen);
