@@ -52,21 +52,14 @@ void Context :: MatrixMode(GLenum mode) {
 	switch (mode) {
 	case GL_MODELVIEW:
 		m_CurrentMatrixStack = &m_ModelViewMatrixStack;
-		m_MatrixModePaletteEnabled = false;
 		break;
 
 	case GL_PROJECTION:
 		m_CurrentMatrixStack = &m_ProjectionMatrixStack;
-		m_MatrixModePaletteEnabled = false;
 		break;
 
 	case GL_TEXTURE:
 		m_CurrentMatrixStack = &m_TextureMatrixStack[m_ActiveTexture];
-		m_MatrixModePaletteEnabled = false;
-		break;
-
-	case GL_MATRIX_PALETTE_OES:
-		m_MatrixModePaletteEnabled = true;
 		break;
 
 	default:
@@ -86,42 +79,23 @@ void Context :: RebuildMatrices(void) {
 
 void Context :: UpdateInverseModelViewMatrix(void) {
 	m_InverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().InverseUpper3(m_RescaleNormalEnabled);
-
-	for (size_t index = 0; index < MATRIX_PALETTE_SIZE; ++index) {
-		m_MatrixPaletteInverse[index] = m_MatrixPalette[index].InverseUpper3(m_RescaleNormalEnabled);
-	}
 }
 
 void Context :: LoadIdentity(void) { 
 
-	if (!m_MatrixModePaletteEnabled) {
-		CurrentMatrixStack()->LoadIdentity();
-		RebuildMatrices();
-	} else {
-		m_MatrixPalette[m_CurrentPaletteMatrix].MakeIdentity();
-		m_MatrixPaletteInverse[m_CurrentPaletteMatrix].MakeIdentity();
-	}
+	CurrentMatrixStack()->LoadIdentity();
+	RebuildMatrices();
 }
 
 void Context :: LoadMatrixx(const GLfixed *m) { 
 
-	if (!m_MatrixModePaletteEnabled) {
-		CurrentMatrixStack()->LoadMatrix(m);
-		RebuildMatrices();
-	} else {
-		m_MatrixPalette[m_CurrentPaletteMatrix] = Matrix4x4(m);
-		m_MatrixPaletteInverse[m_CurrentPaletteMatrix] = m_MatrixPalette[m_CurrentPaletteMatrix].InverseUpper3(m_RescaleNormalEnabled);
-	}
+	CurrentMatrixStack()->LoadMatrix(m);
+	RebuildMatrices();
 }
 
 void Context :: MultMatrix(const Matrix4x4 & m) {
-	if (!m_MatrixModePaletteEnabled) {
-		CurrentMatrixStack()->MultMatrix(m);
-		RebuildMatrices();
-	} else {
-		m_MatrixPalette[m_CurrentPaletteMatrix] = m_MatrixPalette[m_CurrentPaletteMatrix] * Matrix4x4(m);
-		m_MatrixPaletteInverse[m_CurrentPaletteMatrix] = m_MatrixPalette[m_CurrentPaletteMatrix].InverseUpper3(m_RescaleNormalEnabled);
-	}
+	CurrentMatrixStack()->MultMatrix(m);
+	RebuildMatrices();
 }
 
 void Context :: MultMatrixx(const GLfixed *m) { 
@@ -129,11 +103,6 @@ void Context :: MultMatrixx(const GLfixed *m) {
 }
 
 void Context :: PopMatrix(void) { 
-
-	if (m_MatrixModePaletteEnabled) {
-		RecordError(GL_STACK_UNDERFLOW);
-		return;
-	}
 
 	if (CurrentMatrixStack()->PopMatrix()) {
 		RebuildMatrices();
@@ -144,11 +113,6 @@ void Context :: PopMatrix(void) {
 }
 
 void Context :: PushMatrix(void) { 
-	if (m_MatrixModePaletteEnabled) {
-		RecordError(GL_STACK_OVERFLOW);
-		return;
-	}
-
 	if (CurrentMatrixStack()->PushMatrix()) {
 		RecordError(GL_NO_ERROR);
 	} else {
@@ -192,13 +156,7 @@ void Context :: Orthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top,
 
 GLbitfield Context :: QueryMatrixx(GLfixed mantissa[16], GLint exponent[16]) {
 
-	const Matrix4x4* currentMatrix;
-	
-	if (!m_MatrixModePaletteEnabled) {
-		currentMatrix = &CurrentMatrixStack()->CurrentMatrix();
-	} else {
-		currentMatrix = m_MatrixPalette + m_CurrentPaletteMatrix;
-	}
+	const Matrix4x4* currentMatrix = &CurrentMatrixStack()->CurrentMatrix();
 
 	for (int index = 0; index < 16; ++index) {
 		mantissa[index] = currentMatrix->Element(index);
@@ -208,18 +166,3 @@ GLbitfield Context :: QueryMatrixx(GLfixed mantissa[16], GLint exponent[16]) {
 	return 0;
 }
 
-// --------------------------------------------------------------------------
-// Matrix palette extension
-// --------------------------------------------------------------------------
-
-void Context :: CurrentPaletteMatrix(GLuint index) {
-	if (index < 0 || index > MATRIX_PALETTE_SIZE) {
-		RecordError(GL_INVALID_VALUE);
-	} else {
-		m_CurrentPaletteMatrix = index;
-	}
-}
-
-void Context :: LoadPaletteFromModelViewMatrix(void) {
-	m_MatrixPalette[m_CurrentPaletteMatrix] = m_ModelViewMatrixStack.CurrentMatrix();
-}

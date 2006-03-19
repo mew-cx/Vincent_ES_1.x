@@ -239,22 +239,28 @@ cg_virtual_reg_t * CodeGenerator :: AddSaturate255(cg_block_t * block, cg_virtua
 cg_virtual_reg_t * CodeGenerator :: ClampTo255(cg_block_t * block, cg_virtual_reg_t * value) {
 	cg_proc_t * procedure = block->proc;
 
-	DECL_CONST_REG	(constant0, 0);
-	DECL_CONST_REG	(constant17, 17);
-	DECL_CONST_REG	(constant1, 0x10000);
-	DECL_CONST_REG	(constantFactor, 0x1ff);
+	if (value) {
+		DECL_CONST_REG	(constant0, 0);
+		DECL_CONST_REG	(constant17, 17);
+		DECL_CONST_REG	(constant1, 0x10000);
+		DECL_CONST_REG	(constantFactor, 0x1ff);
 
-	DECL_REG	(regClamped0);
-	DECL_REG	(regClamped1);
-	DECL_REG	(regAdjusted);
-	DECL_REG	(regResult);
+		DECL_REG	(regClamped0);
+		DECL_REG	(regClamped1);
+		DECL_REG	(regAdjusted);
+		DECL_REG	(regResult);
 
-	MAX		(regClamped0, value, constant0);
-	MIN		(regClamped1, regClamped0, constant1);
-	MUL		(regAdjusted, regClamped1, constantFactor);
-	LSR		(regResult, regAdjusted, constant17);
+		MAX		(regClamped0, value, constant0);
+		MIN		(regClamped1, regClamped0, constant1);
+		MUL		(regAdjusted, regClamped1, constantFactor);
+		LSR		(regResult, regAdjusted, constant17);
 
-	return regResult;
+		return regResult;
+	} else {
+		DECL_CONST_REG	(regResult, 0);
+
+		return regResult;
+	}
 }
 
 cg_virtual_reg_t * CodeGenerator :: AddSigned(cg_block_t * block, cg_virtual_reg_t * first, cg_virtual_reg_t * second) {

@@ -136,12 +136,6 @@ static const struct {
 	/* OES_point_size_array */
 	FunctionEntry(glPointSizePointerOES),
 
-	/* OES_matrix_palette */
-	FunctionEntry(glCurrentPaletteMatrixOES),
-	FunctionEntry(glLoadPaletteFromModelViewMatrixOES),
-	FunctionEntry(glMatrixIndexPointerOES),
-	FunctionEntry(glWeightPointerOES),
-
 	FunctionEntry(eglSaveSurfaceHM)
 };
 

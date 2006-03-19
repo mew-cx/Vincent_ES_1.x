@@ -73,14 +73,6 @@ void Context :: ToggleClientState(GLenum array, bool value) {
 		m_PointSizeArrayEnabled = value;
 		break;
 
-	case GL_WEIGHT_ARRAY_OES:
-		m_WeightArrayEnabled = value;
-		break;
-
-	case GL_MATRIX_INDEX_ARRAY_OES:
-		m_MatrixIndexArrayEnabled = value;
-		break;
-
 	default:
 		RecordError(GL_INVALID_ENUM);
 	}
@@ -378,8 +370,7 @@ void Context :: DrawArrays(GLenum mode, GLint first, GLsizei count) {
 		return;
 	}
 
-	if (!m_VertexArrayEnabled ||
-		(m_MatrixPaletteEnabled && (!m_MatrixIndexArrayEnabled || !m_WeightArrayEnabled))) {
+	if (!m_VertexArrayEnabled) {
 		RecordError(GL_INVALID_OPERATION);
 		return;
 	}
@@ -403,8 +394,7 @@ void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
 		return;
 	}
 
-	if (!m_VertexArrayEnabled ||
-		(m_MatrixPaletteEnabled && (!m_MatrixIndexArrayEnabled || !m_WeightArrayEnabled))) {
+	if (!m_VertexArrayEnabled) {
 		RecordError(GL_INVALID_OPERATION);
 		return;
 	}
@@ -463,16 +453,6 @@ void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
 //					be retrieved.
 // --------------------------------------------------------------------------
 void Context :: SelectArrayElement(int index) {
-
-	if (m_MatrixPaletteEnabled) {
-		if (m_WeightArray.effectivePointer) {
-			m_WeightArray.FetchValues(index, m_CurrentWeights);
-		}
-
-		if (m_MatrixIndexArray.effectivePointer) {
-			m_MatrixIndexArray.FetchUnsignedByteValues(index, m_PaletteMatrixIndex);
-		}
-	}
 
 	assert(m_VertexArray.effectivePointer);
 
@@ -625,14 +605,6 @@ void Context :: PrepareRendering() {
 	}
 
 	PrepareArray(m_PointSizeArray,m_PointSizeArrayEnabled);
-
-	if (m_MatrixPaletteEnabled) {
-		PrepareArray(m_WeightArray,	  m_WeightArrayEnabled);
-		PrepareArray(m_MatrixIndexArray,m_MatrixIndexArrayEnabled);
-		memset(m_CurrentWeights, 0, sizeof m_CurrentWeights);
-		memset(m_PaletteMatrixIndex, 0, sizeof m_PaletteMatrixIndex);
-	}
-
 }
 
 
@@ -671,16 +643,7 @@ void Context :: CurrentValuesToRasterPosNoLight(Vertex * rasterPos) {
 	FractionalColor backColor;
 
 	// apply projection matrix to eye coordinates
-	if (!m_MatrixPaletteEnabled) {
-		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	} else {
-		rasterPos->m_EyeCoords = m_MatrixPalette[m_PaletteMatrixIndex[0]] * (m_CurrentVertex * m_CurrentWeights[0]);
-
-		for (size_t index = 1; index < m_MatrixIndexArray.size; ++index) {
-			rasterPos->m_EyeCoords += m_MatrixPalette[m_PaletteMatrixIndex[index]] * (m_CurrentVertex * m_CurrentWeights[index]);
-		}
-	}
-
+	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	//	copy current colors to raster pos
@@ -701,16 +664,7 @@ void Context :: CurrentValuesToRasterPosOneSidedNoTrack(Vertex * rasterPos) {
 	FractionalColor backColor;
 
 	// apply projection matrix to eye coordinates
-	if (!m_MatrixPaletteEnabled) {
-		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	} else {
-		rasterPos->m_EyeCoords = m_MatrixPalette[m_PaletteMatrixIndex[0]] * (m_CurrentVertex * m_CurrentWeights[0]);
-
-		for (size_t index = 1; index < m_MatrixIndexArray.size; ++index) {
-			rasterPos->m_EyeCoords += m_MatrixPalette[m_PaletteMatrixIndex[index]] * (m_CurrentVertex * m_CurrentWeights[index]);
-		}
-	}
-
+	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
@@ -720,17 +674,7 @@ void Context :: CurrentValuesToRasterPosOneSidedNoTrack(Vertex * rasterPos) {
 	}
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
-	Vec3D eyeNormal;
-
-	if (!m_MatrixPaletteEnabled) {
-		eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
-	} else {
-		eyeNormal = m_MatrixPaletteInverse[m_PaletteMatrixIndex[0]] * (m_CurrentNormal * m_CurrentWeights[0]);
-
-		for (size_t index = 1; index < m_MatrixIndexArray.size; ++index) {
-			eyeNormal += m_MatrixPaletteInverse[m_PaletteMatrixIndex[index]] * (m_CurrentNormal * m_CurrentWeights[index]);
-		}
-	}
+	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
 
 	if (m_NormalizeEnabled) {
 		eyeNormal.Normalize();
@@ -762,16 +706,7 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(Vertex * rasterPos) {
 	FractionalColor backColor;
 
 	// apply projection matrix to eye coordinates
-	if (!m_MatrixPaletteEnabled) {
-		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	} else {
-		rasterPos->m_EyeCoords = m_MatrixPalette[m_PaletteMatrixIndex[0]] * (m_CurrentVertex * m_CurrentWeights[0]);
-
-		for (size_t index = 1; index < m_MatrixIndexArray.size; ++index) {
-			rasterPos->m_EyeCoords += m_MatrixPalette[m_PaletteMatrixIndex[index]] * (m_CurrentVertex * m_CurrentWeights[index]);
-		}
-	}
-
+	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
@@ -781,17 +716,7 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(Vertex * rasterPos) {
 	}
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
-	Vec3D eyeNormal;
-
-	if (!m_MatrixPaletteEnabled) {
-		eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
-	} else {
-		eyeNormal = m_MatrixPaletteInverse[m_PaletteMatrixIndex[0]] * (m_CurrentNormal * m_CurrentWeights[0]);
-
-		for (size_t index = 1; index < m_MatrixIndexArray.size; ++index) {
-			eyeNormal += m_MatrixPaletteInverse[m_PaletteMatrixIndex[index]] * (m_CurrentNormal * m_CurrentWeights[index]);
-		}
-	}
+	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
 
 	if (m_NormalizeEnabled) {
 		eyeNormal.Normalize();
@@ -822,16 +747,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(Vertex * rasterPos) {
 	FractionalColor backColor;
 
 	// apply projection matrix to eye coordinates
-	if (!m_MatrixPaletteEnabled) {
-		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	} else {
-		rasterPos->m_EyeCoords = m_MatrixPalette[m_PaletteMatrixIndex[0]] * (m_CurrentVertex * m_CurrentWeights[0]);
-
-		for (size_t index = 1; index < m_MatrixIndexArray.size; ++index) {
-			rasterPos->m_EyeCoords += m_MatrixPalette[m_PaletteMatrixIndex[index]] * (m_CurrentVertex * m_CurrentWeights[index]);
-		}
-	}
-
+	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
@@ -841,17 +757,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(Vertex * rasterPos) {
 	}
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
-	Vec3D eyeNormal;
-
-	if (!m_MatrixPaletteEnabled) {
-		eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
-	} else {
-		eyeNormal = m_MatrixPaletteInverse[m_PaletteMatrixIndex[0]] * (m_CurrentNormal * m_CurrentWeights[0]);
-
-		for (size_t index = 1; index < m_MatrixIndexArray.size; ++index) {
-			eyeNormal += m_MatrixPaletteInverse[m_PaletteMatrixIndex[index]] * (m_CurrentNormal * m_CurrentWeights[index]);
-		}
-	}
+	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
 
 	if (m_NormalizeEnabled) {
 		eyeNormal.Normalize();
@@ -888,16 +794,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(Vertex * rasterPos) {
 	FractionalColor backColor;
 
 	// apply projection matrix to eye coordinates
-	if (!m_MatrixPaletteEnabled) {
-		m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	} else {
-		rasterPos->m_EyeCoords = m_MatrixPalette[m_PaletteMatrixIndex[0]] * (m_CurrentVertex * m_CurrentWeights[0]);
-
-		for (size_t index = 1; index < m_MatrixIndexArray.size; ++index) {
-			rasterPos->m_EyeCoords += m_MatrixPalette[m_PaletteMatrixIndex[index]] * (m_CurrentVertex * m_CurrentWeights[index]);
-		}
-	}
-
+	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
 	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
@@ -907,17 +804,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(Vertex * rasterPos) {
 	}
 
 	// apply inverse of model view matrix to normals -> eye coordinates normals
-	Vec3D eyeNormal;
-
-	if (!m_MatrixPaletteEnabled) {
-		eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
-	} else {
-		eyeNormal = m_MatrixPaletteInverse[m_PaletteMatrixIndex[0]] * (m_CurrentNormal * m_CurrentWeights[0]);
-
-		for (size_t index = 1; index < m_MatrixIndexArray.size; ++index) {
-			eyeNormal += m_MatrixPaletteInverse[m_PaletteMatrixIndex[index]] * (m_CurrentNormal * m_CurrentWeights[index]);
-		}
-	}
+	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
 
 	if (m_NormalizeEnabled) {
 		eyeNormal.Normalize();
@@ -951,10 +838,10 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(Vertex * rasterPos) {
 void Context :: ClipCoordsToWindowCoords(Vertex & pos) {
 
 	// perform depth division
-	GLfloat x = pos.m_ClipCoords.x();
-	GLfloat y = pos.m_ClipCoords.y();
-	GLfloat z = pos.m_ClipCoords.z();
-	GLfloat w = pos.m_ClipCoords.w();
+	EGL_Fixed x = pos.m_ClipCoords.x();
+	EGL_Fixed y = pos.m_ClipCoords.y();
+	EGL_Fixed z = pos.m_ClipCoords.z();
+	EGL_Fixed w = pos.m_ClipCoords.w();
 
 	// fix possible rounding problems
 	if (x < -w)	x = -w;
@@ -964,25 +851,43 @@ void Context :: ClipCoordsToWindowCoords(Vertex & pos) {
 	if (z < -w)	z = -w;
 	if (z > w)	z = w;
 
-	// keep this value around for perspective-correct texturing
-	GLfloat invDenominator = (w != 0.0f) ? 1.0f / w : 0.0f;
+	if ((w >> 24) && (w >> 24) + 1) {
+		// keep this value around for perspective-correct texturing
+		EGL_Fixed invDenominator = EGL_Inverse(w >> 8);
 
-	// Scale 1/Z by 2^12 to avoid rounding problems during prespective correct
-	// interpolation
-	// See book by LaMothe for more detailed discussion on this
-	pos.m_WindowCoords.invW = static_cast<EGL_Fixed>(invDenominator * static_cast<float>(EGL_ONE << 12));
+		// Scale 1/Z by 2^4 to avoid rounding problems during prespective correct
+		// interpolation
+		// See book by LaMothe for more detailed discussion on this
+		pos.m_WindowCoords.invW = invDenominator << 4;
 
-	pos.m_WindowCoords.x =
-		EGL_Mul(EGL_FixedFromFloat(x * invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
-	pos.m_WindowCoords.y =
-		EGL_Mul(EGL_FixedFromFloat(y * invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
-	pos.m_WindowCoords.depth =
-		EGL_CLAMP(EGL_Mul(EGL_FixedFromFloat(z * invDenominator), m_DepthRangeFactor) + m_DepthRangeBase, 0, 0xffff);
+		pos.m_WindowCoords.x = 
+			EGL_Mul(EGL_Mul(x >> 8, invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
 
-	//pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x1000) & ~0x1fff);
-	//pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x1000) & ~0x1fff);
-	//pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x80) & ~0xff);
-	//pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x80) & ~0xff);
+		pos.m_WindowCoords.y = 
+			EGL_Mul(EGL_Mul(y >> 8, invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
+
+		pos.m_WindowCoords.depth = 
+			EGL_CLAMP(EGL_Mul(z >> 8, EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase, 0, 0xffff);
+
+	} else {
+		// keep this value around for perspective-correct texturing
+		EGL_Fixed invDenominator = w ? EGL_Inverse(w) : 0;
+
+		// Scale 1/Z by 2^12 to avoid rounding problems during prespective correct
+		// interpolation
+		pos.m_WindowCoords.invW = invDenominator << 12;
+
+		pos.m_WindowCoords.x = 
+			EGL_Mul(EGL_Mul(x, invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
+		pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x800) & ~0xfff);
+		pos.m_WindowCoords.y = 
+			EGL_Mul(EGL_Mul(y, invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
+		pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x800) & ~0xfff);
+		pos.m_WindowCoords.depth = 
+			EGL_CLAMP(EGL_Mul(EGL_Mul(z, invDenominator), m_DepthRangeFactor)  + m_DepthRangeBase, 0, 0xffff);
+
+	}
+
 }
 
 void Context :: GetClipPlanex(GLenum plane, GLfixed eqn[4]) {
@@ -992,14 +897,14 @@ void Context :: GetClipPlanex(GLenum plane, GLfixed eqn[4]) {
 	}
 
 	size_t index = plane - GL_CLIP_PLANE0;
-	eqn[0] = EGL_FixedFromFloat(m_ClipPlanes[index].x());
-	eqn[1] = EGL_FixedFromFloat(m_ClipPlanes[index].y());
-	eqn[2] = EGL_FixedFromFloat(m_ClipPlanes[index].z());
-	eqn[3] = EGL_FixedFromFloat(m_ClipPlanes[index].w());
+	eqn[0] = m_ClipPlanes[index].x();
+	eqn[1] = m_ClipPlanes[index].y();
+	eqn[2] = m_ClipPlanes[index].z();
+	eqn[3] = m_ClipPlanes[index].w();
 }
 
 void Context :: ClipPlanex(GLenum plane, const GLfixed *equation) {
-
+	
 	if (plane < GL_CLIP_PLANE0 || plane >= GL_CLIP_PLANE0 + NUM_CLIP_PLANES) {
 		RecordError(GL_INVALID_ENUM);
 		return;
@@ -1007,72 +912,4 @@ void Context :: ClipPlanex(GLenum plane, const GLfixed *equation) {
 
 	size_t index = plane - GL_CLIP_PLANE0;
 	m_ClipPlanes[index] = m_FullInverseModelViewMatrix.Transpose() * Vec4D(equation);
-}
-
-// --------------------------------------------------------------------------
-// Additional array pointers for matrix palette support
-// --------------------------------------------------------------------------
-
-void Context :: MatrixIndexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
-	if (type != GL_UNSIGNED_BYTE) {
-		RecordError(GL_INVALID_ENUM);
-		return;
-	}
-
-	if (size < 1 || size > MATRIX_PALETTE_SIZE) {
-		RecordError(GL_INVALID_VALUE);
-		return;
-	}
-
-	if (stride < 0) {
-		RecordError(GL_INVALID_VALUE);
-		return;
-	}
-
-	if (stride == 0) {
-		stride = sizeof (GLubyte) * size;
-	}
-
-	m_MatrixIndexArray.pointer = pointer;
-	m_MatrixIndexArray.stride = stride;
-	m_MatrixIndexArray.type = type;
-	m_MatrixIndexArray.size = size;
-	m_MatrixIndexArray.boundBuffer = m_CurrentArrayBuffer;
-}
-
-
-void Context :: WeightPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) {
-	if (type != GL_FIXED && type != GL_FLOAT) {
-		RecordError(GL_INVALID_ENUM);
-		return;
-	}
-
-	if (size < 1 || size > MATRIX_PALETTE_SIZE) {
-		RecordError(GL_INVALID_VALUE);
-		return;
-	}
-
-	if (stride < 0) {
-		RecordError(GL_INVALID_VALUE);
-		return;
-	}
-
-	if (stride == 0) {
-		switch (type) {
-		case GL_FIXED:
-			stride = sizeof (GLfixed) * size;
-			break;
-
-		case GL_FLOAT:
-			stride = sizeof (GLfloat) * size;
-			break;
-
-		}
-	}
-
-	m_WeightArray.pointer = pointer;
-	m_WeightArray.stride = stride;
-	m_WeightArray.type = type;
-	m_WeightArray.size = size;
-	m_WeightArray.boundBuffer = m_CurrentArrayBuffer;
 }

@@ -63,7 +63,6 @@ Context :: Context(const Config & config)
 	m_MatrixMode(GL_MODELVIEW),
 	m_Scissor(0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
 	m_Viewport(0, 0, config.GetConfigAttrib(EGL_WIDTH), config.GetConfigAttrib(EGL_HEIGHT)),
-	m_CurrentPaletteMatrix(0),
 
 	// server flags
 	m_ClipPlaneEnabled(0),
@@ -83,8 +82,6 @@ Context :: Context(const Config & config)
 	m_SampleAlphaToOneEnabled(false),
 	m_SampleCoverageEnabled(false),
 	m_ScissorTestEnabled(false),
-	m_MatrixPaletteEnabled(false),
-	m_MatrixModePaletteEnabled(false),
 	m_ActiveTexture(0),
 	m_ClientActiveTexture(0),
 
@@ -455,10 +452,6 @@ void Context :: Toggle(GLenum cap, bool value) {
 		m_SampleCoverageEnabled = value;
 		break;
 
-	case GL_MATRIX_PALETTE_OES:
-		m_MatrixPaletteEnabled = value;
-		break;
-
 	default:
 		RecordError(GL_INVALID_ENUM);
 		return;
@@ -769,30 +762,6 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 		params[0] = m_TexCoordArray[m_ClientActiveTexture].type;
 		break;
 
-	case GL_MATRIX_INDEX_ARRAY_SIZE_OES:
-		params[0] = m_MatrixIndexArray.size;
-		break;
-
-	case GL_MATRIX_INDEX_ARRAY_TYPE_OES:
-		params[0] = m_MatrixIndexArray.type;
-		break;
-
-	case GL_MATRIX_INDEX_ARRAY_STRIDE_OES:
-		params[0] = m_MatrixIndexArray.stride;
-		break;
-
-	case GL_WEIGHT_ARRAY_SIZE_OES:
-		params[0] = m_WeightArray.size;
-		break;
-
-	case GL_WEIGHT_ARRAY_TYPE_OES:
-		params[0] = m_WeightArray.type;
-		break;
-
-	case GL_WEIGHT_ARRAY_STRIDE_OES:
-		params[0] = m_WeightArray.stride;
-		break;
-
 	case GL_POINT_SIZE_ARRAY_TYPE_OES:
 		params[0] = m_PointSizeArray.type;
 		break;
@@ -823,14 +792,6 @@ void Context :: GetIntegerv(GLenum pname, GLint *params) {
 
 	case GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES:
 		params[0] = m_PointSizeArray.boundBuffer;
-		break;
-
-	case GL_MATRIX_INDEX_ARRAY_BUFFER_BINDING_OES:
-		params[0] = m_MatrixIndexArray.boundBuffer;
-		break;
-
-	case GL_WEIGHT_ARRAY_BUFFER_BINDING_OES:
-		params[0] = m_WeightArray.boundBuffer;
 		break;
 
 	case GL_ARRAY_BUFFER_BINDING:
@@ -1203,14 +1164,6 @@ void Context :: GetPointerv(GLenum pname, void **params) {
 		params[0] = const_cast<void *>(m_TexCoordArray[m_ClientActiveTexture].pointer);
 		break;
 
-	case GL_MATRIX_INDEX_ARRAY_POINTER_OES:
-		params[0] = const_cast<void *>(m_MatrixIndexArray.pointer);
-		break;
-
-	case GL_WEIGHT_ARRAY_POINTER_OES:
-		params[0] = const_cast<void *>(m_WeightArray.pointer);
-		break;
-
 	case GL_POINT_SIZE_ARRAY_POINTER_OES:
 		params[0] = const_cast<void *>(m_PointSizeArray.pointer);
 		break;
@@ -1235,12 +1188,6 @@ GLboolean Context :: IsEnabled(GLenum cap) {
 
 	case GL_TEXTURE_COORD_ARRAY:
 		return m_TexCoordArrayEnabled[m_ClientActiveTexture];
-
-	case GL_MATRIX_INDEX_ARRAY_OES:
-		return m_MatrixIndexArrayEnabled;
-
-	case GL_WEIGHT_ARRAY_OES:
-		return m_WeightArrayEnabled;
 
 	case GL_POINT_SIZE_ARRAY_OES:
 		return m_PointSizeArrayEnabled;
@@ -1318,9 +1265,6 @@ GLboolean Context :: IsEnabled(GLenum cap) {
 
 	case GL_TEXTURE_2D:
 		return m_RasterizerState.IsEnabledTexture(m_ActiveTexture);
-
-	case GL_MATRIX_PALETTE_OES:
-		return m_MatrixPaletteEnabled;
 
 	case GL_POINT_SPRITE_OES:
 		return m_RasterizerState.IsPointSpriteEnabled();

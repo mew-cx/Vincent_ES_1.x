@@ -249,12 +249,6 @@ namespace EGL {
 		/* OES_point_size_array */
 		void PointSizePointer(GLenum type, GLsizei stride, const GLvoid *pointer);
 
-		/* OES_matrix_palette */
-		void CurrentPaletteMatrix(GLuint index);
-		void LoadPaletteFromModelViewMatrix(void);
-		void MatrixIndexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
-		void WeightPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
-
 		// ----------------------------------------------------------------------
 		// Context Management Functions
 		// ----------------------------------------------------------------------
@@ -387,15 +381,10 @@ private:
 		MatrixStack			m_ModelViewMatrixStack;
 		MatrixStack			m_ProjectionMatrixStack;
 		MatrixStack			m_TextureMatrixStack[EGL_NUM_TEXTURE_UNITS];
-		Matrix4x4			m_MatrixPalette[MATRIX_PALETTE_SIZE];
-		Matrix4x4			m_MatrixPaletteInverse[MATRIX_PALETTE_SIZE];
 
 		MatrixStack *		m_CurrentMatrixStack;
 		Matrix4x4			m_InverseModelViewMatrix;
 		Matrix4x4			m_FullInverseModelViewMatrix;
-		I32					m_CurrentPaletteMatrix;
-		EGL_Fixed			m_CurrentWeights[MATRIX_PALETTE_SIZE];
-		U8					m_PaletteMatrixIndex[MATRIX_PALETTE_SIZE];
 		GLenum				m_MatrixMode;
 
 		// ----------------------------------------------------------------------
@@ -421,16 +410,12 @@ private:
 		bool				m_ColorArrayEnabled;
 		bool				m_TexCoordArrayEnabled[EGL_NUM_TEXTURE_UNITS];
 		bool				m_PointSizeArrayEnabled;
-		bool				m_WeightArrayEnabled;
-		bool				m_MatrixIndexArrayEnabled;
 
 		VertexArray			m_VertexArray;
 		VertexArray			m_NormalArray;
 		VertexArray			m_ColorArray;
 		VertexArray			m_TexCoordArray[EGL_NUM_TEXTURE_UNITS];
 		VertexArray			m_PointSizeArray;
-		VertexArray			m_WeightArray;
-		VertexArray			m_MatrixIndexArray;
 
 		// ----------------------------------------------------------------------
 		// Default values if arrays are disabled
@@ -466,7 +451,7 @@ private:
 		// Rendering State
 		// ----------------------------------------------------------------------
 
-		Vec4f				m_ClipPlanes[NUM_CLIP_PLANES];
+		Vec4D				m_ClipPlanes[NUM_CLIP_PLANES];
 		U32					m_ClipPlaneEnabled;
 		Light				m_Lights[EGL_NUMBER_LIGHTS];
 		Material			m_FrontMaterial;
@@ -505,8 +490,6 @@ private:
 		bool				m_SampleAlphaToOneEnabled;
 		bool				m_SampleCoverageEnabled;
 		bool				m_GenerateMipmaps;
-		bool				m_MatrixPaletteEnabled;
-		bool				m_MatrixModePaletteEnabled;
 
 		I32					m_PixelStorePackAlignment;
 		I32					m_PixelStoreUnpackAlignment;

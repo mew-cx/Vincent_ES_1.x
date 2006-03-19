@@ -205,7 +205,7 @@ namespace {
 
 	}
 
-	size_t ClipUser(const Vec4f& plane, Vertex * input[], size_t inputCount, Vertex * output[], Vertex *& nextTemporary, size_t numVarying) {
+	size_t ClipUser(const Vec4D& plane, Vertex * input[], size_t inputCount, Vertex * output[], Vertex *& nextTemporary, size_t numVarying) {
 		if (inputCount < 3) {
 			return 0;
 		}
@@ -218,8 +218,8 @@ namespace {
 
 			current = input[index];
 
-			GLfloat c = Vec4f(current->m_EyeCoords) * plane;
-			GLfloat p = Vec4f(previous->m_EyeCoords) * plane;
+			EGL_Fixed c = current->m_EyeCoords * plane;
+			EGL_Fixed p = previous->m_EyeCoords * plane;
 
 			if (c > 0.0f) {
 				if (p >= 0.0f) {
@@ -231,7 +231,7 @@ namespace {
 					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 
-					InterpolateWithEye(newVertex, *current, *previous, p / (p - c), numVarying);
+					InterpolateWithEye(newVertex, *current, *previous, EGL_Mul(p, EGL_Inverse(p - c)), numVarying);
 					output[resultCount++] = current;
 				}
 			} else {
@@ -241,7 +241,7 @@ namespace {
 					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 
-					InterpolateWithEye(newVertex, *current, *previous, p / (p - c), numVarying);
+					InterpolateWithEye(newVertex, *current, *previous, EGL_Mul(p, EGL_Inverse(p - c)), numVarying);
 				}
 			}
 
@@ -293,28 +293,46 @@ void Context :: CullFace(GLenum mode) {
 }
 
 namespace {
-	inline GLfloat Det3x3(GLfloat x0, GLfloat x1, GLfloat x2,
-						GLfloat y0, GLfloat y1, GLfloat y2,
-						GLfloat z0, GLfloat z1, GLfloat z2) {
-		return
-			  x0 * y1 * z2
-			+ x1 * y2 * z0
-			+ x2 * y0 * z1
-			- x0 * y2 * z1
-			- x1 * y0 * z2
-			- x2 * y1 * z0;
+	inline I64 MulLong(EGL_Fixed a, EGL_Fixed b) {
+		return (((I64) a * (I64) b)  >> EGL_PRECISION);
+	}
+
+	inline EGL_Fixed Round(EGL_Fixed value) {
+		return (value + 8) >> 4;
 	}
 }
 
-
 void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 
-	GLfloat sign =
-		Det3x3(a.m_ClipCoords.w(), a.m_ClipCoords.x(), a.m_ClipCoords.y(),
-			   b.m_ClipCoords.w(), b.m_ClipCoords.x(), b.m_ClipCoords.y(),
-			   c.m_ClipCoords.w(), c.m_ClipCoords.x(), c.m_ClipCoords.y());
+	EGL_Fixed x0 = a.m_ClipCoords.w();
+	EGL_Fixed x1 = a.m_ClipCoords.x();
+	EGL_Fixed x2 = a.m_ClipCoords.y();
+								
+	EGL_Fixed y0 = b.m_ClipCoords.w();
+	EGL_Fixed y1 = b.m_ClipCoords.x();
+	EGL_Fixed y2 = b.m_ClipCoords.y();
+								
+	EGL_Fixed z0 = c.m_ClipCoords.w();
+	EGL_Fixed z1 = c.m_ClipCoords.x();
+	EGL_Fixed z2 = c.m_ClipCoords.y();
 
-	bool cw = (sign < 0.0f);
+	I64 sign;
+	
+	if (((x0 & 0xff000000) == 0 || (x0 & 0xff000000) == 0xff000000) &&
+		((y0 & 0xff000000) == 0 || (y0 & 0xff000000) == 0xff000000) &&
+		((z0 & 0xff000000) == 0 || (z0 & 0xff000000) == 0xff000000)) {
+		sign = 
+			+ Round(x0) * (MulLong(Round(y1), Round(z2)) - MulLong(Round(z1), Round(y2)))
+			- Round(y0) * (MulLong(Round(x1), Round(z2)) - MulLong(Round(z1), Round(x2)))
+			+ Round(z0) * (MulLong(Round(x1), Round(y2)) - MulLong(Round(y1), Round(x2)));
+	} else {
+		sign = 
+			+ Round(x0 >> 6) * (MulLong(Round(y1), Round(z2)) - MulLong(Round(z1), Round(y2)))
+			- Round(y0 >> 6) * (MulLong(Round(x1), Round(z2)) - MulLong(Round(z1), Round(x2)))
+			+ Round(z0 >> 6) * (MulLong(Round(x1), Round(y2)) - MulLong(Round(y1), Round(x2)));
+	}
+
+	bool cw = (sign < 0);
 	bool backFace = cw ^ m_ReverseFaceOrientation;
 
 	if (m_CullFaceEnabled) {

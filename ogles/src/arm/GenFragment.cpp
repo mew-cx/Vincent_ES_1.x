@@ -397,7 +397,6 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 
 		cg_virtual_reg_t * regTextureLogWidth =		LOAD_DATA(block, fragmentInfo.regTexture[unit], OFFSET_TEXTURE_LOG_WIDTH);
 		cg_virtual_reg_t * regTextureLogHeight =	LOAD_DATA(block, fragmentInfo.regTexture[unit], OFFSET_TEXTURE_LOG_HEIGHT);
-		cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, fragmentInfo.regTexture[unit], OFFSET_TEXTURE_DATA);
 
 		LSL		(regScaledU, regU0, regTextureLogWidth);
 		LSL		(regScaledV, regV0, regTextureLogHeight);
@@ -405,6 +404,9 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 		ASR		(regTexX, regScaledU, regConstant16);
 		ASR		(regTexY, regScaledV, regConstant16);
 		LSL		(regScaledTexY, regTexY, regTextureLogWidth);
+
+		cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, fragmentInfo.regTexture[unit], OFFSET_TEXTURE_DATA);
+
 		ADD		(regTexOffset, regScaledTexY, regTexX);
 
 		FetchTexColor(procedure, block, m_State->m_Texture + unit, regTextureData, regTexOffset,

@@ -113,7 +113,7 @@ namespace EGL {
 		FractionalColor		m_FrontColor;		// color in range 0..255
 		FractionalColor		m_BackColor;
 		Vec4D				m_EyeCoords;
-		Vec4f				m_ClipCoords;
+		Vec4D				m_ClipCoords;
 		ScreenCoord			m_WindowCoords;
 		EGL_Fixed			m_Varying[EGL_MAX_NUM_VARYING];
 	};

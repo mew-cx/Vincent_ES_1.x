@@ -234,7 +234,12 @@ namespace EGL {
 	class Vec4D {
 
 		// element names compatible to GPP_VEC4D
-		EGL_Fixed 	m_x, m_y, m_z, m_w;
+		union {
+			struct {
+				EGL_Fixed 	m_x, m_y, m_z, m_w;
+			};
+			EGL_Fixed		m_vec[4];
+		};
 
 	public:
 		// ----------------------------------------------------------------------
@@ -452,146 +457,13 @@ namespace EGL {
 		inline void setW(EGL_Fixed value) {
 			m_w = value;
 		}
-	};
 
-	// --------------------------------------------------------------------------
-	// 4-D Vector class
-	// --------------------------------------------------------------------------
-
-
-	class Vec4f {
-
-		GLfloat m_coords[4];
-
-	public:
-		// ----------------------------------------------------------------------
-		// Constructor
-		// ----------------------------------------------------------------------
-		inline Vec4f() {
-			m_coords[0] = m_coords[1] = m_coords[2] = 0.0f;
-			m_coords[3] = 1.0f;
+		inline EGL_Fixed& operator[](int idx) {
+			return m_vec[idx];
 		}
 
-		// ----------------------------------------------------------------------
-		// Constructor, canonical embedding of R^3 in SO^2
-		//
-		// Parameters:
-		//	x, y, z			-	individual coordinates of 3-D vector
-		// ----------------------------------------------------------------------
-		inline Vec4f(GLfloat x, GLfloat y, GLfloat z) {
-			m_coords[0] = x;
-			m_coords[1] = y;
-			m_coords[2] = z;
-			m_coords[3] = 1.0f;
-		}
-
-		// ----------------------------------------------------------------------
-		// Constructor
-		//
-		// Parameters:
-		//	coords			-	individual coordinates of 3-D vector
-		// ----------------------------------------------------------------------
-		inline Vec4f(const GLfloat * coords) {
-			for (size_t index = 0; index < 4; ++index)
-				m_coords[index] = coords[index];
-		}
-
-		// ----------------------------------------------------------------------
-		// Constructor
-		//
-		// Parameters:
-		//	x, y, z, w			-	individual coordinates of 4-D vector
-		// ----------------------------------------------------------------------
-		inline Vec4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w) {
-			m_coords[0] = x;
-			m_coords[1] = y;
-			m_coords[2] = z;
-			m_coords[3] = w;
-		}
-
-		// ----------------------------------------------------------------------
-		// Copy constructor
-		// ----------------------------------------------------------------------
-		inline Vec4f(const Vec4f& other) {
-			for (size_t index = 0; index < 4; ++index)
-				m_coords[index] = other.m_coords[index];
-		}
-
-		// ----------------------------------------------------------------------
-		// Constructor from fixed point
-		// ----------------------------------------------------------------------
-		inline Vec4f(const Vec4D& other) {
-			m_coords[0] = EGL_FloatFromFixed(other.x());
-			m_coords[1] = EGL_FloatFromFixed(other.y());
-			m_coords[2] = EGL_FloatFromFixed(other.z());
-			m_coords[3] = EGL_FloatFromFixed(other.w());
-		}
-
-
-		// ----------------------------------------------------------------------
-		// Assignment operator
-		// ----------------------------------------------------------------------
-		inline Vec4f& operator=(const Vec4f& other) {
-			for (size_t index = 0; index < 4; ++index)
-				m_coords[index] = other.m_coords[index];
-			return *this;
-		}
-
-		// ----------------------------------------------------------------------
-		// Operations
-		// ----------------------------------------------------------------------
-
-		inline GLfloat operator*(const Vec4f& other) const {
-			GLfloat sum = 0.0f;
-
-			for (int index = 0; index < 4; ++index)
-				sum += m_coords[index] * other.m_coords[index];
-
-			return sum;
-		}
-
-		// ----------------------------------------------------------------------
-		// Element accessors
-		// ----------------------------------------------------------------------
-
-		inline GLfloat x() const {
-			return m_coords[0];
-		}
-
-		inline GLfloat y() const {
-			return m_coords[1];
-		}
-
-		inline GLfloat z() const {
-			return m_coords[2];
-		}
-
-		inline GLfloat w() const {
-			return m_coords[3];
-		}
-
-		inline void setX(GLfloat value) {
-			m_coords[0] = value;
-		}
-
-		inline void setY(GLfloat value) {
-			m_coords[1] = value;
-		}
-
-		inline void setZ(GLfloat value) {
-			m_coords[2] = value;
-		}
-
-		inline void setW(GLfloat value) {
-			m_coords[3] = value;
-		}
-
-		inline const GLfloat & operator[](size_t index) const {
-			return m_coords[index];
-		}
-
-		inline GLfloat & operator[](size_t index) {
-			return m_coords[index];
+		inline const EGL_Fixed& operator[](int idx) const {
+			return m_vec[idx];
 		}
 	};
 
@@ -607,7 +479,6 @@ namespace EGL {
 	inline OGLES_API Vec4D operator*(EGL_Fixed factor, const Vec4D& vector) {
 		return vector * factor;
 	}
-
 
 	// --------------------------------------------------------------------------
 	// 4x4 Matrix class
