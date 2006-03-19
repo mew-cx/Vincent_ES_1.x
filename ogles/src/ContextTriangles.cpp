@@ -41,39 +41,12 @@
 #include "Context.h"
 #include "fixed.h"
 #include "Rasterizer.h"
+#include "Utils.h"
 
 using namespace EGL;
 
 
 namespace {
-
-	inline GLfloat Interpolate(GLfloat x0f, GLfloat x1f, GLfloat coeff) {
-		return x1f + (x0f - x1f) * coeff;
-	}
-
-	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed x1, GLfloat coeff) {
-		return EGL_FixedFromFloat(Interpolate(EGL_FloatFromFixed(x0), EGL_FloatFromFixed(x1), coeff));
-	}
-
-	inline void Interpolate(Vertex& result, const Vertex& dst, const Vertex& src, GLfloat coeff, size_t numVarying) {
-		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), coeff));
-		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), coeff));
-		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), coeff));
-		result.m_ClipCoords.setW(Interpolate(dst.m_ClipCoords.w(), src.m_ClipCoords.w(), coeff));
-
-		for (size_t index = 0; index < numVarying; ++index) {
-			result.m_Varying[index] = Interpolate(dst.m_Varying[index], src.m_Varying[index], coeff);
-		}
-	}
-
-	inline void InterpolateWithEye(Vertex& result, const Vertex& dst, const Vertex& src, GLfloat coeff, size_t numVarying) {
-		result.m_EyeCoords.setX(Interpolate(dst.m_EyeCoords.x(), src.m_EyeCoords.x(), coeff));
-		result.m_EyeCoords.setY(Interpolate(dst.m_EyeCoords.y(), src.m_EyeCoords.y(), coeff));
-		result.m_EyeCoords.setZ(Interpolate(dst.m_EyeCoords.z(), src.m_EyeCoords.z(), coeff));
-		result.m_EyeCoords.setW(Interpolate(dst.m_EyeCoords.w(), src.m_EyeCoords.w(), coeff));
-
-		Interpolate(result, dst, src, coeff, numVarying);
-	}
 
 	inline size_t ClipLow(Vertex * input[], size_t inputCount, Vertex * output[], Vertex *& nextTemporary, size_t coord, size_t numVarying) {
 
@@ -101,14 +74,14 @@ namespace {
 					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 
-					GLfloat c_x = current->m_ClipCoords[coord];
-					GLfloat c_w = current->m_ClipCoords.w();
-					GLfloat p_x = previous->m_ClipCoords[coord];
-					GLfloat p_w = previous->m_ClipCoords.w();
-					GLfloat num = p_w + p_x;
-					GLfloat denom = (p_w + p_x) - (c_w + c_x);
+					EGL_Fixed c_x = current->m_ClipCoords[coord];
+					EGL_Fixed c_w = current->m_ClipCoords.w();
+					EGL_Fixed p_x = previous->m_ClipCoords[coord];
+					EGL_Fixed p_w = previous->m_ClipCoords.w();
+					EGL_Fixed num = p_w + p_x;
+					EGL_Fixed denom = (p_w + p_x) - (c_w + c_x);
 
-					Interpolate(newVertex, *current, *previous, num / denom, numVarying);
+					Interpolate(newVertex, *current, *previous, num, denom, numVarying);
 					newVertex.m_ClipCoords[coord] = -newVertex.m_ClipCoords.w();
 
 					output[resultCount++] = current;
@@ -121,14 +94,14 @@ namespace {
 					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 
-					GLfloat c_x = current->m_ClipCoords[coord];
-					GLfloat c_w = current->m_ClipCoords.w();
-					GLfloat p_x = previous->m_ClipCoords[coord];
-					GLfloat p_w = previous->m_ClipCoords.w();
-					GLfloat num = p_w + p_x;
-					GLfloat denom = (p_w + p_x) - (c_w + c_x);
+					EGL_Fixed c_x = current->m_ClipCoords[coord];
+					EGL_Fixed c_w = current->m_ClipCoords.w();
+					EGL_Fixed p_x = previous->m_ClipCoords[coord];
+					EGL_Fixed p_w = previous->m_ClipCoords.w();
+					EGL_Fixed num = p_w + p_x;
+					EGL_Fixed denom = (p_w + p_x) - (c_w + c_x);
 
-					Interpolate(newVertex, *current, *previous, num / denom, numVarying);
+					Interpolate(newVertex, *current, *previous, num, denom, numVarying);
 					newVertex.m_ClipCoords[coord] = -newVertex.m_ClipCoords.w();
 
 					//previous = current;
@@ -167,14 +140,14 @@ namespace {
 					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 
-					GLfloat c_x = current->m_ClipCoords[coord];
-					GLfloat c_w = current->m_ClipCoords.w();
-					GLfloat p_x = previous->m_ClipCoords[coord];
-					GLfloat p_w = previous->m_ClipCoords.w();
-					GLfloat num = p_w - p_x;
-					GLfloat denom = (p_w - p_x) - (c_w - c_x);
+					EGL_Fixed c_x = current->m_ClipCoords[coord];
+					EGL_Fixed c_w = current->m_ClipCoords.w();
+					EGL_Fixed p_x = previous->m_ClipCoords[coord];
+					EGL_Fixed p_w = previous->m_ClipCoords.w();
+					EGL_Fixed num = p_w - p_x;
+					EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
-					Interpolate(newVertex, *current, *previous, num / denom, numVarying);
+					Interpolate(newVertex, *current, *previous, num, denom, numVarying);
 					newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
 
 					output[resultCount++] = current;
@@ -186,14 +159,14 @@ namespace {
 					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 
-					GLfloat c_x = current->m_ClipCoords[coord];
-					GLfloat c_w = current->m_ClipCoords.w();
-					GLfloat p_x = previous->m_ClipCoords[coord];
-					GLfloat p_w = previous->m_ClipCoords.w();
-					GLfloat num = p_w - p_x;
-					GLfloat denom = (p_w - p_x) - (c_w - c_x);
+					EGL_Fixed c_x = current->m_ClipCoords[coord];
+					EGL_Fixed c_w = current->m_ClipCoords.w();
+					EGL_Fixed p_x = previous->m_ClipCoords[coord];
+					EGL_Fixed p_w = previous->m_ClipCoords.w();
+					EGL_Fixed num = p_w - p_x;
+					EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
-					Interpolate(newVertex, *current, *previous, num / denom, numVarying);
+					Interpolate(newVertex, *current, *previous, num, denom, numVarying);
 					newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
 				}
 			}
@@ -231,7 +204,7 @@ namespace {
 					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 
-					InterpolateWithEye(newVertex, *current, *previous, EGL_Mul(p, EGL_Inverse(p - c)), numVarying);
+					InterpolateWithEye(newVertex, *current, *previous, p, p - c, numVarying);
 					output[resultCount++] = current;
 				}
 			} else {
@@ -241,7 +214,7 @@ namespace {
 					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 
-					InterpolateWithEye(newVertex, *current, *previous, EGL_Mul(p, EGL_Inverse(p - c)), numVarying);
+					InterpolateWithEye(newVertex, *current, *previous, p, p - c, numVarying);
 				}
 			}
 
