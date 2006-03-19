@@ -108,7 +108,7 @@ typedef void (*_GLfuncptr)();
 #define GL_OES_compressed_paletted_texture 1
 /*#define GL_OES_draw_texture             1*/
 #define GL_OES_matrix_get                 1
-#define GL_OES_matrix_palette		      1
+/*#define GL_OES_matrix_palette		      1*/
 #define GL_OES_point_size_array           1
 #define GL_OES_point_sprite               1
 #define GL_OES_read_format                1
