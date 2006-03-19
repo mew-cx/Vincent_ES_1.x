@@ -41,6 +41,7 @@
 #include "Context.h"
 #include "fixed.h"
 #include "Rasterizer.h"
+#include "Utils.h"
 
 using namespace EGL;
 
@@ -57,26 +58,6 @@ void Context :: LineWidthx(GLfixed width) {
 
 namespace {
 
-	inline GLfloat Interpolate(GLfloat x0f, GLfloat x1f, GLfloat coeff) {
-		GLfloat complement = 1.0f - coeff;
-		return x1f * complement + x0f * coeff;
-	}
-
-	inline EGL_Fixed Interpolate(EGL_Fixed x0, EGL_Fixed x1, GLfloat coeff) {
-		return EGL_FixedFromFloat(Interpolate(EGL_FloatFromFixed(x0), EGL_FloatFromFixed(x1), coeff));
-	}
-
-	inline void Interpolate(Vertex& result, const Vertex& dst, const Vertex& src, GLfloat coeff, size_t numVarying) {
-		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), coeff));
-		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), coeff));
-		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), coeff));
-		result.m_ClipCoords.setW(Interpolate(dst.m_ClipCoords.w(), src.m_ClipCoords.w(), coeff));
-
-		for (size_t index = 0; index < numVarying; ++index) {
-			result.m_Varying[index] = Interpolate(dst.m_Varying[index], src.m_Varying[index], coeff);
-		}
-	}
-
 	inline bool Clip(Vertex*& from, Vertex*& to, Vertex *&tempVertices, size_t coord, size_t numVarying) {
 		if (from->m_ClipCoords[coord] < -from->m_ClipCoords.w()) {
 			if (to->m_ClipCoords[coord] < -to->m_ClipCoords.w()) {
@@ -91,7 +72,7 @@ namespace {
 			EGL_Fixed num = p_w - p_x;
 			EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
-			Interpolate(*tempVertices, *from, *to, num / denom, numVarying);
+			Interpolate(*tempVertices, *from, *to, num, denom, numVarying);
 			from = tempVertices++;
 
 			return true;
@@ -109,7 +90,7 @@ namespace {
 			EGL_Fixed num = p_w - p_x;
 			EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
-			Interpolate(*tempVertices, *from, *to, num / denom, numVarying);
+			Interpolate(*tempVertices, *from, *to, num, denom, numVarying);
 			from = tempVertices++;
 
 			return true;
@@ -124,7 +105,7 @@ namespace {
 			EGL_Fixed num = p_w - p_x;
 			EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
-			Interpolate(*tempVertices, *to, *from, num / denom, numVarying);
+			Interpolate(*tempVertices, *to, *from, num, denom, numVarying);
 			to = tempVertices++;
 
 			return true;
@@ -139,7 +120,7 @@ namespace {
 			EGL_Fixed num = p_w - p_x;
 			EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
-			Interpolate(*tempVertices, *to, *from, EGL_Mul(num, EGL_Inverse(denom)), numVarying);
+			Interpolate(*tempVertices, *to, *from, num, denom, numVarying);
 			to = tempVertices++;
 
 			return true;
@@ -152,22 +133,22 @@ namespace {
 
 	inline bool ClipUser(const Vec4D& plane, Vertex*& from, Vertex*& to, Vertex *&tempVertices, size_t numVarying) {
 
-		EGL_Fixed f = Vec4D(from->m_EyeCoords) * plane;
-		EGL_Fixed t = Vec4D(to->m_EyeCoords) * plane;
+		EGL_Fixed f = from->m_EyeCoords * plane;
+		EGL_Fixed t = to->m_EyeCoords * plane;
 
 		if (f < 0) {
 			if (t <= 0) {
 				return false;
 			}
 
-			Interpolate(*tempVertices, *from, *to, EGL_Mul(t, EGL_Inverse(t - f)), numVarying);
+			Interpolate(*tempVertices, *from, *to, t, t - f, numVarying);
 			from = tempVertices++;
 
 			return true;
 
 		} else if (t < 0) {
 
-			Interpolate(*tempVertices, *to, *from, EGL_Mul(f, EGL_Inverse(f - t)), numVarying);
+			Interpolate(*tempVertices, *to, *from, f, f - t, numVarying);
 			to = tempVertices++;
 
 			return true;

@@ -64,28 +64,28 @@ namespace EGL {
 		return 31 - CountLeadingZeros(value);
 	}
 
-	inline EGL_Fixed Interpolate(EGL_Fixed x0f, EGL_Fixed x1f, EGL_Fixed coeff) {
-		return x1f + EGL_Mul((x0f - x1f), coeff);
+	inline EGL_Fixed Interpolate(EGL_Fixed x0f, EGL_Fixed x1f, EGL_Fixed num, EGL_Fixed denom) {
+		return x1f + static_cast<I32>((static_cast<I64>(x0f - x1f) * num) / denom);
 	}
 
-	inline void Interpolate(Vertex& result, const Vertex& dst, const Vertex& src, EGL_Fixed coeff, size_t numVarying) {
-		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), coeff));
-		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), coeff));
-		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), coeff));
-		result.m_ClipCoords.setW(Interpolate(dst.m_ClipCoords.w(), src.m_ClipCoords.w(), coeff));
+	inline void Interpolate(Vertex& result, const Vertex& dst, const Vertex& src, EGL_Fixed num, EGL_Fixed denom, size_t numVarying) {
+		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), num, denom));
+		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), num, denom));
+		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), num, denom));
+		result.m_ClipCoords.setW(Interpolate(dst.m_ClipCoords.w(), src.m_ClipCoords.w(), num, denom));
 
 		for (size_t index = 0; index < numVarying; ++index) {
-			result.m_Varying[index] = Interpolate(dst.m_Varying[index], src.m_Varying[index], coeff);
+			result.m_Varying[index] = Interpolate(dst.m_Varying[index], src.m_Varying[index], num, denom);
 		}
 	}
 
-	inline void InterpolateWithEye(Vertex& result, const Vertex& dst, const Vertex& src, EGL_Fixed coeff, size_t numVarying) {
-		result.m_EyeCoords.setX(Interpolate(dst.m_EyeCoords.x(), src.m_EyeCoords.x(), coeff));
-		result.m_EyeCoords.setY(Interpolate(dst.m_EyeCoords.y(), src.m_EyeCoords.y(), coeff));
-		result.m_EyeCoords.setZ(Interpolate(dst.m_EyeCoords.z(), src.m_EyeCoords.z(), coeff));
-		result.m_EyeCoords.setW(Interpolate(dst.m_EyeCoords.w(), src.m_EyeCoords.w(), coeff));
+	inline void InterpolateWithEye(Vertex& result, const Vertex& dst, const Vertex& src, EGL_Fixed num, EGL_Fixed denom, size_t numVarying) {
+		result.m_EyeCoords.setX(Interpolate(dst.m_EyeCoords.x(), src.m_EyeCoords.x(), num, denom));
+		result.m_EyeCoords.setY(Interpolate(dst.m_EyeCoords.y(), src.m_EyeCoords.y(), num, denom));
+		result.m_EyeCoords.setZ(Interpolate(dst.m_EyeCoords.z(), src.m_EyeCoords.z(), num, denom));
+		result.m_EyeCoords.setW(Interpolate(dst.m_EyeCoords.w(), src.m_EyeCoords.w(), num, denom));
 
-		Interpolate(result, dst, src, coeff, numVarying);
+		Interpolate(result, dst, src, num, denom, numVarying);
 	}
 }
 
