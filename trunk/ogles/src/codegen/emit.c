@@ -2602,6 +2602,8 @@ static void select_global_regs(cg_codegen_t * gen, cg_proc_t * proc)
 	cg_virtual_reg_t * reg;
 	cg_virtual_reg_t ** all_regs, **current_reg;
 	cg_virtual_reg_list_t * node;
+	cg_bitset_t * conflicts[ARM_NUM_VARIABLE_REGS];
+	cg_virtual_reg_list_t * interferences;
 
 	for (reg = proc->registers, index = 0; reg && index < proc->num_args; reg = reg->next, ++index)
 	{
@@ -2631,9 +2633,10 @@ static void select_global_regs(cg_codegen_t * gen, cg_proc_t * proc)
 	/* mark up registers that are to be treated globally */
 	/* for each basic block where the register is used in live_in or live_out, perform a global
 	   allocation of that register */
-	/* initially, we do global allocation only among "permanent" ARM registers */
+	/* initially, we do global allocation only among variable ARM registers */
 
-	for (index = 0, reg_index = 0; index < ARM_NUM_GLOBAL_REGS && reg_index < used_register_count; ++reg_index)
+#if 0
+	for (index = 0, reg_index = 0; index < ARM_NUM_VARIABLE_REGS && reg_index < used_register_count; ++reg_index)
 	{
 		cg_virtual_reg_t * reg = all_regs[reg_index];
 
@@ -2648,6 +2651,40 @@ static void select_global_regs(cg_codegen_t * gen, cg_proc_t * proc)
 			proc->globals = node;
 		}
 	}
+#else
+	for (index = 0; index < ARM_NUM_VARIABLE_REGS; ++index) {
+		conflicts[index] = cg_bitset_create(proc->module->heap, proc->num_registers);
+	}
+
+	for (reg_index = 0; reg_index < used_register_count; ++reg_index)
+	{
+		cg_virtual_reg_t * reg = all_regs[reg_index];
+
+		if (!reg->is_arg && reg->type == cg_reg_type_general)
+		{
+			for (index = 0; index < ARM_NUM_VARIABLE_REGS; ++index) {
+				
+				if (!CG_BITSET_TEST(conflicts[index], reg->reg_no)) {
+					reg->is_global = 1;
+					reg->physical_reg = &gen->registers[index + ARMREG_V1];
+
+					for (interferences = reg->interferences; interferences; interferences = interferences->next) {
+						CG_BITSET_SET(conflicts[index], interferences->reg->reg_no);
+					}
+
+					CG_BITSET_SET(conflicts[index], reg->reg_no);
+
+					node = (cg_virtual_reg_list_t *) cg_heap_allocate(proc->module->heap, sizeof(cg_virtual_reg_list_t));
+					node->reg = reg;
+					node->next = proc->globals;
+					proc->globals = node;
+
+					break;
+				}
+			}
+		}
+	}
+#endif
 
 	free(all_regs);
 }

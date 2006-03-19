@@ -480,7 +480,7 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	block = cg_block_create(procedure, 4);
 	notInside->block = block;
 
-#if 0
+#if 1
     //        } else if (done) {
 	//			rowMask >>= EGL_RASTER_BLOCK_SIZE - ix - 1;
 	//			break;
@@ -666,6 +666,7 @@ void CodeGenerator :: GenerateRasterBlockColorAlpha(const VaryingInfo * varyingI
 
 	cg_block_ref_t * yLoopTop = cg_block_ref_create(procedure);
 	cg_block_ref_t * yLoopEnd = cg_block_ref_create(procedure);
+	cg_block_ref_t * yLoopIncr = cg_block_ref_create(procedure);
 
 	// stencil test passed
 	block = cg_block_create(procedure, 2);
@@ -694,6 +695,11 @@ void CodeGenerator :: GenerateRasterBlockColorAlpha(const VaryingInfo * varyingI
 #endif
 
 	ADD			(regMask1, regMask0, maskSize);
+
+	DECL_FLAGS	(skipEndLoop);
+
+	CMP		(skipEndLoop, regRowMask, zero);
+	BEQ		(skipEndLoop, yLoopIncr);
 
 	for (index = 0; index < varyingInfo->numVarying; ++index) {
 		//	varying0[index][0] = varying[index][0][0];
@@ -810,6 +816,7 @@ void CodeGenerator :: GenerateRasterBlockColorAlpha(const VaryingInfo * varyingI
 
 	block = cg_block_create(procedure, 2);
 	xLoopEnd->block = block;
+	yLoopIncr->block = block;
 
 	// <---- loop termination goes here
 	DECL_FLAGS	(regReachedYLoopEnd);

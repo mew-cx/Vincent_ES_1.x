@@ -101,12 +101,14 @@ namespace {
 		return static_cast<I32>((product + (1 << (shift - 1))) >> shift);
 	}
 
-	I32 InvNewtonRaphson4q28(I32 a, I32 x) {
-		int iter = 2;
+	inline I32 Mul(I32 a, I32 b, const I32 shift) {
+		I64 product = static_cast<I64>(a) * static_cast<I64>(b);
+		return static_cast<I32>(product >> shift);
+	}
 
-		do {
-			x = EGL_InverseIterQ(a, x, 28);
-		} while (--iter);
+	inline I32 InvNewtonRaphson4q28(I32 a, I32 x) {
+		x = EGL_InverseIterQ(a, x, 28);
+		x = EGL_InverseIterQ(a, x, 28);
 
 		return x;
 	}
@@ -319,112 +321,108 @@ void Rasterizer :: RasterBlockColorAlpha(I32 varying[][2][2],
 void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 								  const Vertex& c) {
 
+	I32 x, y;					// block index loop vars
+	I32 index, unit;			// index into varying variable array & texture unit
+
+	Variables vars;
+
+	Edges edges;
+
 	// 16.16 -> 28.4 fixed-point coordinates
-	I32 Y1 = (a.m_WindowCoords.y + (1 << 11)) >> 12;
-	I32 Y2 = (b.m_WindowCoords.y + (1 << 11)) >> 12;
-	I32 Y3 = (c.m_WindowCoords.y + (1 << 11)) >> 12;
-
-	I32 X1 = (a.m_WindowCoords.x + (1 << 11)) >> 12;
-	I32 X2 = (b.m_WindowCoords.x + (1 << 11)) >> 12;
-	I32 X3 = (c.m_WindowCoords.x + (1 << 11)) >> 12;
-
-	// Debug code: Determine an interior point of the triangle
-	//I32 IX = (X1 + X2 + X3) / 3;
-	//I32 IY = (Y1 + Y2 + Y3) / 3;
-
-	//I32 OX = (IX + 8) >> 4;
-	//I32 OY = (IY + 8) >> 4;
+	const I32 X1 = (a.m_WindowCoords.x + (1 << 11)) >> 12;
+	const I32 X2 = (b.m_WindowCoords.x + (1 << 11)) >> 12;
+	const I32 X3 = (c.m_WindowCoords.x + (1 << 11)) >> 12;
 
     // Deltas
-    I32 DX12 = X1 - X2, DX23 = X2 - X3, DX31 = X3 - X1;
-    I32 DY12 = Y1 - Y2, DY23 = Y2 - Y3, DY31 = Y3 - Y1;
-
-    I32 DW12 = a.m_WindowCoords.invW - b.m_WindowCoords.invW;
-    I32 DW23 = b.m_WindowCoords.invW - c.m_WindowCoords.invW;
-    I32 DW31 = c.m_WindowCoords.invW - a.m_WindowCoords.invW;
-
-    I32 DD12 = (a.m_WindowCoords.depth << 4) - (b.m_WindowCoords.depth << 4);
-    I32 DD23 = (b.m_WindowCoords.depth << 4) - (c.m_WindowCoords.depth << 4);
-    I32 DD31 = (c.m_WindowCoords.depth << 4) - (a.m_WindowCoords.depth << 4);
+    const I32 DX12 = X1 - X2;
+	const I32 DX23 = X2 - X3;
+	const I32 DX31 = X3 - X1;
 
     // 24.8 Fixed-point deltas
-	Edges edges;
     edges.edge12.FDX = DX12 << 4;
 	edges.edge23.FDX = DX23 << 4;
 	edges.edge31.FDX = DX31 << 4;
+
+	// 16.16 -> 28.4 fixed-point coordinates
+	const I32 Y1 = (a.m_WindowCoords.y + (1 << 11)) >> 12;
+	const I32 Y2 = (b.m_WindowCoords.y + (1 << 11)) >> 12;
+	const I32 Y3 = (c.m_WindowCoords.y + (1 << 11)) >> 12;
+
+    const I32 DY12 = Y1 - Y2;
+	const I32 DY23 = Y2 - Y3;
+	const I32 DY31 = Y3 - Y1;
 
     edges.edge12.FDY = DY12 << 4;
 	edges.edge23.FDY = DY23 << 4;
 	edges.edge31.FDY = DY31 << 4;
 
+	// setup of interpolation of varying vars goes here
+	// area in 24.8
+	I32 area = DX31 * DY12 - DX12 * DY31;
+
+	if (area <= 0xf)
+		return;
+
+	// inv arera as 8.24
+	I32 invArea = EGL_InverseQ(area, 8);
+
     // Bounding rectangle; round lower bound down to block size
-    I32 minx = ((min(X1, X2, X3) + 0x7) >> 4) & ~(EGL_RASTER_BLOCK_SIZE - 1);
-    I32 miny = ((min(Y1, Y2, Y3) + 0x7) >> 4) & ~(EGL_RASTER_BLOCK_SIZE - 1);
-    I32 maxx = ((max(X1, X2, X3) + 0x8) >> 4) + (EGL_RASTER_BLOCK_SIZE - 1) & ~(EGL_RASTER_BLOCK_SIZE - 1);
-    I32 maxy = ((max(Y1, Y2, Y3) + 0x8) >> 4) + (EGL_RASTER_BLOCK_SIZE - 1) & ~(EGL_RASTER_BLOCK_SIZE - 1);
-	I32 span = maxx - minx;
+    const I32 minx = ((min(X1, X2, X3) + 0x7) >> 4) & ~(EGL_RASTER_BLOCK_SIZE - 1);
+    const I32 miny = ((min(Y1, Y2, Y3) + 0x7) >> 4) & ~(EGL_RASTER_BLOCK_SIZE - 1);
+    const I32 maxx = ((max(X1, X2, X3) + 0x8) >> 4) + (EGL_RASTER_BLOCK_SIZE - 1) & ~(EGL_RASTER_BLOCK_SIZE - 1);
+    const I32 maxy = ((max(Y1, Y2, Y3) + 0x8) >> 4) + (EGL_RASTER_BLOCK_SIZE - 1) & ~(EGL_RASTER_BLOCK_SIZE - 1);
+	const I32 span = maxx - minx;
 
 	m_RasterInfo.Init(m_Surface, miny, minx);
 	I32 blockStride = EGL_RASTER_BLOCK_SIZE * m_RasterInfo.RasterSurface.Pitch - span;
+
+	const U32 numVarying = m_VaryingInfo.numVarying;
+	U32 usedNumVarying = 0;
+
 
     // Half-edge constants
     I32 C1 = Y2 * X1 - X2 * Y1;
     I32 C2 = Y3 * X2 - X3 * Y2;
     I32 C3 = Y1 * X3 - X1 * Y3;
 
-	I32 x, y;					// block index loop vars
-	U32 index, unit;			// index into varying variable array & texture unit
-
-	Variables vars;
-	I32 area, invArea;
-
-	U32 numVarying = m_VaryingInfo.numVarying, usedNumVarying = 0;
-
     // Correct for fill convention
 	if (DY12 > 0 || (DY12 == 0 && DX12 < 0)) C1++;
 	if (DY23 > 0 || (DY23 == 0 && DX23 < 0)) C2++;
 	if (DY31 > 0 || (DY31 == 0 && DX31 < 0)) C3++;
 
-	// setup of interpolation of varying vars goes here
-	// area in 24.8
-	area = DX31 * DY12 - DX12 * DY31;
+	I32 XMin1 = (minx << 4) + (1 << 3) - X1;
+	I32 YMin1 = (miny << 4) + (1 << 3) - Y1;
 
-	if (area <= 0xf)
-		return;
+	// Deltas
+    const I32 DD12 = (a.m_WindowCoords.depth - b.m_WindowCoords.depth) << 4;
+    const I32 DD23 = (b.m_WindowCoords.depth - c.m_WindowCoords.depth) << 4;
+    const I32 DD31 = (c.m_WindowCoords.depth - a.m_WindowCoords.depth) << 4;
 
-	// inv arera as 8.24
-	invArea = EGL_InverseQ(area, 8);
-
-	vars.Depth.dX =  MulRoundShift(det2x2(DY12, DD12, DY31, DD31), invArea, 28);
-	vars.Depth.dY = -MulRoundShift(det2x2(DX12, DD12, DX31, DD31), invArea, 28);
+	vars.Depth.dX =  Mul(det2x2(DY12, DD12, DY31, DD31), invArea, 28);
+	vars.Depth.dY = -Mul(det2x2(DX12, DD12, DX31, DD31), invArea, 28);
 	vars.Depth.dBlockLine = vars.Depth.dY * EGL_RASTER_BLOCK_SIZE - vars.Depth.dX * span;
+	vars.Depth.Value = (a.m_WindowCoords.depth << 4)
+							  + Mul(XMin1, vars.Depth.dX, 4)
+							  + Mul(YMin1, vars.Depth.dY, 4);
+
+    const I32 DW12 = a.m_WindowCoords.invW - b.m_WindowCoords.invW;
+    const I32 DW23 = b.m_WindowCoords.invW - c.m_WindowCoords.invW;
+    const I32 DW31 = c.m_WindowCoords.invW - a.m_WindowCoords.invW;
 
 	// dWdX, dWdY is 4.28
-	vars.InvW.dX =  MulRoundShift(det2x2(DY12, DW12, DY31, DW31), invArea, 28);
-	vars.InvW.dY = -MulRoundShift(det2x2(DX12, DW12, DX31, DW31), invArea, 28);
+	vars.InvW.dX =  Mul(det2x2(DY12, DW12, DY31, DW31), invArea, 28);
+	vars.InvW.dY = -Mul(det2x2(DX12, DW12, DX31, DW31), invArea, 28);
 	vars.InvW.dBlockLine = vars.InvW.dY * EGL_RASTER_BLOCK_SIZE - vars.InvW.dX * span;
-
-	// invW is 4.28
-	{
-		// calculate coordinate of upper left corner incl. 1/2 pixel pre-step
-		I32 XMin1 = (minx << 4) + (1 << 3) - X1;
-		I32 YMin1 = (miny << 4) + (1 << 3) - Y1;
-
-		vars.Depth.Value = (a.m_WindowCoords.depth << 4)
-								  + MulRoundShift(XMin1, vars.Depth.dX, 4)
-								  + MulRoundShift(YMin1, vars.Depth.dY, 4);
-
-		vars.InvW.Value = a.m_WindowCoords.invW
-								  + MulRoundShift(XMin1, vars.InvW.dX, 4)
-						   		  + MulRoundShift(YMin1, vars.InvW.dY, 4);
-	}
+	vars.InvW.Value = a.m_WindowCoords.invW
+							  + Mul(XMin1, vars.InvW.dX, 4)
+					   		  + Mul(YMin1, vars.InvW.dY, 4);
 
     // Loop through blocks
     for (y = miny; y < maxy; y += EGL_RASTER_BLOCK_SIZE) {
 
         for (x = minx; x < maxx; x += EGL_RASTER_BLOCK_SIZE) {
 
-            // Corners of block
+            // Corners of block as 28.4; move to pixel centers
             GLint x0 = (x << 4) | (1 << 3);
             GLint y0 = (y << 4) | (1 << 3);
 
@@ -465,6 +463,7 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 				totalMask = RasterBlockDepthStencil(&vars, pixelMask);
 #else
 				totalMask = m_BlockDepthStencilFunction(&m_RasterInfo, &vars, pixelMask);
+				//totalMask = RBDepthTestLess(&m_RasterInfo, &vars, pixelMask);
 #endif
             } else {
 				// Partially covered block
@@ -473,6 +472,7 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 				totalMask = RasterBlockEdgeDepthStencil(&vars, &edges, pixelMask);
 #else
 				totalMask = m_BlockEdgeDepthStencilFunction(&m_RasterInfo, &vars, &edges, pixelMask);
+				//totalMask = RBEdgeDepthTestLess(&m_RasterInfo, &vars, &edges, pixelMask);
 #endif
             }
 
@@ -481,29 +481,30 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 					I32 XMin2 = x0 - X1;
 					I32 YMin2 = y0 - Y1;
 
-					for (index = 0; index < numVarying; ++index) {
+					usedNumVarying = numVarying;
+
+					for (index = usedNumVarying; --index >= 0; ) {
 						// 4.28
-						I32 V1OverW = MulRoundShift(a.m_Varying[index], a.m_WindowCoords.invW, 16);
-						I32 V2OverW = MulRoundShift(b.m_Varying[index], b.m_WindowCoords.invW, 16);
-						I32 V3OverW = MulRoundShift(c.m_Varying[index], c.m_WindowCoords.invW, 16);
+						I32 V1OverW = Mul(a.m_Varying[index], a.m_WindowCoords.invW, 16);
+						I32 V2OverW = Mul(b.m_Varying[index], b.m_WindowCoords.invW, 16);
+						I32 V3OverW = Mul(c.m_Varying[index], c.m_WindowCoords.invW, 16);
 
 						I32 IVW12 = V1OverW - V2OverW;
 						I32 IVW31 = V3OverW - V1OverW;
 
 						// dVaryingDx, dVaryingDy is 4.28
-						vars.VaryingInvW[index].dX =  MulRoundShift(det2x2(DY12, IVW12, DY31, IVW31), invArea, 28);
-						vars.VaryingInvW[index].dY = -MulRoundShift(det2x2(DX12, IVW12, DX31, IVW31), invArea, 28);
+						vars.VaryingInvW[index].dX =  Mul(det2x2(DY12, IVW12, DY31, IVW31), invArea, 28);
+						vars.VaryingInvW[index].dY = -Mul(det2x2(DX12, IVW12, DX31, IVW31), invArea, 28);
 						vars.VaryingInvW[index].dBlockLine =
 							vars.VaryingInvW[index].dY * EGL_RASTER_BLOCK_SIZE - vars.VaryingInvW[index].dX * span;
 
 						// varyingStart is 4.28
 						vars.VaryingInvW[index].Value =
 							V1OverW
-								+ MulRoundShift(XMin2, vars.VaryingInvW[index].dX, 4)
-								+ MulRoundShift(YMin2, vars.VaryingInvW[index].dY, 4);
+								+ Mul(XMin2, vars.VaryingInvW[index].dX, 4)
+								+ Mul(YMin2, vars.VaryingInvW[index].dY, 4);
 					}
 
-					usedNumVarying = numVarying;
 				}
 
 				// interpolation values for the four corners
@@ -519,29 +520,29 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 												+ vars.InvW.dY * EGL_RASTER_BLOCK_SIZE, w[1][0]);
 
 				// compute values of varying at all four corners
-				for (index = 0; index < numVarying; ++index) {
-					varying[index][0][0] = MulRoundShift(vars.VaryingInvW[index].Value, w[0][0], 16);
+				for (index = usedNumVarying; --index >= 0; ) {
+					varying[index][0][0] = Mul(vars.VaryingInvW[index].Value, w[0][0], 16);
 					varying[index][0][1] =
-						(MulRoundShift(vars.VaryingInvW[index].Value
+						(Mul(vars.VaryingInvW[index].Value
 										+ (vars.VaryingInvW[index].dY << EGL_LOG_RASTER_BLOCK_SIZE), w[1][0], 16)
 						 - varying[index][0][0]) >> EGL_LOG_RASTER_BLOCK_SIZE;
 
 					varying[index][1][0] =
-						MulRoundShift(vars.VaryingInvW[index].Value
+						Mul(vars.VaryingInvW[index].Value
 										+ (vars.VaryingInvW[index].dX << EGL_LOG_RASTER_BLOCK_SIZE), w[0][1], 16);
 					varying[index][1][1] =
-						(MulRoundShift(vars.VaryingInvW[index].Value
+						(Mul(vars.VaryingInvW[index].Value
 										+ (vars.VaryingInvW[index].dX << EGL_LOG_RASTER_BLOCK_SIZE)
 										+ (vars.VaryingInvW[index].dY << EGL_LOG_RASTER_BLOCK_SIZE), w[1][1], 16)
 						 - varying[index][1][0]) >> EGL_LOG_RASTER_BLOCK_SIZE;
 				}
 
 				// perform Mipmap selection; initialize local RasterInfo structure
-				for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-					size_t textureBase = m_VaryingInfo.textureBase[unit];
+				unit = EGL_NUM_TEXTURE_UNITS - 1; 
+				do {
+					I32 textureBase = m_VaryingInfo.textureBase[unit];
 
 					if (textureBase >= 0 && m_UseMipmap[unit]) {
-
 						I32 dUdX = ((varying[textureBase][1][0] << 1)
 									+ (varying[textureBase][1][1] << EGL_LOG_RASTER_BLOCK_SIZE)
 									- (varying[textureBase][0][0] << 1)
@@ -555,8 +556,8 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 									>> (EGL_LOG_RASTER_BLOCK_SIZE + 1);
 						I32 dVdY = (varying[textureBase + 1][0][1] + varying[textureBase + 1][1][1]) >> 1;
 
-						I32 maxDu = EGL_Max(EGL_Abs(dUdX), EGL_Abs(dUdY)) >> (28 - m_Texture[unit]->GetTexture(0)->GetLogWidth());
-						I32 maxDv = EGL_Max(EGL_Abs(dVdX), EGL_Abs(dVdY)) >> (28 - m_Texture[unit]->GetTexture(0)->GetLogHeight());
+						I32 maxDu = EGL_Max(EGL_Abs(dUdX), EGL_Abs(dUdY)) >> (16 - m_Texture[unit]->GetTexture(0)->GetLogWidth());
+						I32 maxDv = EGL_Max(EGL_Abs(dVdX), EGL_Abs(dVdY)) >> (16 - m_Texture[unit]->GetTexture(0)->GetLogHeight());
 
 						I32 rho = EGL_Max(maxDu, maxDv);
 
@@ -565,19 +566,23 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 					} else {
 						m_RasterInfo.MipmapLevel[unit] = 0;
 					}
-				}
+
+					if (--unit < 0)
+						break;
+				} while (true);
 
 #if !EGL_USE_JIT
 				RasterBlockColorAlpha(varying, pixelMask);
 #else
 				m_BlockColorAlphaFunction(&m_RasterInfo, varying, pixelMask);
+				//RBTextureReplace(&m_RasterInfo, varying, pixelMask);
 #endif
 			}
 cont:
 			vars.Depth.Value += vars.Depth.dX << EGL_LOG_RASTER_BLOCK_SIZE;
 			vars.InvW.Value += vars.InvW.dX << EGL_LOG_RASTER_BLOCK_SIZE;
 
-			for (index = 0; index < usedNumVarying; ++index) {
+			for (index = usedNumVarying; --index >= 0; ) {
 				vars.VaryingInvW[index].Value += vars.VaryingInvW[index].dX << EGL_LOG_RASTER_BLOCK_SIZE;
 			}
 
@@ -590,7 +595,7 @@ cont:
 		vars.Depth.Value += vars.Depth.dBlockLine;
 		vars.InvW.Value += vars.InvW.dBlockLine;
 
-		for (index = 0; index < usedNumVarying; ++index) {
+		for (index = usedNumVarying; --index >= 0; ) {
 			vars.VaryingInvW[index].Value += vars.VaryingInvW[index].dBlockLine;
 		}
 

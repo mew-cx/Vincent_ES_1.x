@@ -239,34 +239,37 @@ void Rasterizer :: AllocateVaryings() {
 
 	// determine uses features and allocate varying variables
 
-	bool needsRGB = false;				// primary RGB used directly
-	bool needsAlpha = false;			// primary alpha used directly
-	bool needsPrevRGB = true;			// primary RGB propagated
-	bool needsPrevAlpha = true;			// primary alpha propagated
+	bool needsRGBForRGB = false;		// primary RGB used directly
+	bool needsAlphaForRGB = false;		// primary RGB used directly
+	bool needsAlphaForAlpha = false;	// primary alpha used directly
+	bool needsPrevRGBForRGB = true;		// primary RGB propagated
+	bool needsPrevAlphaForRGB = true;	// primary RGB propagated
+	bool needsPrevAlphaForAlpha = true;	// primary alpha propagated
 
 	// determine if texture units either use primary fragment color
 	// directly or indirectly propagated through combine operations
 
 	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		if (m_State->m_Texture[unit].Enabled && m_Texture[unit]) {
-			bool usesPrevRGB = false;
-			bool usesPrevAlpha = false;
+			bool usesPrevRGBForRGB = false;
+			bool usesPrevAlphaForRGB = false;
+			bool usesPrevAlphaForAlpha = false;
 
 			switch (m_State->m_Texture[unit].Mode) {
 			case RasterizerState::TextureModeDecal:
-				usesPrevAlpha = true;
+				usesPrevAlphaForAlpha = true;
 				break;
 
 			case RasterizerState::TextureModeReplace:
 				switch (m_Texture[unit]->GetInternalFormat()) {
 				case RasterizerState::TextureFormatAlpha:
-					usesPrevRGB = true;
+					usesPrevRGBForRGB = true;
 					break;
 
 				case RasterizerState::TextureFormatLuminance:
 				case RasterizerState::TextureFormatRGB8:
 				case RasterizerState::TextureFormatRGB565:
-					usesPrevAlpha = true;
+					usesPrevAlphaForAlpha = true;
 					break;
 
 				case RasterizerState::TextureFormatLuminanceAlpha:
@@ -278,29 +281,29 @@ void Rasterizer :: AllocateVaryings() {
 
 				break;
 
-			case RasterizerState::TextureModeBlend:
-			case RasterizerState::TextureModeAdd:
 			case RasterizerState::TextureModeModulate:
-				usesPrevRGB = usesPrevAlpha = true;
+			case RasterizerState::TextureModeAdd:
+			case RasterizerState::TextureModeBlend:
+				usesPrevRGBForRGB = usesPrevAlphaForAlpha = true;
 				break;
 
 			case RasterizerState::TextureModeCombine:
 				switch (m_State->m_Texture[unit].CombineFuncRGB) {
 				case RasterizerState::TextureModeCombineInterpolate:
-					usesPrevRGB |=
+					usesPrevRGBForRGB |=
 						m_State->m_Texture[unit].CombineSrcRGB[2] == RasterizerState::TextureCombineSrcPrevious &&
 						(m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpSrcColor ||
 						 m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpOneMinusSrcColor);
-					needsRGB |=
+					needsRGBForRGB |=
 						m_State->m_Texture[unit].CombineSrcRGB[2] == RasterizerState::TextureCombineSrcPrimaryColor &&
 						(m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpSrcColor ||
 						 m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpOneMinusSrcColor);
 
-					usesPrevAlpha |=
+					usesPrevAlphaForRGB |=
 						m_State->m_Texture[unit].CombineSrcRGB[2] == RasterizerState::TextureCombineSrcPrevious &&
 						(m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpSrcAlpha ||
 						 m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
-					needsAlpha |=
+					needsAlphaForRGB |=
 						m_State->m_Texture[unit].CombineSrcRGB[2] == RasterizerState::TextureCombineSrcPrimaryColor &&
 						(m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpSrcAlpha ||
 						 m_State->m_Texture[unit].CombineOpRGB[2] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
@@ -311,39 +314,39 @@ void Rasterizer :: AllocateVaryings() {
 				case RasterizerState::TextureModeCombineSubtract:
 				case RasterizerState::TextureModeCombineDot3RGB:
 				case RasterizerState::TextureModeCombineDot3RGBA:
-					usesPrevRGB |=
+					usesPrevRGBForRGB |=
 						m_State->m_Texture[unit].CombineSrcRGB[1] == RasterizerState::TextureCombineSrcPrevious &&
 						(m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpSrcColor ||
 						 m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpOneMinusSrcColor);
-					needsRGB |=
+					needsRGBForRGB |=
 						m_State->m_Texture[unit].CombineSrcRGB[1] == RasterizerState::TextureCombineSrcPrimaryColor &&
 						(m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpSrcColor ||
 						 m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpOneMinusSrcColor);
 
-					usesPrevAlpha |=
+					usesPrevAlphaForRGB |=
 						m_State->m_Texture[unit].CombineSrcRGB[1] == RasterizerState::TextureCombineSrcPrevious &&
 						(m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpSrcAlpha ||
 						 m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
-					needsAlpha |=
+					needsAlphaForRGB |=
 						m_State->m_Texture[unit].CombineSrcRGB[1] == RasterizerState::TextureCombineSrcPrimaryColor &&
 						(m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpSrcAlpha ||
 						 m_State->m_Texture[unit].CombineOpRGB[1] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
 
 				case RasterizerState::TextureModeCombineReplace:
-					usesPrevRGB |=
+					usesPrevRGBForRGB |=
 						m_State->m_Texture[unit].CombineSrcRGB[0] == RasterizerState::TextureCombineSrcPrevious &&
 						(m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpSrcColor ||
 						 m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpOneMinusSrcColor);
-					needsRGB |=
+					needsRGBForRGB |=
 						m_State->m_Texture[unit].CombineSrcRGB[0] == RasterizerState::TextureCombineSrcPrimaryColor &&
 						(m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpSrcColor ||
 						 m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpOneMinusSrcColor);
 
-					usesPrevAlpha |=
+					usesPrevAlphaForRGB |=
 						m_State->m_Texture[unit].CombineSrcRGB[0] == RasterizerState::TextureCombineSrcPrevious &&
 						(m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpSrcAlpha ||
 						 m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
-					needsAlpha |=
+					needsAlphaForRGB |=
 						m_State->m_Texture[unit].CombineSrcRGB[0] == RasterizerState::TextureCombineSrcPrimaryColor &&
 						(m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpSrcAlpha ||
 						 m_State->m_Texture[unit].CombineOpRGB[0] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
@@ -351,11 +354,11 @@ void Rasterizer :: AllocateVaryings() {
 
 				switch (m_State->m_Texture[unit].CombineFuncAlpha) {
 				case RasterizerState::TextureModeCombineInterpolate:
-					usesPrevAlpha |=
+					usesPrevAlphaForAlpha |=
 						m_State->m_Texture[unit].CombineSrcAlpha[2] == RasterizerState::TextureCombineSrcPrevious &&
 						(m_State->m_Texture[unit].CombineOpAlpha[2] == RasterizerState::TextureCombineOpSrcAlpha ||
 						 m_State->m_Texture[unit].CombineOpAlpha[2] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
-					needsAlpha |=
+					needsAlphaForAlpha |=
 						m_State->m_Texture[unit].CombineSrcAlpha[2] == RasterizerState::TextureCombineSrcPrimaryColor &&
 						(m_State->m_Texture[unit].CombineOpAlpha[2] == RasterizerState::TextureCombineOpSrcAlpha ||
 						 m_State->m_Texture[unit].CombineOpAlpha[2] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
@@ -364,21 +367,21 @@ void Rasterizer :: AllocateVaryings() {
 				case RasterizerState::TextureModeCombineAdd:
 				case RasterizerState::TextureModeCombineAddSigned:
 				case RasterizerState::TextureModeCombineSubtract:
-					usesPrevAlpha |=
+					usesPrevAlphaForAlpha |=
 						m_State->m_Texture[unit].CombineSrcAlpha[1] == RasterizerState::TextureCombineSrcPrevious &&
 						(m_State->m_Texture[unit].CombineOpAlpha[1] == RasterizerState::TextureCombineOpSrcAlpha ||
 						 m_State->m_Texture[unit].CombineOpAlpha[1] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
-					needsAlpha |=
+					needsAlphaForAlpha |=
 						m_State->m_Texture[unit].CombineSrcAlpha[1] == RasterizerState::TextureCombineSrcPrimaryColor &&
 						(m_State->m_Texture[unit].CombineOpAlpha[1] == RasterizerState::TextureCombineOpSrcAlpha ||
 						 m_State->m_Texture[unit].CombineOpAlpha[1] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
 
 				case RasterizerState::TextureModeCombineReplace:
-					usesPrevAlpha |=
+					usesPrevAlphaForAlpha |=
 						m_State->m_Texture[unit].CombineSrcAlpha[0] == RasterizerState::TextureCombineSrcPrevious &&
 						(m_State->m_Texture[unit].CombineOpAlpha[0] == RasterizerState::TextureCombineOpSrcAlpha ||
 						 m_State->m_Texture[unit].CombineOpAlpha[0] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
-					needsAlpha |=
+					needsAlphaForAlpha |=
 						m_State->m_Texture[unit].CombineSrcAlpha[0] == RasterizerState::TextureCombineSrcPrimaryColor &&
 						(m_State->m_Texture[unit].CombineOpAlpha[0] == RasterizerState::TextureCombineOpSrcAlpha ||
 						 m_State->m_Texture[unit].CombineOpAlpha[0] == RasterizerState::TextureCombineOpOneMinusSrcAlpha);
@@ -388,15 +391,21 @@ void Rasterizer :: AllocateVaryings() {
 
 			}
 
-			needsPrevRGB   &= usesPrevRGB;
-			needsPrevAlpha &= usesPrevAlpha;
+			needsPrevRGBForRGB		&= usesPrevRGBForRGB;
+			needsPrevAlphaForRGB	&= usesPrevAlphaForRGB;
+			needsPrevAlphaForAlpha	&= usesPrevAlphaForAlpha;
 		}
 	}
 
-	needsRGB		  |= needsPrevRGB;
-	needsAlpha		  |= needsPrevAlpha;
+	needsRGBForRGB	  |= needsPrevRGBForRGB;
+	needsAlphaForAlpha|= needsPrevAlphaForAlpha;
+	needsAlphaForRGB  |= needsPrevAlphaForRGB;
 
-	bool needsColor   = needsRGB | needsAlpha;
+	bool needsRGB     = needsRGBForRGB;
+	bool needsAlpha   = (m_State->m_Alpha.Enabled || m_State->m_Blend.Enabled) && (needsAlphaForAlpha);
+
+	// Do not have granularity of using only alpha at this point
+	bool needsColor	  = needsRGB | needsAlpha;
 
 	bool needsFog 	  = m_State->m_Fog.Enabled;
 	bool needsDepth   = m_State->m_DepthTest.Enabled ||
@@ -418,7 +427,7 @@ void Rasterizer :: AllocateVaryings() {
 	if (needsFog) {
 		m_VaryingInfo.fogIndex = nextIndex++;
 	} else {
-		m_VaryingInfo.fogIndex = nextIndex++;
+		m_VaryingInfo.fogIndex = -1;
 	}
 
 	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {

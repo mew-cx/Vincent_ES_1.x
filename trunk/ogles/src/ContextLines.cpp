@@ -83,13 +83,13 @@ namespace {
 				return false;
 			}
 
-			GLfloat c_x = from->m_ClipCoords[coord];
-			GLfloat c_w = -from->m_ClipCoords.w();
-			GLfloat p_x = to->m_ClipCoords[coord];
-			GLfloat p_w = -to->m_ClipCoords.w();
+			EGL_Fixed c_x = from->m_ClipCoords[coord];
+			EGL_Fixed c_w = -from->m_ClipCoords.w();
+			EGL_Fixed p_x = to->m_ClipCoords[coord];
+			EGL_Fixed p_w = -to->m_ClipCoords.w();
 
-			GLfloat num = p_w - p_x;
-			GLfloat denom = (p_w - p_x) - (c_w - c_x);
+			EGL_Fixed num = p_w - p_x;
+			EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
 			Interpolate(*tempVertices, *from, *to, num / denom, numVarying);
 			from = tempVertices++;
@@ -101,13 +101,13 @@ namespace {
 				return false;
 			}
 
-			GLfloat c_x = from->m_ClipCoords[coord];
-			GLfloat c_w = from->m_ClipCoords.w();
-			GLfloat p_x = to->m_ClipCoords[coord];
-			GLfloat p_w = to->m_ClipCoords.w();
+			EGL_Fixed c_x = from->m_ClipCoords[coord];
+			EGL_Fixed c_w = from->m_ClipCoords.w();
+			EGL_Fixed p_x = to->m_ClipCoords[coord];
+			EGL_Fixed p_w = to->m_ClipCoords.w();
 
-			GLfloat num = p_w - p_x;
-			GLfloat denom = (p_w - p_x) - (c_w - c_x);
+			EGL_Fixed num = p_w - p_x;
+			EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
 			Interpolate(*tempVertices, *from, *to, num / denom, numVarying);
 			from = tempVertices++;
@@ -116,13 +116,13 @@ namespace {
 
 		} else if (to->m_ClipCoords[coord] < -to->m_ClipCoords.w()) {
 
-			GLfloat c_x = to->m_ClipCoords[coord];
-			GLfloat c_w = -to->m_ClipCoords.w();
-			GLfloat p_x = from->m_ClipCoords[coord];
-			GLfloat p_w = -from->m_ClipCoords.w();
+			EGL_Fixed c_x = to->m_ClipCoords[coord];
+			EGL_Fixed c_w = -to->m_ClipCoords.w();
+			EGL_Fixed p_x = from->m_ClipCoords[coord];
+			EGL_Fixed p_w = -from->m_ClipCoords.w();
 
-			GLfloat num = p_w - p_x;
-			GLfloat denom = (p_w - p_x) - (c_w - c_x);
+			EGL_Fixed num = p_w - p_x;
+			EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
 			Interpolate(*tempVertices, *to, *from, num / denom, numVarying);
 			to = tempVertices++;
@@ -131,15 +131,15 @@ namespace {
 
 		} else if (to->m_ClipCoords[coord] > to->m_ClipCoords.w()) {
 
-			GLfloat c_x = to->m_ClipCoords[coord];
-			GLfloat c_w = to->m_ClipCoords.w();
-			GLfloat p_x = from->m_ClipCoords[coord];
-			GLfloat p_w = from->m_ClipCoords.w();
+			EGL_Fixed c_x = to->m_ClipCoords[coord];
+			EGL_Fixed c_w = to->m_ClipCoords.w();
+			EGL_Fixed p_x = from->m_ClipCoords[coord];
+			EGL_Fixed p_w = from->m_ClipCoords.w();
 
-			GLfloat num = p_w - p_x;
-			GLfloat denom = (p_w - p_x) - (c_w - c_x);
+			EGL_Fixed num = p_w - p_x;
+			EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
-			Interpolate(*tempVertices, *to, *from, num / denom, numVarying);
+			Interpolate(*tempVertices, *to, *from, EGL_Mul(num, EGL_Inverse(denom)), numVarying);
 			to = tempVertices++;
 
 			return true;
@@ -150,24 +150,24 @@ namespace {
 		}
 	}
 
-	inline bool ClipUser(const Vec4f& plane, Vertex*& from, Vertex*& to, Vertex *&tempVertices, size_t numVarying) {
+	inline bool ClipUser(const Vec4D& plane, Vertex*& from, Vertex*& to, Vertex *&tempVertices, size_t numVarying) {
 
-		GLfloat f = Vec4f(from->m_EyeCoords) * plane;
-		GLfloat t = Vec4f(to->m_EyeCoords) * plane;
+		EGL_Fixed f = Vec4D(from->m_EyeCoords) * plane;
+		EGL_Fixed t = Vec4D(to->m_EyeCoords) * plane;
 
-		if (f < 0.0f) {
-			if (t <= 0.0f) {
+		if (f < 0) {
+			if (t <= 0) {
 				return false;
 			}
 
-			Interpolate(*tempVertices, *from, *to, t / (t - f), numVarying);
+			Interpolate(*tempVertices, *from, *to, EGL_Mul(t, EGL_Inverse(t - f)), numVarying);
 			from = tempVertices++;
 
 			return true;
 
-		} else if (t < 0.0f) {
+		} else if (t < 0) {
 
-			Interpolate(*tempVertices, *to, *from, f / (f - t), numVarying);
+			Interpolate(*tempVertices, *to, *from, EGL_Mul(f, EGL_Inverse(f - t)), numVarying);
 			to = tempVertices++;
 
 			return true;

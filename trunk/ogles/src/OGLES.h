@@ -86,7 +86,6 @@
 									"GL_OES_single_precision "\
 									"GL_OES_read_format "\
 									"GL_OES_query_matrix "\
-									"GL_OES_matrix_palette "\
 									"GL_OES_point_size_array "\
 									"GL_OES_point_sprite "\
 									"GL_OES_compressed_paletted_texture"
