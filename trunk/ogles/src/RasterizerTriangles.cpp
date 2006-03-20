@@ -400,10 +400,14 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 
 	vars.Depth.dX =  Mul(det2x2(DY12, DD12, DY31, DD31), invArea, 28);
 	vars.Depth.dY = -Mul(det2x2(DX12, DD12, DX31, DD31), invArea, 28);
+	I32 depthSlope=  EGL_Max(EGL_Abs(vars.Depth.dX), EGL_Abs(vars.Depth.dY));
+	I32 factor    =  EGL_Mul(depthSlope, m_State->GetPolygonOffsetFactor());
 	vars.Depth.dBlockLine = vars.Depth.dY * EGL_RASTER_BLOCK_SIZE - vars.Depth.dX * span;
-	vars.Depth.Value = (a.m_WindowCoords.depth << 4)
-							  + Mul(XMin1, vars.Depth.dX, 4)
-							  + Mul(YMin1, vars.Depth.dY, 4);
+	vars.Depth.Value = (a.m_WindowCoords.depth << 4) 
+							+ ((m_State->GetPolygonOffsetUnits() + (1 << 11)) >> 12)
+							+ factor
+							+ Mul(XMin1, vars.Depth.dX, 4)
+							+ Mul(YMin1, vars.Depth.dY, 4);
 
     const I32 DW12 = a.m_WindowCoords.invW - b.m_WindowCoords.invW;
     const I32 DW23 = b.m_WindowCoords.invW - c.m_WindowCoords.invW;

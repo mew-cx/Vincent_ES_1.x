@@ -81,7 +81,7 @@ namespace {
 					EGL_Fixed num = p_w + p_x;
 					EGL_Fixed denom = (p_w + p_x) - (c_w + c_x);
 
-					Interpolate(newVertex, *current, *previous, num, denom, numVarying);
+					Interpolate(newVertex, *current, *previous, Coeff4q28(num, denom), numVarying);
 					newVertex.m_ClipCoords[coord] = -newVertex.m_ClipCoords.w();
 
 					output[resultCount++] = current;
@@ -101,7 +101,7 @@ namespace {
 					EGL_Fixed num = p_w + p_x;
 					EGL_Fixed denom = (p_w + p_x) - (c_w + c_x);
 
-					Interpolate(newVertex, *current, *previous, num, denom, numVarying);
+					Interpolate(newVertex, *current, *previous, Coeff4q28(num, denom), numVarying);
 					newVertex.m_ClipCoords[coord] = -newVertex.m_ClipCoords.w();
 
 					//previous = current;
@@ -147,7 +147,7 @@ namespace {
 					EGL_Fixed num = p_w - p_x;
 					EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
-					Interpolate(newVertex, *current, *previous, num, denom, numVarying);
+					Interpolate(newVertex, *current, *previous, Coeff4q28(num, denom), numVarying);
 					newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
 
 					output[resultCount++] = current;
@@ -166,7 +166,7 @@ namespace {
 					EGL_Fixed num = p_w - p_x;
 					EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
-					Interpolate(newVertex, *current, *previous, num, denom, numVarying);
+					Interpolate(newVertex, *current, *previous, Coeff4q28(num, denom), numVarying);
 					newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
 				}
 			}
@@ -194,8 +194,8 @@ namespace {
 			EGL_Fixed c = current->m_EyeCoords * plane;
 			EGL_Fixed p = previous->m_EyeCoords * plane;
 
-			if (c > 0.0f) {
-				if (p >= 0.0f) {
+			if (c > 0) {
+				if (p >= 0) {
 					// line segment between previous and current is fully contained in cube
 					output[resultCount++] = current;
 				} else {
@@ -204,17 +204,17 @@ namespace {
 					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 
-					InterpolateWithEye(newVertex, *current, *previous, p, p - c, numVarying);
+					InterpolateWithEye(newVertex, *current, *previous, Coeff4q28(p, p - c), numVarying);
 					output[resultCount++] = current;
 				}
 			} else {
-				if (p > 0.0f) {
+				if (p > 0) {
 					// line segment between previous and current is intersected;
 					// create vertex at intersection and add it
 					Vertex & newVertex = *nextTemporary++;
 					output[resultCount++] = &newVertex;
 
-					InterpolateWithEye(newVertex, *current, *previous, p, p - c, numVarying);
+					InterpolateWithEye(newVertex, *current, *previous, Coeff4q28(p, p - c), numVarying);
 				}
 			}
 

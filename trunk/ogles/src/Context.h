@@ -385,6 +385,7 @@ private:
 		MatrixStack *		m_CurrentMatrixStack;
 		Matrix4x4			m_InverseModelViewMatrix;
 		Matrix4x4			m_FullInverseModelViewMatrix;
+		Matrix4x4			m_ScaledProjectionMatrix;
 		GLenum				m_MatrixMode;
 
 		// ----------------------------------------------------------------------

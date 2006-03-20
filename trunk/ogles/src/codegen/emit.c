@@ -2635,7 +2635,7 @@ static void select_global_regs(cg_codegen_t * gen, cg_proc_t * proc)
 	   allocation of that register */
 	/* initially, we do global allocation only among variable ARM registers */
 
-#if 0
+#if 1
 	for (index = 0, reg_index = 0; index < ARM_NUM_VARIABLE_REGS && reg_index < used_register_count; ++reg_index)
 	{
 		cg_virtual_reg_t * reg = all_regs[reg_index];

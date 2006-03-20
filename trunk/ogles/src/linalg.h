@@ -637,13 +637,13 @@ namespace EGL {
 
 			for (int i = 0; i < ROWS; ++i) {
 				for (int j = 0; j < COLUMNS; ++j) {
-					EGL_Fixed sum = 0;
+					I64 sum = 0;
 
 					for (int k = 0; k < COLUMNS; ++k) {
-						sum += EGL_Mul(Element(i, k), other.Element(k, j));
+						sum += static_cast<I64>(Element(i, k)) * other.Element(k, j);
 					}
 
-					result.Element(i, j) = sum;
+					result.Element(i, j) = static_cast<I32>(sum >> EGL_PRECISION);
 				}
 			}
 
@@ -651,6 +651,22 @@ namespace EGL {
 			return result;
 		}
 
+		// ----------------------------------------------------------------------
+		// Scale the matrix as (*this) * scale
+		//
+		// Parameters:
+		//	scale		-	scale factor to apply
+		// ----------------------------------------------------------------------
+		inline Matrix4x4& operator*=(EGL_Fixed scale) {
+			for (int i = 0; i < ROWS; ++i) {
+				for (int j = 0; j < COLUMNS; ++j) {
+					Element(i, j) = EGL_Mul(Element(i, j), scale);
+				}
+			}
+
+			m_identity = false;
+			return *this;
+		}
 
 		// ----------------------------------------------------------------------
 		// Transform a 3-D vector using this matrix. The vector is extended

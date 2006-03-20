@@ -64,28 +64,36 @@ namespace EGL {
 		return 31 - CountLeadingZeros(value);
 	}
 
-	inline EGL_Fixed Interpolate(EGL_Fixed x0f, EGL_Fixed x1f, EGL_Fixed num, EGL_Fixed denom) {
-		return x1f + static_cast<I32>((static_cast<I64>(x0f - x1f) * num) / denom);
+	// Calculate the interpolated value x1f + (xof - x1f) * coeff4q28
+	// where coeff4q28 is a 4.28 fixed point value
+	inline EGL_Fixed Interpolate(EGL_Fixed x0f, EGL_Fixed x1f, I32 coeff4q28) {
+		return x1f + static_cast<I32>((static_cast<I64>(x0f - x1f) * coeff4q28 + (1 << 27)) >> 28);
 	}
 
-	inline void Interpolate(Vertex& result, const Vertex& dst, const Vertex& src, EGL_Fixed num, EGL_Fixed denom, size_t numVarying) {
-		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), num, denom));
-		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), num, denom));
-		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), num, denom));
-		result.m_ClipCoords.setW(Interpolate(dst.m_ClipCoords.w(), src.m_ClipCoords.w(), num, denom));
+	inline void Interpolate(Vertex& result, const Vertex& dst, const Vertex& src, I32 coeff4q28, size_t numVarying) {
+		result.m_ClipCoords.setX(Interpolate(dst.m_ClipCoords.x(), src.m_ClipCoords.x(), coeff4q28));
+		result.m_ClipCoords.setY(Interpolate(dst.m_ClipCoords.y(), src.m_ClipCoords.y(), coeff4q28));
+		result.m_ClipCoords.setZ(Interpolate(dst.m_ClipCoords.z(), src.m_ClipCoords.z(), coeff4q28));
+		result.m_ClipCoords.setW(Interpolate(dst.m_ClipCoords.w(), src.m_ClipCoords.w(), coeff4q28));
 
 		for (size_t index = 0; index < numVarying; ++index) {
-			result.m_Varying[index] = Interpolate(dst.m_Varying[index], src.m_Varying[index], num, denom);
+			result.m_Varying[index] = Interpolate(dst.m_Varying[index], src.m_Varying[index], coeff4q28);
 		}
 	}
 
-	inline void InterpolateWithEye(Vertex& result, const Vertex& dst, const Vertex& src, EGL_Fixed num, EGL_Fixed denom, size_t numVarying) {
-		result.m_EyeCoords.setX(Interpolate(dst.m_EyeCoords.x(), src.m_EyeCoords.x(), num, denom));
-		result.m_EyeCoords.setY(Interpolate(dst.m_EyeCoords.y(), src.m_EyeCoords.y(), num, denom));
-		result.m_EyeCoords.setZ(Interpolate(dst.m_EyeCoords.z(), src.m_EyeCoords.z(), num, denom));
-		result.m_EyeCoords.setW(Interpolate(dst.m_EyeCoords.w(), src.m_EyeCoords.w(), num, denom));
+	inline void InterpolateWithEye(Vertex& result, const Vertex& dst, const Vertex& src, I32 coeff4q28, size_t numVarying) {
+		result.m_EyeCoords.setX(Interpolate(dst.m_EyeCoords.x(), src.m_EyeCoords.x(), coeff4q28));
+		result.m_EyeCoords.setY(Interpolate(dst.m_EyeCoords.y(), src.m_EyeCoords.y(), coeff4q28));
+		result.m_EyeCoords.setZ(Interpolate(dst.m_EyeCoords.z(), src.m_EyeCoords.z(), coeff4q28));
+		result.m_EyeCoords.setW(Interpolate(dst.m_EyeCoords.w(), src.m_EyeCoords.w(), coeff4q28));
 
-		Interpolate(result, dst, src, num, denom, numVarying);
+		Interpolate(result, dst, src, coeff4q28, numVarying);
+	}
+
+	// Calculate the qutient num / denom as 4.28 fixed point number
+	inline I32 Coeff4q28(EGL_Fixed num, EGL_Fixed denom) {
+		const I64 quot = (static_cast<I64>(num) << 29) / denom;
+		return static_cast<I32>((quot + 1) >> 1);
 	}
 }
 
