@@ -72,7 +72,7 @@ namespace {
 			EGL_Fixed num = p_w - p_x;
 			EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
-			Interpolate(*tempVertices, *from, *to, num, denom, numVarying);
+			Interpolate(*tempVertices, *from, *to, Coeff4q28(num, denom), numVarying);
 			from = tempVertices++;
 
 			return true;
@@ -90,7 +90,7 @@ namespace {
 			EGL_Fixed num = p_w - p_x;
 			EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
-			Interpolate(*tempVertices, *from, *to, num, denom, numVarying);
+			Interpolate(*tempVertices, *from, *to, Coeff4q28(num, denom), numVarying);
 			from = tempVertices++;
 
 			return true;
@@ -105,7 +105,7 @@ namespace {
 			EGL_Fixed num = p_w - p_x;
 			EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
-			Interpolate(*tempVertices, *to, *from, num, denom, numVarying);
+			Interpolate(*tempVertices, *to, *from, Coeff4q28(num, denom), numVarying);
 			to = tempVertices++;
 
 			return true;
@@ -120,7 +120,7 @@ namespace {
 			EGL_Fixed num = p_w - p_x;
 			EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
 
-			Interpolate(*tempVertices, *to, *from, num, denom, numVarying);
+			Interpolate(*tempVertices, *to, *from, Coeff4q28(num, denom), numVarying);
 			to = tempVertices++;
 
 			return true;
@@ -141,14 +141,14 @@ namespace {
 				return false;
 			}
 
-			Interpolate(*tempVertices, *from, *to, t, t - f, numVarying);
+			Interpolate(*tempVertices, *from, *to, Coeff4q28(t, t - f), numVarying);
 			from = tempVertices++;
 
 			return true;
 
 		} else if (t < 0) {
 
-			Interpolate(*tempVertices, *to, *from, f, f - t, numVarying);
+			Interpolate(*tempVertices, *to, *from, Coeff4q28(f, f - t), numVarying);
 			to = tempVertices++;
 
 			return true;

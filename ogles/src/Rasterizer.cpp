@@ -405,7 +405,7 @@ void Rasterizer :: AllocateVaryings() {
 	bool needsAlpha   = (m_State->m_Alpha.Enabled || m_State->m_Blend.Enabled) && (needsAlphaForAlpha);
 
 	// Do not have granularity of using only alpha at this point
-	bool needsColor	  = needsRGB | needsAlpha;
+	bool needsColor	  = true;//needsRGB | needsAlpha;
 
 	bool needsFog 	  = m_State->m_Fog.Enabled;
 	bool needsDepth   = m_State->m_DepthTest.Enabled ||

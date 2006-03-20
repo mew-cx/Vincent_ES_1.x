@@ -163,6 +163,7 @@ Context :: Context(const Config & config)
 		m_Rasterizer->SetTexture(unit, m_Textures.GetObject(defaultTexture));
 	}
 
+	//m_ScaledProjectionMatrix *= 0x1000;
 	memset(&m_ClipPlanes, 0, sizeof(m_ClipPlanes));
 }
 
