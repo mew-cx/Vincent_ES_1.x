@@ -644,7 +644,7 @@ void Context :: CurrentValuesToRasterPosNoLight(Vertex * rasterPos) {
 
 	// apply projection matrix to eye coordinates
 	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	rasterPos->m_ClipCoords = m_ScaledProjectionMatrix * rasterPos->m_EyeCoords;
+	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	//	copy current colors to raster pos
 	rasterPos->m_FrontColor = rasterPos->m_BackColor = m_CurrentRGBA;
@@ -665,7 +665,7 @@ void Context :: CurrentValuesToRasterPosOneSidedNoTrack(Vertex * rasterPos) {
 
 	// apply projection matrix to eye coordinates
 	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	rasterPos->m_ClipCoords = m_ScaledProjectionMatrix * rasterPos->m_EyeCoords;
+	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
 	if (m_RasterizerState.IsEnabledFog()) {
@@ -707,7 +707,7 @@ void Context :: CurrentValuesToRasterPosOneSidedTrack(Vertex * rasterPos) {
 
 	// apply projection matrix to eye coordinates
 	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	rasterPos->m_ClipCoords = m_ScaledProjectionMatrix * rasterPos->m_EyeCoords;
+	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
 	if (m_RasterizerState.IsEnabledFog()) {
@@ -748,7 +748,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(Vertex * rasterPos) {
 
 	// apply projection matrix to eye coordinates
 	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	rasterPos->m_ClipCoords = m_ScaledProjectionMatrix * rasterPos->m_EyeCoords;
+	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
 	if (m_RasterizerState.IsEnabledFog()) {
@@ -795,7 +795,7 @@ void Context :: CurrentValuesToRasterPosTwoSidedTrack(Vertex * rasterPos) {
 
 	// apply projection matrix to eye coordinates
 	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	rasterPos->m_ClipCoords = m_ScaledProjectionMatrix * rasterPos->m_EyeCoords;
+	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 
 	// populate fog density here...
 	if (m_RasterizerState.IsEnabledFog()) {

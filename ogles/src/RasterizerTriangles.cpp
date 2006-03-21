@@ -71,10 +71,10 @@ namespace {
 	}
 
 	// 32-bit determinant with 64-bit intermediate
-	inline I32 det2x2(I32 a00, I32 a01, I32 a10, I32 a11) {
+	inline I64 det2x2(I32 a00, I32 a01, I32 a10, I32 a11) {
 		I64 prod1 = static_cast<I64>(a00) * static_cast<I64>(a11);
 		I64 prod2 = static_cast<I64>(a10) * static_cast<I64>(a01);
-		return static_cast<I32>(prod1 - prod2);
+		return static_cast<I64>(prod1 - prod2);
 	}
 
 	bool HasAlpha(RasterizerState::TextureFormat format) {
@@ -103,6 +103,11 @@ namespace {
 
 	inline I32 Mul(I32 a, I32 b, const I32 shift) {
 		I64 product = static_cast<I64>(a) * static_cast<I64>(b);
+		return static_cast<I32>(product >> shift);
+	}
+
+	inline I32 Mul64(I64 a, I32 b, const I32 shift) {
+		I64 product = a * b;
 		return static_cast<I32>(product >> shift);
 	}
 
@@ -398,8 +403,8 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
     const I32 DD23 = (b.m_WindowCoords.depth - c.m_WindowCoords.depth) << 4;
     const I32 DD31 = (c.m_WindowCoords.depth - a.m_WindowCoords.depth) << 4;
 
-	vars.Depth.dX =  Mul(det2x2(DY12, DD12, DY31, DD31), invArea, 28);
-	vars.Depth.dY = -Mul(det2x2(DX12, DD12, DX31, DD31), invArea, 28);
+	vars.Depth.dX =  Mul64(det2x2(DY12, DD12, DY31, DD31), invArea, 28);
+	vars.Depth.dY = -Mul64(det2x2(DX12, DD12, DX31, DD31), invArea, 28);
 	I32 depthSlope=  EGL_Max(EGL_Abs(vars.Depth.dX), EGL_Abs(vars.Depth.dY));
 	I32 factor    =  EGL_Mul(depthSlope, m_State->GetPolygonOffsetFactor());
 	vars.Depth.dBlockLine = vars.Depth.dY * EGL_RASTER_BLOCK_SIZE - vars.Depth.dX * span;
@@ -414,8 +419,8 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
     const I32 DW31 = c.m_WindowCoords.invW - a.m_WindowCoords.invW;
 
 	// dWdX, dWdY is 4.28
-	vars.InvW.dX =  Mul(det2x2(DY12, DW12, DY31, DW31), invArea, 28);
-	vars.InvW.dY = -Mul(det2x2(DX12, DW12, DX31, DW31), invArea, 28);
+	vars.InvW.dX =  Mul64(det2x2(DY12, DW12, DY31, DW31), invArea, 28);
+	vars.InvW.dY = -Mul64(det2x2(DX12, DW12, DX31, DW31), invArea, 28);
 	vars.InvW.dBlockLine = vars.InvW.dY * EGL_RASTER_BLOCK_SIZE - vars.InvW.dX * span;
 	vars.InvW.Value = a.m_WindowCoords.invW
 							  + Mul(XMin1, vars.InvW.dX, 4)
@@ -497,8 +502,8 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 						I32 IVW31 = V3OverW - V1OverW;
 
 						// dVaryingDx, dVaryingDy is 4.28
-						vars.VaryingInvW[index].dX =  Mul(det2x2(DY12, IVW12, DY31, IVW31), invArea, 28);
-						vars.VaryingInvW[index].dY = -Mul(det2x2(DX12, IVW12, DX31, IVW31), invArea, 28);
+						vars.VaryingInvW[index].dX =  Mul64(det2x2(DY12, IVW12, DY31, IVW31), invArea, 28);
+						vars.VaryingInvW[index].dY = -Mul64(det2x2(DX12, IVW12, DX31, IVW31), invArea, 28);
 						vars.VaryingInvW[index].dBlockLine =
 							vars.VaryingInvW[index].dY * EGL_RASTER_BLOCK_SIZE - vars.VaryingInvW[index].dX * span;
 
