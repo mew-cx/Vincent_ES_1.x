@@ -315,7 +315,7 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 
 	if (m_VaryingInfo->colorIndex >= 0) {
 		if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
-			if (m_TwoSidedLightning && backFace) {
+			if (m_LightEnabled && m_TwoSidedLightning && backFace) {
 				a.m_BackColor.toArray(a.m_Varying + m_VaryingInfo->colorIndex);
 				b.m_BackColor.toArray(b.m_Varying + m_VaryingInfo->colorIndex);
 				c.m_BackColor.toArray(c.m_Varying + m_VaryingInfo->colorIndex);
@@ -325,7 +325,7 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 				c.m_FrontColor.toArray(c.m_Varying + m_VaryingInfo->colorIndex);
 			}
 		} else {
-			if (m_TwoSidedLightning && backFace) {
+			if (m_LightEnabled && m_TwoSidedLightning && backFace) {
 				c.m_BackColor.toArray(a.m_Varying + m_VaryingInfo->colorIndex);
 				c.m_BackColor.toArray(b.m_Varying + m_VaryingInfo->colorIndex);
 				c.m_BackColor.toArray(c.m_Varying + m_VaryingInfo->colorIndex);
@@ -388,8 +388,7 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 
 
 void Context :: DrawTriangle(int index) {
-	SelectArrayElement(index);
-	CurrentValuesToRasterPos(&m_Input[m_NextIndex++]);
+	SelectArrayElement(index, &m_Input[m_NextIndex++]);
 
 	if (m_NextIndex == 3) {
 		RenderTriangle(m_Input[0], m_Input[1], m_Input[2]);
@@ -398,8 +397,7 @@ void Context :: DrawTriangle(int index) {
 }
 
 void Context :: DrawTriangleStrip(int index) {
-	SelectArrayElement(index);
-	CurrentValuesToRasterPos(&m_Input[m_NextIndex++]);
+	SelectArrayElement(index, &m_Input[m_NextIndex++]);
 
 	if (m_PrimitiveState == 3) {
 		// even triangle
@@ -419,8 +417,7 @@ void Context :: DrawTriangleStrip(int index) {
 }
 
 void Context :: DrawTriangleFan(int index) {
-	SelectArrayElement(index);
-	CurrentValuesToRasterPos(&m_Input[m_NextIndex++]);
+	SelectArrayElement(index, &m_Input[m_NextIndex++]);
 
 	if (m_PrimitiveState == 3) {
 		// even triangle

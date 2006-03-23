@@ -50,8 +50,12 @@ namespace EGL {
 
 	class Vec3D {
 
-		// element names compatible to GPP_VEC3D
-		EGL_Fixed 	m_x, m_y, m_z;
+		union {
+			struct {
+				EGL_Fixed 	m_x, m_y, m_z;
+			};
+			EGL_Fixed		m_vec[3];
+		};
 
 	public:
 		// ----------------------------------------------------------------------
@@ -220,6 +224,22 @@ namespace EGL {
 		inline void setZ(EGL_Fixed value) {
 			m_z = value;
 		}
+
+		inline EGL_Fixed& operator[](int idx) {
+			return m_vec[idx];
+		}
+
+		inline const EGL_Fixed& operator[](int idx) const {
+			return m_vec[idx];
+		}
+
+		inline EGL_Fixed * getArray() {
+			return m_vec;
+		}
+
+		inline const EGL_Fixed * getArray() const {
+			return m_vec;
+		}
 	};
 
 	inline OGLES_API Vec3D operator*(EGL_Fixed factor, const Vec3D& vector) {
@@ -233,7 +253,6 @@ namespace EGL {
 
 	class Vec4D {
 
-		// element names compatible to GPP_VEC4D
 		union {
 			struct {
 				EGL_Fixed 	m_x, m_y, m_z, m_w;
@@ -326,6 +345,19 @@ namespace EGL {
 		inline Vec3D Project() const {
 			return Vec3D(m_x, m_y, m_z);
 		}
+
+		// ----------------------------------------------------------------------
+		// Projective Division
+		// ----------------------------------------------------------------------
+		inline void ProjectiveDivision() {
+			if (m_w != EGL_ONE) {
+				EGL_Fixed factor = EGL_Inverse(m_w);
+				m_x = EGL_Mul(m_x, factor);
+				m_y = EGL_Mul(m_y, factor);
+				m_z = EGL_Mul(m_z, factor);
+			}
+		}
+
 
 		// ----------------------------------------------------------------------
 		// Vector addition
@@ -464,6 +496,14 @@ namespace EGL {
 
 		inline const EGL_Fixed& operator[](int idx) const {
 			return m_vec[idx];
+		}
+
+		inline EGL_Fixed * getArray() {
+			return m_vec;
+		}
+
+		inline const EGL_Fixed * getArray() const {
+			return m_vec;
 		}
 	};
 
@@ -790,6 +830,15 @@ namespace EGL {
 				EGL_Mul(vector.w(), Element(3, 3)));
 		}
 
+		inline void Multiply(const Vec4D& vector, EGL_Fixed * result, int dim = 4) const {
+			for (int idx = 0; idx < dim; ++idx) {
+				*result++ =
+					EGL_Mul(vector.x(), Element(idx, 0)) +
+					EGL_Mul(vector.y(), Element(idx, 1)) +
+					EGL_Mul(vector.z(), Element(idx, 2)) +
+					EGL_Mul(vector.w(), Element(idx, 3));
+			}
+		}
 
 		// ----------------------------------------------------------------------
 		// Calculate the matrix for which the upper left 3x3 matrix is the 

@@ -283,3 +283,170 @@ bool Context :: GetLightxv(GLenum light, GLenum pname, GLfixed *params) {
 	return true;
 }
 
+
+// --------------------------------------------------------------------------
+// Perform lightning and geometry transformation on the current vertex
+// and store the results in buffer for the rasterization stage of the
+// pipeline.
+//
+// Parameters:
+//	rasterPos	-	A pointer to a vertex parameter buffer for the
+//					rasterization stage
+// --------------------------------------------------------------------------
+
+
+void Context :: LightVertexNoLight(Vertex * rasterPos) {
+
+	//	copy current colors to raster pos
+	if (m_RasterizerState.IsEnabledFog()) {
+		assert(m_VaryingInfo->fogIndex >= 0);
+		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+	}
+
+}
+
+
+void Context :: LightVertexOneSidedNoTrack(Vertex * rasterPos) {
+
+	FractionalColor color;
+	FractionalColor backColor;
+
+	// populate fog density here...
+	if (m_RasterizerState.IsEnabledFog()) {
+		assert(m_VaryingInfo->fogIndex >= 0);
+		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+	}
+
+	if (m_NormalizeEnabled) {
+		rasterPos->m_EyeNormal.Normalize();
+	}
+
+	// for each light that is turned on, call into calculation
+	int mask = 1;
+
+	color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
+	color.a = m_FrontMaterial.GetDiffuseColor().a;
+	color += m_FrontMaterial.GetEmissiveColor();
+
+	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
+		if (m_LightEnabled & mask) {
+			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, rasterPos->m_EyeNormal,
+				m_FrontMaterial, color);
+		}
+	}
+
+	color.Clamp();
+	rasterPos->m_FrontColor = color;
+}
+
+
+void Context :: LightVertexOneSidedTrack(Vertex * rasterPos) {
+	FractionalColor color;
+	FractionalColor backColor;
+
+	// populate fog density here...
+	if (m_RasterizerState.IsEnabledFog()) {
+		assert(m_VaryingInfo->fogIndex >= 0);
+		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+	}
+
+	if (m_NormalizeEnabled) {
+		rasterPos->m_EyeNormal.Normalize();
+	}
+
+	// for each light that is turned on, call into calculation
+	int mask = 1;
+
+	color = rasterPos->m_FrontColor * m_LightModelAmbient;
+	color += m_FrontMaterial.GetEmissiveColor();
+
+	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
+		if (m_LightEnabled & mask) {
+			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, rasterPos->m_EyeNormal,
+				m_FrontMaterial, rasterPos->m_FrontColor, color);
+		}
+	}
+
+	color.Clamp();
+	rasterPos->m_FrontColor = color;
+}
+
+
+void Context :: LightVertexTwoSidedNoTrack(Vertex * rasterPos) {
+	FractionalColor color;
+	FractionalColor backColor;
+
+	// populate fog density here...
+	if (m_RasterizerState.IsEnabledFog()) {
+		assert(m_VaryingInfo->fogIndex >= 0);
+		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+	}
+
+	if (m_NormalizeEnabled) {
+		rasterPos->m_EyeNormal.Normalize();
+	}
+
+	// for each light that is turned on, call into calculation
+	int mask = 1;
+
+	color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
+	color.a = m_FrontMaterial.GetDiffuseColor().a;
+	color += m_FrontMaterial.GetEmissiveColor();
+
+	backColor = color;
+
+	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
+		if (m_LightEnabled & mask) {
+			m_Lights[index].AccumulateLight2(rasterPos->m_EyeCoords, rasterPos->m_EyeNormal,
+				m_FrontMaterial, color, backColor);
+		}
+	}
+
+	color.Clamp();
+	backColor.Clamp();
+
+	rasterPos->m_FrontColor = color;
+	rasterPos->m_BackColor = backColor;
+}
+
+
+void Context :: LightVertexTwoSidedTrack(Vertex * rasterPos) {
+	FractionalColor color;
+	FractionalColor backColor;
+
+	// populate fog density here...
+	if (m_RasterizerState.IsEnabledFog()) {
+		assert(m_VaryingInfo->fogIndex >= 0);
+		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+	}
+
+	// apply inverse of model view matrix to normals -> eye coordinates normals
+
+	if (m_NormalizeEnabled) {
+		rasterPos->m_EyeNormal.Normalize();
+	}
+
+	// for each light that is turned on, call into calculation
+	int mask = 1;
+
+	color = rasterPos->m_FrontColor * m_LightModelAmbient;
+	color += m_FrontMaterial.GetEmissiveColor();
+
+	backColor = color;
+
+	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
+		if (m_LightEnabled & mask) {
+			m_Lights[index].AccumulateLight2(rasterPos->m_EyeCoords, rasterPos->m_EyeNormal,
+				m_FrontMaterial, rasterPos->m_FrontColor, color, backColor);
+		}
+	}
+
+	color.Clamp();
+	backColor.Clamp();
+
+	rasterPos->m_FrontColor = color;
+	rasterPos->m_BackColor = backColor;
+}
+
+
+

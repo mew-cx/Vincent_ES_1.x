@@ -48,7 +48,12 @@ namespace EGL {
 	class FractionalColor {
 
 	public:
-		EGL_Fixed	r, g, b, a;			// rgba components
+		union {
+			struct {
+				EGL_Fixed	r, g, b, a;			// rgba components
+			};
+			EGL_Fixed		vec[4];
+		};
 
 	public:
 		FractionalColor() {
@@ -122,6 +127,22 @@ namespace EGL {
 				(EGL_IntFromFixed(a * 0xFF) & 0x80) << 8;
 		}
 
+		inline EGL_Fixed& operator[](int idx) {
+			return vec[idx];
+		}
+
+		inline const EGL_Fixed& operator[](int idx) const {
+			return vec[idx];
+		}
+
+		inline EGL_Fixed * getArray() {
+			return vec;
+		}
+
+		inline const EGL_Fixed * getArray() const {
+			return vec;
+		}
+		
 		// convert fixed point to byte format
 		inline operator Color() const {
 			return Color(
