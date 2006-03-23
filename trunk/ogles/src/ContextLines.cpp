@@ -200,8 +200,7 @@ void Context :: RenderLine(Vertex& from, Vertex& to) {
 
 
 void Context :: DrawLine(int index) {
-	SelectArrayElement(index);
-	CurrentValuesToRasterPos(&m_Input[m_NextIndex++]);
+	SelectArrayElement(index, &m_Input[m_NextIndex++]);
 
 	if (m_NextIndex == 2) {
 		RenderLine(m_Input[0], m_Input[1]);
@@ -210,8 +209,7 @@ void Context :: DrawLine(int index) {
 }
 
 void Context :: DrawLineStrip(int index) {
-	SelectArrayElement(index);
-	CurrentValuesToRasterPos(&m_Input[m_NextIndex++]);
+	SelectArrayElement(index, &m_Input[m_NextIndex++]);
 
 	if (m_PrimitiveState != 0) {
 		// determine line orienation based on parity
@@ -231,8 +229,7 @@ void Context :: DrawLineStrip(int index) {
 }
 
 void Context :: DrawLineLoop(int index) {
-	SelectArrayElement(index);
-	CurrentValuesToRasterPos(&m_Input[m_NextIndex++]);
+	SelectArrayElement(index, &m_Input[m_NextIndex++]);
 
 	if (m_PrimitiveState == 2) {
 		// we have seen at least 3 vertices

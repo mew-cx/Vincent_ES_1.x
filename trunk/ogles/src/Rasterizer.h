@@ -97,25 +97,14 @@ namespace EGL {
 	// ----------------------------------------------------------------------
 
 	struct Vertex {
-		// ----------------------------------------------------------------------
-		// Current values for setup
-		// ----------------------------------------------------------------------
-
-		Vec4D				m_CurrentVertex;
-		Vec3D				m_CurrentNormal;
-		FractionalColor		m_CurrentRGBA;
-		TexCoord			m_CurrentTextureCoords[EGL_NUM_TEXTURE_UNITS];
-
-		// ----------------------------------------------------------------------
-		// Current values for setup
-		// ----------------------------------------------------------------------
-
-		FractionalColor		m_FrontColor;		// color in range 0..255
-		FractionalColor		m_BackColor;
 		Vec4D				m_EyeCoords;
 		Vec4D				m_ClipCoords;
 		ScreenCoord			m_WindowCoords;
+		Vec3D				m_EyeNormal;
+		FractionalColor		m_FrontColor;		// color in range 0..255
+		FractionalColor		m_BackColor;
 		EGL_Fixed			m_Varying[EGL_MAX_NUM_VARYING];
+		bool				m_Lit;
 	};
 
 	struct SurfaceInfo {

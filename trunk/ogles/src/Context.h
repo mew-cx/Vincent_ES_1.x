@@ -332,11 +332,10 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 
 private:
-		void SelectArrayElement(int index);
+		void SelectArrayElement(int index, Vertex * rasterPos);
 		EGL_Fixed SelectPointSizeArrayElement(int index);
 
-		void CurrentValuesToRasterPos(Vertex * rasterPos);
-		void CurrentTextureValuesToRasterPos(Vertex * rasterPos);
+		void LightVertex(Vertex * rasterPos);
 
 		typedef void (Context::*GeometryFunction)(Vertex * rasterPos);
 		typedef void (Context::*DrawPrimitiveFunction)(int index);
@@ -348,11 +347,12 @@ private:
 		bool Begin(GLenum mode);
 		void End();
 
-		void CurrentValuesToRasterPosNoLight(Vertex * rasterPos);
-		void CurrentValuesToRasterPosOneSidedNoTrack(Vertex * rasterPos);
-		void CurrentValuesToRasterPosOneSidedTrack(Vertex * rasterPos);
-		void CurrentValuesToRasterPosTwoSidedNoTrack(Vertex * rasterPos);
-		void CurrentValuesToRasterPosTwoSidedTrack(Vertex * rasterPos);
+		void LightVertices(Vertex * input[], size_t inputCount);
+		void LightVertexNoLight(Vertex * rasterPos);
+		void LightVertexOneSidedNoTrack(Vertex * rasterPos);
+		void LightVertexOneSidedTrack(Vertex * rasterPos);
+		void LightVertexTwoSidedNoTrack(Vertex * rasterPos);
+		void LightVertexTwoSidedTrack(Vertex * rasterPos);
 
 		void InterpolateRasterPos(Vertex * a, Vertex * b, GLfixed x, Vertex * result);
 
@@ -424,18 +424,11 @@ private:
 		Vec3D				m_DefaultNormal;
 		FractionalColor		m_DefaultRGBA;
 		Vec4D				m_DefaultTextureCoords[EGL_NUM_TEXTURE_UNITS];
-		TexCoord			m_DefaultScaledTextureCoords[EGL_NUM_TEXTURE_UNITS];
 		size_t				m_ActiveTexture;
 		size_t				m_ClientActiveTexture;
 
-		// ----------------------------------------------------------------------
-		// Current values for setup
-		// ----------------------------------------------------------------------
-
-		Vec4D				m_CurrentVertex;
-		Vec3D				m_CurrentNormal;
-		FractionalColor		m_CurrentRGBA;
-		TexCoord			m_CurrentTextureCoords[EGL_NUM_TEXTURE_UNITS];
+		Vec3D				m_TransformedDefaultNormal;
+		Vec4D				m_DefaultTransformedTextureCoords[EGL_NUM_TEXTURE_UNITS];
 
 		// ----------------------------------------------------------------------
 		// Hints
@@ -560,17 +553,18 @@ private:
 	}
 
 
-	inline void Context :: CurrentValuesToRasterPos(Vertex * rasterPos) {
-		(this->*m_GeometryFunction)(rasterPos);
-/*		if ((rasterPos->m_ClipCoords.x() >= 0x10000000 || rasterPos->m_ClipCoords.x() < - 0x10000000 ||
-			 rasterPos->m_ClipCoords.y() >= 0x10000000 || rasterPos->m_ClipCoords.y() < - 0x10000000 ||
-			 rasterPos->m_ClipCoords.z() >= 0x10000000 || rasterPos->m_ClipCoords.z() < - 0x10000000) &&
-			(rasterPos->m_ClipCoords.w() >= 0x100     || rasterPos->m_ClipCoords.w() < - 0x100))
-			rasterPos->m_ClipCoords = (rasterPos->m_ClipCoords * 0x201) * (EGL_ONE/2);
-*/
-  }
+	inline void Context :: LightVertex(Vertex * rasterPos) {
+		if (!rasterPos->m_Lit) {
+			(this->*m_GeometryFunction)(rasterPos);
+			rasterPos->m_Lit = true;
+		}
+	}
 
-
+	inline void Context :: LightVertices(Vertex * input[], size_t inputCount) {
+		while (inputCount--) {
+			LightVertex(*input++);
+		}
+	}
 }
 
 #endif //ndef EGL_CONTEXT_H

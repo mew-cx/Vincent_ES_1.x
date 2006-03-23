@@ -283,10 +283,6 @@ void Context :: MultiTexCoord4x(GLenum target, GLfixed s, GLfixed t, GLfixed r, 
 	size_t unit = target - GL_TEXTURE0;
 
 	m_DefaultTextureCoords[unit] = Vec4D(s, t, r, q);
-
-	I32 inverse = EGL_Inverse(q);
-	m_DefaultScaledTextureCoords[unit].tu = EGL_Mul(s, inverse);
-	m_DefaultScaledTextureCoords[unit].tv = EGL_Mul(t, inverse);
 }
 
 
@@ -452,54 +448,61 @@ void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
 //	index		-	The array index from which any array coordinates should
 //					be retrieved.
 // --------------------------------------------------------------------------
-void Context :: SelectArrayElement(int index) {
+void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 
 	assert(m_VertexArray.effectivePointer);
 
 	{
-		EGL_Fixed coords[4];
+		Vec4D currentVertex;
 
-		m_VertexArray.FetchValues(index, coords);
-
-		if (m_VertexArray.size == 3) {
-			m_CurrentVertex = Vec4D(coords[0], coords[1], coords[2]);
-		} else if (m_VertexArray.size == 2) {
-			m_CurrentVertex = Vec4D(coords[0], coords[1], 0);
-		} else {
-			m_CurrentVertex = Vec4D(coords);
-		}
+		m_VertexArray.FetchValues(index, currentVertex.getArray());
+		m_ModelViewMatrixStack.CurrentMatrix().Multiply(currentVertex, rasterPos->m_EyeCoords);
+		rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
 	}
 
 	if (m_NormalArray.effectivePointer) {
-		EGL_Fixed coords[3];
+		Vec3D normal;
 
-		m_NormalArray.FetchValues(index, coords);
-		m_CurrentNormal = Vec3D(coords);
+		m_NormalArray.FetchValues(index, normal.getArray());
+		rasterPos->m_EyeNormal = m_InverseModelViewMatrix.Multiply3x3(normal);
+	} else {
+		rasterPos->m_EyeNormal = m_TransformedDefaultNormal;
 	}
 
 	if (m_ColorArray.effectivePointer) {
-		EGL_Fixed coords[4];
-
-		m_ColorArray.FetchValues(index, coords);
-		m_CurrentRGBA = FractionalColor(coords);
+		m_ColorArray.FetchValues(index, rasterPos->m_FrontColor.getArray());
+	} else {
+		rasterPos->m_FrontColor = m_DefaultRGBA;
 	}
 
 	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		if (m_TexCoordArray[unit].effectivePointer) {
-			EGL_Fixed coords[4];
+		if (m_VaryingInfo->textureBase[unit] >= 0) {
+			I32 base = m_VaryingInfo->textureBase[unit];
 
-			m_TexCoordArray[unit].FetchValues(index, coords);
+			if (m_TexCoordArray[unit].effectivePointer) {
+				Vec4D texCoords, projectedTexCoords;
 
-			if (m_TexCoordArray[unit].size < 4) {
-				m_CurrentTextureCoords[unit].tu = coords[0];
-				m_CurrentTextureCoords[unit].tv = coords[1];
+				m_TexCoordArray[unit].FetchValues(index, texCoords.getArray());
+			
+				if (m_TextureMatrixStack[unit].CurrentMatrix().IsIdentity()) {
+					projectedTexCoords = texCoords;
+				} else {
+					m_TextureMatrixStack[unit].CurrentMatrix().Multiply(texCoords, projectedTexCoords);
+				}
+
+				// according to Blythe & McReynolds, this should really happen
+				// as part of the perspective interpolation
+				projectedTexCoords.ProjectiveDivision();
+				rasterPos->m_Varying[base]     = projectedTexCoords.x();
+				rasterPos->m_Varying[base + 1] = projectedTexCoords.y();
 			} else {
-				I32 factor = EGL_Inverse(coords[3]);
-				m_CurrentTextureCoords[unit].tu = EGL_Mul(coords[0], factor);
-				m_CurrentTextureCoords[unit].tv = EGL_Mul(coords[1], factor);
+				rasterPos->m_Varying[base]     = m_DefaultTransformedTextureCoords[unit].x();
+				rasterPos->m_Varying[base + 1] = m_DefaultTransformedTextureCoords[unit].y();
 			}
 		}
 	}
+
+	rasterPos->m_Lit = false;
 }
 
 
@@ -566,272 +569,39 @@ void Context :: PrepareRendering() {
 	if (m_LightingEnabled) {
 		if (m_ColorMaterialEnabled) {
 			if (m_TwoSidedLightning) {
-                m_GeometryFunction = &Context::CurrentValuesToRasterPosTwoSidedTrack;
+                m_GeometryFunction = &Context::LightVertexTwoSidedTrack;
 			} else {
-				m_GeometryFunction = &Context::CurrentValuesToRasterPosOneSidedTrack;
+				m_GeometryFunction = &Context::LightVertexOneSidedTrack;
 			}
 		} else {
 			if (m_TwoSidedLightning) {
-				m_GeometryFunction = &Context::CurrentValuesToRasterPosTwoSidedNoTrack;
+				m_GeometryFunction = &Context::LightVertexTwoSidedNoTrack;
 			} else {
-				m_GeometryFunction = &Context::CurrentValuesToRasterPosOneSidedNoTrack;
+				m_GeometryFunction = &Context::LightVertexOneSidedNoTrack;
 			}
 		}
 	} else {
-		m_GeometryFunction = &Context::CurrentValuesToRasterPosNoLight;
+		m_GeometryFunction = &Context::LightVertexNoLight;
 	}
 
 	PrepareArray(m_VertexArray,   m_VertexArrayEnabled);
-
 	PrepareArray(m_NormalArray,	  m_NormalArrayEnabled);
-
-	if (!m_NormalArray.effectivePointer) {
-		m_CurrentNormal = m_DefaultNormal;
-	}
-
 	PrepareArray(m_ColorArray,    m_ColorArrayEnabled, true);
 
-	if (!m_ColorArray.effectivePointer) {
-		m_CurrentRGBA = m_DefaultRGBA;
-	}
-
 	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		PrepareArray(m_TexCoordArray[unit], m_TexCoordArrayEnabled[unit]);
+		Vec4D transformedTexCoords;
 
-		if (!m_TexCoordArray[unit].effectivePointer) {
-			m_CurrentTextureCoords[unit].tu = m_DefaultScaledTextureCoords[unit].tu;
-			m_CurrentTextureCoords[unit].tv = m_DefaultScaledTextureCoords[unit].tv;
-		}
+		PrepareArray(m_TexCoordArray[unit], m_TexCoordArrayEnabled[unit]);
+		m_TextureMatrixStack[unit].CurrentMatrix().Multiply(m_DefaultTextureCoords[m_ActiveTexture], 
+															m_DefaultTransformedTextureCoords[unit]);
+		// according to Blythe & McReynolds, this should really happen
+		// as part of the perspective interpolation
+		m_DefaultTransformedTextureCoords[unit].ProjectiveDivision();
 	}
 
 	PrepareArray(m_PointSizeArray,m_PointSizeArrayEnabled);
-}
 
-
-inline void Context :: CurrentTextureValuesToRasterPos(Vertex * rasterPos) {
-	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		if (m_VaryingInfo->textureBase[unit] >= 0) {
-			I32 base = m_VaryingInfo->textureBase[unit];
-
-			if (m_TextureMatrixStack[unit].CurrentMatrix().IsIdentity()) {
-				rasterPos->m_Varying[base] = m_CurrentTextureCoords[unit].tu;
-				rasterPos->m_Varying[base + 1] = m_CurrentTextureCoords[unit].tv;
-			} else {
-				Vec3D inCoords(m_CurrentTextureCoords[unit].tu, m_CurrentTextureCoords[unit].tv, 0);
-				Vec4D outCoords = m_TextureMatrixStack[unit].CurrentMatrix() * inCoords;
-				rasterPos->m_Varying[base] = outCoords.x();
-				rasterPos->m_Varying[base + 1] = outCoords.y();
-			}
-		}
-	}
-}
-
-
-// --------------------------------------------------------------------------
-// Perform lightning and geometry transformation on the current vertex
-// and store the results in buffer for the rasterization stage of the
-// pipeline.
-//
-// Parameters:
-//	rasterPos	-	A pointer to a vertex parameter buffer for the
-//					rasterization stage
-// --------------------------------------------------------------------------
-
-
-void Context :: CurrentValuesToRasterPosNoLight(Vertex * rasterPos) {
-	FractionalColor color;
-	FractionalColor backColor;
-
-	// apply projection matrix to eye coordinates
-	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
-
-	//	copy current colors to raster pos
-	rasterPos->m_FrontColor = rasterPos->m_BackColor = m_CurrentRGBA;
-
-	if (m_RasterizerState.IsEnabledFog()) {
-		assert(m_VaryingInfo->fogIndex >= 0);
-		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
-	}
-
-	CurrentTextureValuesToRasterPos(rasterPos);
-}
-
-
-void Context :: CurrentValuesToRasterPosOneSidedNoTrack(Vertex * rasterPos) {
-
-	FractionalColor color;
-	FractionalColor backColor;
-
-	// apply projection matrix to eye coordinates
-	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
-
-	// populate fog density here...
-	if (m_RasterizerState.IsEnabledFog()) {
-		assert(m_VaryingInfo->fogIndex >= 0);
-		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
-	}
-
-	// apply inverse of model view matrix to normals -> eye coordinates normals
-	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
-
-	if (m_NormalizeEnabled) {
-		eyeNormal.Normalize();
-	}
-
-	// for each light that is turned on, call into calculation
-	int mask = 1;
-
-	color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
-	color.a = m_FrontMaterial.GetDiffuseColor().a;
-	color += m_FrontMaterial.GetEmissiveColor();
-
-	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
-		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, eyeNormal,
-				m_FrontMaterial, color);
-		}
-	}
-
-	color.Clamp();
-	rasterPos->m_FrontColor = color;
-
-	CurrentTextureValuesToRasterPos(rasterPos);
-}
-
-
-void Context :: CurrentValuesToRasterPosOneSidedTrack(Vertex * rasterPos) {
-	FractionalColor color;
-	FractionalColor backColor;
-
-	// apply projection matrix to eye coordinates
-	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
-
-	// populate fog density here...
-	if (m_RasterizerState.IsEnabledFog()) {
-		assert(m_VaryingInfo->fogIndex >= 0);
-		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
-	}
-
-	// apply inverse of model view matrix to normals -> eye coordinates normals
-	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
-
-	if (m_NormalizeEnabled) {
-		eyeNormal.Normalize();
-	}
-
-	// for each light that is turned on, call into calculation
-	int mask = 1;
-
-	color = m_CurrentRGBA * m_LightModelAmbient;
-	color += m_FrontMaterial.GetEmissiveColor();
-
-	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
-		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, eyeNormal,
-				m_FrontMaterial, m_CurrentRGBA, color);
-		}
-	}
-
-	color.Clamp();
-	rasterPos->m_FrontColor = color;
-
-	CurrentTextureValuesToRasterPos(rasterPos);
-}
-
-
-void Context :: CurrentValuesToRasterPosTwoSidedNoTrack(Vertex * rasterPos) {
-	FractionalColor color;
-	FractionalColor backColor;
-
-	// apply projection matrix to eye coordinates
-	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
-
-	// populate fog density here...
-	if (m_RasterizerState.IsEnabledFog()) {
-		assert(m_VaryingInfo->fogIndex >= 0);
-		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
-	}
-
-	// apply inverse of model view matrix to normals -> eye coordinates normals
-	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
-
-	if (m_NormalizeEnabled) {
-		eyeNormal.Normalize();
-	}
-
-	// for each light that is turned on, call into calculation
-	int mask = 1;
-
-	color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
-	color.a = m_FrontMaterial.GetDiffuseColor().a;
-	color += m_FrontMaterial.GetEmissiveColor();
-
-	backColor = color;
-
-	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
-		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight2(rasterPos->m_EyeCoords, eyeNormal,
-				m_FrontMaterial, color, backColor);
-		}
-	}
-
-	color.Clamp();
-	backColor.Clamp();
-
-	rasterPos->m_FrontColor = color;
-	rasterPos->m_BackColor = backColor;
-
-	CurrentTextureValuesToRasterPos(rasterPos);
-}
-
-
-void Context :: CurrentValuesToRasterPosTwoSidedTrack(Vertex * rasterPos) {
-	FractionalColor color;
-	FractionalColor backColor;
-
-	// apply projection matrix to eye coordinates
-	m_ModelViewMatrixStack.CurrentMatrix().Multiply(m_CurrentVertex, rasterPos->m_EyeCoords);
-	rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
-
-	// populate fog density here...
-	if (m_RasterizerState.IsEnabledFog()) {
-		assert(m_VaryingInfo->fogIndex >= 0);
-		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
-	}
-
-	// apply inverse of model view matrix to normals -> eye coordinates normals
-	Vec3D eyeNormal = m_InverseModelViewMatrix.Multiply3x3(m_CurrentNormal);
-
-	if (m_NormalizeEnabled) {
-		eyeNormal.Normalize();
-	}
-
-	// for each light that is turned on, call into calculation
-	int mask = 1;
-
-	color = m_CurrentRGBA * m_LightModelAmbient;
-	color += m_FrontMaterial.GetEmissiveColor();
-
-	backColor = color;
-
-	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
-		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight2(rasterPos->m_EyeCoords, eyeNormal,
-				m_FrontMaterial, m_CurrentRGBA, color, backColor);
-		}
-	}
-
-	color.Clamp();
-	backColor.Clamp();
-
-	rasterPos->m_FrontColor = color;
-	rasterPos->m_BackColor = backColor;
-
-	CurrentTextureValuesToRasterPos(rasterPos);
+	m_TransformedDefaultNormal = m_InverseModelViewMatrix.Multiply3x3(m_DefaultNormal);
 }
 
 

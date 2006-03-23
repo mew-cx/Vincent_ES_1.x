@@ -71,8 +71,7 @@ inline EGL_Fixed Context :: SelectPointSizeArrayElement(int index) {
 
 void Context :: DrawPoint(int index) {
 	EGL_Fixed size = SelectPointSizeArrayElement(index);
-	SelectArrayElement(index);
-	CurrentValuesToRasterPos(&m_Input[0]);
+	SelectArrayElement(index, &m_Input[0]);
 	RenderPoint(m_Input[0], size);
 }
 
