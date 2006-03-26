@@ -56,14 +56,12 @@ void Context :: Materialx(GLenum face, GLenum pname, GLfixed param) {
 		return;
 	}
 
-	Material * material = &m_FrontMaterial;
-
 	switch (pname) {
 	case GL_SHININESS:
 		if (param < 0 || param > EGL_FixedFromInt(128)) {
 			RecordError(GL_INVALID_VALUE);
 		} else {
-			material->SetSpecularExponent(param);
+			m_Material.SetSpecularExponent(param);
 		}
 
 		break;
@@ -81,28 +79,26 @@ void Context :: Materialxv(GLenum face, GLenum pname, const GLfixed *params) {
 		return;
 	}
 
-	Material * material = &m_FrontMaterial;
-
 	switch (pname) {
 	case GL_AMBIENT:
-		material->SetAmbientColor(FractionalColor::Clamp(params));
+		m_Material.SetAmbientColor(FractionalColor::Clamp(params));
 		break;
 
 	case GL_DIFFUSE:
-		material->SetDiffuseColor(FractionalColor::Clamp(params));
+		m_Material.SetDiffuseColor(FractionalColor::Clamp(params));
 		break;
 
 	case GL_AMBIENT_AND_DIFFUSE:
-		material->SetAmbientColor(FractionalColor::Clamp(params));
-		material->SetDiffuseColor(FractionalColor::Clamp(params));
+		m_Material.SetAmbientColor(FractionalColor::Clamp(params));
+		m_Material.SetDiffuseColor(FractionalColor::Clamp(params));
 		break;
 
 	case GL_SPECULAR:
-		material->SetSpecularColor(FractionalColor::Clamp(params));
+		m_Material.SetSpecularColor(FractionalColor::Clamp(params));
 		break;
 
 	case GL_EMISSION:
-		material->SetEmissiveColor(FractionalColor::Clamp(params));
+		m_Material.SetEmissiveColor(FractionalColor::Clamp(params));
 		break;
 
 	default:
@@ -119,23 +115,23 @@ bool Context :: GetMaterialxv(GLenum face, GLenum pname, GLfixed *params) {
 
 	switch (pname) {
 	case GL_AMBIENT:
-		CopyColor(m_FrontMaterial.GetAmbientColor(), params);
+		CopyColor(m_Material.GetAmbientColor(), params);
 		break;
 
 	case GL_DIFFUSE:
-		CopyColor(m_FrontMaterial.GetDiffuseColor(), params);
+		CopyColor(m_Material.GetDiffuseColor(), params);
 		break;
 
 	case GL_SPECULAR:
-		CopyColor(m_FrontMaterial.GetSpecularColor(), params);
+		CopyColor(m_Material.GetSpecularColor(), params);
 		break;
 
 	case GL_EMISSION:
-		CopyColor(m_FrontMaterial.GetEmissiveColor(), params);
+		CopyColor(m_Material.GetEmissiveColor(), params);
 		break;
 
 	case GL_SHININESS:
-		params[0] = m_FrontMaterial.GetSpecularExponent();
+		params[0] = m_Material.GetSpecularExponent();
 		break;
 
 	default:

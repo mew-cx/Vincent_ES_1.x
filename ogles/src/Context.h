@@ -335,9 +335,7 @@ private:
 		void SelectArrayElement(int index, Vertex * rasterPos);
 		EGL_Fixed SelectPointSizeArrayElement(int index);
 
-		void LightVertex(Vertex * rasterPos);
-
-		typedef void (Context::*GeometryFunction)(Vertex * rasterPos);
+		typedef void (Context::*LightVertexFunction)(Vertex * rasterPos, Vertex::LightMode mode);
 		typedef void (Context::*DrawPrimitiveFunction)(int index);
 		typedef void (Context::*EndPrimitiveFunction)();
 
@@ -347,14 +345,17 @@ private:
 		bool Begin(GLenum mode);
 		void End();
 
-		void LightVertices(Vertex * input[], size_t inputCount);
-		void LightVertexNoLight(Vertex * rasterPos);
-		void LightVertexOneSidedNoTrack(Vertex * rasterPos);
-		void LightVertexOneSidedTrack(Vertex * rasterPos);
-		void LightVertexTwoSidedNoTrack(Vertex * rasterPos);
-		void LightVertexTwoSidedTrack(Vertex * rasterPos);
+		void LightVertices(Vertex * input[], size_t inputCount, Vertex::LightMode mode);
 
-		void InterpolateRasterPos(Vertex * a, Vertex * b, GLfixed x, Vertex * result);
+		void LightVertex(Vertex * rasterPos, Vertex::LightMode mode);
+
+		void LightVertexNoLight(Vertex * rasterPos, Vertex::LightMode mode);
+		void LightVertexNoTrack(Vertex * rasterPos, Vertex::LightMode mode);
+		void LightVertexTrack(Vertex * rasterPos, Vertex::LightMode mode);
+
+		size_t ClipPrimitive(size_t inputCount, Vertex * input[], Vertex * output[], Vertex *** result);
+
+		//void InterpolateRasterPos(Vertex * a, Vertex * b, GLfixed x, Vertex * result);
 
 private:
 		// ----------------------------------------------------------------------
@@ -447,8 +448,9 @@ private:
 		Vec4D				m_ClipPlanes[NUM_CLIP_PLANES];
 		U32					m_ClipPlaneEnabled;
 		Light				m_Lights[EGL_NUMBER_LIGHTS];
-		Material			m_FrontMaterial;
+		Material			m_Material;
 		FractionalColor		m_LightModelAmbient;
+		FractionalColor		m_EffectiveLightModelAmbient; // material * light model ambient
 		GLint				m_LightEnabled;
 
 		EGL_Fixed			m_DepthClearValue;
@@ -492,7 +494,7 @@ private:
 		RasterizerState			m_RasterizerState;
 		Rasterizer *			m_Rasterizer;
 		const VaryingInfo *		m_VaryingInfo;
-		GeometryFunction		m_GeometryFunction;
+		LightVertexFunction		m_LightVertexFunction;
 		DrawPrimitiveFunction	m_DrawPrimitiveFunction;
 		EndPrimitiveFunction	m_EndPrimitiveFunction;
 		U32						m_PrimitiveState;	// primitive state machine state
@@ -553,16 +555,16 @@ private:
 	}
 
 
-	inline void Context :: LightVertex(Vertex * rasterPos) {
-		if (!rasterPos->m_Lit) {
-			(this->*m_GeometryFunction)(rasterPos);
-			rasterPos->m_Lit = true;
+	inline void Context :: LightVertex(Vertex * rasterPos, Vertex::LightMode mode) {
+		if (!(rasterPos->m_Lit & mode)) {
+			(this->*m_LightVertexFunction)(rasterPos, mode);
+			rasterPos->m_Lit |= mode;
 		}
 	}
 
-	inline void Context :: LightVertices(Vertex * input[], size_t inputCount) {
+	inline void Context :: LightVertices(Vertex * input[], size_t inputCount, Vertex::LightMode mode) {
 		while (inputCount--) {
-			LightVertex(*input++);
+			LightVertex(*input++, mode);
 		}
 	}
 }

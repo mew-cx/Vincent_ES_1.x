@@ -90,18 +90,18 @@ void Context :: RenderPoint(Vertex& point, EGL_Fixed size) {
 	}
 
 	// in principle, the scissor test can be included in here
-	if (point.m_ClipCoords.x() < -point.m_ClipCoords.w() ||
-		point.m_ClipCoords.x() >  point.m_ClipCoords.w() ||
-		point.m_ClipCoords.y() < -point.m_ClipCoords.w() ||
-		point.m_ClipCoords.y() >  point.m_ClipCoords.w() ||
-		point.m_ClipCoords.z() < -point.m_ClipCoords.w() ||
-		point.m_ClipCoords.z() >  point.m_ClipCoords.w())
+	if (point.m_cc)
 		return;
 
 	ClipCoordsToWindowCoords(point);
 
 	if (m_VaryingInfo->colorIndex >= 0) {
-		point.m_FrontColor.toArray(point.m_Varying + m_VaryingInfo->colorIndex);
+		if (m_LightingEnabled) {
+			LightVertex(&point, Vertex::LightMode::Front);
+			point.m_Color[Vertex::LightMode::Front].toArray(point.m_Varying + m_VaryingInfo->colorIndex);
+		} else {
+			point.m_Color[Vertex::LightMode::Unlit].toArray(point.m_Varying + m_VaryingInfo->colorIndex);
+		}
 	}
 
 	if (m_PointSizeAttenuate) {

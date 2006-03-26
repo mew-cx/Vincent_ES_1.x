@@ -46,187 +46,6 @@
 using namespace EGL;
 
 
-namespace {
-
-	inline size_t ClipLow(Vertex * input[], size_t inputCount, Vertex * output[], Vertex *& nextTemporary, size_t coord, size_t numVarying) {
-
-		if (inputCount < 3) {
-			return 0;
-		}
-
-		Vertex * previous = input[inputCount - 1];
-		Vertex * current;
-		int resultCount = 0;
-
-		for (size_t index = 0; index < inputCount; ++index) {
-
-			current = input[index];
-
-			if (current->m_ClipCoords[coord] >= -current->m_ClipCoords.w()) {
-
-				if (previous->m_ClipCoords[coord] >= -previous->m_ClipCoords.w()) {
-					// line segment between previous and current is fully contained in cube
-					output[resultCount++] = current;
-					//previous = current;
-				} else {
-					// line segment between previous and current is intersected;
-					// create vertex at intersection, then add current
-					Vertex & newVertex = *nextTemporary++;
-					output[resultCount++] = &newVertex;
-
-					EGL_Fixed c_x = current->m_ClipCoords[coord];
-					EGL_Fixed c_w = current->m_ClipCoords.w();
-					EGL_Fixed p_x = previous->m_ClipCoords[coord];
-					EGL_Fixed p_w = previous->m_ClipCoords.w();
-					EGL_Fixed num = p_w + p_x;
-					EGL_Fixed denom = (p_w + p_x) - (c_w + c_x);
-
-					Interpolate(newVertex, *current, *previous, Coeff4q28(num, denom), numVarying);
-					newVertex.m_ClipCoords[coord] = -newVertex.m_ClipCoords.w();
-
-					output[resultCount++] = current;
-					//previous = current;
-				}
-			} else {
-				if (previous->m_ClipCoords[coord] >= -previous->m_ClipCoords.w()) {
-					// line segment between previous and current is intersected;
-					// create vertex at intersection and add it
-					Vertex & newVertex = *nextTemporary++;
-					output[resultCount++] = &newVertex;
-
-					EGL_Fixed c_x = current->m_ClipCoords[coord];
-					EGL_Fixed c_w = current->m_ClipCoords.w();
-					EGL_Fixed p_x = previous->m_ClipCoords[coord];
-					EGL_Fixed p_w = previous->m_ClipCoords.w();
-					EGL_Fixed num = p_w + p_x;
-					EGL_Fixed denom = (p_w + p_x) - (c_w + c_x);
-
-					Interpolate(newVertex, *current, *previous, Coeff4q28(num, denom), numVarying);
-					newVertex.m_ClipCoords[coord] = -newVertex.m_ClipCoords.w();
-
-					//previous = current;
-				}
-			}
-
-			previous = current;
-		}
-
-		return resultCount;
-
-	}
-
-	inline size_t ClipHigh(Vertex * input[], size_t inputCount, Vertex * output[], Vertex *& nextTemporary, size_t coord, size_t numVarying) {
-
-		if (inputCount < 3) {
-			return 0;
-		}
-
-		Vertex * previous = input[inputCount - 1];
-		Vertex * current;
-		int resultCount = 0;
-
-		for (size_t index = 0; index < inputCount; ++index) {
-
-			current = input[index];
-
-			if (current->m_ClipCoords[coord] < current->m_ClipCoords.w()) {
-
-				if (previous->m_ClipCoords[coord] < previous->m_ClipCoords.w()) {
-					// line segment between previous and current is fully contained in cube
-					output[resultCount++] = current;
-				} else {
-					// line segment between previous and current is intersected;
-					// create vertex at intersection, then add current
-					Vertex & newVertex = *nextTemporary++;
-					output[resultCount++] = &newVertex;
-
-					EGL_Fixed c_x = current->m_ClipCoords[coord];
-					EGL_Fixed c_w = current->m_ClipCoords.w();
-					EGL_Fixed p_x = previous->m_ClipCoords[coord];
-					EGL_Fixed p_w = previous->m_ClipCoords.w();
-					EGL_Fixed num = p_w - p_x;
-					EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
-
-					Interpolate(newVertex, *current, *previous, Coeff4q28(num, denom), numVarying);
-					newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
-
-					output[resultCount++] = current;
-				}
-			} else {
-				if (previous->m_ClipCoords[coord] < previous->m_ClipCoords.w()) {
-					// line segment between previous and current is intersected;
-					// create vertex at intersection and add it
-					Vertex & newVertex = *nextTemporary++;
-					output[resultCount++] = &newVertex;
-
-					EGL_Fixed c_x = current->m_ClipCoords[coord];
-					EGL_Fixed c_w = current->m_ClipCoords.w();
-					EGL_Fixed p_x = previous->m_ClipCoords[coord];
-					EGL_Fixed p_w = previous->m_ClipCoords.w();
-					EGL_Fixed num = p_w - p_x;
-					EGL_Fixed denom = (p_w - p_x) - (c_w - c_x);
-
-					Interpolate(newVertex, *current, *previous, Coeff4q28(num, denom), numVarying);
-					newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
-				}
-			}
-
-			previous = current;
-		}
-
-		return resultCount;
-
-	}
-
-	size_t ClipUser(const Vec4D& plane, Vertex * input[], size_t inputCount, Vertex * output[], Vertex *& nextTemporary, size_t numVarying) {
-		if (inputCount < 3) {
-			return 0;
-		}
-
-		Vertex * previous = input[inputCount - 1];
-		Vertex * current;
-		int resultCount = 0;
-
-		for (size_t index = 0; index < inputCount; ++index) {
-
-			current = input[index];
-
-			EGL_Fixed c = current->m_EyeCoords * plane;
-			EGL_Fixed p = previous->m_EyeCoords * plane;
-
-			if (c > 0) {
-				if (p >= 0) {
-					// line segment between previous and current is fully contained in cube
-					output[resultCount++] = current;
-				} else {
-					// line segment between previous and current is intersected;
-					// create vertex at intersection, then add current
-					Vertex & newVertex = *nextTemporary++;
-					output[resultCount++] = &newVertex;
-
-					InterpolateWithEye(newVertex, *current, *previous, Coeff4q28(p, p - c), numVarying);
-					output[resultCount++] = current;
-				}
-			} else {
-				if (p > 0) {
-					// line segment between previous and current is intersected;
-					// create vertex at intersection and add it
-					Vertex & newVertex = *nextTemporary++;
-					output[resultCount++] = &newVertex;
-
-					InterpolateWithEye(newVertex, *current, *previous, Coeff4q28(p, p - c), numVarying);
-				}
-			}
-
-			previous = current;
-		}
-
-		return resultCount;
-	}
-
-}
-
-
 void Context :: FrontFace(GLenum mode) {
 
 	switch (mode) {
@@ -277,6 +96,9 @@ namespace {
 
 void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 
+	if (a.m_cc & b.m_cc & c.m_cc)
+		return;
+
 	EGL_Fixed x0 = a.m_ClipCoords.w();
 	EGL_Fixed x1 = a.m_ClipCoords.x();
 	EGL_Fixed x2 = a.m_ClipCoords.y();
@@ -314,30 +136,32 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 	}
 
 	if (m_VaryingInfo->colorIndex >= 0) {
-		if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
-			if (m_LightEnabled && m_TwoSidedLightning && backFace) {
-				a.m_BackColor.toArray(a.m_Varying + m_VaryingInfo->colorIndex);
-				b.m_BackColor.toArray(b.m_Varying + m_VaryingInfo->colorIndex);
-				c.m_BackColor.toArray(c.m_Varying + m_VaryingInfo->colorIndex);
-			} else {
-				a.m_FrontColor.toArray(a.m_Varying + m_VaryingInfo->colorIndex);
-				b.m_FrontColor.toArray(b.m_Varying + m_VaryingInfo->colorIndex);
-				c.m_FrontColor.toArray(c.m_Varying + m_VaryingInfo->colorIndex);
+		Vertex::LightMode mode;
+
+		if (m_LightingEnabled) { 
+			mode = backFace ? Vertex::LightMode::Back : Vertex::LightMode::Front;
+			LightVertex(&c, mode);
+
+			if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
+				LightVertex(&a, mode);
+				LightVertex(&b, mode);
 			}
 		} else {
-			if (m_LightEnabled && m_TwoSidedLightning && backFace) {
-				c.m_BackColor.toArray(a.m_Varying + m_VaryingInfo->colorIndex);
-				c.m_BackColor.toArray(b.m_Varying + m_VaryingInfo->colorIndex);
-				c.m_BackColor.toArray(c.m_Varying + m_VaryingInfo->colorIndex);
-			} else {
-				c.m_FrontColor.toArray(a.m_Varying + m_VaryingInfo->colorIndex);
-				c.m_FrontColor.toArray(b.m_Varying + m_VaryingInfo->colorIndex);
-				c.m_FrontColor.toArray(c.m_Varying + m_VaryingInfo->colorIndex);
-			}
+			mode = Vertex::LightMode::Unlit;
 		}
+
+		if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
+			a.m_Color[mode].toArray(a.m_Varying + m_VaryingInfo->colorIndex);
+			b.m_Color[mode].toArray(b.m_Varying + m_VaryingInfo->colorIndex);
+		} else {
+			c.m_Color[mode].toArray(a.m_Varying + m_VaryingInfo->colorIndex);
+			c.m_Color[mode].toArray(b.m_Varying + m_VaryingInfo->colorIndex);
+		}
+
+		c.m_Color[mode].toArray(c.m_Varying + m_VaryingInfo->colorIndex);
 	}
 
-	Vertex * array1[16];
+	Vertex * array1[16], *array2[16], ** result = 0;
 	array1[0] = &a;
 
 	if (!cw) {
@@ -348,40 +172,15 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 		array1[1] = &c;
 	}
 
-	Vertex * array2[16];
-	Vertex * tempVertices = m_Temporary;
-
-	size_t numVertices = 3;
-	size_t numVarying = m_VaryingInfo->numVarying;
-
-	if (m_ClipPlaneEnabled) {
-		for (size_t index = 0, mask = 1; index < NUM_CLIP_PLANES; ++index, mask <<= 1) {
-			if (m_ClipPlaneEnabled & mask) {
-				numVertices = ClipUser(m_ClipPlanes[index], array1, numVertices, array2, tempVertices, numVarying);
-
-				if (!numVertices) {
-					return;
-				}
-
-				for (size_t idx = 0; idx < numVertices; ++idx) {
-					array1[idx] = array2[idx];
-				}
-			}
-		}
-	}
-
-	for (size_t coord = 0; coord < 3; ++coord) {
-		numVertices = ClipLow(array1, numVertices, array2, tempVertices, coord, numVarying);
-		numVertices = ClipHigh(array2, numVertices, array1, tempVertices, coord, numVarying);
-	}
+	size_t numVertices = ClipPrimitive(3, array1, array2, &result);
 
 	if (numVertices >= 3) {
-		ClipCoordsToWindowCoords(*array1[0]);
-		ClipCoordsToWindowCoords(*array1[1]);
+		ClipCoordsToWindowCoords(*result[0]);
+		ClipCoordsToWindowCoords(*result[1]);
 
 		for (size_t index = 2; index < numVertices; ++index) {
-			ClipCoordsToWindowCoords(*array1[index]);
-			m_Rasterizer->RasterTriangle(*array1[0], *array1[index - 1], *array1[index]);
+			ClipCoordsToWindowCoords(*result[index]);
+			m_Rasterizer->RasterTriangle(*result[0], *result[index - 1], *result[index]);
 		}
 	}
 }

@@ -221,11 +221,6 @@ inline I32 EGL_MulShift(I32 a, I32 b, I32 shift) {
 	return static_cast<I32>(product >> shift);
 }
 
-#ifndef EGL_USE_GPP
-// ==========================================================================
-// Implementation if GPP is not available
-// ==========================================================================
-
 
 // --------------------------------------------------------------------------
 // Calculate inverse of fixed point number
@@ -326,112 +321,6 @@ EGL_Fixed EGL_Sin(EGL_Fixed value);
 //	value		-	the numbers whose cosine should be calculated
 // --------------------------------------------------------------------------
 EGL_Fixed EGL_Cos(EGL_Fixed value);
-
-
-#else 
-// ==========================================================================
-// Implementation if GPP is available
-// ==========================================================================
-
-
-// --------------------------------------------------------------------------
-// Perform division of two fixed point numbers
-//
-// Parameters:
-//	a			-	dividend
-//	b			-	divisor
-// --------------------------------------------------------------------------
-inline EGL_Fixed EGL_Div(EGL_Fixed a, EGL_Fixed b) {
-	assert(b);
-	assert(-b);
-	I32 result;
-	gppDiv_16_32s(a, b, &result);
-	return result;
-}
-
-
-// --------------------------------------------------------------------------
-// Calculate inverse of fixed point number
-//
-// Parameters:
-//	value		-	the number whose inverse should be calculated
-// --------------------------------------------------------------------------
-inline EGL_Fixed EGL_Inverse(EGL_Fixed value) {
-	I32 result;
-	assert(value);
-	assert(-value);
-	gppInv_16_32s(value, &result);
-	return result;
-}
-
-
-// --------------------------------------------------------------------------
-// Calculate square root of fixed point number
-//
-// Parameters:
-//	value		-	the number whose square root should be calculated
-// --------------------------------------------------------------------------
-inline EGL_Fixed EGL_FastSqrt(EGL_Fixed value) {
-	U32 result;
-	gppSqrtLP_16_32s(static_cast<U32>(value), &result);
-	return static_cast<I32>(result);
-}
-
-
-// --------------------------------------------------------------------------
-// Calculate square root of fixed point number
-//
-// Parameters:
-//	value		-	the number whose square root should be calculated
-// --------------------------------------------------------------------------
-inline EGL_Fixed EGL_Sqrt(EGL_Fixed value) {
-	U32 result;
-	gppSqrtHP_16_32s(static_cast<U32>(value), &result);
-	return static_cast<I32>(result);
-}
-
-
-// --------------------------------------------------------------------------
-// Calculate the inverse of the square root of fixed point number
-//
-// Parameters:
-//	value		-	the numbers whose inverse of square root should be 
-//					calculated
-// --------------------------------------------------------------------------
-inline EGL_Fixed EGL_InvSqrt(EGL_Fixed value) {
-	U32 result;
-	gppInvSqrtLP_16_32s(static_cast<U32>(value), &result);
-	return static_cast<I32>(result);
-}
-
-
-// --------------------------------------------------------------------------
-// Calculate sine of fixed point number
-//
-// Parameters:
-//	value		-	the numbers whose sine should be calculated
-// --------------------------------------------------------------------------
-inline EGL_Fixed EGL_Sin(EGL_Fixed value) {
-	I32 result;
-	gppSinHP_16_32s(value, &result);
-	return result;
-}
-
-
-// --------------------------------------------------------------------------
-// Calculate cosine of fixed point number
-//
-// Parameters:
-//	value		-	the numbers whose cosine should be calculated
-// --------------------------------------------------------------------------
-inline EGL_Fixed EGL_Cos(EGL_Fixed value) {
-	I32 result;
-	gppCosHP_16_32s(value, &result);
-	return result;
-}
-
-
-#endif // ndef EGL_USE_GPP
 
 
 // --------------------------------------------------------------------------
