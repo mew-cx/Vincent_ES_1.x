@@ -163,38 +163,45 @@ namespace {
 
 void Context :: RenderLine(Vertex& from, Vertex& to) {
 
-	Vertex * tempVertices = m_Temporary;
-	Vertex * pFrom = &from;
-	Vertex * pTo = &to;
+	if (from.m_cc & to.m_cc) {
+		// all points outside of one frustrum plane
+		return;
+	}
 
-	if (m_ClipPlaneEnabled) {
-		for (size_t index = 0, mask = 1; index < NUM_CLIP_PLANES; ++index, mask <<= 1) {
-			if (m_ClipPlaneEnabled & mask) {
-				if (!ClipUser(m_ClipPlanes[index], pFrom, pTo, tempVertices, m_VaryingInfo->numVarying)) {
-					return;
-				}
+	if (m_VaryingInfo->colorIndex >= 0) {
+		if (m_LightingEnabled) {
+			LightVertex(&to, Vertex::LightMode::Front);
+			to.m_Color[Vertex::LightMode::Front].toArray(to.m_Varying + m_VaryingInfo->colorIndex);
+
+			if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
+				LightVertex(&from, Vertex::LightMode::Front);
+				from.m_Color[Vertex::LightMode::Front].toArray(from.m_Varying + m_VaryingInfo->colorIndex);
+			} else {
+				to.m_Color[Vertex::LightMode::Front].toArray(from.m_Varying + m_VaryingInfo->colorIndex);
+			}
+		} else {
+			to.m_Color[Vertex::LightMode::Unlit].toArray(to.m_Varying + m_VaryingInfo->colorIndex);
+
+			if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
+				from.m_Color[Vertex::LightMode::Unlit].toArray(from.m_Varying + m_VaryingInfo->colorIndex);
+			} else {
+				to.m_Color[Vertex::LightMode::Unlit].toArray(from.m_Varying + m_VaryingInfo->colorIndex);
 			}
 		}
 	}
 
-	if (Clip(pFrom, pTo, tempVertices, 0, m_VaryingInfo->numVarying) &&
-		Clip(pFrom, pTo, tempVertices, 1, m_VaryingInfo->numVarying) &&
-		Clip(pFrom, pTo, tempVertices, 2, m_VaryingInfo->numVarying)) {
+	Vertex * array1[16], *array2[16], ** result = 0;
+	array1[0] = &from;
+	array1[1] = &to;
 
-		ClipCoordsToWindowCoords(*pFrom);
-		ClipCoordsToWindowCoords(*pTo);
+	size_t numVertices = ClipPrimitive(2, array1, array2, &result);
 
-		if (m_VaryingInfo->colorIndex >= 0) {
-			if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
-				pFrom->m_FrontColor.toArray(pFrom->m_Varying + m_VaryingInfo->colorIndex);
-			} else {
-				pTo->m_FrontColor.toArray(pFrom->m_Varying + m_VaryingInfo->colorIndex);
-			}
+	if (numVertices >= 2) {
 
-			pTo->m_FrontColor.toArray(pTo->m_Varying + m_VaryingInfo->colorIndex);
-		}
+		ClipCoordsToWindowCoords(*result[0]);
+		ClipCoordsToWindowCoords(*result[1]);
 
-		m_Rasterizer->RasterLine(*pFrom, *pTo);
+		m_Rasterizer->RasterLine(*result[0], *result[1]);
 	}
 }
 

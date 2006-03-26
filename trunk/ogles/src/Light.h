@@ -98,20 +98,6 @@ namespace EGL {
 		void AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
 			const Material& currMaterial, const FractionalColor& currentColor, FractionalColor& result);
 
-
-		// two-sided lightning
-		// TO DO:
-		// create version for: light at infinity or light at location
-		// spot light vs. point light
-		// color material vs. material color
-		void AccumulateLight2(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
-			const Material& currMaterial, FractionalColor& result, 
-			FractionalColor& result2);
-
-		void AccumulateLight2(const Vec4D& vertexCoords, const Vec3D& vertexNormal, 
-			const Material& currMaterial, const FractionalColor& currentColor, FractionalColor& result, 
-			FractionalColor& result2);
-
 	private:
 		FractionalColor			m_AmbientColor;
 		FractionalColor			m_DiffuseColor;
@@ -130,6 +116,13 @@ namespace EGL {
 		FractionalColor			m_EffectiveAmbientColor;
 		FractionalColor			m_EffectiveDiffuseColor;
 		FractionalColor			m_EffectiveSpecularColor;
+
+		// flags to accelerate calculate
+		bool					m_NoAmbientColor : 1;		// effective ambient color is black
+		bool					m_NoDiffuseColor : 1;		// effective ambient color is black
+		bool					m_NoSpecularColor : 1;		// effective ambient color is black
+		bool					m_IsConstantAttenuation : 1;// only constant term, so we can
+		EGL_Fixed				m_AttenuationFactor;		// precompute att value
 	};
 
 

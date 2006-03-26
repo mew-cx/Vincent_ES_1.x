@@ -101,10 +101,18 @@ namespace EGL {
 		Vec4D				m_ClipCoords;
 		ScreenCoord			m_WindowCoords;
 		Vec3D				m_EyeNormal;
-		FractionalColor		m_FrontColor;		// color in range 0..255
-		FractionalColor		m_BackColor;
+		FractionalColor		m_Color[3];	// base color, front color, back color		
 		EGL_Fixed			m_Varying[EGL_MAX_NUM_VARYING];
-		bool				m_Lit;
+
+		enum LightMode {
+			Unlit = 0,
+			Front = 1,
+			Back  = 2
+			// BackAndFront = 3
+		};
+
+		unsigned			m_Lit : 2;	// unlit or lit vertex?
+		unsigned			m_cc : 6;	// culling flags
 	};
 
 	struct SurfaceInfo {

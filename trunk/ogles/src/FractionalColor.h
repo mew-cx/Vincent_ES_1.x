@@ -142,6 +142,10 @@ namespace EGL {
 		inline const EGL_Fixed * getArray() const {
 			return vec;
 		}
+
+		inline bool IsBlack() const {
+			return r == 0 && b == 0 && g == 0;
+		}
 		
 		// convert fixed point to byte format
 		inline operator Color() const {

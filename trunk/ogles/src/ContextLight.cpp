@@ -295,7 +295,7 @@ bool Context :: GetLightxv(GLenum light, GLenum pname, GLfixed *params) {
 // --------------------------------------------------------------------------
 
 
-void Context :: LightVertexNoLight(Vertex * rasterPos) {
+void Context :: LightVertexNoLight(Vertex * rasterPos, Vertex::LightMode mode) {
 
 	//	copy current colors to raster pos
 	if (m_RasterizerState.IsEnabledFog()) {
@@ -306,10 +306,7 @@ void Context :: LightVertexNoLight(Vertex * rasterPos) {
 }
 
 
-void Context :: LightVertexOneSidedNoTrack(Vertex * rasterPos) {
-
-	FractionalColor color;
-	FractionalColor backColor;
+void Context :: LightVertexNoTrack(Vertex * rasterPos, Vertex::LightMode mode) {
 
 	// populate fog density here...
 	if (m_RasterizerState.IsEnabledFog()) {
@@ -321,28 +318,25 @@ void Context :: LightVertexOneSidedNoTrack(Vertex * rasterPos) {
 		rasterPos->m_EyeNormal.Normalize();
 	}
 
+	Vec3D normal = (mode == Vertex::LightMode::Front) ? rasterPos->m_EyeNormal : -rasterPos->m_EyeNormal;
+
+	rasterPos->m_Color[mode] = m_EffectiveLightModelAmbient;
+
 	// for each light that is turned on, call into calculation
 	int mask = 1;
 
-	color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
-	color.a = m_FrontMaterial.GetDiffuseColor().a;
-	color += m_FrontMaterial.GetEmissiveColor();
-
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, rasterPos->m_EyeNormal,
-				m_FrontMaterial, color);
+			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, normal,
+				m_Material, rasterPos->m_Color[mode]);
 		}
 	}
 
-	color.Clamp();
-	rasterPos->m_FrontColor = color;
+	rasterPos->m_Color[mode].Clamp();
 }
 
 
-void Context :: LightVertexOneSidedTrack(Vertex * rasterPos) {
-	FractionalColor color;
-	FractionalColor backColor;
+void Context :: LightVertexTrack(Vertex * rasterPos, Vertex::LightMode mode) {
 
 	// populate fog density here...
 	if (m_RasterizerState.IsEnabledFog()) {
@@ -354,99 +348,55 @@ void Context :: LightVertexOneSidedTrack(Vertex * rasterPos) {
 		rasterPos->m_EyeNormal.Normalize();
 	}
 
-	// for each light that is turned on, call into calculation
-	int mask = 1;
+	Vec3D normal = (mode == Vertex::LightMode::Front) ? rasterPos->m_EyeNormal : -rasterPos->m_EyeNormal;
 
-	color = rasterPos->m_FrontColor * m_LightModelAmbient;
-	color += m_FrontMaterial.GetEmissiveColor();
-
-	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
-		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, rasterPos->m_EyeNormal,
-				m_FrontMaterial, rasterPos->m_FrontColor, color);
-		}
-	}
-
-	color.Clamp();
-	rasterPos->m_FrontColor = color;
-}
-
-
-void Context :: LightVertexTwoSidedNoTrack(Vertex * rasterPos) {
-	FractionalColor color;
-	FractionalColor backColor;
-
-	// populate fog density here...
-	if (m_RasterizerState.IsEnabledFog()) {
-		assert(m_VaryingInfo->fogIndex >= 0);
-		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
-	}
-
-	if (m_NormalizeEnabled) {
-		rasterPos->m_EyeNormal.Normalize();
-	}
+	rasterPos->m_Color[mode] = rasterPos->m_Color[Vertex::LightMode::Unlit] * m_LightModelAmbient;
+	rasterPos->m_Color[mode] += m_Material.GetEmissiveColor();
 
 	// for each light that is turned on, call into calculation
 	int mask = 1;
 
-	color = m_FrontMaterial.GetAmbientColor() * m_LightModelAmbient;
-	color.a = m_FrontMaterial.GetDiffuseColor().a;
-	color += m_FrontMaterial.GetEmissiveColor();
-
-	backColor = color;
-
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight2(rasterPos->m_EyeCoords, rasterPos->m_EyeNormal,
-				m_FrontMaterial, color, backColor);
+			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, normal,
+				m_Material, rasterPos->m_Color[Vertex::LightMode::Unlit], rasterPos->m_Color[mode]);
 		}
 	}
 
-	color.Clamp();
-	backColor.Clamp();
-
-	rasterPos->m_FrontColor = color;
-	rasterPos->m_BackColor = backColor;
+	rasterPos->m_Color[mode].Clamp();
 }
 
 
-void Context :: LightVertexTwoSidedTrack(Vertex * rasterPos) {
-	FractionalColor color;
-	FractionalColor backColor;
+// --------------------------------------------------------------------------
+// Calculate the fog density for a vertex at the given distance
+// --------------------------------------------------------------------------
 
-	// populate fog density here...
-	if (m_RasterizerState.IsEnabledFog()) {
-		assert(m_VaryingInfo->fogIndex >= 0);
-		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+
+namespace {
+
+	// TO DO: Make more efficient!!!
+	inline EGL_Fixed Exp(EGL_Fixed value) {
+		return EGL_FixedFromFloat(exp(EGL_FloatFromFixed(-value)));
 	}
 
-	// apply inverse of model view matrix to normals -> eye coordinates normals
-
-	if (m_NormalizeEnabled) {
-		rasterPos->m_EyeNormal.Normalize();
+	inline EGL_Fixed Exp2(EGL_Fixed value) {
+		return Exp(EGL_Mul(value, value));
 	}
-
-	// for each light that is turned on, call into calculation
-	int mask = 1;
-
-	color = rasterPos->m_FrontColor * m_LightModelAmbient;
-	color += m_FrontMaterial.GetEmissiveColor();
-
-	backColor = color;
-
-	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
-		if (m_LightEnabled & mask) {
-			m_Lights[index].AccumulateLight2(rasterPos->m_EyeCoords, rasterPos->m_EyeNormal,
-				m_FrontMaterial, rasterPos->m_FrontColor, color, backColor);
-		}
-	}
-
-	color.Clamp();
-	backColor.Clamp();
-
-	rasterPos->m_FrontColor = color;
-	rasterPos->m_BackColor = backColor;
 }
 
 
+EGL_Fixed Context :: FogDensity(EGL_Fixed eyeDistance) const {
 
+	switch (m_FogMode) {
+		default:
+		case FogLinear:
+			return EGL_CLAMP(EGL_Mul((m_FogEnd - eyeDistance) >> m_FogGradientShift, m_FogGradient) + 128, 0, EGL_ONE);
+
+		case FogModeExp:
+			return EGL_CLAMP(Exp(EGL_Mul(m_FogDensity, eyeDistance)) + 128, 0, EGL_ONE);
+
+		case FogModeExp2:
+			return EGL_CLAMP(Exp2(EGL_Mul(m_FogDensity, eyeDistance)) + 128, 0, EGL_ONE);
+	}
+
+}

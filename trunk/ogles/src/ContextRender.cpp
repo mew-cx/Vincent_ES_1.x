@@ -7,6 +7,7 @@
 // --------------------------------------------------------------------------
 //
 // 08-07-2003	Hans-Martin Will	initial version
+// 25-03-2006	Hans-Martin Will	reworked clipping
 //
 // --------------------------------------------------------------------------
 //
@@ -21,27 +22,49 @@
 //   *	Redistributions in binary form must reproduce the above copyright
 // 		notice, this list of conditions and the following disclaimer in the
 // 		documentation and/or other materials provided with the distribution.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
 // SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
 // THE POSSIBILITY OF SUCH DAMAGE.
+//
+// --------------------------------------------------------------------------
+//
+// Copyright (C) 2003  David Blythe   All Rights Reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+// DAVID BLYTHE BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+// AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // ==========================================================================
 
 
 #include "stdafx.h"
-#include "context.h"
 #include <string.h>
 #include "fixed.h"
-#include "surface.h"
+#include "Context.h"
+#include "Surface.h"
+#include "Utils.h"
 
 
 using namespace EGL;
@@ -260,7 +283,7 @@ void Context :: TexCoordPointer(GLint size, GLenum type, GLsizei stride, const G
 
 
 // --------------------------------------------------------------------------
-// Default values of array is disabled
+// Default values if corrsponding array is disabled
 // --------------------------------------------------------------------------
 
 
@@ -458,6 +481,7 @@ void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 		m_VertexArray.FetchValues(index, currentVertex.getArray());
 		m_ModelViewMatrixStack.CurrentMatrix().Multiply(currentVertex, rasterPos->m_EyeCoords);
 		rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
+		CalcCC(rasterPos);
 	}
 
 	if (m_NormalArray.effectivePointer) {
@@ -470,9 +494,9 @@ void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 	}
 
 	if (m_ColorArray.effectivePointer) {
-		m_ColorArray.FetchValues(index, rasterPos->m_FrontColor.getArray());
+		m_ColorArray.FetchValues(index, rasterPos->m_Color[Vertex::LightMode::Unlit].getArray());
 	} else {
-		rasterPos->m_FrontColor = m_DefaultRGBA;
+		rasterPos->m_Color[Vertex::LightMode::Unlit] = m_DefaultRGBA;
 	}
 
 	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
@@ -491,7 +515,8 @@ void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 				}
 
 				// according to Blythe & McReynolds, this should really happen
-				// as part of the perspective interpolation
+				// as part of the perspective interpolation; but that would require
+				// interpolating another coordinate; which we do not want to afford
 				projectedTexCoords.ProjectiveDivision();
 				rasterPos->m_Varying[base]     = projectedTexCoords.x();
 				rasterPos->m_Varying[base + 1] = projectedTexCoords.y();
@@ -502,39 +527,7 @@ void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 		}
 	}
 
-	rasterPos->m_Lit = false;
-}
-
-
-namespace {
-
-	inline EGL_Fixed Exp(EGL_Fixed value) {
-		return EGL_FixedFromFloat(exp(EGL_FloatFromFixed(-value)));
-	}
-
-	inline EGL_Fixed Exp2(EGL_Fixed value) {
-		return Exp(EGL_Mul(value, value));
-	}
-}
-
-
-// --------------------------------------------------------------------------
-// Calculate the fog density for a vertex at the given distance
-// --------------------------------------------------------------------------
-EGL_Fixed Context :: FogDensity(EGL_Fixed eyeDistance) const {
-
-	switch (m_FogMode) {
-		default:
-		case FogLinear:
-			return EGL_CLAMP(EGL_Mul((m_FogEnd - eyeDistance) >> m_FogGradientShift, m_FogGradient) + 128, 0, EGL_ONE);
-
-		case FogModeExp:
-			return EGL_CLAMP(Exp(EGL_Mul(m_FogDensity, eyeDistance)) + 128, 0, EGL_ONE);
-
-		case FogModeExp2:
-			return EGL_CLAMP(Exp2(EGL_Mul(m_FogDensity, eyeDistance)) + 128, 0, EGL_ONE);
-	}
-
+	rasterPos->m_Lit = Vertex::LightMode::Unlit;
 }
 
 
@@ -568,20 +561,27 @@ void Context :: PrepareRendering() {
 
 	if (m_LightingEnabled) {
 		if (m_ColorMaterialEnabled) {
-			if (m_TwoSidedLightning) {
-                m_GeometryFunction = &Context::LightVertexTwoSidedTrack;
-			} else {
-				m_GeometryFunction = &Context::LightVertexOneSidedTrack;
-			}
+               m_LightVertexFunction = &Context::LightVertexTrack;
 		} else {
-			if (m_TwoSidedLightning) {
-				m_GeometryFunction = &Context::LightVertexTwoSidedNoTrack;
-			} else {
-				m_GeometryFunction = &Context::LightVertexOneSidedNoTrack;
+			m_LightVertexFunction = &Context::LightVertexNoTrack;
+		}
+
+		// for each light that is turned on, init effective color values
+		int mask = 1;
+
+		for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
+			if (m_LightEnabled & mask) {
+				m_Lights[index].InitWithMaterial(m_Material);
 			}
 		}
+
+		// this is used if no color material tracking is enabled
+		m_EffectiveLightModelAmbient = m_Material.GetAmbientColor() * m_LightModelAmbient;
+		m_EffectiveLightModelAmbient.a = m_Material.GetDiffuseColor().a;
+		m_EffectiveLightModelAmbient += m_Material.GetEmissiveColor();
+
 	} else {
-		m_GeometryFunction = &Context::LightVertexNoLight;
+		m_LightVertexFunction = &Context::LightVertexNoLight;
 	}
 
 	PrepareArray(m_VertexArray,   m_VertexArrayEnabled);
@@ -605,6 +605,158 @@ void Context :: PrepareRendering() {
 }
 
 
+size_t Context :: ClipPrimitive(size_t inputCount, Vertex * input[], Vertex * output[], Vertex *** result) {
+    size_t plane;
+
+    Vertex ** vilist = input;
+    Vertex ** volist = output;
+
+    Vertex * vprev, * vnext;
+    size_t i, cnt = 0, icnt = inputCount, ocnt = 0;
+	const size_t numVarying = m_VaryingInfo->numVarying;
+	Vertex * nextTemporary = m_Temporary;
+
+	if (m_ClipPlaneEnabled) {
+		for (size_t index = 0, mask = 1; index < NUM_CLIP_PLANES; ++index, mask <<= 1) {
+			if (m_ClipPlaneEnabled & mask) {
+				U32 c;
+				bool inside, prev_inside;
+
+				cnt++;
+				ocnt = 0;
+				vnext = vilist[icnt - 1];
+
+				EGL_Fixed currentCoeff = vnext->m_EyeCoords * m_ClipPlanes[index];
+				inside = currentCoeff >= 0;
+
+				for (c = 0; c < icnt; c++) {
+
+					Vertex * voutside, *vinside;
+					EGL_Fixed prevCoeff = currentCoeff;
+					prev_inside = inside;
+					vprev = vnext;
+					vnext = vilist[c];
+					currentCoeff = vnext->m_EyeCoords * m_ClipPlanes[index];
+					inside = currentCoeff >= 0;
+
+					if (inside ^ prev_inside) {
+						if (inside) { 
+							vinside = vnext; 
+							voutside = vprev; 
+						} else { 
+							voutside = vnext; 
+							vinside = vprev; 
+						}
+
+						Vertex & newVertex = *nextTemporary++;
+
+						InterpolateWithEye(newVertex, *vinside, *voutside, Coeff4q28(prevCoeff, currentCoeff - prevCoeff), numVarying);
+						volist[ocnt++] = &newVertex;
+					}
+
+					if (inside) {
+						volist[ocnt++] = vilist[c];
+					}
+				}
+
+				{
+					// swap input and output lists
+					Vertex ** vtlist;
+					vtlist = vilist; vilist = volist; volist = vtlist;
+				}
+
+				icnt = ocnt;
+
+				if (!icnt)
+					return 0;
+			}
+		}
+	}
+
+	U32 cc = 0;
+
+	for (i = 0; i < icnt; ++i) {
+		cc |= vilist[i]->m_cc;
+	}
+
+    for (plane = 0; plane < 6; plane++) {
+		U32 c, p = 1 << plane;
+		I32 coord = plane >> 1;
+		bool inside, prev_inside;
+
+		if (!(cc & p)) continue;
+
+		cc = 0;
+		cnt++;
+		ocnt = 0;
+		vnext = vilist[icnt - 1];
+
+		inside = !(vnext->m_cc & p);
+
+		for (c = 0; c < icnt; c++) {
+
+			Vertex * voutside, *vinside;
+			prev_inside = inside;
+			vprev = vnext;
+			vnext = vilist[c];
+			inside = !(vnext->m_cc & p);
+
+			if (inside ^ prev_inside) {
+				if (inside) { 
+					vinside = vnext; 
+					voutside = vprev; 
+				} else { 
+					voutside = vnext; 
+					vinside = vprev; 
+				}
+
+				EGL_Fixed ci = vinside->m_ClipCoords[coord];
+				EGL_Fixed wi = vinside->m_ClipCoords.w();
+				EGL_Fixed co = voutside->m_ClipCoords[coord];
+				EGL_Fixed wo = voutside->m_ClipCoords.w();
+
+				if (!(plane & 1)) {
+					wi = -wi; wo = -wo;
+				}
+
+				EGL_Fixed num = wi - ci;
+				EGL_Fixed denom = co - ci - wo + wi;
+
+				Vertex & newVertex = *nextTemporary++;
+
+				Interpolate(newVertex, *vinside, *voutside, Coeff4q28(num, denom), numVarying);
+				newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
+				CalcCC(&newVertex);
+				cc |= newVertex.m_cc;
+
+				volist[ocnt++] = &newVertex;
+			}
+
+			if (inside /*&& c != icnt-1*/) {
+				volist[ocnt++] = vilist[c];
+		//    printf("copy (%d) ", ocnt-1); printv4(&vilist[c]->c.x);
+				cc |= vilist[c]->m_cc;
+			}
+		}
+
+		{
+			// swap input and output lists
+			Vertex ** vtlist;
+			vtlist = vilist; vilist = volist; volist = vtlist;
+		}
+
+		icnt = ocnt;
+
+		if (!icnt)
+			return 0;
+    }
+
+    *result = vilist;
+
+	return icnt;
+}
+
+
 void Context :: ClipCoordsToWindowCoords(Vertex & pos) {
 
 	// perform depth division
@@ -613,6 +765,8 @@ void Context :: ClipCoordsToWindowCoords(Vertex & pos) {
 	EGL_Fixed z = pos.m_ClipCoords.z();
 	EGL_Fixed w = pos.m_ClipCoords.w();
 
+# if 0
+	// don't use this because we will snap to 1/16th pixel further down
 	// fix possible rounding problems
 	if (x < -w)	x = -w;
 	if (x > w)	x = w;
@@ -620,6 +774,7 @@ void Context :: ClipCoordsToWindowCoords(Vertex & pos) {
 	if (y > w)	y = w;
 	if (z < -w)	z = -w;
 	if (z > w)	z = w;
+#endif
 
 	if ((w >> 24) && (w >> 24) + 1) {
 		// keep this value around for perspective-correct texturing
@@ -632,9 +787,11 @@ void Context :: ClipCoordsToWindowCoords(Vertex & pos) {
 
 		pos.m_WindowCoords.x = 
 			EGL_Mul(EGL_Mul(x >> 8, invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
+		pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x800) & ~0xfff);
 
 		pos.m_WindowCoords.y = 
 			EGL_Mul(EGL_Mul(y >> 8, invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
+		pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x800) & ~0xfff);
 
 		pos.m_WindowCoords.depth = 
 			EGL_CLAMP(EGL_Mul(z >> 8, EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase, 0, 0xffff);
