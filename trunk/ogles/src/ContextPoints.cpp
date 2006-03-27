@@ -78,6 +78,10 @@ void Context :: DrawPoint(int index) {
 
 void Context :: RenderPoint(Vertex& point, EGL_Fixed size) {
 
+	// in principle, the scissor test can be included in here
+	if (point.m_cc)
+		return;
+
 	// any user defined clip planes?
 	if (m_ClipPlaneEnabled) {
 		for (size_t index = 0, mask = 1; index < NUM_CLIP_PLANES; ++index, mask <<= 1) {
@@ -88,10 +92,6 @@ void Context :: RenderPoint(Vertex& point, EGL_Fixed size) {
 			}
 		}
 	}
-
-	// in principle, the scissor test can be included in here
-	if (point.m_cc)
-		return;
 
 	ClipCoordsToWindowCoords(point);
 

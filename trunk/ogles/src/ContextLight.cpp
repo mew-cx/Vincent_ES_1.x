@@ -295,24 +295,7 @@ bool Context :: GetLightxv(GLenum light, GLenum pname, GLfixed *params) {
 // --------------------------------------------------------------------------
 
 
-void Context :: LightVertexNoLight(Vertex * rasterPos, Vertex::LightMode mode) {
-
-	//	copy current colors to raster pos
-	if (m_RasterizerState.IsEnabledFog()) {
-		assert(m_VaryingInfo->fogIndex >= 0);
-		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
-	}
-
-}
-
-
 void Context :: LightVertexNoTrack(Vertex * rasterPos, Vertex::LightMode mode) {
-
-	// populate fog density here...
-	if (m_RasterizerState.IsEnabledFog()) {
-		assert(m_VaryingInfo->fogIndex >= 0);
-		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
-	}
 
 	if (m_NormalizeEnabled) {
 		rasterPos->m_EyeNormal.Normalize();
@@ -337,12 +320,6 @@ void Context :: LightVertexNoTrack(Vertex * rasterPos, Vertex::LightMode mode) {
 
 
 void Context :: LightVertexTrack(Vertex * rasterPos, Vertex::LightMode mode) {
-
-	// populate fog density here...
-	if (m_RasterizerState.IsEnabledFog()) {
-		assert(m_VaryingInfo->fogIndex >= 0);
-		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
-	}
 
 	if (m_NormalizeEnabled) {
 		rasterPos->m_EyeNormal.Normalize();
