@@ -161,6 +161,7 @@ void Context :: BufferData(GLenum target, GLsizeiptr size, const GLvoid *data, G
 
 	if (*currentBuffer == 0 || !m_Buffers.IsObject(*currentBuffer)) {
 		RecordError(GL_INVALID_OPERATION);
+		return;
 	}
 
 	Buffer * buffer = m_Buffers.GetObject(*currentBuffer);
@@ -182,6 +183,7 @@ void Context :: BufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, c
 
 	if (*currentBuffer == 0 || !m_Buffers.IsObject(*currentBuffer)) {
 		RecordError(GL_INVALID_OPERATION);
+		return;
 	}
 
 	Buffer * buffer = m_Buffers.GetObject(*currentBuffer);

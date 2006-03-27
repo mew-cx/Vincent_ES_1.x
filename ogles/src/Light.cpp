@@ -169,7 +169,7 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 		}
 	}
 
-	if (!m_ConstantAttenuation) {
+	if (!m_IsConstantAttenuation) {
 		if (m_Position.w() != 0) {
 			EGL_Fixed length = EGL_Sqrt(sqLength);
 
@@ -230,7 +230,7 @@ void Light :: AccumulateLight(const Vec4D& vertexCoords, const Vec3D& vertexNorm
 		}
 	}
 
-	if (!m_ConstantAttenuation) {
+	if (!m_IsConstantAttenuation) {
 		if (m_Position.w() != 0) {
 			EGL_Fixed length = EGL_Sqrt(sqLength);
 

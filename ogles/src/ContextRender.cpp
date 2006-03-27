@@ -484,6 +484,12 @@ void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 		CalcCC(rasterPos);
 	}
 
+	//	copy current colors to raster pos
+	if (m_RasterizerState.IsEnabledFog()) {
+		assert(m_VaryingInfo->fogIndex >= 0);
+		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
+	}
+
 	if (m_NormalArray.effectivePointer) {
 		Vec3D normal;
 
@@ -581,7 +587,7 @@ void Context :: PrepareRendering() {
 		m_EffectiveLightModelAmbient += m_Material.GetEmissiveColor();
 
 	} else {
-		m_LightVertexFunction = &Context::LightVertexNoLight;
+		m_LightVertexFunction = 0;
 	}
 
 	PrepareArray(m_VertexArray,   m_VertexArrayEnabled);
@@ -612,7 +618,7 @@ size_t Context :: ClipPrimitive(size_t inputCount, Vertex * input[], Vertex * ou
     Vertex ** volist = output;
 
     Vertex * vprev, * vnext;
-    size_t i, cnt = 0, icnt = inputCount, ocnt = 0;
+    size_t i, icnt = inputCount, ocnt = 0;
 	const size_t numVarying = m_VaryingInfo->numVarying;
 	Vertex * nextTemporary = m_Temporary;
 
@@ -620,41 +626,26 @@ size_t Context :: ClipPrimitive(size_t inputCount, Vertex * input[], Vertex * ou
 		for (size_t index = 0, mask = 1; index < NUM_CLIP_PLANES; ++index, mask <<= 1) {
 			if (m_ClipPlaneEnabled & mask) {
 				U32 c;
-				bool inside, prev_inside;
-
-				cnt++;
 				ocnt = 0;
 				vnext = vilist[icnt - 1];
 
 				EGL_Fixed currentCoeff = vnext->m_EyeCoords * m_ClipPlanes[index];
-				inside = currentCoeff >= 0;
 
 				for (c = 0; c < icnt; c++) {
-
-					Vertex * voutside, *vinside;
 					EGL_Fixed prevCoeff = currentCoeff;
-					prev_inside = inside;
 					vprev = vnext;
 					vnext = vilist[c];
 					currentCoeff = vnext->m_EyeCoords * m_ClipPlanes[index];
-					inside = currentCoeff >= 0;
 
-					if (inside ^ prev_inside) {
-						if (inside) { 
-							vinside = vnext; 
-							voutside = vprev; 
-						} else { 
-							voutside = vnext; 
-							vinside = vprev; 
-						}
-
+					if ((currentCoeff > 0) && (prevCoeff < 0) ||
+						(currentCoeff <= 0) && (prevCoeff > 0)) {
 						Vertex & newVertex = *nextTemporary++;
-
-						InterpolateWithEye(newVertex, *vinside, *voutside, Coeff4q28(prevCoeff, currentCoeff - prevCoeff), numVarying);
+						InterpolateWithEye(newVertex, *vprev, *vnext, Coeff4q28(prevCoeff, prevCoeff - currentCoeff), numVarying);
+						CalcCC(&newVertex);
 						volist[ocnt++] = &newVertex;
 					}
 
-					if (inside) {
+					if (currentCoeff > 0) {
 						volist[ocnt++] = vilist[c];
 					}
 				}
@@ -687,7 +678,6 @@ size_t Context :: ClipPrimitive(size_t inputCount, Vertex * input[], Vertex * ou
 		if (!(cc & p)) continue;
 
 		cc = 0;
-		cnt++;
 		ocnt = 0;
 		vnext = vilist[icnt - 1];
 
@@ -725,7 +715,7 @@ size_t Context :: ClipPrimitive(size_t inputCount, Vertex * input[], Vertex * ou
 				Vertex & newVertex = *nextTemporary++;
 
 				Interpolate(newVertex, *vinside, *voutside, Coeff4q28(num, denom), numVarying);
-				newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
+				//newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
 				CalcCC(&newVertex);
 				cc |= newVertex.m_cc;
 
@@ -765,7 +755,7 @@ void Context :: ClipCoordsToWindowCoords(Vertex & pos) {
 	EGL_Fixed z = pos.m_ClipCoords.z();
 	EGL_Fixed w = pos.m_ClipCoords.w();
 
-# if 0
+# if 1
 	// don't use this because we will snap to 1/16th pixel further down
 	// fix possible rounding problems
 	if (x < -w)	x = -w;
@@ -775,6 +765,10 @@ void Context :: ClipCoordsToWindowCoords(Vertex & pos) {
 	if (z < -w)	z = -w;
 	if (z > w)	z = w;
 #endif
+
+//	if (x > -w && x < w && y > -w && y < w && z > -w && z < w) {
+//		printf("Blah");
+//	}
 
 	if ((w >> 24) && (w >> 24) + 1) {
 		// keep this value around for perspective-correct texturing
