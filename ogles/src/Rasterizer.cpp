@@ -784,12 +784,9 @@ bool Rasterizer::FragmentDepthStencil(const RasterInfo * rasterInfo,
 			surfaceInfo->StencilBuffer[offset] =
 				surfaceInfo->StencilBuffer[offset] & ~m_State->m_Stencil.Mask |
 				stencilValue & m_State->m_Stencil.Mask;
-		}
-	}
 
-	if (m_State->m_Stencil.Enabled && !depthTest && m_State->m_DepthTest.Enabled) {
-		// otherwise we returned at the top
-		return false;
+			return false;
+		}
 	}
 
 	// Masking and write to framebuffer
