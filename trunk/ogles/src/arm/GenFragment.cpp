@@ -664,8 +664,6 @@ cg_block_t * CodeGenerator :: GenerateFragmentDepthStencil(cg_proc_t * procedure
 		fragmentInfo.regDepth = regNewDepth;
 	}*/
 
-	CMP		(regDepthTest, fragmentInfo.regDepth, regZBufferValue);
-
 	cg_opcode_t branchOnDepthTestPassed, branchOnDepthTestFailed;
 
 	switch (m_State->m_DepthTest.Func) {
@@ -720,6 +718,8 @@ cg_block_t * CodeGenerator :: GenerateFragmentDepthStencil(cg_proc_t * procedure
 	}
 
 	if (!m_State->m_Stencil.Enabled && m_State->m_DepthTest.Enabled) {
+		CMP		(regDepthTest, fragmentInfo.regDepth, regZBufferValue);
+
 		//if (!depthTest)
 		//	return;
 
@@ -730,9 +730,15 @@ cg_block_t * CodeGenerator :: GenerateFragmentDepthStencil(cg_proc_t * procedure
 		} else {
 			cg_create_inst_branch_cond(block, branchOnDepthTestFailed, regDepthTest, continuation CG_INST_DEBUG_ARGS);
 		}
-	}
 
-	if (m_State->m_Stencil.Enabled) {
+		// Masking and write to framebuffer
+		if (m_State->m_Mask.Depth) {
+			//m_Surface->GetDepthBuffer()[offset] = depth;
+			STH		(fragmentInfo.regDepth, regZBufferAddr);
+		}
+
+		return block;
+	} else if (m_State->m_Stencil.Enabled) {
 
 		//bool stencilTest;
 		//U32 stencilRef = m_State->m_Stencil.Reference & m_State->ComparisonMask;
@@ -892,11 +898,11 @@ cg_block_t * CodeGenerator :: GenerateFragmentDepthStencil(cg_proc_t * procedure
 			}
 
 no_write:
-			if (passedTest == cg_op_nop) {
-				return block;
-			} else {
+			//if (passedTest == cg_op_nop) {
+			//	return block;
+			//} else {
 				BRA		(continuation);
-			}
+			//}
 		//}
 		}
 
@@ -1027,6 +1033,12 @@ no_write:
 		block = cg_block_create(procedure, weight);
 		labelStencilZTestPassed->block = block;
 
+		// Masking and write to depth buffer
+		if (m_State->m_Mask.Depth) {
+			//m_Surface->GetDepthBuffer()[offset] = depth;
+			STH		(fragmentInfo.regDepth, regZBufferAddr);
+		}
+
 			{
 				cg_virtual_reg_t * regNewStencilValue;
 
@@ -1117,12 +1129,6 @@ no_write:
 		// stencil test bypassed
 		block = cg_block_create(procedure, weight);
 		labelStencilBypassed->block = block;
-	}
-
-	// Masking and write to framebuffer
-	if (m_State->m_Mask.Depth) {
-		//m_Surface->GetDepthBuffer()[offset] = depth;
-		STH		(fragmentInfo.regDepth, regZBufferAddr);
 	}
 
 	return block;
