@@ -139,7 +139,7 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 		Vertex::LightMode mode;
 
 		if (m_LightingEnabled) { 
-			mode = backFace ? Vertex::LightMode::Back : Vertex::LightMode::Front;
+			mode = (backFace && m_TwoSidedLightning) ? Vertex::LightMode::Back : Vertex::LightMode::Front;
 			LightVertex(&c, mode);
 
 			if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {

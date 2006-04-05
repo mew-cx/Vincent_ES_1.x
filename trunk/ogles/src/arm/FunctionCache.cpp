@@ -118,6 +118,8 @@ void * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & s
 		comparison = &RasterizerState::ComparePolygonColorAlpha;
 		break;
 
+	default:
+		assert(0);
 	}
 
 	for (FunctionInfo * function = m_MostRecentlyUsed; function; function = function->m_Next) {
@@ -169,7 +171,7 @@ void * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & s
 		break;
 
 	default:
-		;
+		assert(0);
 	}
 
 	return reinterpret_cast<void *>(m_Code + m_MostRecentlyUsed->m_Offset); 
@@ -250,6 +252,7 @@ void FunctionCache :: CompactCode() {
 			target->m_State = function->m_State;
 			target->m_Offset = function->m_Offset;
 			target->m_Size = function->m_Size;
+			target->m_Type = function->m_Type;
 
 			++target;
 		}
@@ -276,4 +279,6 @@ void FunctionCache :: CompactCode() {
 			m_Functions[index].m_Next = m_Functions + index + 1;
 		}
 	}
+
+	m_DidGC = true;
 }

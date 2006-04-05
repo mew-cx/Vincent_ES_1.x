@@ -66,6 +66,9 @@ namespace EGL {
 
 		void * GetFunction(FunctionType type, const RasterizerState & state, const VaryingInfo * varyingInfo);
 
+		void Begin();
+		bool End();
+
 	private:
 		void * AddFunction(FunctionType type, const RasterizerState & state, size_t size);
 		void CompactCode();
@@ -80,7 +83,16 @@ namespace EGL {
 		size_t				m_UsedFunctions;
 		size_t				m_MaxFunctions;
 		float				m_PercentageKeep;
+		bool				m_DidGC;
 	};
+
+	inline void FunctionCache :: Begin() {
+		m_DidGC = false;
+	}
+
+	inline bool FunctionCache :: End() {
+		return m_DidGC;
+	}
 }
 
 

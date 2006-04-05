@@ -148,17 +148,22 @@ void Rasterizer :: PrepareTriangle() {
 
 	// initialize block rasterization here
 
-	m_BlockDepthStencilFunction = (BlockDepthStencilFunction *) //&RBDepthTestLess;
-		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockDepthStencil,
-									 *m_State, &m_VaryingInfo);
+	do {
+		m_FunctionCache->Begin();
 
-	m_BlockEdgeDepthStencilFunction = (BlockEdgeDepthStencilFunction *) //&RBEdgeDepthTestLess;
-		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockEdgeDepthStencil,
-									 *m_State, &m_VaryingInfo);
+		m_BlockDepthStencilFunction = (BlockDepthStencilFunction *) //&RBDepthTestLess;
+			m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockDepthStencil,
+										 *m_State, &m_VaryingInfo);
 
-	m_BlockColorAlphaFunction = (BlockColorAlphaFunction *) //&RBTextureReplace;
-		m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockColorAlpha,
-									 *m_State, &m_VaryingInfo);
+		m_BlockEdgeDepthStencilFunction = (BlockEdgeDepthStencilFunction *) //&RBEdgeDepthTestLess;
+			m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockEdgeDepthStencil,
+										 *m_State, &m_VaryingInfo);
+
+		m_BlockColorAlphaFunction = (BlockColorAlphaFunction *) //&RBTextureReplace;
+			m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockColorAlpha,
+										 *m_State, &m_VaryingInfo);
+
+	} while (m_FunctionCache->End());
 }
 
 #if !EGL_USE_JIT
@@ -557,28 +562,28 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 									- (varying[textureBase][0][0] << 1)
 									- (varying[textureBase][0][1] << EGL_LOG_RASTER_BLOCK_SIZE))
 									>> (EGL_LOG_RASTER_BLOCK_SIZE + 1);
-						I32 dUdY = (varying[textureBase][0][1] + varying[textureBase][1][1]) >> 1;
+						I32 dUdY = (varying[textureBase][0][1] + varying[textureBase][1][1]) 
+									>> 1;
 						I32 dVdX = ((varying[textureBase + 1][1][0] << 1)
 									+ (varying[textureBase + 1][1][1] << EGL_LOG_RASTER_BLOCK_SIZE)
 									- (varying[textureBase + 1][0][0] << 1)
 									- (varying[textureBase + 1][0][1] << EGL_LOG_RASTER_BLOCK_SIZE))
 									>> (EGL_LOG_RASTER_BLOCK_SIZE + 1);
-						I32 dVdY = (varying[textureBase + 1][0][1] + varying[textureBase + 1][1][1]) >> 1;
+						I32 dVdY = (varying[textureBase + 1][0][1] + varying[textureBase + 1][1][1]) 
+									>> 1;
 
 						I32 maxDu = EGL_Max(EGL_Abs(dUdX), EGL_Abs(dUdY)) >> (16 - m_Texture[unit]->GetTexture(0)->GetLogWidth());
 						I32 maxDv = EGL_Max(EGL_Abs(dVdX), EGL_Abs(dVdY)) >> (16 - m_Texture[unit]->GetTexture(0)->GetLogHeight());
 
-						I32 rho = EGL_Max(maxDu, maxDv);
+						I32 rho = maxDu + maxDv;
+
+						// should actually plug in approximation formula from Blythe & McReynolds
 
 						// we start with nearest/minification only selection; will add LINEAR later
 						m_RasterInfo.MipmapLevel[unit] = EGL_Min(Log2(rho), m_RasterInfo.MaxMipmapLevel[unit]);
-					} else {
-						m_RasterInfo.MipmapLevel[unit] = 0;
+						m_RasterInfo.Textures[unit] = m_Texture[unit]->GetTexture(m_RasterInfo.MipmapLevel[unit]);
 					}
-
-					if (--unit < 0)
-						break;
-				} while (true);
+				} while (--unit >= 0);
 
 #if !EGL_USE_JIT
 				RasterBlockColorAlpha(varying, pixelMask);

@@ -119,12 +119,7 @@ void CodeGenerator :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 	info.regTexture[0] = regTexture;
 
 	for (unit = 1; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		DECL_CONST_REG	(regOffset, unit * 4);
-		DECL_REG		(regTextureN);
-
-		ADD				(regTextureN, regTexture, regOffset);
-
-		info.regTexture[unit] = regTextureN;
+		info.regTexture[unit] =  LOAD_DATA(block, regInfo, OFFSET_TEXTURES + unit * sizeof(void *));
 	}
 
 	// EGL_Fixed deltaX = p_to.m_WindowCoords.x - p_from.m_WindowCoords.x;
