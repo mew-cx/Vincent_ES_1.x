@@ -111,23 +111,29 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 	EGL_Fixed z1 = c.m_ClipCoords.x();
 	EGL_Fixed z2 = c.m_ClipCoords.y();
 
+	bool cw;
 	I64 sign;
 	
-	if (((x0 & 0xff000000) == 0 || (x0 & 0xff000000) == 0xff000000) &&
-		((y0 & 0xff000000) == 0 || (y0 & 0xff000000) == 0xff000000) &&
-		((z0 & 0xff000000) == 0 || (z0 & 0xff000000) == 0xff000000)) {
+	sign = 
+			+ (x0 >> 12) * (static_cast<I64>(y1 >> 12) * (z2 >> 12) - static_cast<I64>(z1 >> 12) * (y2 >> 12))
+			- (y0 >> 12) * (static_cast<I64>(x1 >> 12) * (z2 >> 12) - static_cast<I64>(z1 >> 12) * (x2 >> 12))
+			+ (z0 >> 12) * (static_cast<I64>(x1 >> 12) * (y2 >> 12) - static_cast<I64>(y1 >> 12) * (x2 >> 12));
+
+	if (sign <= -(1 << 6))
+		cw = true;
+	else if (sign >= (1 << 6))
+		cw = false;
+	else {
+		// This code assumes that truncation is handled properly, e.g. the sign is always correct,
+		// and the lower 63 bits are the properly truncated result of the overall product.
 		sign = 
-			+ Round(x0) * (MulLong(Round(y1), Round(z2)) - MulLong(Round(z1), Round(y2)))
-			- Round(y0) * (MulLong(Round(x1), Round(z2)) - MulLong(Round(z1), Round(x2)))
-			+ Round(z0) * (MulLong(Round(x1), Round(y2)) - MulLong(Round(y1), Round(x2)));
-	} else {
-		sign = 
-			+ Round(x0 >> 6) * (MulLong(Round(y1), Round(z2)) - MulLong(Round(z1), Round(y2)))
-			- Round(y0 >> 6) * (MulLong(Round(x1), Round(z2)) - MulLong(Round(z1), Round(x2)))
-			+ Round(z0 >> 6) * (MulLong(Round(x1), Round(y2)) - MulLong(Round(y1), Round(x2)));
+				+ x0 * (static_cast<I64>(y1) * z2 - static_cast<I64>(z1) * y2)
+				- y0 * (static_cast<I64>(x1) * z2 - static_cast<I64>(z1) * x2)
+				+ z0 * (static_cast<I64>(x1) * y2 - static_cast<I64>(y1) * x2);
+
+		cw = sign < 0;
 	}
 
-	bool cw = (sign < 0);
 	bool backFace = cw ^ m_ReverseFaceOrientation;
 
 	if (m_CullFaceEnabled) {
