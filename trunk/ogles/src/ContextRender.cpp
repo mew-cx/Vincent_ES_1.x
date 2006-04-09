@@ -481,6 +481,10 @@ void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 		m_VertexArray.FetchValues(index, currentVertex.getArray());
 		m_ModelViewMatrixStack.CurrentMatrix().Multiply(currentVertex, rasterPos->m_EyeCoords);
 		rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
+
+		if (rasterPos->m_ClipCoords.w() < 0) 
+			rasterPos->m_ClipCoords = -rasterPos->m_ClipCoords;
+
 		CalcCC(rasterPos);
 	}
 
@@ -611,6 +615,24 @@ void Context :: PrepareRendering() {
 }
 
 
+namespace {
+	void DumpVertices(size_t inputCount, Vertex * input[]) {
+		printf("Number of vertices: %d\n", inputCount);
+
+		for (size_t index = 0; index < inputCount; ++index) {
+			printf("eye: (%x, %x, %x, %x)  clip: (%x, %x, %x, %x)\n",
+				input[index]->m_EyeCoords.x(),
+				input[index]->m_EyeCoords.y(),
+				input[index]->m_EyeCoords.z(),
+				input[index]->m_EyeCoords.w(),
+				input[index]->m_ClipCoords.x(),
+				input[index]->m_ClipCoords.y(),
+				input[index]->m_ClipCoords.z(),
+				input[index]->m_ClipCoords.w());
+		}
+	}
+}
+
 size_t Context :: ClipPrimitive(size_t inputCount, Vertex * input[], Vertex * output[], Vertex *** result) {
     size_t plane;
 
@@ -640,7 +662,15 @@ size_t Context :: ClipPrimitive(size_t inputCount, Vertex * input[], Vertex * ou
 					if ((currentCoeff > 0) && (prevCoeff < 0) ||
 						(currentCoeff <= 0) && (prevCoeff > 0)) {
 						Vertex & newVertex = *nextTemporary++;
-						InterpolateWithEye(newVertex, *vprev, *vnext, Coeff4q28(prevCoeff, prevCoeff - currentCoeff), numVarying);
+
+						if (EGL_Abs(prevCoeff) > EGL_Abs(currentCoeff)) {
+							I32 coeff = Coeff4q28(prevCoeff, prevCoeff - currentCoeff);
+							InterpolateWithEye(newVertex, *vprev, *vnext, coeff, numVarying);
+						} else {
+							I32 coeff = Coeff4q28(currentCoeff, currentCoeff - prevCoeff);
+							InterpolateWithEye(newVertex, *vnext, *vprev, coeff, numVarying);
+						}
+
 						CalcCC(&newVertex);
 						volist[ocnt++] = &newVertex;
 					}
@@ -714,7 +744,12 @@ size_t Context :: ClipPrimitive(size_t inputCount, Vertex * input[], Vertex * ou
 
 				Vertex & newVertex = *nextTemporary++;
 
-				Interpolate(newVertex, *vinside, *voutside, Coeff4q28(num, denom), numVarying);
+				I32 coeff = Coeff4q28(num, denom);
+
+				if (coeff < (1 << 27))
+					Interpolate(newVertex, *vinside, *voutside, coeff, numVarying);
+				else
+					Interpolate(newVertex, *voutside, *vinside, (1 << 28) - coeff, numVarying);
 				//newVertex.m_ClipCoords[coord] = newVertex.m_ClipCoords.w();
 				CalcCC(&newVertex);
 				cc |= newVertex.m_cc;
@@ -724,7 +759,6 @@ size_t Context :: ClipPrimitive(size_t inputCount, Vertex * input[], Vertex * ou
 
 			if (inside /*&& c != icnt-1*/) {
 				volist[ocnt++] = vilist[c];
-		//    printf("copy (%d) ", ocnt-1); printv4(&vilist[c]->c.x);
 				cc |= vilist[c]->m_cc;
 			}
 		}
@@ -739,6 +773,7 @@ size_t Context :: ClipPrimitive(size_t inputCount, Vertex * input[], Vertex * ou
 
 		if (!icnt)
 			return 0;
+
     }
 
     *result = vilist;
@@ -766,10 +801,6 @@ void Context :: ClipCoordsToWindowCoords(Vertex & pos) {
 	if (z > w)	z = w;
 #endif
 
-//	if (x > -w && x < w && y > -w && y < w && z > -w && z < w) {
-//		printf("Blah");
-//	}
-
 	if ((w >> 24) && (w >> 24) + 1) {
 		// keep this value around for perspective-correct texturing
 		EGL_Fixed invDenominator = EGL_Inverse(w >> 8);
@@ -781,11 +812,11 @@ void Context :: ClipCoordsToWindowCoords(Vertex & pos) {
 
 		pos.m_WindowCoords.x = 
 			EGL_Mul(EGL_Mul(x >> 8, invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
-		pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x800) & ~0xfff);
+		//pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x800) & ~0xfff);
 
 		pos.m_WindowCoords.y = 
 			EGL_Mul(EGL_Mul(y >> 8, invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
-		pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x800) & ~0xfff);
+		//pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x800) & ~0xfff);
 
 		pos.m_WindowCoords.depth = 
 			EGL_CLAMP(EGL_Mul(z >> 8, EGL_Mul(m_DepthRangeFactor, invDenominator))  + m_DepthRangeBase, 0, 0xffff);
@@ -800,15 +831,12 @@ void Context :: ClipCoordsToWindowCoords(Vertex & pos) {
 
 		pos.m_WindowCoords.x = 
 			EGL_Mul(EGL_Mul(x, invDenominator), m_ViewportScale.x()) + m_ViewportOrigin.x();
-		pos.m_WindowCoords.x = ((pos.m_WindowCoords.x + 0x800) & ~0xfff);
 		pos.m_WindowCoords.y = 
 			EGL_Mul(EGL_Mul(y, invDenominator), m_ViewportScale.y()) + m_ViewportOrigin.y();
-		pos.m_WindowCoords.y = ((pos.m_WindowCoords.y + 0x800) & ~0xfff);
 		pos.m_WindowCoords.depth = 
 			EGL_CLAMP(EGL_Mul(EGL_Mul(z, invDenominator), m_DepthRangeFactor)  + m_DepthRangeBase, 0, 0xffff);
 
 	}
-
 }
 
 void Context :: GetClipPlanex(GLenum plane, GLfixed eqn[4]) {

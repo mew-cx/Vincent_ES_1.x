@@ -214,6 +214,24 @@ inline EGL_Fixed EGL_Mul(EGL_Fixed a, EGL_Fixed b) {
 // Parameters:
 //	a			-	first operand
 //	b			-	second operand
+// --------------------------------------------------------------------------
+inline I64 EGL_Mul64(EGL_Fixed a, EGL_Fixed b) {
+	return ((I64) a * (I64) b);
+}
+
+// --------------------------------------------------------------------------
+// Round a 32.32 number to 16.16
+// --------------------------------------------------------------------------
+inline EGL_Fixed EGL_Round32(I64 value) {
+	return static_cast<I32>((value + (1 << (EGL_PRECISION - 1))) >> EGL_PRECISION);
+}
+
+// --------------------------------------------------------------------------
+// Calculate product of two fixed point numbers
+//
+// Parameters:
+//	a			-	first operand
+//	b			-	second operand
 //  shift		-	amount of right-shift after multiply
 // --------------------------------------------------------------------------
 inline I32 EGL_MulShift(I32 a, I32 b, I32 shift) {
