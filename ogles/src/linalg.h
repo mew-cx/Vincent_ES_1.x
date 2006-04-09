@@ -427,18 +427,13 @@ namespace EGL {
 		//	other		-	second operand
 		// ----------------------------------------------------------------------
 		inline EGL_Fixed operator*(const Vec4D& other) const {
-			return EGL_Mul(m_x, other.m_x) +
-				EGL_Mul(m_y, other.m_y) +
-				EGL_Mul(m_z, other.m_z) +
-				EGL_Mul(m_w, other.m_w);
-		}
-
-		inline I64 longProduct(const Vec4D& other) const {
-			return 
+			I64 sum =
 				(static_cast<I64>(m_x) * static_cast<I64>(other.m_x) +
 				 static_cast<I64>(m_y) * static_cast<I64>(other.m_y) +
 				 static_cast<I64>(m_z) * static_cast<I64>(other.m_z) +
-				 static_cast<I64>(m_w) * static_cast<I64>(other.m_w)) >> EGL_PRECISION;
+				 static_cast<I64>(m_w) * static_cast<I64>(other.m_w));
+
+			return static_cast<I32>((sum + (1 << (EGL_PRECISION - 1))) >> EGL_PRECISION);
 		}
 
 		// ----------------------------------------------------------------------
@@ -691,7 +686,7 @@ namespace EGL {
 						sum += static_cast<I64>(Element(i, k)) * other.Element(k, j);
 					}
 
-					result.Element(i, j) = static_cast<I32>(sum >> EGL_PRECISION);
+					result.Element(i, j) = static_cast<I32>((sum + (1 << (EGL_PRECISION - 1))) >> EGL_PRECISION);
 				}
 			}
 
@@ -725,24 +720,28 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		inline Vec4D operator*(const Vec3D& vector) const {
 			return Vec4D(
-				EGL_Mul(vector.x(), Element(0, 0)) +
-				EGL_Mul(vector.y(), Element(0, 1)) +
-				EGL_Mul(vector.z(), Element(0, 2)) +
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(0, 0)) +
+					EGL_Mul64(vector.y(), Element(0, 1)) +
+					EGL_Mul64(vector.z(), Element(0, 2))) +
 				Element(0, 3),
 
-				EGL_Mul(vector.x(), Element(1, 0)) +
-				EGL_Mul(vector.y(), Element(1, 1)) +
-				EGL_Mul(vector.z(), Element(1, 2)) +
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(1, 0)) +
+					EGL_Mul64(vector.y(), Element(1, 1)) +
+					EGL_Mul64(vector.z(), Element(1, 2))) +
 				Element(1, 3),
 
-				EGL_Mul(vector.x(), Element(2, 0)) +
-				EGL_Mul(vector.y(), Element(2, 1)) +
-				EGL_Mul(vector.z(), Element(2, 2)) +
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(2, 0)) +
+					EGL_Mul64(vector.y(), Element(2, 1)) +
+					EGL_Mul64(vector.z(), Element(2, 2))) +
 				Element(2, 3),
 
-				EGL_Mul(vector.x(), Element(3, 0)) +
-				EGL_Mul(vector.y(), Element(3, 1)) +
-				EGL_Mul(vector.z(), Element(3, 2)) +
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(3, 0)) +
+					EGL_Mul64(vector.y(), Element(3, 1)) +
+					EGL_Mul64(vector.z(), Element(3, 2))) +
 				Element(3, 3));
 		}
 
@@ -757,17 +756,20 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		inline Vec3D Multiply3x3(const Vec3D& vector) const {
 			return Vec3D(
-				EGL_Mul(vector.x(), Element(0, 0)) +
-				EGL_Mul(vector.y(), Element(0, 1)) +
-				EGL_Mul(vector.z(), Element(0, 2)),
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(0, 0)) +
+					EGL_Mul64(vector.y(), Element(0, 1)) +
+					EGL_Mul64(vector.z(), Element(0, 2))),
 
-				EGL_Mul(vector.x(), Element(1, 0)) +
-				EGL_Mul(vector.y(), Element(1, 1)) +
-				EGL_Mul(vector.z(), Element(1, 2)),
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(1, 0)) +
+					EGL_Mul64(vector.y(), Element(1, 1)) +
+					EGL_Mul64(vector.z(), Element(1, 2))),
 
-				EGL_Mul(vector.x(), Element(2, 0)) +
-				EGL_Mul(vector.y(), Element(2, 1)) +
-				EGL_Mul(vector.z(), Element(2, 2)));
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(2, 0)) +
+					EGL_Mul64(vector.y(), Element(2, 1)) +
+					EGL_Mul64(vector.z(), Element(2, 2))));
 		}
 
 
@@ -778,9 +780,10 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		inline EGL_Fixed GetTransformedZ(const Vec3D& vector) const {
 			return
-				EGL_Mul(vector.x(), Element(2, 0)) +
-				EGL_Mul(vector.y(), Element(2, 1)) +
-				EGL_Mul(vector.z(), Element(2, 2)) +
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(2, 0)) +
+					EGL_Mul64(vector.y(), Element(2, 1)) +
+					EGL_Mul64(vector.z(), Element(2, 2))) +
 				Element(2, 3);
 		}
 
@@ -793,58 +796,67 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		inline Vec4D operator*(const Vec4D& vector) const {
 			return Vec4D(
-				EGL_Mul(vector.x(), Element(0, 0)) +
-				EGL_Mul(vector.y(), Element(0, 1)) +
-				EGL_Mul(vector.z(), Element(0, 2)) +
-				EGL_Mul(vector.w(), Element(0, 3)),
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(0, 0)) +
+					EGL_Mul64(vector.y(), Element(0, 1)) +
+					EGL_Mul64(vector.z(), Element(0, 2)) +
+					EGL_Mul64(vector.w(), Element(0, 3))),
 
-				EGL_Mul(vector.x(), Element(1, 0)) +
-				EGL_Mul(vector.y(), Element(1, 1)) +
-				EGL_Mul(vector.z(), Element(1, 2)) +
-				EGL_Mul(vector.w(), Element(1, 3)),
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(1, 0)) +
+					EGL_Mul64(vector.y(), Element(1, 1)) +
+					EGL_Mul64(vector.z(), Element(1, 2)) +
+					EGL_Mul64(vector.w(), Element(1, 3))),
 
-				EGL_Mul(vector.x(), Element(2, 0)) +
-				EGL_Mul(vector.y(), Element(2, 1)) +
-				EGL_Mul(vector.z(), Element(2, 2)) +
-				EGL_Mul(vector.w(), Element(2, 3)),
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(2, 0)) +
+					EGL_Mul64(vector.y(), Element(2, 1)) +
+					EGL_Mul64(vector.z(), Element(2, 2)) +
+					EGL_Mul64(vector.w(), Element(2, 3))),
 
-				EGL_Mul(vector.x(), Element(3, 0)) +
-				EGL_Mul(vector.y(), Element(3, 1)) +
-				EGL_Mul(vector.z(), Element(3, 2)) +
-				EGL_Mul(vector.w(), Element(3, 3)));
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(3, 0)) +
+					EGL_Mul64(vector.y(), Element(3, 1)) +
+					EGL_Mul64(vector.z(), Element(3, 2)) +
+					EGL_Mul64(vector.w(), Element(3, 3))));
 		}
 
 
 		inline void Multiply(const Vec4D& vector, Vec4D& result) const {
 			result = Vec4D(
-				EGL_Mul(vector.x(), Element(0, 0)) +
-				EGL_Mul(vector.y(), Element(0, 1)) +
-				EGL_Mul(vector.z(), Element(0, 2)) +
-				EGL_Mul(vector.w(), Element(0, 3)),
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(0, 0)) +
+					EGL_Mul64(vector.y(), Element(0, 1)) +
+					EGL_Mul64(vector.z(), Element(0, 2)) +
+					EGL_Mul64(vector.w(), Element(0, 3))),
 
-				EGL_Mul(vector.x(), Element(1, 0)) +
-				EGL_Mul(vector.y(), Element(1, 1)) +
-				EGL_Mul(vector.z(), Element(1, 2)) +
-				EGL_Mul(vector.w(), Element(1, 3)),
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(1, 0)) +
+					EGL_Mul64(vector.y(), Element(1, 1)) +
+					EGL_Mul64(vector.z(), Element(1, 2)) +
+					EGL_Mul64(vector.w(), Element(1, 3))),
 
-				EGL_Mul(vector.x(), Element(2, 0)) +
-				EGL_Mul(vector.y(), Element(2, 1)) +
-				EGL_Mul(vector.z(), Element(2, 2)) +
-				EGL_Mul(vector.w(), Element(2, 3)),
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(2, 0)) +
+					EGL_Mul64(vector.y(), Element(2, 1)) +
+					EGL_Mul64(vector.z(), Element(2, 2)) +
+					EGL_Mul64(vector.w(), Element(2, 3))),
 
-				EGL_Mul(vector.x(), Element(3, 0)) +
-				EGL_Mul(vector.y(), Element(3, 1)) +
-				EGL_Mul(vector.z(), Element(3, 2)) +
-				EGL_Mul(vector.w(), Element(3, 3)));
+				EGL_Round32(
+					EGL_Mul64(vector.x(), Element(3, 0)) +
+					EGL_Mul64(vector.y(), Element(3, 1)) +
+					EGL_Mul64(vector.z(), Element(3, 2)) +
+					EGL_Mul64(vector.w(), Element(3, 3))));
 		}
 
 		inline void Multiply(const Vec4D& vector, EGL_Fixed * result, int dim = 4) const {
 			for (int idx = 0; idx < dim; ++idx) {
 				*result++ =
-					EGL_Mul(vector.x(), Element(idx, 0)) +
-					EGL_Mul(vector.y(), Element(idx, 1)) +
-					EGL_Mul(vector.z(), Element(idx, 2)) +
-					EGL_Mul(vector.w(), Element(idx, 3));
+					EGL_Round32(
+						EGL_Mul64(vector.x(), Element(idx, 0)) +
+						EGL_Mul64(vector.y(), Element(idx, 1)) +
+						EGL_Mul64(vector.z(), Element(idx, 2)) +
+						EGL_Mul64(vector.w(), Element(idx, 3)));
 			}
 		}
 
