@@ -97,10 +97,10 @@ void Context :: RenderPoint(Vertex& point, EGL_Fixed size) {
 
 	if (m_VaryingInfo->colorIndex >= 0) {
 		if (m_LightingEnabled) {
-			LightVertex(&point, Vertex::LightMode::Front);
-			point.m_Color[Vertex::LightMode::Front].toArray(point.m_Varying + m_VaryingInfo->colorIndex);
+			LightVertex(&point, Front);
+			point.m_Color[Front].toArray(point.m_Varying + m_VaryingInfo->colorIndex);
 		} else {
-			point.m_Color[Vertex::LightMode::Unlit].toArray(point.m_Varying + m_VaryingInfo->colorIndex);
+			point.m_Color[Unlit].toArray(point.m_Varying + m_VaryingInfo->colorIndex);
 		}
 	}
 

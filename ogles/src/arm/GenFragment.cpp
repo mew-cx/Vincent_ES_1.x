@@ -568,7 +568,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure, cg_block_t * curre
 cg_block_t * CodeGenerator :: GenerateFragmentDepthStencil(cg_proc_t * procedure, cg_block_t * currentBlock,
 	cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
 	int weight, cg_virtual_reg_t * regDepthBuffer,
-	cg_virtual_reg_t * regStencilBuffer, bool forceScissor) {
+	cg_virtual_reg_t * regStencilBuffer, bool forceScissor, bool noScissor) {
 
 	cg_block_t * block = currentBlock;
 
@@ -583,7 +583,7 @@ cg_block_t * CodeGenerator :: GenerateFragmentDepthStencil(cg_proc_t * procedure
 	//	return;
 	//}
 
-	if (forceScissor || m_State->m_ScissorTest.Enabled) {
+	if (forceScissor || (!noScissor && m_State->m_ScissorTest.Enabled)) {
 		DECL_REG	(regConstXStart);
 		DECL_REG	(regConstXEnd);
 		DECL_FLAGS	(regXStartTest);

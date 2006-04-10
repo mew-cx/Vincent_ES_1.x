@@ -504,9 +504,9 @@ void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 	}
 
 	if (m_ColorArray.effectivePointer) {
-		m_ColorArray.FetchValues(index, rasterPos->m_Color[Vertex::LightMode::Unlit].getArray());
+		m_ColorArray.FetchValues(index, rasterPos->m_Color[Unlit].getArray());
 	} else {
-		rasterPos->m_Color[Vertex::LightMode::Unlit] = m_DefaultRGBA;
+		rasterPos->m_Color[Unlit] = m_DefaultRGBA;
 	}
 
 	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
@@ -537,7 +537,7 @@ void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 		}
 	}
 
-	rasterPos->m_Lit = Vertex::LightMode::Unlit;
+	rasterPos->m_Lit = Unlit;
 }
 
 

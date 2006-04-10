@@ -170,22 +170,22 @@ void Context :: RenderLine(Vertex& from, Vertex& to) {
 
 	if (m_VaryingInfo->colorIndex >= 0) {
 		if (m_LightingEnabled) {
-			LightVertex(&to, Vertex::LightMode::Front);
-			to.m_Color[Vertex::LightMode::Front].toArray(to.m_Varying + m_VaryingInfo->colorIndex);
+			LightVertex(&to, Front);
+			to.m_Color[Front].toArray(to.m_Varying + m_VaryingInfo->colorIndex);
 
 			if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
-				LightVertex(&from, Vertex::LightMode::Front);
-				from.m_Color[Vertex::LightMode::Front].toArray(from.m_Varying + m_VaryingInfo->colorIndex);
+				LightVertex(&from, Front);
+				from.m_Color[Front].toArray(from.m_Varying + m_VaryingInfo->colorIndex);
 			} else {
-				to.m_Color[Vertex::LightMode::Front].toArray(from.m_Varying + m_VaryingInfo->colorIndex);
+				to.m_Color[Front].toArray(from.m_Varying + m_VaryingInfo->colorIndex);
 			}
 		} else {
-			to.m_Color[Vertex::LightMode::Unlit].toArray(to.m_Varying + m_VaryingInfo->colorIndex);
+			to.m_Color[Unlit].toArray(to.m_Varying + m_VaryingInfo->colorIndex);
 
 			if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
-				from.m_Color[Vertex::LightMode::Unlit].toArray(from.m_Varying + m_VaryingInfo->colorIndex);
+				from.m_Color[Unlit].toArray(from.m_Varying + m_VaryingInfo->colorIndex);
 			} else {
-				to.m_Color[Vertex::LightMode::Unlit].toArray(from.m_Varying + m_VaryingInfo->colorIndex);
+				to.m_Color[Unlit].toArray(from.m_Varying + m_VaryingInfo->colorIndex);
 			}
 		}
 	}
