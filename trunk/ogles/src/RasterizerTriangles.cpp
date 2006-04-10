@@ -339,9 +339,9 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 	Edges edges;
 
 	// 16.16 -> 28.4 fixed-point coordinates
-	const I32 X1 = (a.m_WindowCoords.x + (1 << 11)) >> 12;
-	const I32 X2 = (b.m_WindowCoords.x + (1 << 11)) >> 12;
-	const I32 X3 = (c.m_WindowCoords.x + (1 << 11)) >> 12;
+	const I32 X1 = ((a.m_WindowCoords.x + (1 << 13)) >> 12) & ~3;
+	const I32 X2 = ((b.m_WindowCoords.x + (1 << 13)) >> 12) & ~3;
+	const I32 X3 = ((c.m_WindowCoords.x + (1 << 13)) >> 12) & ~3;
 
     // Deltas
     const I32 DX12 = X1 - X2;
@@ -354,9 +354,9 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 	edges.edge31.FDX = DX31 << 4;
 
 	// 16.16 -> 28.4 fixed-point coordinates
-	const I32 Y1 = (a.m_WindowCoords.y + (1 << 11)) >> 12;
-	const I32 Y2 = (b.m_WindowCoords.y + (1 << 11)) >> 12;
-	const I32 Y3 = (c.m_WindowCoords.y + (1 << 11)) >> 12;
+	const I32 Y1 = ((a.m_WindowCoords.y + (1 << 13)) >> 12) & ~3;
+	const I32 Y2 = ((b.m_WindowCoords.y + (1 << 13)) >> 12) & ~3;
+	const I32 Y3 = ((c.m_WindowCoords.y + (1 << 13)) >> 12) & ~3;
 
     const I32 DY12 = Y1 - Y2;
 	const I32 DY23 = Y2 - Y3;
