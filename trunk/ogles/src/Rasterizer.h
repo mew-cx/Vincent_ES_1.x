@@ -96,6 +96,13 @@ namespace EGL {
 	// Vertex information as input for rasterizer
 	// ----------------------------------------------------------------------
 
+	enum LightMode {
+		Unlit = 0,
+		Front = 1,
+		Back  = 2
+		// BackAndFront = 3
+	};
+
 	struct Vertex {
 		Vec4D				m_EyeCoords;
 		Vec4D				m_ClipCoords;
@@ -103,13 +110,6 @@ namespace EGL {
 		Vec3D				m_EyeNormal;
 		FractionalColor		m_Color[3];	// base color, front color, back color		
 		EGL_Fixed			m_Varying[EGL_MAX_NUM_VARYING];
-
-		enum LightMode {
-			Unlit = 0,
-			Front = 1,
-			Back  = 2
-			// BackAndFront = 3
-		};
 
 		unsigned			m_Lit : 2;	// unlit or lit vertex?
 		unsigned			m_cc : 6;	// culling flags
@@ -153,6 +153,7 @@ namespace EGL {
 		Interpolant	InvW;								// w^-1 (as 4.28)
 		Interpolant Depth;								// Depth (as 28.4)
 		Interpolant	VaryingInvW[EGL_MAX_NUM_VARYING];	// varying[idx] * w^-1 (as 4.28)
+		I32			x, y;								// x and y integer screen coordinates
 	};
 
 	struct Edge {

@@ -295,13 +295,13 @@ bool Context :: GetLightxv(GLenum light, GLenum pname, GLfixed *params) {
 // --------------------------------------------------------------------------
 
 
-void Context :: LightVertexNoTrack(Vertex * rasterPos, Vertex::LightMode mode) {
+void Context :: LightVertexNoTrack(Vertex * rasterPos, LightMode mode) {
 
 	if (m_NormalizeEnabled) {
 		rasterPos->m_EyeNormal.Normalize();
 	}
 
-	Vec3D normal = (mode == Vertex::LightMode::Front) ? rasterPos->m_EyeNormal : -rasterPos->m_EyeNormal;
+	Vec3D normal = (mode == Front) ? rasterPos->m_EyeNormal : -rasterPos->m_EyeNormal;
 
 	rasterPos->m_Color[mode] = m_EffectiveLightModelAmbient;
 
@@ -319,15 +319,15 @@ void Context :: LightVertexNoTrack(Vertex * rasterPos, Vertex::LightMode mode) {
 }
 
 
-void Context :: LightVertexTrack(Vertex * rasterPos, Vertex::LightMode mode) {
+void Context :: LightVertexTrack(Vertex * rasterPos, LightMode mode) {
 
 	if (m_NormalizeEnabled) {
 		rasterPos->m_EyeNormal.Normalize();
 	}
 
-	Vec3D normal = (mode == Vertex::LightMode::Front) ? rasterPos->m_EyeNormal : -rasterPos->m_EyeNormal;
+	Vec3D normal = (mode == Front) ? rasterPos->m_EyeNormal : -rasterPos->m_EyeNormal;
 
-	rasterPos->m_Color[mode] = rasterPos->m_Color[Vertex::LightMode::Unlit] * m_LightModelAmbient;
+	rasterPos->m_Color[mode] = rasterPos->m_Color[Unlit] * m_LightModelAmbient;
 	rasterPos->m_Color[mode] += m_Material.GetEmissiveColor();
 
 	// for each light that is turned on, call into calculation
@@ -336,7 +336,7 @@ void Context :: LightVertexTrack(Vertex * rasterPos, Vertex::LightMode mode) {
 	for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
 		if (m_LightEnabled & mask) {
 			m_Lights[index].AccumulateLight(rasterPos->m_EyeCoords, normal,
-				m_Material, rasterPos->m_Color[Vertex::LightMode::Unlit], rasterPos->m_Color[mode]);
+				m_Material, rasterPos->m_Color[Unlit], rasterPos->m_Color[mode]);
 		}
 	}
 

@@ -115,7 +115,7 @@ namespace EGL {
 		cg_block_t * GenerateFragmentDepthStencil(cg_proc_t * procedure, cg_block_t * currentBlock,
 			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
 			int weight, cg_virtual_reg_t * regDepthBuffer = 0,
-			cg_virtual_reg_t * regStencilBuffer = 0, bool forceScissor = false);
+			cg_virtual_reg_t * regStencilBuffer = 0, bool forceScissor = false, bool noScissor = false);
 
 		void GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t * currentBlock,
 			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
@@ -182,6 +182,8 @@ namespace EGL {
 	// Offsets of structure members within Variables
 	// -------------------------------------------------------------------------
 
+#	define OFFSET_VARIABLES_X				offsetof(Variables, x)
+#	define OFFSET_VARIABLES_Y				offsetof(Variables, y)
 #	define OFFSET_VARIABLES_DEPTH			offsetof(Variables, Depth)
 #	define OFFSET_VARIABLES_INV_W			offsetof(Variables, InvW)
 #	define OFFSET_VARIABLES_VARYING_INV_W	offsetof(Variables, VaryingInvW)

@@ -142,10 +142,10 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 	}
 
 	if (m_VaryingInfo->colorIndex >= 0) {
-		Vertex::LightMode mode;
+		LightMode mode;
 
 		if (m_LightingEnabled) { 
-			mode = (backFace && m_TwoSidedLightning) ? Vertex::LightMode::Back : Vertex::LightMode::Front;
+			mode = (backFace && m_TwoSidedLightning) ? Back : Front;
 			LightVertex(&c, mode);
 
 			if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
@@ -153,7 +153,7 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 				LightVertex(&b, mode);
 			}
 		} else {
-			mode = Vertex::LightMode::Unlit;
+			mode = Unlit;
 		}
 
 		if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
@@ -193,44 +193,52 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 
 
 void Context :: DrawTriangle(int index) {
-	SelectArrayElement(index, &m_Input[m_NextIndex++]);
+	SelectArrayElement(index, &m_Input[m_NextIndex]);
 
-	if (m_NextIndex == 3) {
+	if (++m_NextIndex == 3) {
 		RenderTriangle(m_Input[0], m_Input[1], m_Input[2]);
 		m_NextIndex = 0;
 	}
 }
 
 void Context :: DrawTriangleStrip(int index) {
-	SelectArrayElement(index, &m_Input[m_NextIndex++]);
+	SelectArrayElement(index, &m_Input[m_NextIndex]);
 
 	if (m_PrimitiveState == 3) {
 		// even triangle
-		RenderTriangle(m_Input[0], m_Input[2], m_Input[1]);
+		I32 prevIndex = (m_NextIndex - 1) > m_NextIndex ? m_NextIndex + 2 : m_NextIndex - 1;
+		I32 prevIndex2 = (m_NextIndex - 2) > m_NextIndex ? m_NextIndex + 1 : m_NextIndex - 2;
+		RenderTriangle(m_Input[prevIndex], m_Input[prevIndex2], m_Input[m_NextIndex]);
 		m_PrimitiveState = 2;
 	} else if (m_PrimitiveState == 2) {
 		// odd triangle
-		RenderTriangle(m_Input[0], m_Input[1], m_Input[2]);
+		I32 prevIndex = (m_NextIndex - 1) > m_NextIndex ? m_NextIndex + 2 : m_NextIndex - 1;
+		I32 prevIndex2 = (m_NextIndex - 2) > m_NextIndex ? m_NextIndex + 1 : m_NextIndex - 2;
+		RenderTriangle(m_Input[prevIndex2], m_Input[prevIndex], m_Input[m_NextIndex]);
 		m_PrimitiveState = 3;
 	} else {
 		// remember seen a vertex
 		++m_PrimitiveState;
 	}
 
-	if (m_NextIndex == 3)
+	if (++m_NextIndex == 3)
 		m_NextIndex = 0;
 }
 
 void Context :: DrawTriangleFan(int index) {
-	SelectArrayElement(index, &m_Input[m_NextIndex++]);
+	SelectArrayElement(index, &m_Input[m_NextIndex]);
 
 	if (m_PrimitiveState == 3) {
 		// even triangle
-		RenderTriangle(m_Input[0], m_Input[2], m_Input[1]);
+		I32 prevIndex = (m_NextIndex - 1) > m_NextIndex ? m_NextIndex + 2 : m_NextIndex - 1;
+		I32 prevIndex2 = (m_NextIndex - 2) > m_NextIndex ? m_NextIndex + 1 : m_NextIndex - 2;
+		RenderTriangle(m_Input[prevIndex], m_Input[prevIndex2], m_Input[m_NextIndex]);
 		m_PrimitiveState = 2;
 	} else if (m_PrimitiveState == 2) {
 		// odd triangle
-		RenderTriangle(m_Input[0], m_Input[1], m_Input[2]);
+		I32 prevIndex = (m_NextIndex - 1) > m_NextIndex ? m_NextIndex + 2 : m_NextIndex - 1;
+		I32 prevIndex2 = (m_NextIndex - 2) > m_NextIndex ? m_NextIndex + 1 : m_NextIndex - 2;
+		RenderTriangle(m_Input[prevIndex2], m_Input[prevIndex], m_Input[m_NextIndex]);
 		m_PrimitiveState = 3;
 	} else if (m_PrimitiveState == 1) {
 		// remember seen second vertex
@@ -240,7 +248,7 @@ void Context :: DrawTriangleFan(int index) {
 		m_PrimitiveState = 1;
 	}
 
-	if (m_NextIndex == 3)
+	if (++m_NextIndex == 3)
 		m_NextIndex = 1;
 }
 

@@ -129,6 +129,9 @@ void CodeGenerator :: GenerateRasterBlockDepthStencil(const VaryingInfo * varyin
 
 	DECL_CONST_REG	(maskSize, sizeof(PixelMask));
 
+	cg_virtual_reg_t *	regBaseX = LOAD_DATA(block, regVars, OFFSET_VARIABLES_X);
+	cg_virtual_reg_t *	regBaseY = LOAD_DATA(block, regVars, OFFSET_VARIABLES_Y);
+
 	//I32 depth0 = vars->Depth.Value;
 	cg_virtual_reg_t *	regDepthInit = LOAD_DATA(block, regVars, OFFSET_VARIABLES_DEPTH + OFFSET_INTERPOLANT_VALUE);
 	cg_virtual_reg_t *	regDepthDx = LOAD_DATA(block, regVars, OFFSET_VARIABLES_DEPTH + OFFSET_INTERPOLANT_DX);
@@ -211,6 +214,37 @@ void CodeGenerator :: GenerateRasterBlockDepthStencil(const VaryingInfo * varyin
 	//		bool written = FragmentDepthStencil(&m_RasterInfo, &surfaceInfo, ix, depth0 >> 4);
 	cg_block_ref_t * notWritten = cg_block_ref_create(procedure);
 
+	if (m_State->IsEnabledScissorTest()) {
+		// scissor test goes here
+		DECL_REG	(regX);
+		DECL_REG	(regY);
+		DECL_REG	(regTempY);
+		DECL_CONST_REG(blockSize, EGL_RASTER_BLOCK_SIZE);		
+
+		ADD		(regX, regIX0, regBaseX);
+		SUB		(regTempY, blockSize, regIY0);
+		ADD		(regY, regTempY, regBaseY);
+
+		DECL_CONST_REG	(xBottom, m_State->m_ScissorTest.X);
+		DECL_CONST_REG	(xTop, m_State->m_ScissorTest.X + m_State->m_ScissorTest.Width);
+		DECL_CONST_REG	(yBottom, m_State->m_ScissorTest.Y);
+		DECL_CONST_REG	(yTop, m_State->m_ScissorTest.Y + m_State->m_ScissorTest.Height);
+
+		DECL_FLAGS	(xLow);
+		DECL_FLAGS	(xHigh);
+		DECL_FLAGS	(yLow);
+		DECL_FLAGS	(yHigh);
+
+		CMP		(xLow, regX, xBottom);
+		BLT		(xLow, notWritten);
+		CMP		(xHigh, regX, xTop);
+		BGE		(xHigh, notWritten);
+		CMP		(yLow, regY, yBottom);
+		BLT		(yLow, notWritten);
+		CMP		(yHigh, regY, yTop);
+		BGE		(yHigh, notWritten);
+	}
+
 	DECL_REG(regShiftedDepth);
 
 	LSR		(regShiftedDepth, regDepth3, four);
@@ -219,7 +253,7 @@ void CodeGenerator :: GenerateRasterBlockDepthStencil(const VaryingInfo * varyin
 	info.regDepth = regShiftedDepth;
 
 	GenerateFragmentDepthStencil(procedure, block, notWritten, 
-		info, 4, regDepthBuffer0, regStencilBuffer0, false);
+		info, 4, regDepthBuffer0, regStencilBuffer0, false, true);
 
 	//		rowMask |= (written ? (1 << (EGL_RASTER_BLOCK_SIZE - 1)) : 0);
 	block = cg_block_create(procedure, 4);
@@ -321,6 +355,9 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	DECL_CONST_REG	(logBlockSize, EGL_LOG_RASTER_BLOCK_SIZE);
 
 	DECL_CONST_REG	(maskSize, sizeof(PixelMask));
+
+	cg_virtual_reg_t *	regBaseX = LOAD_DATA(block, regVars, OFFSET_VARIABLES_X);
+	cg_virtual_reg_t *	regBaseY = LOAD_DATA(block, regVars, OFFSET_VARIABLES_Y);
 
 	//I32 depth0 = vars->Depth.Value;
 	cg_virtual_reg_t *	regDepthInit = LOAD_DATA(block, regVars, OFFSET_VARIABLES_DEPTH + OFFSET_INTERPOLANT_VALUE);
@@ -457,6 +494,37 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	//		done = true;
 	LDI			(regDone1, 1);
 
+	if (m_State->IsEnabledScissorTest()) {
+		// scissor test goes here
+		DECL_REG	(regX);
+		DECL_REG	(regY);
+		DECL_REG	(regTempY);
+		DECL_CONST_REG(blockSize, EGL_RASTER_BLOCK_SIZE);		
+
+		ADD		(regX, regIX0, regBaseX);
+		SUB		(regTempY, blockSize, regIY0);
+		ADD		(regY, regTempY, regBaseY);
+
+		DECL_CONST_REG	(xBottom, m_State->m_ScissorTest.X);
+		DECL_CONST_REG	(xTop, m_State->m_ScissorTest.X + m_State->m_ScissorTest.Width);
+		DECL_CONST_REG	(yBottom, m_State->m_ScissorTest.Y);
+		DECL_CONST_REG	(yTop, m_State->m_ScissorTest.Y + m_State->m_ScissorTest.Height);
+
+		DECL_FLAGS	(xLow);
+		DECL_FLAGS	(xHigh);
+		DECL_FLAGS	(yLow);
+		DECL_FLAGS	(yHigh);
+
+		CMP		(xLow, regX, xBottom);
+		BLT		(xLow, notWritten);
+		CMP		(xHigh, regX, xTop);
+		BGE		(xHigh, notWritten);
+		CMP		(yLow, regY, yBottom);
+		BLT		(yLow, notWritten);
+		CMP		(yHigh, regY, yTop);
+		BGE		(yHigh, notWritten);
+	}
+
 	//		bool written = FragmentDepthStencil(&m_RasterInfo, &surfaceInfo, ix, depth1 >> 4);
 	DECL_REG(regShiftedDepth);
 
@@ -466,7 +534,7 @@ void CodeGenerator :: GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * va
 	info.regDepth = regShiftedDepth;
 
 	GenerateFragmentDepthStencil(procedure, block, notWritten, 
-		info, 4, regDepthBuffer0, regStencilBuffer0, false);
+		info, 4, regDepthBuffer0, regStencilBuffer0, false, true);
 
 	//		rowMask |= (written ? (1 << (EGL_RASTER_BLOCK_SIZE - 1)) : 0);
 	block = cg_block_create(procedure, 4);

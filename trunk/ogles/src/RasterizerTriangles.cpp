@@ -183,8 +183,16 @@ PixelMask Rasterizer :: RasterBlockDepthStencil(const Variables * vars,
 
         for (I32 ix = 0; ix < EGL_RASTER_BLOCK_SIZE; ix++) {
 
+			bool written = false;
+
             // test and write depth and stencil
-			bool written = FragmentDepthStencil(&m_RasterInfo, &surfaceInfo, ix, depth0 >> 4);
+			if (!m_State->IsEnabledScissorTest() ||
+				m_State->m_ScissorTest.X <= vars->x + ix &&
+				m_State->m_ScissorTest.X + m_State->m_ScissorTest.Width > vars->x + ix &&
+				m_State->m_ScissorTest.Y <= vars->y + iy &&
+				m_State->m_ScissorTest.Y + m_State->m_ScissorTest.Height > vars->y + iy) {
+				written = FragmentDepthStencil(&m_RasterInfo, &surfaceInfo, ix, depth0 >> 4);
+			}
 
 			rowMask = (rowMask >> 1) | (written ? (1 << (EGL_RASTER_BLOCK_SIZE - 1)) : 0);
 			depth0 += vars->Depth.dX;
@@ -225,7 +233,17 @@ PixelMask Rasterizer :: RasterBlockEdgeDepthStencil(const Variables * vars,
         for(I32 ix = 0; ix < EGL_RASTER_BLOCK_SIZE; ix++) {
             if (CX1 > 0 && CX2 > 0 && CX3 > 0) {
 				// test and write depth and stencil
-				bool written = FragmentDepthStencil(&m_RasterInfo, &surfaceInfo, ix, depth1 >> 4);
+				bool written = false;
+
+				// test and write depth and stencil
+				if (!m_State->IsEnabledScissorTest() ||
+					m_State->m_ScissorTest.X <= vars->x + ix &&
+					m_State->m_ScissorTest.X + m_State->m_ScissorTest.Width > vars->x + ix &&
+					m_State->m_ScissorTest.Y <= vars->y + iy &&
+					m_State->m_ScissorTest.Y + m_State->m_ScissorTest.Height > vars->y + iy) {
+					written = FragmentDepthStencil(&m_RasterInfo, &surfaceInfo, ix, depth1 >> 4);
+				}
+
 				rowMask >>= 1;
 				rowMask |= written ? (1 << (EGL_RASTER_BLOCK_SIZE - 1)) : 0;
 				done = true;
@@ -331,7 +349,6 @@ void Rasterizer :: RasterBlockColorAlpha(I32 varying[][2][2],
 void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 								  const Vertex& c) {
 
-	I32 x, y;					// block index loop vars
 	I32 index, unit;			// index into varying variable array & texture unit
 
 	Variables vars;
@@ -339,9 +356,9 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 	Edges edges;
 
 	// 16.16 -> 28.4 fixed-point coordinates
-	const I32 X1 = ((a.m_WindowCoords.x + (1 << 13)) >> 12) & ~3;
-	const I32 X2 = ((b.m_WindowCoords.x + (1 << 13)) >> 12) & ~3;
-	const I32 X3 = ((c.m_WindowCoords.x + (1 << 13)) >> 12) & ~3;
+	const I32 X1 = ((a.m_WindowCoords.x + (1 << 12)) >> 12) & ~1;
+	const I32 X2 = ((b.m_WindowCoords.x + (1 << 12)) >> 12) & ~1;
+	const I32 X3 = ((c.m_WindowCoords.x + (1 << 12)) >> 12) & ~1;
 
     // Deltas
     const I32 DX12 = X1 - X2;
@@ -354,9 +371,9 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 	edges.edge31.FDX = DX31 << 4;
 
 	// 16.16 -> 28.4 fixed-point coordinates
-	const I32 Y1 = ((a.m_WindowCoords.y + (1 << 13)) >> 12) & ~3;
-	const I32 Y2 = ((b.m_WindowCoords.y + (1 << 13)) >> 12) & ~3;
-	const I32 Y3 = ((c.m_WindowCoords.y + (1 << 13)) >> 12) & ~3;
+	const I32 Y1 = ((a.m_WindowCoords.y + (1 << 12)) >> 12) & ~1;
+	const I32 Y2 = ((b.m_WindowCoords.y + (1 << 12)) >> 12) & ~1;
+	const I32 Y3 = ((c.m_WindowCoords.y + (1 << 12)) >> 12) & ~1;
 
     const I32 DY12 = Y1 - Y2;
 	const I32 DY23 = Y2 - Y3;
@@ -396,9 +413,9 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
     I32 C3 = Y1 * X3 - X1 * Y3;
 
     // Correct for fill convention
-	if (DY12 > 0 || (DY12 == 0 && DX12 < 0)) C1++;
-	if (DY23 > 0 || (DY23 == 0 && DX23 < 0)) C2++;
-	if (DY31 > 0 || (DY31 == 0 && DX31 < 0)) C3++;
+	if (DY12 < 0 || (DY12 == 0 && DX12 > 0)) C1++;
+	if (DY23 < 0 || (DY23 == 0 && DX23 > 0)) C2++;
+	if (DY31 < 0 || (DY31 == 0 && DX31 > 0)) C3++;
 
 	I32 XMin1 = (minx << 4) + (1 << 3) - X1;
 	I32 YMin1 = (miny << 4) + (1 << 3) - Y1;
@@ -432,13 +449,13 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 					   		  + Mul(YMin1, vars.InvW.dY, 4);
 
     // Loop through blocks
-    for (y = miny; y < maxy; y += EGL_RASTER_BLOCK_SIZE) {
+    for (vars.y = miny; vars.y < maxy; vars.y += EGL_RASTER_BLOCK_SIZE) {
 
-        for (x = minx; x < maxx; x += EGL_RASTER_BLOCK_SIZE) {
+        for (vars.x = minx; vars.x < maxx; vars.x += EGL_RASTER_BLOCK_SIZE) {
 
             // Corners of block as 28.4; move to pixel centers
-            GLint x0 = (x << 4) | (1 << 3);
-            GLint y0 = (y << 4) | (1 << 3);
+            GLint x0 = (vars.x << 4) | (1 << 3);
+            GLint y0 = (vars.y << 4) | (1 << 3);
 
             // Evaluate half-space functions
             edges.edge12.CY = C1 + DY12 * x0 - DX12 * y0;

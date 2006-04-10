@@ -335,7 +335,7 @@ private:
 		void SelectArrayElement(int index, Vertex * rasterPos);
 		EGL_Fixed SelectPointSizeArrayElement(int index);
 
-		typedef void (Context::*LightVertexFunction)(Vertex * rasterPos, Vertex::LightMode mode);
+		typedef void (Context::*LightVertexFunction)(Vertex * rasterPos, LightMode mode);
 		typedef void (Context::*DrawPrimitiveFunction)(int index);
 		typedef void (Context::*EndPrimitiveFunction)();
 
@@ -345,13 +345,13 @@ private:
 		bool Begin(GLenum mode);
 		void End();
 
-		void LightVertices(Vertex * input[], size_t inputCount, Vertex::LightMode mode);
+		void LightVertices(Vertex * input[], size_t inputCount, LightMode mode);
 
-		void LightVertex(Vertex * rasterPos, Vertex::LightMode mode);
+		void LightVertex(Vertex * rasterPos, LightMode mode);
 
-		void LightVertexNoLight(Vertex * rasterPos, Vertex::LightMode mode);
-		void LightVertexNoTrack(Vertex * rasterPos, Vertex::LightMode mode);
-		void LightVertexTrack(Vertex * rasterPos, Vertex::LightMode mode);
+		void LightVertexNoLight(Vertex * rasterPos, LightMode mode);
+		void LightVertexNoTrack(Vertex * rasterPos, LightMode mode);
+		void LightVertexTrack(Vertex * rasterPos, LightMode mode);
 
 		size_t ClipPrimitive(size_t inputCount, Vertex * input[], Vertex * output[], Vertex *** result);
 
@@ -555,14 +555,14 @@ private:
 	}
 
 
-	inline void Context :: LightVertex(Vertex * rasterPos, Vertex::LightMode mode) {
+	inline void Context :: LightVertex(Vertex * rasterPos, LightMode mode) {
 		if (!(rasterPos->m_Lit & mode)) {
 			(this->*m_LightVertexFunction)(rasterPos, mode);
 			rasterPos->m_Lit |= mode;
 		}
 	}
 
-	inline void Context :: LightVertices(Vertex * input[], size_t inputCount, Vertex::LightMode mode) {
+	inline void Context :: LightVertices(Vertex * input[], size_t inputCount, LightMode mode) {
 		while (inputCount--) {
 			LightVertex(*input++, mode);
 		}
