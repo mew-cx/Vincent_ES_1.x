@@ -428,12 +428,12 @@ namespace EGL {
 		// ----------------------------------------------------------------------
 		inline EGL_Fixed operator*(const Vec4D& other) const {
 			I64 sum =
-				(static_cast<I64>(m_x) * static_cast<I64>(other.m_x) +
-				 static_cast<I64>(m_y) * static_cast<I64>(other.m_y) +
-				 static_cast<I64>(m_z) * static_cast<I64>(other.m_z) +
-				 static_cast<I64>(m_w) * static_cast<I64>(other.m_w));
+				EGL_Mul64(m_x, other.m_x) +
+				EGL_Mul64(m_y, other.m_y) +
+				EGL_Mul64(m_z, other.m_z) +
+				EGL_Mul64(m_w, other.m_w);
 
-			return static_cast<I32>((sum + (1 << (EGL_PRECISION - 1))) >> EGL_PRECISION);
+			return EGL_Round32(sum);
 		}
 
 		// ----------------------------------------------------------------------
@@ -683,10 +683,10 @@ namespace EGL {
 					I64 sum = 0;
 
 					for (int k = 0; k < COLUMNS; ++k) {
-						sum += static_cast<I64>(Element(i, k)) * other.Element(k, j);
+						sum += EGL_Mul64(Element(i, k), other.Element(k, j));
 					}
 
-					result.Element(i, j) = static_cast<I32>((sum + (1 << (EGL_PRECISION - 1))) >> EGL_PRECISION);
+					result.Element(i, j) = EGL_Round32(sum);
 				}
 			}
 
