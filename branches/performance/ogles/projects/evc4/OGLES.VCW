@@ -18,34 +18,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "StaticLib"=.\StaticLib.vcp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name codegen
-    End Project Dependency
-}}}
-
-###############################################################################
-
 Project: "codegen"=.\codegen.vcp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "etk"=.\etk.vcp - Package Owner=<4>
 
 Package=<5>
 {{{

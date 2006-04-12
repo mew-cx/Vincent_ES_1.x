@@ -321,8 +321,10 @@ DEP_CPP_CONFI=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONFI=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -491,8 +493,10 @@ DEP_CPP_CONTE=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTE=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -674,8 +678,10 @@ DEP_CPP_CONTEX=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEX=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -853,8 +859,10 @@ DEP_CPP_CONTEXT=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXT=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -1036,8 +1044,10 @@ DEP_CPP_CONTEXTL=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTL=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -1222,8 +1232,10 @@ DEP_CPP_CONTEXTLI=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTLI=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -1405,8 +1417,10 @@ DEP_CPP_CONTEXTM=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTM=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -1585,8 +1599,10 @@ DEP_CPP_CONTEXTMA=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTMA=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -1764,8 +1780,10 @@ DEP_CPP_CONTEXTP=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTP=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -1946,8 +1964,10 @@ DEP_CPP_CONTEXTR=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTR=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -2126,8 +2146,10 @@ DEP_CPP_CONTEXTRE=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTRE=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -2311,8 +2333,10 @@ DEP_CPP_CONTEXTT=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTT=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -2496,8 +2520,10 @@ DEP_CPP_CONTEXTTR=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTTR=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -2675,8 +2701,10 @@ DEP_CPP_CONTEXTV=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTV=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -2787,8 +2815,10 @@ DEP_CPP_DISPL=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_DISPL=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3090,8 +3120,10 @@ DEP_CPP_GL_CP=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_GL_CP=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3208,8 +3240,10 @@ DEP_CPP_LIGHT=\
 	"..\..\src\Material.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_LIGHT=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3293,8 +3327,10 @@ DEP_CPP_LINAL=\
 	"..\..\src\linalg.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_LINAL=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3384,8 +3420,10 @@ DEP_CPP_MATER=\
 	"..\..\src\Material.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_MATER=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3472,8 +3510,10 @@ DEP_CPP_MATRI=\
 	"..\..\src\MatrixStack.h"\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_MATRI=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3628,8 +3668,10 @@ DEP_CPP_RASTE=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_RASTE=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -3927,8 +3969,10 @@ DEP_CPP_RASTERI=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_RASTER=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -4084,8 +4128,10 @@ DEP_CPP_RASTERIZ=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_RASTERI=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -4224,8 +4270,10 @@ DEP_CPP_TEXTU=\
 	"..\..\src\Texture.h"\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_TEXTU=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -4655,8 +4703,10 @@ DEP_CPP_CODEG=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_FUNCT=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -4813,8 +4863,10 @@ DEP_CPP_FUNCT=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_GENFR=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -5005,8 +5057,10 @@ DEP_CPP_GENFR=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_GENLL=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -5305,7 +5359,7 @@ NODEP_CPP_GENPO=\
 	".\rmintr.h"\
 	
 
-!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release XScale"
+!ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
 
 DEP_CPP_GENPO=\
 	"..\..\include\GLES\egl.h"\
@@ -5364,7 +5418,6 @@ DEP_CPP_GENPO=\
 	
 NODEP_CPP_GENPO=\
 	".\mnintrin.h"\
-	".\pp.h"\
 	".\rmintr.h"\
 	
 
@@ -5588,8 +5641,10 @@ DEP_CPP_GENTR=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_GENTR=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -5776,8 +5831,10 @@ DEP_CPP_CONTEXTW=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_CONTEXTW=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -5958,8 +6015,10 @@ DEP_CPP_EGL_C=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_EGL_C=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -6046,8 +6105,10 @@ NODEP_CPP_OGLES=\
 DEP_CPP_OGLES=\
 	"..\..\src\OGLES.h"\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_OGLES=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
@@ -6114,8 +6175,10 @@ NODEP_CPP_STDAF=\
 
 DEP_CPP_STDAF=\
 	"..\..\src\WinCE\stdafx.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_STDAF=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 # ADD CPP /Yc"stdafx.h"
 
@@ -6227,8 +6290,10 @@ DEP_CPP_SURFA=\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
-	{$(INCLUDE)}"armintr.h"\
-	{$(INCLUDE)}"Cmnintrin.h"\
+	
+NODEP_CPP_SURFA=\
+	".\mnintrin.h"\
+	".\rmintr.h"\
 	
 
 !ELSEIF  "$(CFG)" == "OGLES - Win32 (WCE ARMV4) Release ARM"
