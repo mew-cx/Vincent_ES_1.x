@@ -42,9 +42,6 @@
 using namespace EGL;
 
 
-#ifndef EGL_USE_GPP
-
-
 // --------------------------------------------------------------------------
 // lookup table for calculation of inverse
 // --------------------------------------------------------------------------
@@ -225,8 +222,6 @@ EGL_Fixed EGL_Sqrt(EGL_Fixed a) {
 		s = (s + EGL_Div(a, s)) >> 1;
     return s;
 }
-
-#endif //ndef EGL_USE_GPP
 
 /* assume 0 <= x <= 1 and y >= 0 */
 static __inline EGL_Fixed

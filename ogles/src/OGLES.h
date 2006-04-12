@@ -73,7 +73,7 @@
 
 
 #ifndef EGL_RELEASE
-#	define EGL_RELEASE				"1.1.0"
+#	define EGL_RELEASE				"1.0.0"
 #endif
 
 #define EGL_CONFIG_VENDOR			"Hans-Martin Will"
@@ -90,11 +90,7 @@
 									"GL_OES_point_sprite "\
 									"GL_OES_compressed_paletted_texture"
 
-#ifdef EGL_USE_GPP
-#	define EGL_CONFIG_RENDERER		"Software GPP"
-#else
 #	define EGL_CONFIG_RENDERER		"Software"
-#endif
 
 #if EGL_USE_JIT
 #	define	EGL_JIT_VERSION			" JIT"

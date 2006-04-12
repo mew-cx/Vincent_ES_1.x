@@ -41,11 +41,8 @@
 extern "C" {
 #endif
 
-
-#ifndef EGL_USE_GPP		// define only if not including Intel's GPP library
-
 #	ifdef EGL_ON_SYMBIAN
-	    typedef TInt8	 I8;
+	    typedef TInt8	I8;
         typedef TUint8  U8;
         typedef TInt16  I16;
         typedef TUint16 U16;
@@ -59,13 +56,6 @@ extern "C" {
 	    typedef int 				I32;
 	    typedef unsigned int 		U32;
 #	endif
-
-#endif
-
-#if 0
-typedef unsigned __int64	U64;
-typedef __int64				I64;
-#endif
 
 #ifdef __cplusplus
 }
