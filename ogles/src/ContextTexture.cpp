@@ -484,8 +484,8 @@ namespace {
 		U32 srcHeight = src->GetHeight();
 		U32 srcGap = srcWidth - copyWidth;
 
-		const U16 * srcPtr = src->GetColorBuffer() + srcX + srcY * src->GetPitch();
-		const U8 * alphaPtr = src->GetAlphaBuffer() + srcX + srcY * src->GetPitch();
+		const U16 * srcPtr = src->GetColorBuffer() + srcX + srcY * srcWidth;
+		const U8 * alphaPtr = src->GetAlphaBuffer() + srcX + srcY * srcWidth;
 		U8 * dstPtr = reinterpret_cast<U8 *>(dst) + dstX * dstPixelSize + dstY * dstBytesWidth;
 
 		do {
