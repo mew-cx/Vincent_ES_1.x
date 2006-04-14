@@ -41,7 +41,7 @@ extern "C" {
 
 #if defined(__SYMBIAN32__)
 
-#	define EGL_PLATFORM_HEADER_INCLUDE <e32def.h>
+#	include <e32def.h>
 
 #elif (defined(WIN32) || defined(_WIN32_WCE)) /*&& !defined(APIENTRY) && !defined(__CYGWIN__)*/
 
@@ -49,7 +49,15 @@ extern "C" {
 #		define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #	endif
 
-#	define EGL_PLATFORM_HEADER_INCLUDE <windows.h>
+#	include <windows.h>
+
+#elif defined(__gnu_linux__)
+
+#	define GLAPI
+
+#	ifdef APIENTRY
+#		undef APIENTRY
+#	endif
 
 #else
 
@@ -57,22 +65,16 @@ extern "C" {
 
 #endif
 
-#include EGL_PLATFORM_HEADER_INCLUDE
-
 
 #ifndef APIENTRY
 #define APIENTRY
 #endif
 
 #ifndef GLAPI
-	#ifndef STATIC_GLES
-		#ifdef OGLES_EXPORTS
-			#define GLAPI __declspec(dllexport)
-		#else
-			#define GLAPI __declspec(dllimport)
-		#endif
+	#ifdef OGLES_EXPORTS
+		#define GLAPI __declspec(dllexport)
 	#else
-		#define GLAPI 
+		#define GLAPI __declspec(dllimport)
 	#endif
 #endif
 
@@ -106,7 +108,7 @@ typedef void (*_GLfuncptr)();
 #define GL_OES_compressed_paletted_texture 1
 /*#define GL_OES_draw_texture             1*/
 #define GL_OES_matrix_get                 1
-#define GL_OES_matrix_palette		      1
+/*#define GL_OES_matrix_palette		      1*/
 #define GL_OES_point_size_array           1
 #define GL_OES_point_sprite               1
 #define GL_OES_read_format                1

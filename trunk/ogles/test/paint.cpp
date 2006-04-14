@@ -1359,8 +1359,8 @@ extern "C" void PaintProc(HWND hWnd) {
 	// rendering preamble
 	RECT rt;
 	hdc = BeginPaint(hWnd, &ps);
-	//EGLDisplay display = eglGetDisplay(hdc);
-	EGLDisplay display = eglGetDisplay(0);
+	EGLDisplay display = eglGetDisplay(hdc);
+	//EGLDisplay display = eglGetDisplay(0);
 
 	GetClientRect(hWnd, &rt);
 
@@ -1419,16 +1419,17 @@ extern "C" void PaintProc(HWND hWnd) {
 
 	//glLineWidth(0x10000);
 
-	//glDisable(GL_TEXTURE_2D);
-	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_2D);
+	//glEnable(GL_TEXTURE_2D);
 	glTexEnvx(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 	glEnable(GL_CULL_FACE);
 	//glDisable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	//glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	//glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	//glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
@@ -1453,7 +1454,7 @@ extern "C" void PaintProc(HWND hWnd) {
 
 	//glScissor(30, 30, 100, 100);
 	//glEnable(GL_SCISSOR_TEST);
-	//glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 	//glDrawArrays(GL_LINE_STRIP, 0, SIZE);
 	glDrawArrays(GL_TRIANGLES, 0, SIZE);
 
@@ -1464,6 +1465,9 @@ extern "C" void PaintProc(HWND hWnd) {
 	//eglSaveSurfaceHM(g_surface, L"image.bmp");
     eglSwapBuffers(display, g_surface);
 	DWORD endSwap = GetTickCount();
+
+	if (endSwap == startTicks)
+		endSwap = startTicks + 1;
 
 	int fps = 1000 / (endSwap - startTicks);
 	int clear = clearTicks - startTicks;

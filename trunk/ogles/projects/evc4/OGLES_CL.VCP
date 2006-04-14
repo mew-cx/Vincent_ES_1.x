@@ -2147,7 +2147,6 @@ DEP_CPP_CONTEXTRE=\
 	"..\..\src\Rasterizer.h"\
 	"..\..\src\RasterizerState.h"\
 	"..\..\src\Texture.h"\
-	"..\..\src\Utils.h"\
 	"..\..\src\WinCE\e32def.h"\
 	"..\..\src\WinCE\stdafx.h"\
 	"..\..\src\WinCE\Surface.h"\
