@@ -1272,7 +1272,7 @@ extern "C" void PaintProc() {
 	//glEnable(GL_SCISSOR_TEST);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 	//glDrawArrays(GL_LINE_STRIP, 0, SIZE);
-	//glDrawArrays(GL_TRIANGLES, 0, SIZE);
+	glDrawArrays(GL_TRIANGLES, 0, SIZE);
 
 	glFinish();
 	eglWaitGL();
