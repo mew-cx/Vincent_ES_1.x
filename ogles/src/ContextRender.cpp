@@ -476,16 +476,20 @@ void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 	assert(m_VertexArray.effectivePointer);
 
 	{
+		// readly should have cases for size = 2, 3, 4
 		Vec4D currentVertex;
 
 		m_VertexArray.FetchValues(index, currentVertex.getArray());
-		m_ModelViewMatrixStack.CurrentMatrix().Multiply(currentVertex, rasterPos->m_EyeCoords);
-		rasterPos->m_ClipCoords = m_ProjectionMatrixStack.CurrentMatrix() * rasterPos->m_EyeCoords;
+		m_ModelViewProjectionMatrix.Multiply(currentVertex, rasterPos->m_ClipCoords);
+
 
 		if (rasterPos->m_ClipCoords.w() < 0) 
 			rasterPos->m_ClipCoords = -rasterPos->m_ClipCoords;
 
 		CalcCC(rasterPos);
+
+		// do we need eye-coords (e.g. fog, light, or user-clipping)
+		m_ModelViewMatrixStack.CurrentMatrix().Multiply(currentVertex, rasterPos->m_EyeCoords);
 	}
 
 	//	copy current colors to raster pos
@@ -494,6 +498,7 @@ void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
 	}
 
+	// do we need normals?
 	if (m_NormalArray.effectivePointer) {
 		Vec3D normal;
 
@@ -503,16 +508,18 @@ void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 		rasterPos->m_EyeNormal = m_TransformedDefaultNormal;
 	}
 
+	// do we need colors?
 	if (m_ColorArray.effectivePointer) {
 		m_ColorArray.FetchValues(index, rasterPos->m_Color[Unlit].getArray());
 	} else {
 		rasterPos->m_Color[Unlit] = m_DefaultRGBA;
 	}
 
+	// do we need texture coordinates?
 	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		if (m_VaryingInfo->textureBase[unit] >= 0) {
-			I32 base = m_VaryingInfo->textureBase[unit];
+		I32 base = m_VaryingInfo->textureBase[unit];
 
+		if (base >= 0) {
 			if (m_TexCoordArray[unit].effectivePointer) {
 				Vec4D texCoords, projectedTexCoords;
 
