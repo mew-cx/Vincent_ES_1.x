@@ -386,6 +386,7 @@ private:
 		MatrixStack *		m_CurrentMatrixStack;
 		Matrix4x4			m_InverseModelViewMatrix;
 		Matrix4x4			m_FullInverseModelViewMatrix;
+		Matrix4x4			m_ModelViewProjectionMatrix;
 		GLenum				m_MatrixMode;
 
 		// ----------------------------------------------------------------------
@@ -406,11 +407,11 @@ private:
 		// Client state variables
 		// ----------------------------------------------------------------------
 
-		bool				m_VertexArrayEnabled;
-		bool				m_NormalArrayEnabled;
-		bool				m_ColorArrayEnabled;
+		bool				m_VertexArrayEnabled: 1;
+		bool				m_NormalArrayEnabled: 1;
+		bool				m_ColorArrayEnabled:1;
+		bool				m_PointSizeArrayEnabled: 1;
 		bool				m_TexCoordArrayEnabled[EGL_NUM_TEXTURE_UNITS];
-		bool				m_PointSizeArrayEnabled;
 
 		VertexArray			m_VertexArray;
 		VertexArray			m_NormalArray;
@@ -469,22 +470,22 @@ private:
 		EGL_Fixed			m_PointSizeMin, m_PointSizeMax;
 		EGL_Fixed			m_PointFadeThresholdSize;
 		EGL_Fixed			m_PointDistanceAttenuation[3];
-		bool				m_PointSizeAttenuate;
+		bool				m_PointSizeAttenuate: 1;
 
-		bool				m_LightingEnabled;		// is lightning enabled?
-		bool				m_TwoSidedLightning;	// do we have two-sided lightning
-		bool				m_CullFaceEnabled;
-		bool				m_DitherEnabled;
-		bool				m_ReverseFaceOrientation;
-		bool				m_ColorMaterialEnabled;
-		bool				m_NormalizeEnabled;
-		bool				m_RescaleNormalEnabled;
-		bool				m_PolygonOffsetFillEnabled;
-		bool				m_MultiSampleEnabled;
-		bool				m_SampleAlphaToCoverageEnabled;
-		bool				m_SampleAlphaToOneEnabled;
-		bool				m_SampleCoverageEnabled;
-		bool				m_GenerateMipmaps;
+		bool				m_LightingEnabled: 1;		// is lightning enabled?
+		bool				m_TwoSidedLightning: 1;	// do we have two-sided lightning
+		bool				m_CullFaceEnabled: 1;
+		bool				m_DitherEnabled: 1;
+		bool				m_ReverseFaceOrientation: 1;
+		bool				m_ColorMaterialEnabled: 1;
+		bool				m_NormalizeEnabled: 1;
+		bool				m_RescaleNormalEnabled: 1;
+		bool				m_PolygonOffsetFillEnabled: 1;
+		bool				m_MultiSampleEnabled: 1;
+		bool				m_SampleAlphaToCoverageEnabled: 1;
+		bool				m_SampleAlphaToOneEnabled: 1;
+		bool				m_SampleCoverageEnabled: 1;
+		bool				m_GenerateMipmaps: 1;
 
 		I32					m_PixelStorePackAlignment;
 		I32					m_PixelStoreUnpackAlignment;
