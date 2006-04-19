@@ -74,6 +74,9 @@ void Context :: RebuildMatrices(void) {
 	if (m_CurrentMatrixStack == &m_ModelViewMatrixStack) {
 		m_InverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().InverseUpper3(m_RescaleNormalEnabled);
 		m_FullInverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().Inverse();
+		m_ModelViewProjectionMatrix = m_ProjectionMatrixStack.CurrentMatrix() * m_ModelViewMatrixStack.CurrentMatrix();
+	} else if (m_CurrentMatrixStack = &m_ProjectionMatrixStack) {
+		m_ModelViewProjectionMatrix = m_ProjectionMatrixStack.CurrentMatrix() * m_ModelViewMatrixStack.CurrentMatrix();
 	}
 }
 
