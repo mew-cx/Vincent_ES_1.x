@@ -221,11 +221,11 @@ namespace EGL {
 
 		size_t				size;
 		GLenum				type;
-		GLsizei				stride;
 		const GLvoid *		pointer;
 		size_t				boundBuffer;
-		const void *		effectivePointer;
 		FetchValueFunction	fetchFunction;
+		const void *		effectivePointer;
+		GLsizei				stride;
 	};
 
 	template <class ELEMENT>
