@@ -99,12 +99,12 @@ namespace EGL {
 	// set the culling mask for a vertex
 	inline void CalcCC(Vertex * vertex) {
 		vertex->m_cc =
-			 (vertex->m_ClipCoords.x() < -vertex->m_ClipCoords.w())       |
-			((vertex->m_ClipCoords.x() >  vertex->m_ClipCoords.w()) << 1) |
-			((vertex->m_ClipCoords.y() < -vertex->m_ClipCoords.w()) << 2) |
-			((vertex->m_ClipCoords.y() >  vertex->m_ClipCoords.w()) << 3) |
-			((vertex->m_ClipCoords.z() < -vertex->m_ClipCoords.w()) << 4) |
-			((vertex->m_ClipCoords.z() >  vertex->m_ClipCoords.w()) << 5);
+			(vertex->m_ClipCoords.x() < -vertex->m_ClipCoords.w() ? (1 << 0) : 0) |
+			(vertex->m_ClipCoords.x() >  vertex->m_ClipCoords.w() ? (1 << 1) : 0) |
+			(vertex->m_ClipCoords.y() < -vertex->m_ClipCoords.w() ? (1 << 2) : 0) |
+			(vertex->m_ClipCoords.y() >  vertex->m_ClipCoords.w() ? (1 << 3) : 0) |
+			(vertex->m_ClipCoords.z() < -vertex->m_ClipCoords.w() ? (1 << 4) : 0) |
+			(vertex->m_ClipCoords.z() >  vertex->m_ClipCoords.w() ? (1 << 5) : 0);
 	}
 }
 
