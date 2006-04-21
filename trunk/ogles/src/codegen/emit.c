@@ -309,6 +309,7 @@ struct cg_codegen_t
 int is_simple_inst(cg_inst_t * inst) {
 	switch (inst->base.opcode)
 	{
+		case cg_op_cnv_flt:
 		case cg_op_finv:
 		case cg_op_fdiv:
 		case cg_op_fsqrt:
@@ -2152,6 +2153,22 @@ void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 				kill_flags(gen);
 				kill_argument_registers(gen);
 				call_runtime(gen, gen->runtime->inv_LP_16_32s);
+
+				/* load result from stack position */
+				physical_reg = allocate_reg(gen, inst->unary.dest_value, 1);
+				assign_reg(gen, physical_reg, inst->unary.dest_value);
+				physical_reg->dirty = physical_reg->defined = 1;
+			}
+			break;
+
+		case cg_op_cnv_flt:
+			{
+				cg_physical_reg_t * physical_reg;
+
+				load_register_arg(gen, inst->unary.operand.source, ARMREG_A1, inst);
+				kill_flags(gen);
+				kill_argument_registers(gen);
+				call_runtime(gen, gen->runtime->convert_float);
 
 				/* load result from stack position */
 				physical_reg = allocate_reg(gen, inst->unary.dest_value, 1);
