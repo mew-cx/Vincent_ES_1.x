@@ -84,6 +84,8 @@ typedef struct cg_runtime_info_t
 	I32 (*sqrt_LP_16_32s)		(I32 src);
 	I32 (*inv_sqrt_LP_16_32s)	(I32 src);
 
+	I32 (*convert_float)		(I32 src);
+
 	/*
 	void (*sin_LP_16_32s)		(I32 theta, I32* sin_theta);
 	void (*cos_LP_16_32s)		(I32 theta, I32* cos_theta);
