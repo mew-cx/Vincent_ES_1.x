@@ -89,11 +89,53 @@ namespace EGL {
 
 	class MultiTexture;
 
+	// ----------------------------------------------------------------------
+	// Compile-time information for vertex fetch and transformation
+	// ----------------------------------------------------------------------
+
+	struct ArrayState {
+		GLenum		Type;
+		size_t		Size;
+		boolean		Enabled;
+	};
+
+	struct RenderState {
+		VaryingInfo	Varying;
+		ArrayState	Coord;
+		ArrayState	Normal;
+		ArrayState	Color;
+		ArrayState	TexCoord[EGL_NUM_TEXTURE_UNITS];
+		boolean		TextureMatrixIdentity[EGL_NUM_TEXTURE_UNITS];
+		boolean		NeedsNormal;
+		boolean		NeedsColor;
+		boolean		NeedsEyeCoords;
+	};
+
+	// ----------------------------------------------------------------------
+	// Runtime information for vertex fetch and transformation
+	// ----------------------------------------------------------------------
+
+	struct ArrayInfo {
+		void * 	Base;
+		GLsizei	Stride;
+	};
+
+	struct RenderInfo {
+		ArrayInfo	Coord;
+		ArrayInfo	Normal;
+		ArrayInfo	Color;
+		ArrayInfo	TexCoord[EGL_NUM_TEXTURE_UNITS];
+		const GLfixed *	ModelviewProjectionMatrix;
+		const GLfixed * ModelviewMatrix;
+		const GLfixed * InvModelviewMatrix;
+		const GLfixed * TextureMatrix[EGL_NUM_TEXTURE_UNITS];
+	};
+
 	class CodeGenerator {
 
 	public:
 		// ----------------------------------------------------------------------
-		// Code generation of triangle scan line
+		// Code generation of rasterizer
 		// ----------------------------------------------------------------------
 		void Compile(FunctionCache * target, FunctionCache::FunctionType type, const VaryingInfo * varyingInfo,
 			void (CodeGenerator::*function)(const VaryingInfo * varyingInfo));
@@ -106,6 +148,64 @@ namespace EGL {
 		void GenerateRasterBlockDepthStencil(const VaryingInfo * varyingInfo);
 		void GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * varyingInfo);
 		void GenerateRasterBlockColorAlpha(const VaryingInfo * varyingInfo);
+
+		// ----------------------------------------------------------------------
+		// Code generation of vertex processing
+		// ----------------------------------------------------------------------
+
+		void GenerateFetch(const RenderState * state);
+
+		// fetch vertex coordinates and transform by given matrix
+		void GenerateCoordFetchMultiply(cg_block_t * block,
+			cg_virtual_reg_t * vectorBase, cg_virtual_reg_t * resultBase, size_t resultOffset,
+			cg_virtual_reg_t * matrixBase,
+			GLenum type, size_t size);
+
+		void GenerateCoordFetchMultiply2(cg_block_t * block,
+			cg_virtual_reg_t * vectorBase, cg_virtual_reg_t * resultBase, size_t resultOffset,
+			cg_virtual_reg_t * matrixBase, GLenum type);
+
+		void GenerateCoordFetchMultiply3(cg_block_t * block,
+			cg_virtual_reg_t * vectorBase, cg_virtual_reg_t * resultBase, size_t resultOffset,
+			cg_virtual_reg_t * matrixBase, GLenum type);
+
+		void GenerateCoordFetchMultiply4(cg_block_t * block,
+			cg_virtual_reg_t * vectorBase, cg_virtual_reg_t * resultBase, size_t resultOffset,
+			cg_virtual_reg_t * matrixBase, GLenum type);
+
+		// fetch normal and transform by given matrix
+		void GenerateNormalFetchMultiply(cg_block_t * block,
+			cg_virtual_reg_t * vectorBase, cg_virtual_reg_t * resultBase, size_t resultOffset,
+			cg_virtual_reg_t * matrixBase,
+			GLenum type);
+
+		// fetch color
+		void GenerateColorFetch(cg_block_t * block,
+			cg_virtual_reg_t * vectorBase, cg_virtual_reg_t * resultBase, size_t resultOffset,
+			GLenum type);
+
+		// fetch tex coords and transform by given matrix if not null
+		void GenerateTexCoordFetchMultiply(cg_block_t * block,
+			cg_virtual_reg_t * vectorBase, cg_virtual_reg_t * resultBase, size_t resultOffset,
+			cg_virtual_reg_t * matrixBase, GLenum type, size_t size);
+
+		void GenerateTexCoordFetchMultiply2(cg_block_t * block,
+			cg_virtual_reg_t * vectorBase, cg_virtual_reg_t * resultBase, size_t resultOffset,
+			cg_virtual_reg_t * matrixBase, GLenum type);
+
+		void GenerateTexCoordFetchMultiply3(cg_block_t * block,
+			cg_virtual_reg_t * vectorBase, cg_virtual_reg_t * resultBase, size_t resultOffset,
+			cg_virtual_reg_t * matrixBase, GLenum type);
+
+		void GenerateTexCoordFetchMultiply4(cg_block_t * block,
+			cg_virtual_reg_t * vectorBase, cg_virtual_reg_t * resultBase, size_t resultOffset,
+			cg_virtual_reg_t * matrixBase, GLenum type);
+
+		// load a specific element of a matrix
+		cg_virtual_reg_t * LoadMatrixElement(cg_block_t * block,
+				cg_virtual_reg_t * base, int row, int column);
+
+		cg_virtual_reg_t * LoadVectorElement(cg_block_t * block, cg_virtual_reg_t * base, int element, GLenum type);
 
 	private:
 		void GenerateFragment(cg_proc_t * procedure, cg_block_t * currentBlock,
@@ -269,7 +369,11 @@ namespace EGL {
 	// For Vertex
 	// -------------------------------------------------------------------------
 
+#	define OFFSET_RASTER_POS_CLIP			offsetof(Vertex, m_ClipCoords)
+#	define OFFSET_RASTER_POS_EYE			offsetof(Vertex, m_EyeCoords)
+#	define OFFSET_RASTER_POS_NORMAL			offsetof(Vertex, m_EyeNormal)
 #	define OFFSET_RASTER_POS_WINDOW			offsetof(Vertex, m_WindowCoords)
+#	define OFFSET_RASTER_POS_RAW_COLOR		offsetof(Vertex, m_Color)
 #	define OFFSET_RASTER_POS_COLOR			(offsetof(Vertex, m_Varying) + varyingInfo->colorIndex * sizeof(U32))
 #	define OFFSET_RASTER_POS_TEXTURE(unit)	(offsetof(Vertex, m_Varying) + varyingInfo->textureBase[unit] * sizeof(U32))
 #	define OFFSET_RASTER_POS_FOG			(offsetof(Vertex, m_Varying) + varyingInfo->fogIndex * sizeof(U32))
@@ -292,5 +396,34 @@ namespace EGL {
 #	define OFFSET_RASTER_POS_TEX_DTVDX		(OFFSET_RASTER_POS_TEXTURE + OFFSET_TEX_COORD_DTVDX)
 #	define OFFSET_RASTER_POS_TEX_DTVDY		(OFFSET_RASTER_POS_TEXTURE + OFFSET_TEX_COORD_DTVDY)
 
+	// -------------------------------------------------------------------------
+	// For ArrayInfo
+	// -------------------------------------------------------------------------
+
+#	define OFFSET_ARRAY_INFO_BASE			offsetof(ArrayInfo, Base)
+#	define OFFSET_ARRAY_INFO_STRIDE			offsetof(ArrayInfo, Stride)
+
+	// -------------------------------------------------------------------------
+	// For RenderInfo
+	// -------------------------------------------------------------------------
+
+#	define OFFSET_RENDER_INFO_COORD				offsetof(RenderInfo, Coord)
+#	define OFFSET_RENDER_INFO_NORMAL			offsetof(RenderInfo, Normal)
+#	define OFFSET_RENDER_INFO_COLOR				offsetof(RenderInfo, Color)
+#	define OFFSET_RENDER_INFO_TEX_COORD(unit)	(offsetof(RenderInfo, TexCoord) + (unit) * sizeof(ArrayInfo))
+#	define OFFSET_RENDER_INFO_MV				offsetof(RenderInfo, ModelviewMatrix)
+#	define OFFSET_RENDER_INFO_MVP				offsetof(RenderInfo, ModelviewProjectionMatrix)
+#	define OFFSET_RENDER_INFO_INV_MV			offsetof(RenderInfo, InvModelviewMatrix)
+#	define OFFSET_RENDER_INFO_TEX(unit)			(offsetof(RenderInfo, TextureMatrix) + (unit) * sizeof(const GLfixed *))
+
+#	define OFFSET_RENDER_INFO_COORD_BASE		(OFFSET_RENDER_INFO_COORD + OFFSET_ARRAY_INFO_BASE)
+#	define OFFSET_RENDER_INFO_COORD_STRIDE		(OFFSET_RENDER_INFO_COORD + OFFSET_ARRAY_INFO_STRIDE)
+#	define OFFSET_RENDER_INFO_NORMAL_BASE		(OFFSET_RENDER_INFO_NORMAL + OFFSET_ARRAY_INFO_BASE)
+#	define OFFSET_RENDER_INFO_NORMAL_STRIDE		(OFFSET_RENDER_INFO_NORMAL + OFFSET_ARRAY_INFO_STRIDE)
+#	define OFFSET_RENDER_INFO_COLOR_BASE		(OFFSET_RENDER_INFO_COLOR + OFFSET_ARRAY_INFO_BASE)
+#	define OFFSET_RENDER_INFO_COLOR_STRIDE		(OFFSET_RENDER_INFO_COLOR + OFFSET_ARRAY_INFO_STRIDE)
+
+#	define OFFSET_RENDER_INFO_TEX_COORD_BASE(u)		(OFFSET_RENDER_INFO_TEX_COORD(u) + OFFSET_ARRAY_INFO_BASE)
+#	define OFFSET_RENDER_INFO_TEX_COORD_STRIDE(u)	(OFFSET_RENDER_INFO_TEX_COORD(u) + OFFSET_ARRAY_INFO_STRIDE)
 
 #endif //ndef EGL_CODE_GENERATOR_H
