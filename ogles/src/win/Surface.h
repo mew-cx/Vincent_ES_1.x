@@ -68,9 +68,10 @@ namespace EGL {
 		void ClearColorBuffer(const Color & rgba, const Color & mask);
 		void ClearStencilBuffer(U32 value, U32 mask);
 
-		U16 GetWidth();
-		U16 GetHeight();
-		U32 GetPixels();
+		U16 GetWidth() const;
+		U16 GetHeight() const;
+		U32 GetPixels() const;
+		U32 GetPitch() const;
 		const Rect& GetRect() const;
 
 		void SetCurrentContext(Context * context);
@@ -100,6 +101,7 @@ namespace EGL {
 		U32 *	m_StencilBuffer;	// stencil buffer
 
 		Rect	m_Rect;
+		U32		m_Pitch;			// increment top move from y to y + 1
 
 		Context *	m_CurrentContext;
 		bool	m_Disposed;			// the surface 
@@ -115,7 +117,7 @@ namespace EGL {
 		return &m_Config;
 	}
 
-	inline U32 Surface :: GetPixels() {
+	inline U32 Surface :: GetPixels() const {
 		return GetWidth() * GetHeight();
 	}
 
@@ -147,12 +149,16 @@ namespace EGL {
 		return m_StencilBuffer;
 	}
 
-	inline U16 Surface :: GetWidth() {
+	inline U16 Surface :: GetWidth() const {
 		return m_Rect.width;
 	}
 
-	inline U16 Surface :: GetHeight() {
+	inline U16 Surface :: GetHeight() const {
 		return m_Rect.height;
+	}
+
+	inline U32 Surface :: GetPitch() const {
+		return m_Pitch;
 	}
 
 	inline const Rect& Surface :: GetRect() const {
