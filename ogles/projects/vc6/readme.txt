@@ -1,1 +1,0 @@
-Visual Studio 6 Projects go here
