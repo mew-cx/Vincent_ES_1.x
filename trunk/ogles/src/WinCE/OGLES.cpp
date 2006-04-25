@@ -39,8 +39,8 @@
 #include "OGLES.h"
 
 
-DWORD s_TlsIndexContext;	// thread local storage slot for current context
-DWORD s_TlsIndexError;		// thread local storage slot for EGL error
+extern DWORD s_TlsIndexContext;	// thread local storage slot for current context
+extern DWORD s_TlsIndexError;		// thread local storage slot for EGL error
 
 
 BOOL APIENTRY DllMain( HANDLE hModule, 
