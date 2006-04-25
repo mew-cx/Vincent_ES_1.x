@@ -148,6 +148,7 @@ namespace EGL {
 		void GenerateRasterBlockDepthStencil(const VaryingInfo * varyingInfo);
 		void GenerateRasterBlockEdgeDepthStencil(const VaryingInfo * varyingInfo);
 		void GenerateRasterBlockColorAlpha(const VaryingInfo * varyingInfo);
+		void GenerateRasterScanLine();
 
 		// ----------------------------------------------------------------------
 		// Code generation of vertex processing

@@ -47,6 +47,11 @@
 
 using namespace EGL;
 
+DWORD s_TlsIndexContext;
+DWORD s_TlsIndexError;
+static EGLint  RefCount = 0;
+
+
 
 // version numbers
 #define EGL_VERSION_MAJOR 1
@@ -88,12 +93,37 @@ GLAPI EGLBoolean APIENTRY eglInitialize (EGLDisplay dpy, EGLint *major, EGLint *
 		*minor = EGL_VERSION_MINOR;
 	}
 
+	if (RefCount == 0) {
+
+		s_TlsIndexContext = TlsAlloc();
+		s_TlsIndexError = TlsAlloc();
+
+		if (s_TlsIndexContext == 0xffffffff ||
+			s_TlsIndexError == 0xffffffff) {
+
+			eglRecordError(EGL_NOT_INITIALIZED);
+			return false;
+		}
+	}
+
+	RefCount++;
 	eglRecordError(EGL_SUCCESS);
 
 	return TRUE;
 }
 
 GLAPI EGLBoolean APIENTRY eglTerminate (EGLDisplay dpy) {
+
+	if (RefCount > 0) {
+
+		if (RefCount == 1) {
+
+			TlsFree(s_TlsIndexContext);
+			TlsFree(s_TlsIndexError);
+		}
+
+		RefCount--;
+	}
 
 	eglRecordError(EGL_SUCCESS);
 	return EGL_TRUE;
@@ -123,11 +153,11 @@ GLAPI EGLBoolean APIENTRY eglSaveSurfaceHM(EGLSurface surface, const TCHAR * fil
 	return surface->Save(filename);
 }
 
-#define FunctionEntry(s) { #s, s }
+#define FunctionEntry(s) { #s, (void (APIENTRY *)(void)) s }
 
 static const struct {
 	const char * name;
-	void * ptr;
+	void (APIENTRY * ptr)(void);
 
 } FunctionTable[] = {
 	/* OES_query_matrix */
@@ -140,7 +170,7 @@ static const struct {
 };
 
 
-GLAPI void (* APIENTRY eglGetProcAddress (const char *procname))() {
+GLAPI void (APIENTRY * eglGetProcAddress(const char *procname))(void) {
 
 	eglRecordError(EGL_SUCCESS);
 
