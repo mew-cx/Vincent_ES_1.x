@@ -9,27 +9,27 @@
 // --------------------------------------------------------------------------
 //
 // Copyright (c) 2004, Hans-Martin Will. All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without 
-// modification, are permitted provided that the following conditions are 
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 //	 *  Redistributions of source code must retain the above copyright
-// 		notice, this list of conditions and the following disclaimer. 
+// 		notice, this list of conditions and the following disclaimer.
 //   *	Redistributions in binary form must reproduce the above copyright
-// 		notice, this list of conditions and the following disclaimer in the 
-// 		documentation and/or other materials provided with the distribution. 
-// 
+// 		notice, this list of conditions and the following disclaimer in the
+// 		documentation and/or other materials provided with the distribution.
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+// OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 // SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
 // ==========================================================================
@@ -37,7 +37,46 @@
 
 #include "stdafx.h"
 #include "FunctionCache.h"
-#include "CodeGenerator.h"
+#include "FetchVertexPart.h"
+
+#ifdef EGL_ON_WINCE
+
+// --------------------------------------------------------------------------
+// These declarations for coredll are extracted from platform builder
+// source code
+// --------------------------------------------------------------------------
+
+/* Flags for CacheSync/CacheRangeFlush */
+#define CACHE_SYNC_DISCARD      0x001   /* write back & discard all cached data */
+#define CACHE_SYNC_INSTRUCTIONS 0x002   /* discard all cached instructions */
+#define CACHE_SYNC_WRITEBACK    0x004   /* write back but don't discard data cache*/
+#define CACHE_SYNC_FLUSH_I_TLB  0x008   /* flush I-TLB */
+#define CACHE_SYNC_FLUSH_D_TLB  0x010   /* flush D-TLB */
+#define CACHE_SYNC_FLUSH_TLB    (CACHE_SYNC_FLUSH_I_TLB|CACHE_SYNC_FLUSH_D_TLB)    /* flush all TLB */
+#define CACHE_SYNC_L2_WRITEBACK 0x020   /* write-back L2 Cache */
+#define CACHE_SYNC_L2_DISCARD   0x040   /* discard L2 Cache */
+
+#define CACHE_SYNC_ALL          0x07F   /* sync and discard everything in Cache/TLB */
+
+extern "C" {
+	void CacheSync(int flags);
+	void CacheRangeFlush (LPVOID pAddr, DWORD dwLength, DWORD dwFlags);
+}
+
+#endif
+
+#if defined(ARM) && defined(__gnu_linux__)
+#define CLEAR_INSN_CACHE(BEG, END)									\
+{																	\
+  register unsigned long _beg __asm ("a1") = (unsigned long) (BEG);	\
+  register unsigned long _end __asm ("a2") = (unsigned long) (END);	\
+  register unsigned long _flg __asm ("a3") = 0;						\
+  register unsigned long _scno __asm ("r7") = 0xf0002;				\
+  __asm __volatile ("swi 0x9f0002		@ sys_cacheflush"			\
+		    : "=r" (_beg)											\
+		    : "0" (_beg), "r" (_end), "r" (_flg), "r" (_scno));		\
+}
+#endif
 
 
 using namespace EGL;
@@ -50,12 +89,15 @@ namespace EGL {
 	struct FunctionInfo {
 		FunctionInfo	* m_Prev;		// previous item in LRU chain
 		FunctionInfo	* m_Next;		// next item in LRU chain
-		RasterizerState	m_State;		// the state that was compiled into this function
+
+										// the state that was compiled into this function
+		U8				m_State[sizeof(RasterizerState) > sizeof(RenderState) ?
+							    sizeof(RasterizerState) : sizeof(RenderState)];
 		size_t			m_Offset;		// offset of function in code segment
 		size_t			m_Size;			// size of function in code segment
 		U32				m_Flags;		// flags for garbage collection
 
-		FunctionCache::FunctionType m_Type;	// what kind of function is this?
+		PipelinePart::Part m_Part;		// what part of the pipeline is this?
 	};
 }
 
@@ -65,7 +107,7 @@ FunctionCache :: FunctionCache(size_t totalSize, float percentageKeep) {
 	m_PercentageKeep = percentageKeep;
 
 	m_UsedFunctions = 0;
-	m_MaxFunctions = totalSize / 256;		 
+	m_MaxFunctions = totalSize / 256;
 
 	m_MostRecentlyUsed = 0;
 	m_LeastRecentlyUsed = 0;
@@ -96,34 +138,26 @@ FunctionCache :: ~FunctionCache() {
 }
 
 
-void * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & state, const VaryingInfo * varyingInfo) {
+void * FunctionCache :: GetFunction(PipelinePart::Part part, const void * state) {
 
-	RasterizerState::CompareFunction comparison = 0;
-
-	switch (type) {
-	case FunctionTypePoint:
-		comparison = &RasterizerState::ComparePoint;
-		break;
-
-	case FunctionTypeLine:
-		comparison = &RasterizerState::CompareLine;
-		break;
-
-	case FunctionTypeBlockDepthStencil:
-	case FunctionTypeBlockEdgeDepthStencil:
-		comparison = &RasterizerState::ComparePolygonDepthStencil;
-		break;
-
-	case FunctionTypeBlockColorAlpha:
-		comparison = &RasterizerState::ComparePolygonColorAlpha;
-		break;
-
-	default:
-		assert(0);
-	}
+	PipelinePart & ppart = PipelinePart::Get(part);
 
 	for (FunctionInfo * function = m_MostRecentlyUsed; function; function = function->m_Next) {
-		if (function->m_Type == type && (state.*comparison)(function->m_State)) {
+		if (function->m_Part == part && ppart.CompareState(function->m_State, state)) {
+			return reinterpret_cast<void *>(m_Code + function->m_Offset);
+		}
+	}
+
+	assert(0);
+	return 0;
+}
+
+void FunctionCache :: PrepareFunction(PipelinePart::Part part, const void * state, const VaryingInfo * varyingInfo) {
+
+	PipelinePart & ppart = PipelinePart::Get(part);
+
+	for (FunctionInfo * function = m_MostRecentlyUsed; function; function = function->m_Next) {
+		if (function->m_Part == part && ppart.CompareState(function->m_State, state)) {
 			// move to front
 			if (function->m_Prev) {
 				function->m_Prev->m_Next = function->m_Next;
@@ -140,45 +174,18 @@ void * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & s
 				m_MostRecentlyUsed = function;
 			}
 
-			return reinterpret_cast<void *>(m_Code + function->m_Offset);
+			return;
 		}
 	}
 
 	// not found in cache, need to compile
 
-	CodeGenerator generator;
-	generator.SetState(&state);
-
-	switch (type) {
-	case FunctionTypePoint:
-		generator.Compile(this, type, varyingInfo, &CodeGenerator::GenerateRasterPoint);
-		break;
-
-	case FunctionTypeLine:
-		generator.Compile(this, type, varyingInfo, &CodeGenerator::GenerateRasterLine);
-		break;
-
-	case FunctionTypeBlockDepthStencil:
-		generator.Compile(this, type, varyingInfo, &CodeGenerator::GenerateRasterBlockDepthStencil);
-		break;
-
-	case FunctionTypeBlockEdgeDepthStencil:
-		generator.Compile(this, type, varyingInfo, &CodeGenerator::GenerateRasterBlockEdgeDepthStencil);
-		break;
-
-	case FunctionTypeBlockColorAlpha:
-		generator.Compile(this, type, varyingInfo, &CodeGenerator::GenerateRasterBlockColorAlpha);
-		break;
-
-	default:
-		assert(0);
-	}
-
-	return reinterpret_cast<void *>(m_Code + m_MostRecentlyUsed->m_Offset); 
+	ppart.Compile(this, varyingInfo, state);
 }
 
+void * FunctionCache :: BeginAddFunction(PipelinePart::Part part, const void * state, size_t size) {
 
-void * FunctionCache :: AddFunction(FunctionType type, const RasterizerState & state, size_t size) {
+	PipelinePart & ppart = PipelinePart::Get(part);
 
 	if (size + m_Used >= m_Total || m_UsedFunctions >= m_MaxFunctions) {
 		CompactCode();
@@ -204,12 +211,15 @@ void * FunctionCache :: AddFunction(FunctionType type, const RasterizerState & s
 	function->m_Offset = m_Used;
 	function->m_Size = size;
 	m_Used += size;
-	function->m_State = state;
-	function->m_Type = type;
+	ppart.CopyState(function->m_State, state);
+	function->m_Part = part;
 
-	return reinterpret_cast<void *>(m_Code + m_MostRecentlyUsed->m_Offset); 
+	return reinterpret_cast<void *>(m_Code + function->m_Offset);
 }
 
+void FunctionCache :: EndAddFunction(void * addr, size_t size) {
+	SyncCache(addr, size);
+}
 
 void FunctionCache :: CompactCode() {
 
@@ -242,17 +252,17 @@ void FunctionCache :: CompactCode() {
 	countFunctions = 0;
 
 	FunctionInfo * target = m_Functions;
-	
+
 	for (function = m_Functions; function < m_Functions + m_UsedFunctions; ++function) {
 		if (function->m_Flags) {
 			memmove(m_Code + m_Used, m_Code + function->m_Offset, function->m_Size);
 			function->m_Offset = m_Used;
 			m_Used += function->m_Size;
 
-			target->m_State = function->m_State;
+			memmove(target->m_State, function->m_State, sizeof(target->m_State));
 			target->m_Offset = function->m_Offset;
 			target->m_Size = function->m_Size;
-			target->m_Type = function->m_Type;
+			target->m_Part = function->m_Part;
 
 			++target;
 		}
@@ -280,5 +290,16 @@ void FunctionCache :: CompactCode() {
 		}
 	}
 
-	m_DidGC = true;
+	SyncCache(m_Code, m_Used);
 }
+
+void FunctionCache :: SyncCache(void * base, size_t size) {
+#if defined(EGL_ON_WINCE) && (defined(ARM) || defined(_ARM_))
+	// flush data cache and clear instruction cache to make new code visible to execution unit
+	CacheSync(CACHE_SYNC_INSTRUCTIONS | CACHE_SYNC_WRITEBACK);
+#elif defined(ARM) && defined(__gnu_linux__)
+	CLEAR_INSN_CACHE(targetBuffer, (U8 *) targetBuffer + cg_segment_size(cseg))
+#endif
+
+}
+
