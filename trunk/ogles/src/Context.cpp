@@ -141,7 +141,7 @@ Context :: Context(const Config & config)
 	ClearDepthx(EGL_ONE);
 	ClearStencil(0);
 
-	m_Rasterizer = new Rasterizer(GetRasterizerState());	
+	m_Rasterizer = new Rasterizer(GetRasterizerState(), &m_FunctionCache);	
 	m_VaryingInfo = m_Rasterizer->GetVaryingInfo();
 
 	m_Buffers.Allocate();			// default buffer
@@ -484,6 +484,7 @@ void Context :: Hint(GLenum target, GLenum mode) {
 
 	case GL_PERSPECTIVE_CORRECTION_HINT:
 		m_PerspectiveCorrectionHint = mode;
+		m_RasterizerState.SetPerspectiveCorrection(mode != GL_FASTEST);
 		break;
 
 	case GL_POINT_SMOOTH_HINT:

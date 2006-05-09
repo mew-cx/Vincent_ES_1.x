@@ -571,6 +571,14 @@ namespace EGL {
 			return m_identity;
 		}
 
+		inline EGL_Fixed * GetArray() {
+			return m_elements;
+		}
+
+		inline const EGL_Fixed * GetArray() const {
+			return m_elements;
+		}
+		
 		// ----------------------------------------------------------------------
 		// Default constructor: Initialize the matrix as identity matrix
 		// ----------------------------------------------------------------------

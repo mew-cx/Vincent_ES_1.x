@@ -39,39 +39,37 @@
 
 
 #include "OGLES.h"
-#include "RasterizerState.h"
-#include "Rasterizer.h"
+#include "PipelinePart.h"
 
 
 namespace EGL {
 
 	struct FunctionInfo;
-	class CodeGenerator;
 
 	class OGLES_API FunctionCache {
 		friend class CodeGenerator;
 
 	public:
-		enum FunctionType {
-			FunctionTypePoint,
-			FunctionTypeLine,
-			FunctionTypeBlockDepthStencil,
-			FunctionTypeBlockEdgeDepthStencil,
-			FunctionTypeBlockColorAlpha
-		};
-
-	public:
 		FunctionCache(size_t totalSize = 65536, float percentageKeep = 0.6);
 		~FunctionCache();
 
-		void * GetFunction(FunctionType type, const RasterizerState & state, const VaryingInfo * varyingInfo);
+		// request a function pointer for a specific pipeline part and state
+		void PrepareFunction(PipelinePart::Part part, const void * state, const VaryingInfo * varyingInfo);
 
-		void Begin();
-		bool End();
+		// request a function pointer for a specific pipeline part and state
+		void * GetFunction(PipelinePart::Part part, const void * state);
 
+		// a code generator requests a memory area to save the newly generated code
+		void * BeginAddFunction(PipelinePart::Part part, const void * state, size_t size);
+		
+		// a code generator is done adding instructions into the memory area
+		void EndAddFunction(void * addr, size_t size);
+		
 	private:
-		void * AddFunction(FunctionType type, const RasterizerState & state, size_t size);
+		// perform a GC on the function cache
 		void CompactCode();
+		
+		void SyncCache(void * base, size_t size);
 
 	private:
 		U8 *				m_Code;
@@ -83,16 +81,8 @@ namespace EGL {
 		size_t				m_UsedFunctions;
 		size_t				m_MaxFunctions;
 		float				m_PercentageKeep;
-		bool				m_DidGC;
 	};
 
-	inline void FunctionCache :: Begin() {
-		m_DidGC = false;
-	}
-
-	inline bool FunctionCache :: End() {
-		return m_DidGC;
-	}
 }
 
 

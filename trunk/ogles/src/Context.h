@@ -50,8 +50,10 @@
 #include "Light.h"
 #include "RasterizerState.h"
 #include "Rasterizer.h"
+#include "FunctionCache.h"
 #include "MatrixStack.h"
 #include "Texture.h"
+#include "FetchVertexPart.h"
 
 
 namespace EGL {
@@ -338,9 +340,12 @@ private:
 		typedef void (Context::*LightVertexFunction)(Vertex * rasterPos, LightMode mode);
 		typedef void (Context::*DrawPrimitiveFunction)(int index);
 		typedef void (Context::*EndPrimitiveFunction)();
+		
+		typedef void (*FetchVertexFunction)(const RenderInfo * info, int index, Vertex * result);
 
 		void PrepareRendering();
-		void PrepareArray(VertexArray & array, bool enabled, bool isColor = false);
+		void PrepareArray(VertexArray& array, bool enabled, ArrayState& arrayState, ArrayInfo& arrayInfo, bool isColor = false);
+		void BeginRendering();
 
 		bool Begin(GLenum mode);
 		void End();
@@ -492,12 +497,16 @@ private:
 
 		CullMode			m_CullMode;
 
+		FunctionCache			m_FunctionCache;
 		RasterizerState			m_RasterizerState;
+		RenderState				m_RenderState;		// subset of state as relevant for JITting
+		RenderInfo				m_RenderInfo;
 		Rasterizer *			m_Rasterizer;
-		const VaryingInfo *		m_VaryingInfo;
+		const VaryingInfo *		m_VaryingInfo;		// TODO -> should be moved into m_RenderState
 		LightVertexFunction		m_LightVertexFunction;
 		DrawPrimitiveFunction	m_DrawPrimitiveFunction;
 		EndPrimitiveFunction	m_EndPrimitiveFunction;
+		FetchVertexFunction		m_FetchVertexFunction;
 		U32						m_PrimitiveState;	// primitive state machine state
 		U32						m_NextIndex;		// next index to fill in m_Input
 
@@ -568,6 +577,22 @@ private:
 			LightVertex(*input++, mode);
 		}
 	}
+	
+	#if EGL_USE_JIT
+	inline void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
+
+		m_FetchVertexFunction(&m_RenderInfo, index, rasterPos);
+
+		if (rasterPos->m_ClipCoords.w() < 0) 
+			rasterPos->m_ClipCoords = -rasterPos->m_ClipCoords;
+
+		CalcCC(rasterPos);
+
+		rasterPos->m_Lit = Unlit;
+	}
+	#endif // EGL_USE_JIT
+
+	
 }
 
 #endif //ndef EGL_CONTEXT_H

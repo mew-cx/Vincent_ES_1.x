@@ -99,6 +99,8 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 	if (a.m_cc & b.m_cc & c.m_cc)
 		return;
 
+	U8 mask = a.m_cc | b.m_cc | c.m_cc;
+
 	EGL_Fixed x0 = a.m_ClipCoords.w();
 	EGL_Fixed x1 = a.m_ClipCoords.x();
 	EGL_Fixed x2 = a.m_ClipCoords.y();
@@ -167,7 +169,7 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 		c.m_Color[mode].toArray(c.m_Varying + m_VaryingInfo->colorIndex);
 	}
 
-	Vertex * array1[16], *array2[16], ** result = 0;
+	Vertex * array1[16], *array2[16], ** result = array1;
 	array1[0] = &a;
 
 	if (!cw) {
@@ -178,7 +180,7 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 		array1[1] = &c;
 	}
 
-	size_t numVertices = ClipPrimitive(3, array1, array2, &result);
+	size_t numVertices = mask ? ClipPrimitive(3, array1, array2, &result) : 3;
 
 	if (numVertices >= 3) {
 		ClipCoordsToWindowCoords(*result[0]);

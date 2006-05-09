@@ -99,5 +99,3 @@ namespace EGL {
 #endif
 
 }
-
-

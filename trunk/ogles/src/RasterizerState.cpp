@@ -49,7 +49,8 @@ using namespace EGL;
 RasterizerState :: RasterizerState():
 	m_ShadingModel(ShadeModelSmooth),
 	m_SampleCoverage(EGL_ONE),
-	m_InvertSampleCoverage(false)
+	m_InvertSampleCoverage(false),
+	m_PerspectiveCorrection(true)
 {
 }
 
@@ -75,7 +76,9 @@ bool RasterizerState :: CompareCommon(const RasterizerState& other) const {
 		m_Stencil == other.m_Stencil &&
 
 		m_SampleCoverage == other.m_SampleCoverage &&
-		m_InvertSampleCoverage == other.m_InvertSampleCoverage;
+		m_InvertSampleCoverage == other.m_InvertSampleCoverage &&
+		
+		m_PerspectiveCorrection == other.m_PerspectiveCorrection;
 }
 
 
