@@ -144,26 +144,30 @@ namespace EGL {
 void Rasterizer :: PrepareTriangle() {
 	Prepare();
 
+	m_FunctionCache->PrepareFunction(PipelinePart::PartRasterBlockDepthStencil,
+									 m_State, &m_VaryingInfo);
+
+	m_FunctionCache->PrepareFunction(PipelinePart::PartRasterBlockEdgeDepthStencil,
+									 m_State, &m_VaryingInfo);
+
+	m_FunctionCache->PrepareFunction(PipelinePart::PartRasterBlockColorAlpha,
+									 m_State, &m_VaryingInfo);
+}
+
+void Rasterizer :: BeginTriangle() {
 	memset(m_RasterInfo.MipmapLevel, 0, sizeof(m_RasterInfo.MipmapLevel));
 
-	// initialize block rasterization here
-
-	do {
-		m_FunctionCache->Begin();
-
 		m_BlockDepthStencilFunction = (BlockDepthStencilFunction *) //&RBDepthTestLess;
-			m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockDepthStencil,
-										 *m_State, &m_VaryingInfo);
+		m_FunctionCache->GetFunction(PipelinePart::PartRasterBlockDepthStencil,
+									 m_State);
 
 		m_BlockEdgeDepthStencilFunction = (BlockEdgeDepthStencilFunction *) //&RBEdgeDepthTestLess;
-			m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockEdgeDepthStencil,
-										 *m_State, &m_VaryingInfo);
+		m_FunctionCache->GetFunction(PipelinePart::PartRasterBlockEdgeDepthStencil,
+									 m_State);
 
 		m_BlockColorAlphaFunction = (BlockColorAlphaFunction *) //&RBTextureReplace;
-			m_FunctionCache->GetFunction(FunctionCache::FunctionTypeBlockColorAlpha,
-										 *m_State, &m_VaryingInfo);
-
-	} while (m_FunctionCache->End());
+		m_FunctionCache->GetFunction(PipelinePart::PartRasterBlockColorAlpha,
+									 m_State);
 }
 
 #if !EGL_USE_JIT
@@ -323,7 +327,7 @@ void Rasterizer :: RasterBlockColorAlpha(I32 varying[][2][2],
 					fog = varying0[m_VaryingInfo.fogIndex][0];
 				}
 
-				FragmentColorAlpha(&m_RasterInfo, &surfaceInfo, ix, tu, tv, baseColor, fog);
+				FragmentColorAlpha(&m_RasterInfo, &surfaceInfo, ix, tu, tv, baseColor, fog, EGL_ONE);
 			}
 
 			if (!(rowMask >>= 1))
@@ -390,6 +394,12 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 	if (area <= 0xf)
 		return;
 
+	// don't use perspective correction for small triangles; not sure if area is the
+	// right criteria, could also use extent in x and y for extremely skinny triangles
+	bool perspective = true; /*(area <= EGL_MIN_TRIANGLE_PERSPECTIVE) ? 
+					   false 
+					   : m_State->GetPerspectiveCorrection();*/
+	
 	// inv arera as 8.24
 	I32 invArea = EGL_InverseQ(area, 8);
 
@@ -422,7 +432,7 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 
 	// Deltas
     const I32 DD12 = (a.m_WindowCoords.depth - b.m_WindowCoords.depth) << 4;
-    const I32 DD23 = (b.m_WindowCoords.depth - c.m_WindowCoords.depth) << 4;
+    //const I32 DD23 = (b.m_WindowCoords.depth - c.m_WindowCoords.depth) << 4;
     const I32 DD31 = (c.m_WindowCoords.depth - a.m_WindowCoords.depth) << 4;
 
 	vars.Depth.dX =  Mul64(det2x2(DY12, DD12, DY31, DD31), invArea, 28);
@@ -436,9 +446,14 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 							+ Mul(XMin1, vars.Depth.dX, 4)
 							+ Mul(YMin1, vars.Depth.dY, 4);
 
-    const I32 DW12 = a.m_WindowCoords.invW - b.m_WindowCoords.invW;
-    const I32 DW23 = b.m_WindowCoords.invW - c.m_WindowCoords.invW;
-    const I32 DW31 = c.m_WindowCoords.invW - a.m_WindowCoords.invW;
+    I32 DW12;
+    //I32 DW23;
+    I32 DW31;
+
+	if (perspective) {
+		DW12 = a.m_WindowCoords.invW - b.m_WindowCoords.invW;
+		//DW23 = b.m_WindowCoords.invW - c.m_WindowCoords.invW;
+		DW31 = c.m_WindowCoords.invW - a.m_WindowCoords.invW;
 
 	// dWdX, dWdY is 4.28
 	vars.InvW.dX =  Mul64(det2x2(DY12, DW12, DY31, DW31), invArea, 28);
@@ -447,6 +462,7 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 	vars.InvW.Value = a.m_WindowCoords.invW
 							  + Mul(XMin1, vars.InvW.dX, 4)
 					   		  + Mul(YMin1, vars.InvW.dY, 4);
+	}
 
     // Loop through blocks
     for (vars.y = miny; vars.y < maxy; vars.y += EGL_RASTER_BLOCK_SIZE) {
@@ -494,7 +510,6 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 				totalMask = RasterBlockDepthStencil(&vars, pixelMask);
 #else
 				totalMask = m_BlockDepthStencilFunction(&m_RasterInfo, &vars, pixelMask);
-				//totalMask = RBDepthTestLess(&m_RasterInfo, &vars, pixelMask);
 #endif
             } else {
 				// Partially covered block
@@ -503,11 +518,13 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 				totalMask = RasterBlockEdgeDepthStencil(&vars, &edges, pixelMask);
 #else
 				totalMask = m_BlockEdgeDepthStencilFunction(&m_RasterInfo, &vars, &edges, pixelMask);
-				//totalMask = RBEdgeDepthTestLess(&m_RasterInfo, &vars, &edges, pixelMask);
 #endif
             }
 
 			if (totalMask) {
+				I32 varying[EGL_MAX_NUM_VARYING][2][2];	
+				
+				if (perspective) {
 				if (numVarying != usedNumVarying) {
 					I32 XMin2 = x0 - X1;
 					I32 YMin2 = y0 - Y1;
@@ -541,8 +558,6 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 				// interpolation values for the four corners
 				I32 w[2][2];				// w in all four corners of block 4.28 (?)
 
-				I32 varying[EGL_MAX_NUM_VARYING][2][2];	//
-
 				// compute w in all four corners
 				w[0][0] = EGL_InverseQ(vars.InvW.Value, 28);		// 4.28
 				w[0][1] = InvNewtonRaphson4q28(vars.InvW.Value + vars.InvW.dX * EGL_RASTER_BLOCK_SIZE, w[0][0]);
@@ -566,6 +581,47 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 										+ (vars.VaryingInvW[index].dX << EGL_LOG_RASTER_BLOCK_SIZE)
 										+ (vars.VaryingInvW[index].dY << EGL_LOG_RASTER_BLOCK_SIZE), w[1][1], 16)
 						 - varying[index][1][0]) >> EGL_LOG_RASTER_BLOCK_SIZE;
+				}
+				} else {
+					if (numVarying != usedNumVarying) {
+						I32 XMin2 = x0 - X1;
+						I32 YMin2 = y0 - Y1;
+
+						usedNumVarying = numVarying;
+
+						for (index = usedNumVarying; --index >= 0; ) {
+							// 16.16
+							I32 V1 = a.m_Varying[index];
+							I32 V2 = b.m_Varying[index];
+							I32 V3 = c.m_Varying[index];
+
+							I32 V12 = V1 - V2;
+							I32 V31 = V3 - V1;
+
+							// dVaryingDx, dVaryingDy is 16.16
+							vars.VaryingInvW[index].dX =  Mul64(det2x2(DY12, V12, DY31, V31), invArea, 4);
+							vars.VaryingInvW[index].dY = -Mul64(det2x2(DX12, V12, DX31, V31), invArea, 4);
+							vars.VaryingInvW[index].dBlockLine =
+								vars.VaryingInvW[index].dY * EGL_RASTER_BLOCK_SIZE - vars.VaryingInvW[index].dX * span;
+
+							// varyingStart is 16.16
+							vars.VaryingInvW[index].Value =
+								V1
+									+ Mul(XMin2, vars.VaryingInvW[index].dX, 4)
+									+ Mul(YMin2, vars.VaryingInvW[index].dY, 4);
+						}
+
+					}
+
+					// compute values of varying at all four corners
+					for (index = usedNumVarying; --index >= 0; ) {
+						varying[index][0][0] = vars.VaryingInvW[index].Value;
+						varying[index][0][1] = 
+						varying[index][1][1] = vars.VaryingInvW[index].dY;
+
+						varying[index][1][0] = vars.VaryingInvW[index].Value
+											 + (vars.VaryingInvW[index].dX << EGL_LOG_RASTER_BLOCK_SIZE);
+					}
 				}
 
 				// perform Mipmap selection; initialize local RasterInfo structure
@@ -606,7 +662,6 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 				RasterBlockColorAlpha(varying, pixelMask);
 #else
 				m_BlockColorAlphaFunction(&m_RasterInfo, varying, pixelMask);
-				//RBTextureReplace(&m_RasterInfo, varying, pixelMask);
 #endif
 			}
 cont:

@@ -54,9 +54,6 @@ namespace EGL {
 
 	class RasterizerState {
 
-		friend class Rasterizer;
-		friend class CodeGenerator;
-
 	public:
 		enum Limits {
 			LogMaxTextureSize = 12,
@@ -199,6 +196,10 @@ namespace EGL {
 	public:
 		RasterizerState();
 
+		void * operator new(size_t size, void * mem) {
+			return mem;
+		}
+
 		bool CompareCommon(const RasterizerState& other) const;
 		bool ComparePoint(const RasterizerState& other) const;
 		bool CompareLine(const RasterizerState& other) const;
@@ -254,6 +255,8 @@ namespace EGL {
 		WrappingMode GetWrappingModeT(size_t unit) const		{ return m_Texture[unit].WrappingModeT; }
 
 		void SetInternalFormat(size_t unit, TextureFormat format);
+		void SetPerspectiveCorrection(bool enabled);
+		bool GetPerspectiveCorrection() const;
 
 		void SetDepthRange(EGL_Fixed zNear, EGL_Fixed zFar);
 
@@ -337,7 +340,7 @@ namespace EGL {
 		StencilOp GetStencilOpFailZFail() const;
 		StencilOp GetStencilOpFailZPass() const;
 
-	private:
+	public: // for access by code generator
 		// ----------------------------------------------------------------------
 		// Primitve specific rendering state
 		// ----------------------------------------------------------------------
@@ -856,6 +859,7 @@ namespace EGL {
 
 		EGL_Fixed				m_SampleCoverage;
 		bool					m_InvertSampleCoverage;
+		bool					m_PerspectiveCorrection;
 
 	};
 
@@ -1237,6 +1241,15 @@ namespace EGL {
 	inline EGL_Fixed RasterizerState :: GetTextureScaleAlpha(size_t unit) const {
 		return m_Texture[unit].ScaleAlpha;
 	}
+
+	inline void RasterizerState :: SetPerspectiveCorrection(bool enabled) {
+		m_PerspectiveCorrection = enabled;
+	}
+	
+	inline bool RasterizerState :: GetPerspectiveCorrection() const {
+		return m_PerspectiveCorrection;
+	}
+
 
 
 }

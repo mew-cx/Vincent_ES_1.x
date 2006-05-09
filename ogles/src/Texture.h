@@ -48,12 +48,10 @@
 namespace EGL {
 
 	class Rasterizer;
-	class CodeGenerator;
 
 	class Texture { 
 
 		friend class Rasterizer;
-		friend class CodeGenerator;
 
 	public:
 
@@ -75,7 +73,7 @@ namespace EGL {
 
 		void * GetData() const				{ return m_Data; }
 
-	private:
+	public: // public only because generated code needs to access this
 		void *							m_Data;
 		U32								m_LogWidth;
 		U32								m_LogHeight;

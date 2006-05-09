@@ -65,6 +65,7 @@
 #include "Context.h"
 #include "Surface.h"
 #include "Utils.h"
+#include "FetchVertexPart.h"
 
 
 using namespace EGL;
@@ -319,51 +320,172 @@ void Context :: Normal3x(GLfixed nx, GLfixed ny, GLfixed nz) {
 // --------------------------------------------------------------------------
 
 
-bool Context :: Begin(GLenum mode) {
+void Context :: PrepareArray(VertexArray & array, bool enabled, ArrayState & arrayState, ArrayInfo& arrayInfo, bool isColor) {
+
+	array.effectivePointer = 0;
+
+	if (enabled) {
+		if (array.boundBuffer) {
+			if (m_Buffers.IsObject(array.boundBuffer)) {
+				U8 * bufferBase =
+					static_cast<U8 *>(m_Buffers.GetObject(array.boundBuffer)->GetData());
+
+				if (!bufferBase) {
+					return;
+				}
+
+				size_t offset = static_cast<const U8 *>(array.pointer) - static_cast<const U8 *>(0);
+				array.effectivePointer = bufferBase + offset;
+			}
+		} else {
+			array.effectivePointer = array.pointer;
+		}
+	}
+
+	array.PrepareFetchValues(isColor);
+	arrayState.Init(array, enabled);
+	arrayInfo.Init(array);
+}
+
+
+void Context :: PrepareRendering() {
+
+	// reset the state for processing the next vertex
 	m_PrimitiveState = 0;
 	m_NextIndex = 0;
 
+	// get current transformation matrices
+	m_RenderInfo.ModelviewProjectionMatrix = m_ModelViewProjectionMatrix.GetArray();
+	m_RenderInfo.ModelviewMatrix = m_ModelViewMatrixStack.CurrentMatrix().GetArray();
+	m_RenderInfo.InvModelviewMatrix = m_InverseModelViewMatrix.GetArray();
+		
+	
+	// initialize the state information for fetching vertices
+	memset(&m_RenderState, 0, sizeof m_RenderState);
+	m_Rasterizer->AllocateVaryings();	
+	memcpy(&m_RenderState.Varying, m_VaryingInfo, sizeof(VaryingInfo));
+
+	m_RenderState.NeedsEyeCoords = (m_RenderState.Varying.fogIndex >= 0);
+	m_RenderState.NeedsColor = (m_RenderState.Varying.colorIndex >= 0);
+		
+	if (m_LightingEnabled) {
+		m_RenderState.NeedsNormal = true;
+		m_RenderState.NeedsEyeCoords = true;
+		
+		if (m_ColorMaterialEnabled) {
+               m_LightVertexFunction = &Context::LightVertexTrack;
+		} else {
+			m_LightVertexFunction = &Context::LightVertexNoTrack;
+		}
+
+		// for each light that is turned on, init effective color values
+		int mask = 1;
+
+		for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
+			if (m_LightEnabled & mask) {
+				m_Lights[index].InitWithMaterial(m_Material);
+			}
+		}
+
+		// this is used if no color material tracking is enabled
+		m_EffectiveLightModelAmbient = m_Material.GetAmbientColor() * m_LightModelAmbient;
+		m_EffectiveLightModelAmbient.a = m_Material.GetDiffuseColor().a;
+		m_EffectiveLightModelAmbient += m_Material.GetEmissiveColor();
+
+	} else {
+		m_LightVertexFunction = 0;
+	}
+
+	PrepareArray(m_VertexArray,   m_VertexArrayEnabled, m_RenderState.Coord, m_RenderInfo.Coord);
+	PrepareArray(m_NormalArray,	  m_NormalArrayEnabled, m_RenderState.Normal, m_RenderInfo.Normal);
+	PrepareArray(m_ColorArray,    m_ColorArrayEnabled, m_RenderState.Color, m_RenderInfo.Color, true);
+
+	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+		Vec4D transformedTexCoords;
+
+		PrepareArray(m_TexCoordArray[unit], m_TexCoordArrayEnabled[unit], 
+					 m_RenderState.TexCoord[unit], m_RenderInfo.TexCoord[unit]);
+		m_TextureMatrixStack[unit].CurrentMatrix().Multiply(m_DefaultTextureCoords[m_ActiveTexture], 
+															m_DefaultTransformedTextureCoords[unit]);
+											
+		m_RenderState.TextureMatrixIdentity[unit] = m_TextureMatrixStack[unit].CurrentMatrix().IsIdentity();
+		m_RenderInfo.TextureMatrix[unit] = m_TextureMatrixStack[unit].CurrentMatrix().GetArray();
+		// according to Blythe & McReynolds, this should really happen
+		// as part of the perspective interpolation
+		m_DefaultTransformedTextureCoords[unit].ProjectiveDivision();
+	}
+
+	ArrayState dummyState;
+	ArrayInfo dummyInfo;
+	
+	PrepareArray(m_PointSizeArray, m_PointSizeArrayEnabled, dummyState, dummyInfo);
+
+	m_TransformedDefaultNormal = m_InverseModelViewMatrix.Multiply3x3(m_DefaultNormal);
+
+	// init JITting of vertex fetching
+	m_FunctionCache.PrepareFunction(PipelinePart::PartFetchVertex,
+									&m_RenderState, &m_RenderState.Varying);
+}
+
+
+inline void Context :: BeginRendering() {
+	m_FetchVertexFunction = (FetchVertexFunction)
+		m_FunctionCache.GetFunction(PipelinePart::PartFetchVertex,
+									&m_RenderState);
+}
+
+
+bool Context :: Begin(GLenum mode) {
+	PrepareRendering();
+	
 	switch (mode) {
 	case GL_POINTS:
 		m_Rasterizer->PreparePoint();
 		m_DrawPrimitiveFunction = &Context::DrawPoint;
 		m_EndPrimitiveFunction = 0;
+		m_Rasterizer->BeginPoint();
 		break;
 
 	case GL_LINES:
 		m_Rasterizer->PrepareLine();
 		m_DrawPrimitiveFunction = &Context::DrawLine;
 		m_EndPrimitiveFunction = 0;
+		m_Rasterizer->BeginLine();
 		break;
 
 	case GL_LINE_STRIP:
 		m_Rasterizer->PrepareLine();
 		m_DrawPrimitiveFunction = &Context::DrawLineStrip;
 		m_EndPrimitiveFunction = 0;
+		m_Rasterizer->BeginLine();
 		break;
 
 	case GL_LINE_LOOP:
 		m_Rasterizer->PrepareLine();
 		m_DrawPrimitiveFunction = &Context::DrawLineLoop;
 		m_EndPrimitiveFunction = &Context::EndLineLoop;
+		m_Rasterizer->BeginLine();
 		break;
 
 	case GL_TRIANGLES:
 		m_Rasterizer->PrepareTriangle();
 		m_DrawPrimitiveFunction = &Context::DrawTriangle;
 		m_EndPrimitiveFunction = 0;
+		m_Rasterizer->BeginTriangle();
 		break;
 
 	case GL_TRIANGLE_STRIP:
 		m_Rasterizer->PrepareTriangle();
 		m_DrawPrimitiveFunction = &Context::DrawTriangleStrip;
 		m_EndPrimitiveFunction = 0;
+		m_Rasterizer->BeginTriangle();
 		break;
 
 	case GL_TRIANGLE_FAN:
 		m_Rasterizer->PrepareTriangle();
 		m_DrawPrimitiveFunction = &Context::DrawTriangleFan;
 		m_EndPrimitiveFunction = 0;
+		m_Rasterizer->BeginTriangle();
 		break;
 
 	default:
@@ -371,6 +493,8 @@ bool Context :: Begin(GLenum mode) {
 		return false;
 	}
 
+	BeginRendering();
+	
 	return true;
 }
 
@@ -394,8 +518,6 @@ void Context :: DrawArrays(GLenum mode, GLint first, GLsizei count) {
 		return;
 	}
 
-	PrepareRendering();
-	
 	if (Begin(mode)) {
 		while (count-- > 0) {
 			(this->*m_DrawPrimitiveFunction)(first++);
@@ -435,8 +557,6 @@ void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
 		return;
 	}
 
-	PrepareRendering();
-
 	if (type == GL_UNSIGNED_BYTE) {
 		const GLubyte * ptr = reinterpret_cast<const GLubyte *>(indices);
 
@@ -463,6 +583,7 @@ void Context :: DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvo
 }
 
 
+#if !EGL_USE_JIT
 // --------------------------------------------------------------------------
 // Load all the current coordinates from either a specific array or from
 // the common settings.
@@ -481,12 +602,6 @@ void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 
 		m_VertexArray.FetchValues(index, currentVertex.getArray());
 		m_ModelViewProjectionMatrix.Multiply(currentVertex, rasterPos->m_ClipCoords);
-
-
-		if (rasterPos->m_ClipCoords.w() < 0) 
-			rasterPos->m_ClipCoords = -rasterPos->m_ClipCoords;
-
-		CalcCC(rasterPos);
 
 		// do we need eye-coords (e.g. fog, light, or user-clipping)
 		m_ModelViewMatrixStack.CurrentMatrix().Multiply(currentVertex, rasterPos->m_EyeCoords);
@@ -544,82 +659,14 @@ void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 		}
 	}
 
+	if (rasterPos->m_ClipCoords.w() < 0) 
+		rasterPos->m_ClipCoords = -rasterPos->m_ClipCoords;
+
+	CalcCC(rasterPos);
+
 	rasterPos->m_Lit = Unlit;
 }
-
-
-void Context :: PrepareArray(VertexArray & array, bool enabled, bool isColor) {
-
-	array.effectivePointer = 0;
-
-	if (enabled) {
-		if (array.boundBuffer) {
-			if (m_Buffers.IsObject(array.boundBuffer)) {
-				U8 * bufferBase =
-					static_cast<U8 *>(m_Buffers.GetObject(array.boundBuffer)->GetData());
-
-				if (!bufferBase) {
-					return;
-				}
-
-				size_t offset = static_cast<const U8 *>(array.pointer) - static_cast<const U8 *>(0);
-				array.effectivePointer = bufferBase + offset;
-			}
-		} else {
-			array.effectivePointer = array.pointer;
-		}
-	}
-
-	array.PrepareFetchValues(isColor);
-}
-
-
-void Context :: PrepareRendering() {
-
-	if (m_LightingEnabled) {
-		if (m_ColorMaterialEnabled) {
-               m_LightVertexFunction = &Context::LightVertexTrack;
-		} else {
-			m_LightVertexFunction = &Context::LightVertexNoTrack;
-		}
-
-		// for each light that is turned on, init effective color values
-		int mask = 1;
-
-		for (int index = 0; index < EGL_NUMBER_LIGHTS; ++index, mask <<= 1) {
-			if (m_LightEnabled & mask) {
-				m_Lights[index].InitWithMaterial(m_Material);
-			}
-		}
-
-		// this is used if no color material tracking is enabled
-		m_EffectiveLightModelAmbient = m_Material.GetAmbientColor() * m_LightModelAmbient;
-		m_EffectiveLightModelAmbient.a = m_Material.GetDiffuseColor().a;
-		m_EffectiveLightModelAmbient += m_Material.GetEmissiveColor();
-
-	} else {
-		m_LightVertexFunction = 0;
-	}
-
-	PrepareArray(m_VertexArray,   m_VertexArrayEnabled);
-	PrepareArray(m_NormalArray,	  m_NormalArrayEnabled);
-	PrepareArray(m_ColorArray,    m_ColorArrayEnabled, true);
-
-	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		Vec4D transformedTexCoords;
-
-		PrepareArray(m_TexCoordArray[unit], m_TexCoordArrayEnabled[unit]);
-		m_TextureMatrixStack[unit].CurrentMatrix().Multiply(m_DefaultTextureCoords[m_ActiveTexture], 
-															m_DefaultTransformedTextureCoords[unit]);
-		// according to Blythe & McReynolds, this should really happen
-		// as part of the perspective interpolation
-		m_DefaultTransformedTextureCoords[unit].ProjectiveDivision();
-	}
-
-	PrepareArray(m_PointSizeArray,m_PointSizeArrayEnabled);
-
-	m_TransformedDefaultNormal = m_InverseModelViewMatrix.Multiply3x3(m_DefaultNormal);
-}
+#endif // EGL_USE_JIT
 
 
 namespace {

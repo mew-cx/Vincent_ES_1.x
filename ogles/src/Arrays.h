@@ -61,6 +61,11 @@ namespace EGL {
 
 		typedef void (VertexArray::*FetchValueFunction)(int row, GLfixed * buffer);
 
+		const void * GetRowPointer(int row) const {
+			GLsizei rowOffset = row * stride;
+			return reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;
+		}
+
 		void FetchByteValues(int row, GLfixed * buffer) {
 			GLsizei rowOffset = row * stride;
 			const unsigned char * base = reinterpret_cast<const unsigned char *>(effectivePointer) + rowOffset;

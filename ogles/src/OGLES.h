@@ -111,11 +111,12 @@
 #define EGL_LOG_RASTER_BLOCK_SIZE	3
 #define EGL_RASTER_BLOCK_SIZE		(1 << EGL_LOG_RASTER_BLOCK_SIZE)
 
+// minimum triangle area for perspective interpolation; value in 24.8
+#define EGL_MIN_TRIANGLE_PERSPECTIVE	0x400
+
 // --------------------------------------------------------------------------
 // type definitions
 // --------------------------------------------------------------------------
-
-#ifndef EGL_USE_GPP		// define only if not including Intel's GPP library
 
 #	ifdef EGL_ON_SYMBIAN
 	    typedef TInt8	 I8;
@@ -132,7 +133,8 @@
 	    typedef int 				I32;
 	    typedef unsigned int 		U32;
 #	endif
-#endif
+
+#define EGL_BITS_PER_BYTE		8
 
 #ifdef EGL_XSCALE
 #define EGL_USE_CLZ
