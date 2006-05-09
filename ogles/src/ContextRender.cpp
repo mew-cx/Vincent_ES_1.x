@@ -425,6 +425,21 @@ void Context :: PrepareRendering() {
 	// init JITting of vertex fetching
 	m_FunctionCache.PrepareFunction(PipelinePart::PartFetchVertex,
 									&m_RenderState, &m_RenderState.Varying);
+
+	for (size_t index = 0; index < elementsof(m_Input); ++index) {
+		m_Input[index].m_EyeNormal = m_TransformedDefaultNormal;
+		m_Input[index].m_Color[Unlit] = m_DefaultRGBA;
+
+		// do we need texture coordinates?
+		for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
+			I32 base = m_VaryingInfo->textureBase[unit];
+
+			if (base >= 0) {
+				m_Input[index].m_Varying[base]     = m_DefaultTransformedTextureCoords[unit].x();
+				m_Input[index].m_Varying[base + 1] = m_DefaultTransformedTextureCoords[unit].y();
+			}
+		}
+	}
 }
 
 
