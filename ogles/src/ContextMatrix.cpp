@@ -75,8 +75,10 @@ void Context :: RebuildMatrices(void) {
 		m_InverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().InverseUpper3(m_RescaleNormalEnabled);
 		m_FullInverseModelViewMatrix = m_ModelViewMatrixStack.CurrentMatrix().Inverse();
 		m_ModelViewProjectionMatrix = m_ProjectionMatrixStack.CurrentMatrix() * m_ModelViewMatrixStack.CurrentMatrix();
-	} else if (m_CurrentMatrixStack = &m_ProjectionMatrixStack) {
+	} else if (m_CurrentMatrixStack == &m_ProjectionMatrixStack) {
 		m_ModelViewProjectionMatrix = m_ProjectionMatrixStack.CurrentMatrix() * m_ModelViewMatrixStack.CurrentMatrix();
+	} else if (m_MatrixMode == GL_TEXTURE) {
+		m_RenderState.TextureMatrixIdentity[m_ActiveTexture] = m_TextureMatrixStack[m_ActiveTexture].CurrentMatrix().IsIdentity();
 	}
 }
 
