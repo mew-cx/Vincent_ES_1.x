@@ -68,6 +68,8 @@ void RasterLinePart :: GenerateRasterLine(const VaryingInfo * varyingInfo) {
 	cg_virtual_reg_t * regTexture = LOAD_DATA(block, regInfo, OFFSET_TEXTURES);
 
 	FragmentGenerationInfo info;
+	memset(&info, 0, sizeof(info));
+
 	size_t unit;
 
 	info.regInfo = regInfo;
