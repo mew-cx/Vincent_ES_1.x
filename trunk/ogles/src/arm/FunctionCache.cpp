@@ -248,27 +248,27 @@ void FunctionCache :: CompactCode() {
 
 	// now compact the list of functions
 
+	m_UsedFunctions = countFunctions;
 	m_Used = 0;
-	countFunctions = 0;
 
 	FunctionInfo * target = m_Functions;
 
 	for (function = m_Functions; function < m_Functions + m_UsedFunctions; ++function) {
 		if (function->m_Flags) {
 			memmove(m_Code + m_Used, m_Code + function->m_Offset, function->m_Size);
-			function->m_Offset = m_Used;
+			target->m_Offset = m_Used;
 			m_Used += function->m_Size;
 
-			memmove(target->m_State, function->m_State, sizeof(target->m_State));
-			target->m_Offset = function->m_Offset;
+			if (function != target) {
+				memmove(target->m_State, function->m_State, sizeof(target->m_State));
+			}
+
 			target->m_Size = function->m_Size;
 			target->m_Part = function->m_Part;
 
 			++target;
 		}
 	}
-
-	m_UsedFunctions = countFunctions;
 
 	// re-link LRU chain
 
