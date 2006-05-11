@@ -129,5 +129,6 @@ bool RasterizerState :: ComparePolygonColorAlpha(const RasterizerState& other) c
 		m_LogicOp == other.m_LogicOp &&
 
 		m_SampleCoverage == other.m_SampleCoverage &&
-		m_InvertSampleCoverage == other.m_InvertSampleCoverage;
+		m_InvertSampleCoverage == other.m_InvertSampleCoverage &&
+		m_PerspectiveCorrection == other.m_PerspectiveCorrection;
 }
