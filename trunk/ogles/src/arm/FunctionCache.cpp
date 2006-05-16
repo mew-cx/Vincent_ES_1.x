@@ -248,7 +248,6 @@ void FunctionCache :: CompactCode() {
 
 	// now compact the list of functions
 
-	m_UsedFunctions = countFunctions;
 	m_Used = 0;
 
 	FunctionInfo * target = m_Functions;
@@ -269,6 +268,8 @@ void FunctionCache :: CompactCode() {
 			++target;
 		}
 	}
+
+	m_UsedFunctions = countFunctions;
 
 	// re-link LRU chain
 
