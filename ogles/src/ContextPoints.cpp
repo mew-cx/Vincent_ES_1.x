@@ -104,6 +104,10 @@ void Context :: RenderPoint(Vertex& point, EGL_Fixed size) {
 		}
 	}
 
+	if (m_VaryingInfo->fogIndex >= 0) {
+		point.m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(point.m_EyeCoords.z()));
+	}
+
 	if (m_PointSizeAttenuate) {
 		EGL_Fixed eyeDistance = EGL_Abs(point.m_EyeCoords.z());
 

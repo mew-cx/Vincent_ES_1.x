@@ -169,6 +169,20 @@ void Context :: RenderTriangle(Vertex& a, Vertex& b, Vertex& c) {
 		c.m_Color[mode].toArray(c.m_Varying + m_VaryingInfo->colorIndex);
 	}
 
+	if (m_VaryingInfo->fogIndex >= 0) {
+		I32 fogIndex = m_VaryingInfo->fogIndex;
+
+		c.m_Varying[fogIndex] = FogDensity(EGL_Abs(c.m_EyeCoords.z()));
+
+		if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
+			b.m_Varying[fogIndex] = FogDensity(EGL_Abs(b.m_EyeCoords.z()));
+			a.m_Varying[fogIndex] = FogDensity(EGL_Abs(a.m_EyeCoords.z()));
+		} else{
+			b.m_Varying[fogIndex] = 
+			a.m_Varying[fogIndex] = c.m_Varying[fogIndex];
+		}
+	}
+
 	Vertex * array1[16], *array2[16], ** result = array1;
 	array1[0] = &a;
 

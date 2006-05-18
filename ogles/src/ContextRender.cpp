@@ -622,12 +622,6 @@ void Context :: SelectArrayElement(int index, Vertex * rasterPos) {
 		m_ModelViewMatrixStack.CurrentMatrix().Multiply(currentVertex, rasterPos->m_EyeCoords);
 	}
 
-	//	copy current colors to raster pos
-	if (m_RasterizerState.IsEnabledFog()) {
-		assert(m_VaryingInfo->fogIndex >= 0);
-		rasterPos->m_Varying[m_VaryingInfo->fogIndex] = FogDensity(EGL_Abs(rasterPos->m_EyeCoords.z()));
-	}
-
 	// do we need normals?
 	if (m_NormalArray.effectivePointer) {
 		Vec3D normal;
