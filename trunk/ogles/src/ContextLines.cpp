@@ -190,6 +190,18 @@ void Context :: RenderLine(Vertex& from, Vertex& to) {
 		}
 	}
 
+	if (m_VaryingInfo->fogIndex >= 0) {
+		I32 fogIndex = m_VaryingInfo->fogIndex;
+
+		to.m_Varying[fogIndex] = FogDensity(EGL_Abs(to.m_EyeCoords.z()));
+
+		if (m_RasterizerState.GetShadeModel() == RasterizerState::ShadeModelSmooth) {
+			from.m_Varying[fogIndex] = FogDensity(EGL_Abs(from.m_EyeCoords.z()));
+		} else{
+			from.m_Varying[fogIndex] = to.m_Varying[fogIndex];
+		}
+	}
+
 	Vertex * array1[16], *array2[16], ** result = 0;
 	array1[0] = &from;
 	array1[1] = &to;
