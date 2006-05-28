@@ -244,6 +244,10 @@ namespace EGL {
 						 (a.A() + b.A() + c.A() + d.A()) / 4);
 		}
 
+		void ScaleA(EGL_Fixed factor) {
+			a = EGL_Mul(a, factor);
+		}
+
 	private:
 		static inline U8 clamp(U16 value) {
 			return (value > MAX) ? (U8) MAX : (U8) value;
