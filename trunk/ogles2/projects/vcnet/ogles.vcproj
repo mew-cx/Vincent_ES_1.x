@@ -20,7 +20,6 @@
 			OutputDirectory="..\..\bin\x86\Debug"
 			IntermediateDirectory="..\..\obj\ogles\x86\Debug"
 			ConfigurationType="2"
-			InheritedPropertySheets="..\..\..\..\Program Files\Microsoft Visual Studio 8\VC\VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -100,7 +99,6 @@
 			OutputDirectory="..\..\bin\x86\Release"
 			IntermediateDirectory="..\..\obj\ogles\x86\Release"
 			ConfigurationType="2"
-			InheritedPropertySheets="..\..\..\..\Program Files\Microsoft Visual Studio 8\VC\VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
