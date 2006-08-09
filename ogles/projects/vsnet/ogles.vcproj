@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\src;..\..\src\codegen;..\..\src\win;..\..\include"
+				AdditionalIncludeDirectories="..\..\src;..\..\src\codegen;..\..\src\win;..\..\include;..\..\src\arm"
 				PreprocessorDefinitions="OGLES_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -121,7 +121,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\src;..\..\src\codegen;..\..\src\win;..\..\include"
+				AdditionalIncludeDirectories="..\..\src;..\..\src\codegen;..\..\src\win;..\..\include;..\..\src\arm"
 				PreprocessorDefinitions="OGLES_EXPORTS"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
