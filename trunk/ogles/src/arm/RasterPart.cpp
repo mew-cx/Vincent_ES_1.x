@@ -374,7 +374,7 @@ void RasterPart :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentBloc
 	cg_block_t * block = currentBlock;
 
 	switch (textureState->InternalFormat) {
-		case RasterizerState::TextureFormatAlpha:				// 8
+		case ColorFormatAlpha:				// 8
 			{
 			//texColor = Color(0, 0, 0, reinterpret_cast<const U8 *>(data)[texOffset]);
 			regTexColorR = regTexColorG = regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
@@ -393,7 +393,7 @@ void RasterPart :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentBloc
 			}
 			break;
 
-		case RasterizerState::TextureFormatLuminance:			// 8
+		case ColorFormatLuminance:			// 8
 			{
 			//U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset];
 			//texColor = Color (luminance, luminance, luminance, 0xff);
@@ -410,7 +410,7 @@ void RasterPart :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentBloc
 			}
 			break;
 
-		case RasterizerState::TextureFormatLuminanceAlpha:		// 8-8
+		case ColorFormatLuminanceAlpha:		// 8-8
 			{
 			//U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset * 2];
 			//U8 alpha = reinterpret_cast<const U8 *>(data)[texOffset * 2 + 1];
@@ -434,7 +434,7 @@ void RasterPart :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentBloc
 			}
 			break;
 
-		case RasterizerState::TextureFormatRGB565:					// 5-6-5
+		case ColorFormatRGB565:					// 5-6-5
 			//texColor = Color::From565(reinterpret_cast<const U16 *>(data)[texOffset]);
 			{
 			regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
@@ -456,7 +456,7 @@ void RasterPart :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentBloc
 			}
 			break;
 
-		case RasterizerState::TextureFormatRGB8:						// 8-8-8
+		case ColorFormatRGB8:						// 8-8-8
 			{
 			regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 			regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
@@ -491,7 +491,7 @@ void RasterPart :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentBloc
 
 			break;
 
-		case RasterizerState::TextureFormatRGBA4444:					// 4-4-4-4
+		case ColorFormatRGBA4444:					// 4-4-4-4
 			{
 			DECL_REG	(regScaledOffset);
 			DECL_REG	(regConstantOne);
@@ -513,7 +513,7 @@ void RasterPart :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentBloc
 
 			break;
 
-		case RasterizerState::TextureFormatRGBA8:						// 8-8-8-8
+		case ColorFormatRGBA8:						// 8-8-8-8
 			{
 			regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 			regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
@@ -550,7 +550,7 @@ void RasterPart :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentBloc
 
 			break;
 
-		case RasterizerState::TextureFormatRGBA5551:					// 5-5-5-1
+		case ColorFormatRGBA5551:					// 5-5-5-1
 			//texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
 			{
 			DECL_REG	(regScaledOffset);
@@ -1843,7 +1843,7 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 			} else {
 				switch (m_State->m_Texture[unit].InternalFormat) {
 					default:
-					case RasterizerState::TextureFormatAlpha:
+					case ColorFormatAlpha:
 						switch (m_State->m_Texture[unit].Mode) {
 							case RasterizerState::TextureModeReplace:
 								{
@@ -1865,9 +1865,9 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 						}
 						break;
 
-					case RasterizerState::TextureFormatLuminance:
-					case RasterizerState::TextureFormatRGB565:
-					case RasterizerState::TextureFormatRGB8:
+					case ColorFormatLuminance:
+					case ColorFormatRGB565:
+					case ColorFormatRGB8:
 						switch (m_State->m_Texture[unit].Mode) {
 							case RasterizerState::TextureModeDecal:
 							case RasterizerState::TextureModeReplace:
@@ -1929,10 +1929,10 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 						}
 						break;
 
-					case RasterizerState::TextureFormatLuminanceAlpha:
-					case RasterizerState::TextureFormatRGBA5551:
-					case RasterizerState::TextureFormatRGBA4444:
-					case RasterizerState::TextureFormatRGBA8:
+					case ColorFormatLuminanceAlpha:
+					case ColorFormatRGBA5551:
+					case ColorFormatRGBA4444:
+					case ColorFormatRGBA8:
 						switch (m_State->m_Texture[unit].Mode) {
 							case RasterizerState::TextureModeReplace:
 								{
@@ -2123,7 +2123,7 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 		regColorBuffer = LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_COLOR_BUFFER);
 
 	if (!regAlphaBuffer)
-		regAlphaBuffer = LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_ALPHA_BUFFER);
+		regAlphaBuffer = NULL;//LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_ALPHA_BUFFER);
 
 	//U16 dstValue = m_Surface->GetColorBuffer()[offset];
 	//U8 dstAlpha = m_Surface->GetAlphaBuffer()[offset];

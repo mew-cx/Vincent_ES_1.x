@@ -77,13 +77,13 @@ namespace {
 		return static_cast<I64>(prod1 - prod2);
 	}
 
-	bool HasAlpha(RasterizerState::TextureFormat format) {
+	bool HasAlpha(ColorFormat format) {
 		switch (format) {
-		case RasterizerState::TextureFormatAlpha:
-		case RasterizerState::TextureFormatLuminanceAlpha:
-		case RasterizerState::TextureFormatRGBA8:
-		case RasterizerState::TextureFormatRGBA4444:
-		case RasterizerState::TextureFormatRGBA5551:
+		case ColorFormatAlpha:
+		case ColorFormatLuminanceAlpha:
+		case ColorFormatRGBA8:
+		case ColorFormatRGBA4444:
+		case ColorFormatRGBA5551:
 			return true;
 
 		default:
@@ -343,8 +343,7 @@ void Rasterizer :: RasterBlockColorAlpha(I32 varying[][2][2],
 			varying[index][1][0] += varying[index][1][1];
 		}
 
-		surfaceInfo.ColorBuffer += surfaceInfo.Pitch;
-		surfaceInfo.AlphaBuffer += surfaceInfo.Pitch;
+		surfaceInfo.ColorBuffer += surfaceInfo.Pitch << surfaceInfo.ColorOffsetShift;
     }
 }
 
@@ -672,9 +671,8 @@ cont:
 				vars.VaryingInvW[index].Value += vars.VaryingInvW[index].dX << EGL_LOG_RASTER_BLOCK_SIZE;
 			}
 
-			m_RasterInfo.RasterSurface.ColorBuffer   += EGL_RASTER_BLOCK_SIZE;
+			m_RasterInfo.RasterSurface.ColorBuffer   += (EGL_RASTER_BLOCK_SIZE << m_RasterInfo.RasterSurface.ColorOffsetShift);
 			m_RasterInfo.RasterSurface.DepthBuffer   += EGL_RASTER_BLOCK_SIZE;
-			m_RasterInfo.RasterSurface.AlphaBuffer   += EGL_RASTER_BLOCK_SIZE;
 			m_RasterInfo.RasterSurface.StencilBuffer += EGL_RASTER_BLOCK_SIZE;
         }
 
@@ -685,9 +683,8 @@ cont:
 			vars.VaryingInvW[index].Value += vars.VaryingInvW[index].dBlockLine;
 		}
 
-		m_RasterInfo.RasterSurface.ColorBuffer   += blockStride;
+		m_RasterInfo.RasterSurface.ColorBuffer   += (blockStride << m_RasterInfo.RasterSurface.ColorOffsetShift);
 		m_RasterInfo.RasterSurface.DepthBuffer   += blockStride;
-		m_RasterInfo.RasterSurface.AlphaBuffer   += blockStride;
 		m_RasterInfo.RasterSurface.StencilBuffer += blockStride;
     }
 }

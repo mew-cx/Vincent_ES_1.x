@@ -49,22 +49,58 @@ namespace {
 		BITMAPINFOHEADER bmiHeader;
 		DWORD            bmiColors[3];
 
-		InfoHeader(U32 width, U32 height) {
+		InfoHeader(ColorFormat colorFormat, U32 width, U32 height) {
 			bmiHeader.biSize = sizeof(bmiHeader);
 			bmiHeader.biWidth = width;
 			bmiHeader.biHeight = height;
 			bmiHeader.biPlanes = 1;
-			bmiHeader.biBitCount = 16;
 			bmiHeader.biCompression = BI_BITFIELDS;
-			bmiHeader.biSizeImage = width * height * sizeof(U16);
 			bmiHeader.biXPelsPerMeter = 72 * 25;
 			bmiHeader.biYPelsPerMeter = 72 * 25;
 			bmiHeader.biClrUsed = 0;
 			bmiHeader.biClrImportant = 0;
 
-			bmiColors[0] = 0xF800;
-			bmiColors[1] = 0x07E0;
-			bmiColors[2] = 0x001F;
+			switch (colorFormat) {
+			case ColorFormatRGB565:
+				bmiHeader.biBitCount = 16;
+				bmiHeader.biSizeImage = width * height * sizeof(U16);
+
+				bmiColors[0] = Color(0xff, 0, 0, 0).ConvertTo565();
+				bmiColors[1] = Color(0, 0xff, 0, 0).ConvertTo565();
+				bmiColors[2] = Color(0, 0, 0xff, 0).ConvertTo565();
+				break;
+
+			case ColorFormatRGBA5551:
+				bmiHeader.biBitCount = 16;
+				bmiHeader.biSizeImage = width * height * sizeof(U16);
+
+				bmiColors[0] = Color(0xff, 0, 0, 0).ConvertTo5551();
+				bmiColors[1] = Color(0, 0xff, 0, 0).ConvertTo5551();
+				bmiColors[2] = Color(0, 0, 0xff, 0).ConvertTo5551();
+				break;
+
+			case ColorFormatRGBA4444:
+				bmiHeader.biBitCount = 16;
+				bmiHeader.biSizeImage = width * height * sizeof(U16);
+
+				bmiColors[0] = Color(0xff, 0, 0, 0).ConvertTo4444();
+				bmiColors[1] = Color(0, 0xff, 0, 0).ConvertTo4444();
+				bmiColors[2] = Color(0, 0, 0xff, 0).ConvertTo4444();
+				break;
+
+			case ColorFormatRGBA8:
+				// this is realized as ARGB format
+				bmiHeader.biBitCount = 32;
+				bmiHeader.biSizeImage = width * height * sizeof(U32);
+
+				bmiColors[0] = Color(0xff, 0, 0, 0).ConvertToRGBA();
+				bmiColors[1] = Color(0, 0xff, 0, 0).ConvertToRGBA();
+				bmiColors[2] = Color(0, 0, 0xff, 0).ConvertToRGBA();
+				break;
+
+			default:
+				assert(false);
+			}
 		}
 	};
 }
@@ -82,7 +118,6 @@ Surface :: Surface(const Config & config, HDC hdc)
 
 	m_Pitch = width;
 
-	m_AlphaBuffer = new U8[width * height];
 	m_DepthBuffer = new U16[width * height];
 	m_StencilBuffer = new U32[width * height];
 
@@ -90,7 +125,7 @@ Surface :: Surface(const Config & config, HDC hdc)
 		m_HDC = CreateCompatibleDC(hdc);
 	}
 
-	InfoHeader info(width, height);;
+	InfoHeader info(m_Config.GetColorFormat(), width, height);
 
 	m_Bitmap = CreateDIBSection(m_HDC, reinterpret_cast<BITMAPINFO *>(&info), DIB_RGB_COLORS,
 		reinterpret_cast<void **>(&m_ColorBuffer), NULL, 0);
@@ -98,7 +133,6 @@ Surface :: Surface(const Config & config, HDC hdc)
 
 
 Surface :: ~Surface() {
-
 
 	if (m_Bitmap != INVALID_HANDLE_VALUE) {
 		DeleteObject(m_Bitmap);
@@ -108,16 +142,6 @@ Surface :: ~Surface() {
 	if (m_HDC != INVALID_HANDLE_VALUE) {
 		DeleteDC(m_HDC);
 		m_HDC = reinterpret_cast<HDC>(INVALID_HANDLE_VALUE);
-	}
-
-	/*if (m_ColorBuffer != 0) {
-		delete [] m_ColorBuffer;
-		m_ColorBuffer = 0;
-	}*/
-
-	if (m_AlphaBuffer != 0) {
-		delete [] m_AlphaBuffer;
-		m_AlphaBuffer = 0;
 	}
 
 	if (m_DepthBuffer != 0) {
@@ -215,33 +239,51 @@ void Surface :: ClearStencilBuffer(U32 value, U32 mask, const Rect& scissor) {
 	}
 }
 
-/*
-I32 Surface :: DepthBitsFromDepth(GLclampx depth) {
-	I32 result;
-	gppMul_16_32s(EGL_CLAMP(depth, EGL_FIXED_0, EGL_FIXED_1), 0xffffff, &result);
-	return result;
+void Surface :: ClearColorBuffer16(U16 color, U16 colorMask, const Rect& scissor) {
+	if (colorMask == 0xffff) {
+		FillRect((U16 *) m_ColorBuffer, GetRect(), scissor, color);
+	} else {
+		FillRect((U16 *) m_ColorBuffer, GetRect(), scissor, color, colorMask);
+	}
 }
-*/
+
+void Surface :: ClearColorBuffer32(U32 color, U32 colorMask, const Rect& scissor) {
+	if (colorMask == 0xffffffff) {
+		FillRect((U32 *) m_ColorBuffer, GetRect(), scissor, color);
+	} else {
+		FillRect((U32 *) m_ColorBuffer, GetRect(), scissor, color, colorMask);
+	}
+}
 
 void Surface :: ClearColorBuffer(const Color & rgba, const Color & mask, const Rect& scissor) {
-	U16 color = rgba.ConvertTo565();
-	U16 colorMask = mask.ConvertTo565();
+	switch (GetColorFormat()) {
+	case ColorFormatRGB565:
+		ClearColorBuffer16(rgba.ConvertTo565(), mask.ConvertTo565(), scissor);
+		break;
 
-	if (colorMask == 0xffff) {
-		FillRect(m_ColorBuffer, GetRect(), scissor, color);
-	} else {
-		FillRect(m_ColorBuffer, GetRect(), scissor, color, colorMask);
+	case ColorFormatRGBA4444:
+		ClearColorBuffer16(rgba.ConvertTo4444(), mask.ConvertTo4444(), scissor);
+		break;
+
+	case ColorFormatRGBA5551:
+		ClearColorBuffer16(rgba.ConvertTo5551(), mask.ConvertTo5551(), scissor);
+		break;
+
+	case ColorFormatRGBA8:
+		ClearColorBuffer32(rgba.ConvertToRGBA(), mask.ConvertToRGBA(), scissor);
+		break;
+
+	default:
+		assert(false);
 	}
 
-	if (mask.A() && m_AlphaBuffer)
-		FillRect(m_AlphaBuffer, GetRect(), scissor, rgba.A());
 
 }
 
 
 bool Surface :: Save(const TCHAR * filename) {
 
-	InfoHeader info(GetWidth(), GetHeight());
+	InfoHeader info(GetColorFormat(), GetWidth(), GetHeight());
 
     BITMAPFILEHEADER header;
     header.bfType      = 0x4d42;
@@ -264,12 +306,36 @@ bool Surface :: Save(const TCHAR * filename) {
     ::WriteFile(hFile, &info, sizeof(info), &temp, 0);
 
     // Write the image
-    U16 * pixels = m_ColorBuffer;
+	switch (GetColorFormat()) {
+	case ColorFormatRGB565:
+	case ColorFormatRGBA5551:
+	case ColorFormatRGBA4444:
+		{
+			U16 * pixels = (U16 *) m_ColorBuffer;
 
-    for (int h = GetHeight(); h; --h) {
-        ::WriteFile(hFile, pixels, GetWidth() * sizeof(U16), &temp, 0 );
-        pixels += GetWidth();
-    }
+			for (int h = GetHeight(); h; --h) {
+				::WriteFile(hFile, pixels, GetWidth() * sizeof(U16), &temp, 0 );
+				pixels += GetWidth();
+			}
+		}
+
+		break;
+
+	case ColorFormatRGBA8:
+		{
+			U32 * pixels = (U32 *) m_ColorBuffer;
+
+			for (int h = GetHeight(); h; --h) {
+				::WriteFile(hFile, pixels, GetWidth() * sizeof(U32), &temp, 0 );
+				pixels += GetWidth();
+			}
+		}
+
+		break;
+
+	default:
+		assert(false);
+	}
 
     ::CloseHandle(hFile);
 

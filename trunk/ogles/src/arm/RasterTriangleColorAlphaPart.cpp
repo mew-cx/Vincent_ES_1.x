@@ -91,7 +91,7 @@ void RasterTriangleColorAlphaPart :: GenerateRasterBlockColorAlpha(const Varying
 	DECL_REG	(regAlphaBuffer1);	// end y loop
 
 	cg_virtual_reg_t * regColorBuffer = LOAD_DATA(block, regRasterInfo, OFFSET_SURFACE_COLOR_BUFFER);
-	cg_virtual_reg_t * regAlphaBuffer = LOAD_DATA(block, regRasterInfo, OFFSET_SURFACE_ALPHA_BUFFER);
+	cg_virtual_reg_t * regAlphaBuffer = NULL;//LOAD_DATA(block, regRasterInfo, OFFSET_SURFACE_ALPHA_BUFFER);
 	cg_virtual_reg_t * regPitch = LOAD_DATA(block, regRasterInfo, OFFSET_SURFACE_PITCH);
 	
 	cg_virtual_reg_t * regTexture = LOAD_DATA(block, regRasterInfo, OFFSET_TEXTURES);
@@ -346,7 +346,7 @@ bool RasterTriangleColorAlphaPart :: CompareState(const void * first, const void
 void RasterTriangleColorAlphaPart :: Compile(FunctionCache * target, const VaryingInfo * varyingInfo, const void * state) {
 	m_State = static_cast<const RasterizerState *>(state);
 	BeginGenerateCode();
-	GenerateRasterBlockColorAlpha(varyingInfo);
+	//GenerateRasterBlockColorAlpha(varyingInfo);
 	EndGenerateCode(target, state);
 }
 

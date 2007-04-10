@@ -181,17 +181,7 @@ namespace EGL {
 			FilterModeLinear
 		};
 
-		enum TextureFormat {
-			TextureFormatInvalid = -1,
-			TextureFormatAlpha = 0,				// 8
-			TextureFormatLuminance = 1,			// 8
-			TextureFormatLuminanceAlpha = 2,	// 8-8
-			TextureFormatRGB8 = 3,				// 8-8-8
-			TextureFormatRGBA8 = 4,				// 8-8-8-8
-			TextureFormatRGB565 = 5,			// 5-6-5
-			TextureFormatRGBA4444 = 6,			// 4-4-4-4
-			TextureFormatRGBA5551 = 7			// 5-5-5-1
-		};
+		typedef ColorFormat TextureFormat;
 
 	public:
 		RasterizerState();
@@ -475,7 +465,7 @@ namespace EGL {
 				MipmapFilterMode = FilterModeNone;
 				WrappingModeS = WrappingModeRepeat;
 				WrappingModeT = WrappingModeRepeat;
-				InternalFormat = TextureFormatLuminance;				
+				InternalFormat = ColorFormatLuminance;				
 				CombineFuncRGB = TextureModeCombineModulate; 
 				CombineFuncAlpha = TextureModeCombineModulate;
 

@@ -54,7 +54,6 @@ namespace EGL {
 		friend Context;
 
 	public:
-
 		// Create a PBuffer surface
 		Surface(const Config & config, HDC hdc = 0);
 		~Surface();
@@ -77,8 +76,7 @@ namespace EGL {
 		void SetCurrentContext(Context * context);
 		Context * GetCurrentContext();
 
-		U16 * GetColorBuffer();
-		U8 *  GetAlphaBuffer();
+		U8 * GetColorBuffer();
 		U16 * GetDepthBuffer();
 		U32 * GetStencilBuffer();
 
@@ -91,12 +89,17 @@ namespace EGL {
 		HDC GetMemoryDC();
 		HBITMAP GetBitmap();
 
+		ColorFormat GetColorFormat() const;
+
+	private:
+		void ClearColorBuffer16(U16 rgba, U16 mask, const Rect& scissor);
+		void ClearColorBuffer32(U32 rgba, U32 mask, const Rect& scissor);
+
 	private:
 		HDC		m_HDC;				// windows device context handle
 		HBITMAP	m_Bitmap;			// windows bitmap handle
 		Config	m_Config;			// configuration arguments
-		U16 *	m_ColorBuffer;		// pointer to frame buffer base address 5-6-5
-		U8 *	m_AlphaBuffer;		// pointer to alpha buffer
+		U8 *	m_ColorBuffer;		// pointer to frame buffer base address
 		U16 *	m_DepthBuffer;		// pointer to Z-buffer base address
 		U32 *	m_StencilBuffer;	// stencil buffer
 
@@ -104,6 +107,7 @@ namespace EGL {
 		U32		m_Pitch;			// increment top move from y to y + 1
 
 		Context *	m_CurrentContext;
+
 		bool	m_Disposed;			// the surface 
 	};
 
@@ -133,12 +137,8 @@ namespace EGL {
 		return m_Bitmap;
 	}
 
-	inline U16 * Surface :: GetColorBuffer() {
+	inline U8 * Surface :: GetColorBuffer() {
 		return m_ColorBuffer;
-	}
-
-	inline U8 * Surface :: GetAlphaBuffer() {
-		return m_AlphaBuffer;
 	}
 
 	inline U16 * Surface :: GetDepthBuffer() {
@@ -177,6 +177,9 @@ namespace EGL {
 		ClearStencilBuffer(value, mask, GetRect());
 	}
 
+	inline ColorFormat Surface :: GetColorFormat() const {
+		return m_Config.GetColorFormat();
+	}
 }
 
 #endif // ndef EGL_SURFACE_H

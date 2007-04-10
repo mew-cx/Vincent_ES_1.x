@@ -144,12 +144,13 @@ namespace EGL {
 
 	struct SurfaceInfo {
 		U16 *		DepthBuffer;
-		U16 *		ColorBuffer;
+		U8 *		ColorBuffer;
 		U32 *		StencilBuffer;
-		U8 *		AlphaBuffer;
 		U16			Width;
 		U16			Height;
 		I32			Pitch;
+		I32			ColorOffsetShift;
+		ColorFormat	ColorFormat;
 	};
 
 	struct RasterInfo {
