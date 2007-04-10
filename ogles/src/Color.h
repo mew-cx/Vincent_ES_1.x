@@ -44,6 +44,19 @@
 
 namespace EGL {
 
+	// Identifiers for the different color values
+	enum ColorFormat {
+		ColorFormatInvalid = -1,
+		ColorFormatAlpha = 0,				// 8
+		ColorFormatLuminance = 1,			// 8
+		ColorFormatLuminanceAlpha = 2,		// 8-8
+		ColorFormatRGB8 = 3,				// 8-8-8
+		ColorFormatRGBA8 = 4,				// 8-8-8-8
+		ColorFormatRGB565 = 5,				// 5-6-5
+		ColorFormatRGBA4444 = 6,			// 4-4-4-4
+		ColorFormatRGBA5551 = 7				// 5-5-5-1
+	};
+
 	class Color {
 
 	public:
@@ -120,6 +133,10 @@ namespace EGL {
 			return r << 24 | g << 16 | b << 8 | a;
 		}
 
+		inline U32 ConvertToARGB() const {
+			return a << 24 | r << 16 | g << 8 | b;
+		}
+
 		inline U16 ConvertTo5551() const {
 			return (b & 0xF8) >> 2 | (g & 0xF8) << 3 | (r & 0xF8) << 8 | (a & 0x80) >> 7;
 		}
@@ -136,6 +153,15 @@ namespace EGL {
 			U8 g = (rgba & 0x00FF0000) >> 16;
 			U8 b = (rgba & 0x0000FF00) >>  8;
 			U8 a = (rgba & 0x000000FF);
+
+			return Color(r, g, b, a);
+		}
+
+		static inline Color FromARGB(U32 argb) {
+			U8 a = (argb & 0xFF000000) >> 24;
+			U8 r = (argb & 0x00FF0000) >> 16;
+			U8 g = (argb & 0x0000FF00) >>  8;
+			U8 b = (argb & 0x000000FF);
 
 			return Color(r, g, b, a);
 		}

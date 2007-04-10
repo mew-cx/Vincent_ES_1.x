@@ -112,51 +112,51 @@ void Context :: GenTextures(GLsizei n, GLuint *textures) {
 // --------------------------------------------------------------------------
 
 namespace {
-	RasterizerState::TextureFormat TextureFormatFromEnum(GLenum format) {
+	ColorFormat TextureFormatFromEnum(GLenum format) {
 		switch (format) {
 			case GL_ALPHA:
-				return RasterizerState::TextureFormatAlpha;
+				return ColorFormatAlpha;
 
 			case 1:
 			case GL_LUMINANCE:
-				return RasterizerState::TextureFormatLuminance;
+				return ColorFormatLuminance;
 
 			case 2:
 			case GL_LUMINANCE_ALPHA:
-				return RasterizerState::TextureFormatLuminanceAlpha;
+				return ColorFormatLuminanceAlpha;
 
 			case 3:
 			case GL_RGB:
-				return RasterizerState::TextureFormatRGB565;
+				return ColorFormatRGB565;
 
 			case 4:
 			case GL_RGBA:
-				//return RasterizerState::TextureFormatRGBA5551;
-				//return RasterizerState::TextureFormatRGBA4444;
-				return RasterizerState::TextureFormatRGBA8;
+				//return ColorFormatRGBA5551;
+				//return ColorFormatRGBA4444;
+				return ColorFormatRGBA8;
 
 			default:
-				return RasterizerState::TextureFormatInvalid;
+				return ColorFormatInvalid;
 		}
 	}
 
-	GLenum InternalTypeForInternalFormat(RasterizerState::TextureFormat format) {
+	GLenum InternalTypeForInternalFormat(ColorFormat format) {
 		switch (format) {
-			case RasterizerState::TextureFormatAlpha:
-			case RasterizerState::TextureFormatLuminance:
-			case RasterizerState::TextureFormatLuminanceAlpha:
-			case RasterizerState::TextureFormatRGB8:
-			case RasterizerState::TextureFormatRGBA8:
+			case ColorFormatAlpha:
+			case ColorFormatLuminance:
+			case ColorFormatLuminanceAlpha:
+			case ColorFormatRGB8:
+			case ColorFormatRGBA8:
 			default:
 				return GL_UNSIGNED_BYTE;
 
-			case RasterizerState::TextureFormatRGB565:
+			case ColorFormatRGB565:
 				return GL_UNSIGNED_SHORT_5_6_5;
 
-			case RasterizerState::TextureFormatRGBA5551:
+			case ColorFormatRGBA5551:
 				return GL_UNSIGNED_SHORT_5_5_5_1;
 
-			case RasterizerState::TextureFormatRGBA4444:
+			case ColorFormatRGBA4444:
 				return GL_UNSIGNED_SHORT_4_4_4_4;
 		}
 	}
@@ -279,6 +279,7 @@ namespace {
 		}
 	};
 
+	// these converters use OpenGL standard byte order for 32-bit RGBA
 	struct RGBA2Color {
 		enum {
 			baseIncr = 4
@@ -303,6 +304,31 @@ namespace {
 			*ptr++ = value.G();
 			*ptr++ = value.B();
 			*ptr++ = value.A();
+		}
+	};
+
+	// these converters use platform byte order for 32-bit RGBA
+	struct RGBA82Color {
+		enum {
+			baseIncr = 4
+		};
+
+		Color operator()(const U8 * &ptr) {
+			const U32 * u32Ptr = reinterpret_cast<const U32 *>(ptr);
+			ptr += baseIncr;
+			return Color::FromRGBA(*u32Ptr);
+		}
+	};
+
+	struct Color2RGBA8 {
+		enum {
+			baseIncr = 4
+		};
+
+		void operator()(U8 * &ptr, const Color& value) {
+			U32 * u32Ptr = reinterpret_cast<U32 *>(ptr);
+			ptr += baseIncr;
+			*u32Ptr = value.ConvertToRGBA();
 		}
 	};
 
@@ -469,39 +495,6 @@ namespace {
 		} while (--copyHeight);
 	}
 
-	template<class DstAccessor> 
-	void CopySurfacePixels(Surface * src, 
-						   U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
-					       void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
-					       const DstAccessor&, size_t dstAlignment) {
-
-		DstAccessor dstAccessor;
-		size_t dstPixelSize = DstAccessor::baseIncr;
-		U32 dstBytesWidth = Align(dstWidth * dstPixelSize, dstAlignment);
-		U32 dstGap = dstBytesWidth - copyWidth * dstPixelSize;	// how many bytes to skip for next line
-
-		U32 srcWidth = src->GetWidth();
-		U32 srcHeight = src->GetHeight();
-		U32 srcGap = srcWidth - copyWidth;
-
-		const U16 * srcPtr = src->GetColorBuffer() + srcX + srcY * srcWidth;
-		const U8 * alphaPtr = src->GetAlphaBuffer() + srcX + srcY * srcWidth;
-		U8 * dstPtr = reinterpret_cast<U8 *>(dst) + dstX * dstPixelSize + dstY * dstBytesWidth;
-
-		do {
-			U32 span = copyWidth;
-
-			do {
-				Color color = Color::From565A(*srcPtr++, *alphaPtr++);
-				dstAccessor(dstPtr, color);
-			} while (--span);
-
-			srcPtr += srcGap;
-			alphaPtr += srcGap;
-			dstPtr += dstGap;
-		} while (--copyHeight);
-	}
-
 	// -------------------------------------------------------------------------
 	// Given two bitmaps src and dst, where src has dimensions 
 	// (srcWidth * srcHeight) and dst has dimensions (dstWidth * dstHeight),
@@ -514,7 +507,7 @@ namespace {
 	void CopyPixels(const void * src, U32 srcWidth, U32 srcHeight, 
 					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
 					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
-					RasterizerState::TextureFormat format, GLenum srcType, GLenum dstType,
+					ColorFormat format, GLenum srcType, GLenum dstType,
 					size_t srcAlignment, size_t dstAlignment) {
 
 		// ---------------------------------------------------------------------
@@ -553,19 +546,19 @@ namespace {
 
 			
 		switch (format) {
-			case RasterizerState::TextureFormatAlpha:
-			case RasterizerState::TextureFormatLuminance:
+			case ColorFormatAlpha:
+			case ColorFormatLuminance:
 				CopyPixels(reinterpret_cast<const U8 *>(src), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
 					reinterpret_cast<U8 *>(dst), dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
 				break;
 
-			case RasterizerState::TextureFormatLuminanceAlpha:
+			case ColorFormatLuminanceAlpha:
 				CopyPixels(reinterpret_cast<const U16 *>(src), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
 					reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY, srcAlignment, dstAlignment);
 				break;
 
-			case RasterizerState::TextureFormatRGB565:
-			case RasterizerState::TextureFormatRGB8:
+			case ColorFormatRGB565:
+			case ColorFormatRGB8:
 				switch (srcType) {
 					case GL_UNSIGNED_BYTE:
 						switch (dstType) {
@@ -601,9 +594,9 @@ namespace {
 
 				break;
 
-			case RasterizerState::TextureFormatRGBA5551:
-			case RasterizerState::TextureFormatRGBA4444:
-			case RasterizerState::TextureFormatRGBA8:
+			case ColorFormatRGBA5551:
+			case ColorFormatRGBA4444:
+			case ColorFormatRGBA8:
 				switch (srcType) {
 					case GL_UNSIGNED_BYTE:
 						switch (dstType) {
@@ -681,7 +674,7 @@ namespace {
 	bool CopySurfacePixels(Surface * src, 
 					U32 srcX, U32 srcY, U32 copyWidth, U32 copyHeight,
 					void * dst, U32 dstWidth, U32 dstHeight, U32 dstX, U32 dstY,
-					RasterizerState::TextureFormat format, GLenum dstType,
+					ColorFormat format, GLenum dstType,
 					size_t dstAlignment) {
 
 		U32 srcWidth = src->GetWidth();
@@ -721,90 +714,247 @@ namespace {
 		// at this point we know that the copy rectangle is valid and non-empty
 		// ---------------------------------------------------------------------
 
-		switch (format) {
-			case RasterizerState::TextureFormatRGBA5551:
-			case RasterizerState::TextureFormatRGBA4444:
-			case RasterizerState::TextureFormatRGBA8:
-				switch (dstType) {
-				case GL_UNSIGNED_BYTE:
-					CopySurfacePixels(src, srcX, srcY,
-						copyWidth, copyHeight,
-						dst, dstWidth, dstHeight, dstX, dstY,
-						Color2RGBA(), dstAlignment);
-					return true;
+		switch (src->GetColorFormat()) {
+		case ColorFormatRGB565:
+			switch (format) {
+			case ColorFormatLuminance:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGB5652Color(), Color2Luminance(), 2, dstAlignment);
 
-				case GL_UNSIGNED_SHORT_5_5_5_1:
-					CopySurfacePixels(src, srcX, srcY,
-						copyWidth, copyHeight,
-						dst, dstWidth, dstHeight, dstX, dstY,
-						Color2RGBA5551(), dstAlignment);
-					return true;
+				return true;
 
-				case GL_UNSIGNED_SHORT_4_4_4_4:
-					CopySurfacePixels(src, srcX, srcY,
-						copyWidth, copyHeight,
-						dst, dstWidth, dstHeight, dstX, dstY,
-						Color2RGBA4444(), dstAlignment);
-					return true;
+			case ColorFormatRGB565:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGB5652Color(), Color2RGB565(), 2, dstAlignment);
 
-				}
+				return true;
 
-				return false;
+			case ColorFormatRGB8:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGB5652Color(), Color2RGBA(), 2, dstAlignment);
 
-			case RasterizerState::TextureFormatRGB565:
-			case RasterizerState::TextureFormatRGB8:
-				switch (dstType) {
-				case GL_UNSIGNED_BYTE:
-					CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
-						copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
-						RGB5652Color(), Color2RGB(), 1, dstAlignment);
+				return true;
 
-					return true;
+			case ColorFormatLuminanceAlpha:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGB5652Color(), Color2LuminanceAlpha(), 2, dstAlignment);
 
-				case GL_UNSIGNED_SHORT_5_6_5:
-					CopyPixels(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, copyWidth, copyHeight,
-						reinterpret_cast<U16 *>(dst), dstWidth, dstHeight, dstX, dstY, 1, dstAlignment);
+				return true;
 
-					return true;
-				}
+			case ColorFormatRGBA4444:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGB5652Color(), Color2RGBA4444(), 2, dstAlignment);
 
-				return false;
+				return true;
 
-			case RasterizerState::TextureFormatLuminance:
-				switch (dstType) {
-				case GL_UNSIGNED_BYTE:
-					CopySurfacePixels(src, srcX, srcY,
-						copyWidth, copyHeight,
-						dst, dstWidth, dstHeight, dstX, dstY,
-						Color2Luminance(), dstAlignment);
-					return true;
-				}
+			case ColorFormatRGBA5551:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGB5652Color(), Color2RGBA5551(), 2, dstAlignment);
 
-				return false;
+				return true;
 
-			case RasterizerState::TextureFormatAlpha:
-				switch (dstType) {
-				case GL_UNSIGNED_BYTE:
-					CopySurfacePixels(src, srcX, srcY,
-						copyWidth, copyHeight,
-						dst, dstWidth, dstHeight, dstX, dstY,
-						Color2Alpha(), dstAlignment);
-					return true;
-				}
+			case ColorFormatRGBA8:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGB5652Color(), Color2RGBA(), 2, dstAlignment);
 
-				return false;
+				return true;
 
-			case RasterizerState::TextureFormatLuminanceAlpha:
-				switch (dstType) {
-				case GL_UNSIGNED_BYTE:
-					CopySurfacePixels(src, srcX, srcY,
-						copyWidth, copyHeight,
-						dst, dstWidth, dstHeight, dstX, dstY,
-						Color2LuminanceAlpha(), dstAlignment);
-					return true;
-				}
+			}
 
-				return false;
+			break;
+
+		case ColorFormatRGBA4444:
+			switch (format) {
+			case ColorFormatLuminance:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA44442Color(), Color2Luminance(), 2, dstAlignment);
+
+				return true;
+
+			case ColorFormatAlpha:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA44442Color(), Color2Alpha(), 2, dstAlignment);
+
+				return true;
+
+			case ColorFormatLuminanceAlpha:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA44442Color(), Color2LuminanceAlpha(), 2, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGB565:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA44442Color(), Color2RGB565(), 2, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGB8:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA44442Color(), Color2RGB(), 2, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGBA4444:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA44442Color(), Color2RGBA4444(), 2, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGBA5551:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA44442Color(), Color2RGBA5551(), 2, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGBA8:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA44442Color(), Color2RGBA(), 2, dstAlignment);
+
+				return true;
+
+			}
+
+			break;
+
+		case ColorFormatRGBA5551:
+			switch (format) {
+			case ColorFormatLuminance:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA55512Color(), Color2Luminance(), 2, dstAlignment);
+
+				return true;
+
+			case ColorFormatAlpha:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA55512Color(), Color2Alpha(), 2, dstAlignment);
+
+				return true;
+
+			case ColorFormatLuminanceAlpha:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA55512Color(), Color2LuminanceAlpha(), 2, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGB565:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA55512Color(), Color2RGB565(), 2, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGB8:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA55512Color(), Color2RGB(), 2, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGBA4444:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA55512Color(), Color2RGBA4444(), 2, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGBA5551:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA55512Color(), Color2RGBA5551(), 2, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGBA8:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA55512Color(), Color2RGBA(), 2, dstAlignment);
+
+				return true;
+
+			}
+
+			break;
+
+		case ColorFormatRGBA8:
+			switch (format) {
+			case ColorFormatLuminance:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA82Color(), Color2Luminance(), 4, dstAlignment);
+
+				return true;
+
+			case ColorFormatAlpha:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA82Color(), Color2Alpha(), 4, dstAlignment);
+
+				return true;
+
+			case ColorFormatLuminanceAlpha:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA82Color(), Color2LuminanceAlpha(), 4, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGB565:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA82Color(), Color2RGB565(), 4, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGB8:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA82Color(), Color2RGB(), 4, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGBA4444:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA82Color(), Color2RGBA4444(), 4, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGBA5551:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA82Color(), Color2RGBA5551(), 4, dstAlignment);
+
+				return true;
+
+			case ColorFormatRGBA8:
+				CopyPixelsA(src->GetColorBuffer(), srcWidth, srcHeight, srcX, srcY, 
+					copyWidth, copyHeight, dst, dstWidth, dstHeight, dstX, dstY,
+					RGBA82Color(), Color2RGBA(), 4, dstAlignment);
+
+				return true;
+
+			}
+
+			break;
 		}
 
 		return false;
@@ -819,35 +969,35 @@ namespace {
 	//	externalFormat	-	the external bitmap format
 	//	type			-	the external bitmap type
 	// -------------------------------------------------------------------------
-	bool ValidateFormats(RasterizerState::TextureFormat internalFormat,
-		RasterizerState::TextureFormat externalFormat, GLenum type) {
-		if (internalFormat == RasterizerState::TextureFormatInvalid || 
-			externalFormat == RasterizerState::TextureFormatInvalid || 
+	bool ValidateFormats(ColorFormat internalFormat,
+		ColorFormat externalFormat, GLenum type) {
+		if (internalFormat == ColorFormatInvalid || 
+			externalFormat == ColorFormatInvalid || 
 			internalFormat != externalFormat) {
 			return false;
 		}
 
 		switch (internalFormat) {
-			case RasterizerState::TextureFormatAlpha:
-			case RasterizerState::TextureFormatLuminance:
-			case RasterizerState::TextureFormatLuminanceAlpha:
+			case ColorFormatAlpha:
+			case ColorFormatLuminance:
+			case ColorFormatLuminanceAlpha:
 				if (type != GL_UNSIGNED_BYTE) {
 					return false;
 				}
 
 				break;
 
-			case RasterizerState::TextureFormatRGB565:
-			case RasterizerState::TextureFormatRGB8:
+			case ColorFormatRGB565:
+			case ColorFormatRGB8:
 				if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT_5_6_5) {
 					return false;
 				}
 
 				break;
 
-			case RasterizerState::TextureFormatRGBA5551:
-			case RasterizerState::TextureFormatRGBA4444:
-			case RasterizerState::TextureFormatRGBA8:
+			case ColorFormatRGBA5551:
+			case ColorFormatRGBA4444:
+			case ColorFormatRGBA8:
 				if (type != GL_UNSIGNED_BYTE &&
 					type != GL_UNSIGNED_SHORT_4_4_4_4 &&
 					type != GL_UNSIGNED_SHORT_5_5_5_1) {
@@ -861,23 +1011,23 @@ namespace {
 		return true;
 	}
 
-	GLenum TypeForInternalFormat(RasterizerState::TextureFormat format) {
+	GLenum TypeForInternalFormat(ColorFormat format) {
 		switch (format) {
 			default:
-			case RasterizerState::TextureFormatAlpha:
-			case RasterizerState::TextureFormatLuminance:
-			case RasterizerState::TextureFormatLuminanceAlpha:
-			case RasterizerState::TextureFormatRGB8:
-			case RasterizerState::TextureFormatRGBA8:
+			case ColorFormatAlpha:
+			case ColorFormatLuminance:
+			case ColorFormatLuminanceAlpha:
+			case ColorFormatRGB8:
+			case ColorFormatRGBA8:
 				return GL_UNSIGNED_BYTE;
 
-			case RasterizerState::TextureFormatRGB565:
+			case ColorFormatRGB565:
 				return GL_UNSIGNED_SHORT_5_6_5;
 
-			case RasterizerState::TextureFormatRGBA5551:
+			case ColorFormatRGBA5551:
 				return GL_UNSIGNED_SHORT_5_5_5_1;
 
-			case RasterizerState::TextureFormatRGBA4444:
+			case ColorFormatRGBA4444:
 				return GL_UNSIGNED_SHORT_4_4_4_4;
 
 		}
@@ -1204,11 +1354,11 @@ void Context :: TexImage2D(GLenum target, GLint level, GLint internalformat,
 		return;
 	}
 
-	RasterizerState::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
-	RasterizerState::TextureFormat externalFormat = TextureFormatFromEnum(format);
+	ColorFormat internalFormat = TextureFormatFromEnum(internalformat);
+	ColorFormat externalFormat = TextureFormatFromEnum(format);
 
-	if (internalFormat == RasterizerState::TextureFormatInvalid ||
-		externalFormat == RasterizerState::TextureFormatInvalid) {
+	if (internalFormat == ColorFormatInvalid ||
+		externalFormat == ColorFormatInvalid) {
 		RecordError(GL_INVALID_ENUM);
 		return;
 	}
@@ -1260,9 +1410,9 @@ void Context :: TexSubImage2D(GLenum target, GLint level,
 		return;
 	}
 
-	RasterizerState::TextureFormat externalFormat = TextureFormatFromEnum(format);
+	ColorFormat externalFormat = TextureFormatFromEnum(format);
 
-	if (externalFormat == RasterizerState::TextureFormatInvalid) {
+	if (externalFormat == ColorFormatInvalid) {
 		RecordError(GL_INVALID_ENUM);
 		return;
 	}
@@ -1282,7 +1432,7 @@ void Context :: TexSubImage2D(GLenum target, GLint level,
 		return;
 	}
 
-	RasterizerState::TextureFormat internalFormat = texture->GetInternalFormat();
+	ColorFormat internalFormat = texture->GetInternalFormat();
 
 	if (!ValidateFormats(internalFormat, externalFormat, type)) {
 		RecordError(GL_INVALID_OPERATION);
@@ -1315,9 +1465,9 @@ void Context :: CopyTexImage2D(GLenum target, GLint level, GLenum internalformat
 		return;
 	}
 
-	RasterizerState::TextureFormat internalFormat = TextureFormatFromEnum(internalformat);
+	ColorFormat internalFormat = TextureFormatFromEnum(internalformat);
 
-	if (internalFormat == RasterizerState::TextureFormatInvalid) {
+	if (internalFormat == ColorFormatInvalid) {
 		RecordError(GL_INVALID_ENUM);
 		return;
 	}
@@ -1379,10 +1529,10 @@ void Context :: CopyTexSubImage2D(GLenum target, GLint level,
 		return;
 	}
 
-	RasterizerState::TextureFormat internalFormat = texture->GetInternalFormat();
+	ColorFormat internalFormat = texture->GetInternalFormat();
 
-	if (!ValidateFormats(internalFormat, RasterizerState::TextureFormatRGB565, GL_UNSIGNED_SHORT_5_6_5) &&
-		!ValidateFormats(internalFormat, RasterizerState::TextureFormatRGBA8, GL_UNSIGNED_BYTE)) {
+	if (!ValidateFormats(internalFormat, ColorFormatRGB565, GL_UNSIGNED_SHORT_5_6_5) &&
+		!ValidateFormats(internalFormat, ColorFormatRGBA8, GL_UNSIGNED_BYTE)) {
 		RecordError(GL_INVALID_OPERATION);
 		return;
 	}
@@ -1813,7 +1963,8 @@ void Context :: ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 		return;
 	}
 
-	if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT_5_6_5) {
+	if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT_5_6_5 &&
+		type != GL_UNSIGNED_SHORT_4_4_4_4 && type != GL_UNSIGNED_SHORT_5_5_5_1) {
 		RecordError(GL_INVALID_ENUM);
 		return;
 	}
@@ -1823,13 +1974,13 @@ void Context :: ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 		return;
 	}
 
-	if (format == GL_RGBA && type != GL_UNSIGNED_BYTE ||
-		format == GL_RGB && type != GL_UNSIGNED_SHORT_5_6_5) {
+	if (format == GL_RGBA && type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT_4_4_4_4 && type != GL_UNSIGNED_SHORT_5_5_5_1 ||
+		format == GL_RGB && type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT_5_6_5) {
 		RecordError(GL_INVALID_OPERATION);
 		return;
 	}
 
-	RasterizerState::TextureFormat externalFormat = TextureFormatFromEnum(format);
+	ColorFormat externalFormat = TextureFormatFromEnum(format);
 
 	Surface * readSurface = GetReadSurface();
 
@@ -1924,7 +2075,7 @@ void Context :: UpdateMipmaps(void) {
 		size_t height = inner->GetHeight();
 
 		switch (outer->GetInternalFormat()) {
-		case RasterizerState::TextureFormatAlpha:
+		case ColorFormatAlpha:
 			{
 				U8 * outerBase = reinterpret_cast<U8 *>(outer->GetData());
 				U8 * innerBase = reinterpret_cast<U8 *>(inner->GetData());
@@ -1943,7 +2094,7 @@ void Context :: UpdateMipmaps(void) {
 			}
 			break;
 
-		case RasterizerState::TextureFormatLuminance:
+		case ColorFormatLuminance:
 			{
 				U8 * outerBase = reinterpret_cast<U8 *>(outer->GetData());
 				U8 * innerBase = reinterpret_cast<U8 *>(inner->GetData());
@@ -1962,7 +2113,7 @@ void Context :: UpdateMipmaps(void) {
 			}
 			break;
 
-		case RasterizerState::TextureFormatLuminanceAlpha:
+		case ColorFormatLuminanceAlpha:
 			{
 				U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 				U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -1981,7 +2132,7 @@ void Context :: UpdateMipmaps(void) {
 			}
 			break;
 
-		case RasterizerState::TextureFormatRGB565:
+		case ColorFormatRGB565:
 			{
 				U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 				U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -2000,7 +2151,7 @@ void Context :: UpdateMipmaps(void) {
 			}
 			break;
 
-		case RasterizerState::TextureFormatRGBA5551:
+		case ColorFormatRGBA5551:
 			{
 				U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 				U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -2019,7 +2170,7 @@ void Context :: UpdateMipmaps(void) {
 			}
 			break;
 
-		case RasterizerState::TextureFormatRGBA4444:
+		case ColorFormatRGBA4444:
 			{
 				U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 				U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -2058,7 +2209,7 @@ void Context :: UpdateMipmaps(void) {
 			size_t height = inner->GetHeight();
 
 			switch (outer->GetInternalFormat()) {
-			case RasterizerState::TextureFormatAlpha:
+			case ColorFormatAlpha:
 				{
 					U8 * outerBase = reinterpret_cast<U8 *>(outer->GetData());
 					U8 * innerBase = reinterpret_cast<U8 *>(inner->GetData());
@@ -2075,7 +2226,7 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
-			case RasterizerState::TextureFormatLuminance:
+			case ColorFormatLuminance:
 				{
 					U8 * outerBase = reinterpret_cast<U8 *>(outer->GetData());
 					U8 * innerBase = reinterpret_cast<U8 *>(inner->GetData());
@@ -2092,7 +2243,7 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
-			case RasterizerState::TextureFormatLuminanceAlpha:
+			case ColorFormatLuminanceAlpha:
 				{
 					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -2109,7 +2260,7 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
-			case RasterizerState::TextureFormatRGB565:
+			case ColorFormatRGB565:
 				{
 					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -2126,7 +2277,7 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
-			case RasterizerState::TextureFormatRGBA5551:
+			case ColorFormatRGBA5551:
 				{
 					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -2143,7 +2294,7 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
-			case RasterizerState::TextureFormatRGBA4444:
+			case ColorFormatRGBA4444:
 				{
 					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -2179,7 +2330,7 @@ void Context :: UpdateMipmaps(void) {
 			size_t height = inner->GetHeight();
 
 			switch (outer->GetInternalFormat()) {
-			case RasterizerState::TextureFormatAlpha:
+			case ColorFormatAlpha:
 				{
 					U8 * outerBase = reinterpret_cast<U8 *>(outer->GetData());
 					U8 * innerBase = reinterpret_cast<U8 *>(inner->GetData());
@@ -2196,7 +2347,7 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
-			case RasterizerState::TextureFormatLuminance:
+			case ColorFormatLuminance:
 				{
 					U8 * outerBase = reinterpret_cast<U8 *>(outer->GetData());
 					U8 * innerBase = reinterpret_cast<U8 *>(inner->GetData());
@@ -2213,7 +2364,7 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
-			case RasterizerState::TextureFormatLuminanceAlpha:
+			case ColorFormatLuminanceAlpha:
 				{
 					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -2230,7 +2381,7 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
-			case RasterizerState::TextureFormatRGB565:
+			case ColorFormatRGB565:
 				{
 					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -2247,7 +2398,7 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
-			case RasterizerState::TextureFormatRGBA5551:
+			case ColorFormatRGBA5551:
 				{
 					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());
@@ -2264,7 +2415,7 @@ void Context :: UpdateMipmaps(void) {
 				}
 				break;
 
-			case RasterizerState::TextureFormatRGBA4444:
+			case ColorFormatRGBA4444:
 				{
 					U16 * outerBase = reinterpret_cast<U16 *>(outer->GetData());
 					U16 * innerBase = reinterpret_cast<U16 *>(inner->GetData());

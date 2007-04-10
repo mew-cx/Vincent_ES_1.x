@@ -49,16 +49,113 @@ namespace {
     const EGL::Config s_AllConfigurations[] = {
    	    // ----------------------------------------------------------------------
 	    // Initial default configuration 
+	    // RGBA4444, as PBuffer or Windows surface
+	    // ----------------------------------------------------------------------
+	    Config(
+			ColorFormatRGBA4444,
+		    16,				//	EGLint	bufferSize,
+		    4,				//	EGLint	redSize,
+		    4,				//	EGLint	greenSize,
+		    4,				//	EGLint	blueSize,
+		    4,				//	EGLint	alphaSize,
+		    EGL_NONE,		//	EGLint	configCaveat,
+		    1,				//	EGLint	configID,
+		    16,				//	EGLint	depthSize,
+		    0,				//	EGLint	level,
+		    1024,			//	EGLint	maxPBufferWidth,
+		    1024,			//	EGLint	maxPBufferHeight,
+		    1024 * 1024,	//	EGLint	mxPBufferPixels,
+		    EGL_FALSE,		//	EGLint	nativeRenderable,
+		    0,				//	EGLint	nativeVisualID,
+		    EGL_NONE,		//	EGLint	nativeVisualType,
+		    0,				//	EGLint	sampleBuffers,
+		    0,				//	EGLint	samples,
+		    32,				//	EGLint	stencilSize,
+		    EGL_PBUFFER_BIT | EGL_WINDOW_BIT,//	EGLint	surfaceType,
+		    EGL_NONE,		//	EGLint	transparentType,
+		    0,				//	EGLint	transparentRedValue,
+		    0,				//	EGLint	transparentGreenValue,
+		    0,				//	EGLint	transparentBlueValue,
+		    240,			//  EGLint	width,
+		    320				//  EGLint	height
+	    ),
+   	    // ----------------------------------------------------------------------
+	    // Initial default configuration 
+	    // RGBA5551, as PBuffer or Windows surface
+	    // ----------------------------------------------------------------------
+	    Config(
+			ColorFormatRGBA5551,
+		    16,				//	EGLint	bufferSize,
+		    5,				//	EGLint	redSize,
+		    5,				//	EGLint	greenSize,
+		    5,				//	EGLint	blueSize,
+		    1,				//	EGLint	alphaSize,
+		    EGL_NONE,		//	EGLint	configCaveat,
+		    2,				//	EGLint	configID,
+		    16,				//	EGLint	depthSize,
+		    0,				//	EGLint	level,
+		    1024,			//	EGLint	maxPBufferWidth,
+		    1024,			//	EGLint	maxPBufferHeight,
+		    1024 * 1024,	//	EGLint	mxPBufferPixels,
+		    EGL_FALSE,		//	EGLint	nativeRenderable,
+		    0,				//	EGLint	nativeVisualID,
+		    EGL_NONE,		//	EGLint	nativeVisualType,
+		    0,				//	EGLint	sampleBuffers,
+		    0,				//	EGLint	samples,
+		    32,				//	EGLint	stencilSize,
+		    EGL_PBUFFER_BIT | EGL_WINDOW_BIT,//	EGLint	surfaceType,
+		    EGL_NONE,		//	EGLint	transparentType,
+		    0,				//	EGLint	transparentRedValue,
+		    0,				//	EGLint	transparentGreenValue,
+		    0,				//	EGLint	transparentBlueValue,
+		    240,			//  EGLint	width,
+		    320				//  EGLint	height
+	    ),
+   	    // ----------------------------------------------------------------------
+	    // Initial default configuration 
 	    // RGB 565, as PBuffer or Windows surface
 	    // ----------------------------------------------------------------------
 	    Config(
-		    32,				//	EGLint	bufferSize,
+			ColorFormatRGB565,
+		    16,				//	EGLint	bufferSize,
 		    5,				//	EGLint	redSize,
 		    6,				//	EGLint	greenSize,
 		    5,				//	EGLint	blueSize,
+		    0,				//	EGLint	alphaSize,
+		    EGL_NONE,		//	EGLint	configCaveat,
+		    3,				//	EGLint	configID,
+		    16,				//	EGLint	depthSize,
+		    0,				//	EGLint	level,
+		    1024,			//	EGLint	maxPBufferWidth,
+		    1024,			//	EGLint	maxPBufferHeight,
+		    1024 * 1024,	//	EGLint	mxPBufferPixels,
+		    EGL_FALSE,		//	EGLint	nativeRenderable,
+		    0,				//	EGLint	nativeVisualID,
+		    EGL_NONE,		//	EGLint	nativeVisualType,
+		    0,				//	EGLint	sampleBuffers,
+		    0,				//	EGLint	samples,
+		    32,				//	EGLint	stencilSize,
+		    EGL_PBUFFER_BIT | EGL_WINDOW_BIT,//	EGLint	surfaceType,
+		    EGL_NONE,		//	EGLint	transparentType,
+		    0,				//	EGLint	transparentRedValue,
+		    0,				//	EGLint	transparentGreenValue,
+		    0,				//	EGLint	transparentBlueValue,
+		    240,			//  EGLint	width,
+		    320				//  EGLint	height
+	    ),
+   	    // ----------------------------------------------------------------------
+	    // Initial 32-bit framebuffer configuration 
+	    // RGBA 8888, as PBuffer or Windows surface
+	    // ----------------------------------------------------------------------
+	    Config(
+			ColorFormatRGBA8,
+		    32,				//	EGLint	bufferSize,
+		    8,				//	EGLint	redSize,
+		    8,				//	EGLint	greenSize,
+		    8,				//	EGLint	blueSize,
 		    8,				//	EGLint	alphaSize,
-		    EGL_SLOW_CONFIG,//	EGLint	configCaveat,
-		    1,				//	EGLint	configID,
+		    EGL_NONE,		//	EGLint	configCaveat,
+		    4,				//	EGLint	configID,
 		    16,				//	EGLint	depthSize,
 		    0,				//	EGLint	level,
 		    1024,			//	EGLint	maxPBufferWidth,
@@ -81,35 +178,37 @@ namespace {
     };
 
     // total number of supported configurations
-    const int s_NumConfigurations = 1;
+    const int s_NumConfigurations = 4;
 };
 
 Config :: Config(
-	EGLint	bufferSize,
-	EGLint	redSize,
-	EGLint	greenSize,
-	EGLint	blueSize,
-	EGLint	alphaSize,
-	EGLint	configCaveat,
-	EGLint	configID,
-	EGLint	depthSize,
-	EGLint	level,
-	EGLint	maxPBufferWidth,
-	EGLint	maxPBufferHeight,
-	EGLint	mxPBufferPixels,
-	EGLint	nativeRenderable,
-	EGLint	nativeVisualID,
-	EGLint	nativeVisualType,
-	EGLint	sampleBuffers,
-	EGLint	samples,
-	EGLint	stencilSize,
-	EGLint	surfaceType,
-	EGLint	transparentType,
-	EGLint	transparentRedValue,
-	EGLint	transparentGreenValue,
-	EGLint	transparentBlueValue,
-	EGLint	width,
-	EGLint	height):
+	ColorFormat	colorFormat,
+	EGLint		bufferSize,
+	EGLint		redSize,
+	EGLint		greenSize,
+	EGLint		blueSize,
+	EGLint		alphaSize,
+	EGLint		configCaveat,
+	EGLint		configID,
+	EGLint		depthSize,
+	EGLint		level,
+	EGLint		maxPBufferWidth,
+	EGLint		maxPBufferHeight,
+	EGLint		mxPBufferPixels,
+	EGLint		nativeRenderable,
+	EGLint		nativeVisualID,
+	EGLint		nativeVisualType,
+	EGLint		sampleBuffers,
+	EGLint		samples,
+	EGLint		stencilSize,
+	EGLint		surfaceType,
+	EGLint		transparentType,
+	EGLint		transparentRedValue,
+	EGLint		transparentGreenValue,
+	EGLint		transparentBlueValue,
+	EGLint		width,
+	EGLint		height):
+	m_ColorFormat(colorFormat),
 	m_BufferSize(bufferSize),
 	m_RedSize(redSize),
 	m_GreenSize(greenSize),
@@ -140,6 +239,7 @@ Config :: Config(
 
 
 Config :: Config (const Config &other, const EGLint * attribList, const EGLint * validAttributes) {
+	m_ColorFormat			= other.m_ColorFormat;
 	m_BufferSize			= other.m_BufferSize;
 	m_RedSize				= other.m_RedSize;
 	m_GreenSize				= other.m_GreenSize;
@@ -179,6 +279,7 @@ Config :: Config (const Config &other, const EGLint * attribList, const EGLint *
 
 
 Config & Config :: operator=(const Config & other) {
+	m_ColorFormat			= other.m_ColorFormat;
 	m_BufferSize			= other.m_BufferSize;
 	m_RedSize				= other.m_RedSize;
 	m_GreenSize				= other.m_GreenSize;
@@ -397,6 +498,159 @@ void Config :: SetConfigAttrib(EGLint attribute, EGLint value) {
 	}
 }
 
+bool Config :: Matches(const EGLint * attribList) const {
+	if (!attribList) {
+		// special case if NULL list is passed in
+		return true;
+	}
+
+	while (*attribList != EGL_NONE) {
+		EGLint attribute = *attribList++;
+		EGLint value = *attribList++;
+
+		switch (attribute) {
+		case EGL_BUFFER_SIZE:
+			if (m_BufferSize > value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_ALPHA_SIZE:
+			if (m_AlphaSize < value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_BLUE_SIZE:
+			if (m_BlueSize < value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_GREEN_SIZE:
+			if (m_GreenSize < value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_RED_SIZE:
+			if (m_RedSize < value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_DEPTH_SIZE:
+			if (m_DepthSize > value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_STENCIL_SIZE:
+			if (m_StencilSize > value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_CONFIG_CAVEAT:
+			if (m_ConfigCaveat < value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_CONFIG_ID:
+			if (m_ConfigID != value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_LEVEL:
+			if (m_Level != value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_NATIVE_RENDERABLE:
+			if (m_NativeRenderable != value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_NATIVE_VISUAL_TYPE:
+			if (m_NativeVisualType != value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_SAMPLES:
+			if (m_Samples > value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_SAMPLE_BUFFERS:
+			if (m_SampleBuffers > value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_SURFACE_TYPE:
+			if (!(m_SurfaceType & value)) {
+				return false;
+			}
+
+			break;
+
+		case EGL_TRANSPARENT_TYPE:
+			if (m_TransparentType != value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_TRANSPARENT_BLUE_VALUE:
+			if (m_TransparentBlueValue != value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_TRANSPARENT_GREEN_VALUE:
+			if (m_TransparentGreenValue != value) {
+				return false;
+			}
+
+			break;
+
+		case EGL_TRANSPARENT_RED_VALUE:
+			if (m_TransparentRedValue != value) {
+				return false;
+			}
+
+			break;
+
+		default:
+			// should also flag a bad attribute value
+			return false;
+		}
+	}
+
+	// no more criteria; we passed the test
+	return true;
+}
 
 bool Config :: IsValidAttribute(const EGLint * validAttributes, EGLint attribute) {
 	if (validAttributes == 0) {
@@ -408,7 +662,7 @@ bool Config :: IsValidAttribute(const EGLint * validAttributes, EGLint attribute
 			return true;
 		}
 
-		validAttributes += 2;
+		validAttributes += 1;
 	}
 
 	return false;
@@ -416,31 +670,36 @@ bool Config :: IsValidAttribute(const EGLint * validAttributes, EGLint attribute
 
 
 EGLBoolean Config :: GetConfigs(EGLConfig * result, EGLint configSize, EGLint * numConfig) {
+	static const EGLint empty_attribs[] = { EGL_NONE };
 
-	if (result == 0) {
-		// special case: inquire number of configurations available
-		*numConfig = s_NumConfigurations;
-		return EGL_TRUE;
-	}
-
-	if (configSize > s_NumConfigurations) {
-		configSize = s_NumConfigurations;
-	}
-
-	for (int index = 0; index < configSize; ++index) {
-		result[index] = &s_AllConfigurations[index];
-	}
-
-	*numConfig = configSize;
-	return EGL_TRUE;
+	return ChooseConfig(empty_attribs, result, configSize, numConfig);
 }
 
 
 EGLBoolean Config :: ChooseConfig(const EGLint * attribList, EGLConfig * result, EGLint configSize, EGLint * numConfig) {
-	// for now, as we only have one configuration available, just return that.
-	// to be a correct implementation, we will have at least to verify that
-	// the attributes specified match that.
-	return GetConfigs(result, configSize, numConfig);
+	EGLint matchingConfigs = 0;
+
+	if (result == 0) {
+		// special case: inquire number of matching configurations available
+		for (int index = 0; index < s_NumConfigurations; ++index) {
+			if (s_AllConfigurations[index].Matches(attribList)) {
+				++matchingConfigs;
+			}
+		}
+	} else {
+		for (int index = 0; index < s_NumConfigurations; ++index) {
+			if (configSize <= matchingConfigs) {
+				break;
+			}
+
+			if (s_AllConfigurations[index].Matches(attribList)) {
+				result[matchingConfigs++] = &s_AllConfigurations[index];
+			}
+		}
+	}
+
+	*numConfig = matchingConfigs;
+	return EGL_TRUE;
 }
 
 
