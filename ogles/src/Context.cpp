@@ -209,6 +209,10 @@ void Context :: SetDrawSurface(EGL::Surface * surface) {
 		Viewport(0, 0, width, height);
 		Scissor(0, 0, width, height);
 		m_ViewportInitialized = true;
+
+		GetRasterizerState()->SetColorFormat(surface->GetColorFormat());
+	} else {
+		GetRasterizerState()->SetColorFormat(ColorFormatInvalid);
 	}
 
 	m_DrawSurface = surface;

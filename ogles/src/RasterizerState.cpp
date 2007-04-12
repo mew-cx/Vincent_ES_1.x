@@ -50,14 +50,16 @@ RasterizerState :: RasterizerState():
 	m_ShadingModel(ShadeModelSmooth),
 	m_SampleCoverage(EGL_ONE),
 	m_InvertSampleCoverage(false),
-	m_PerspectiveCorrection(true)
+	m_PerspectiveCorrection(true),
+	m_ColorFormat(ColorFormatInvalid)
 {
 }
 
 
 bool RasterizerState :: CompareCommon(const RasterizerState& other) const {
-	if (!(m_ShadingModel == other.m_ShadingModel)  ||
-		!(m_Fog == other.m_Fog) ||
+	if (!(m_ShadingModel == other.m_ShadingModel)   ||
+		!(m_Fog == other.m_Fog)						||
+		!(m_ColorFormat == other.m_ColorFormat)		||
 		!(m_DepthTest == other.m_DepthTest)) {
 		return false;
 	}
@@ -112,8 +114,9 @@ bool RasterizerState :: ComparePolygonColorAlpha(const RasterizerState& other) c
 	//return !(m_Polygon == other.m_Polygon)
 	//	return false;
 
-	if (!(m_ShadingModel == other.m_ShadingModel)  ||
-		!(m_Fog == other.m_Fog)) {
+	if (!(m_ShadingModel == other.m_ShadingModel)   ||
+		!(m_Fog == other.m_Fog)						||
+		!(m_ColorFormat == other.m_ColorFormat)) {
 		return false;
 	}
 

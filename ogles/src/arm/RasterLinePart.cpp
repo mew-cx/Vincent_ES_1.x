@@ -1105,7 +1105,7 @@ bool RasterLinePart :: CompareState(const void * first, const void * second) con
 void RasterLinePart :: Compile(FunctionCache * target, const VaryingInfo * varyingInfo, const void * state) {
 	m_State = static_cast<const RasterizerState *>(state);
 	BeginGenerateCode();
-	//GenerateRasterLine(varyingInfo);
+	GenerateRasterLine(varyingInfo);
 	EndGenerateCode(target, state);
 }
 

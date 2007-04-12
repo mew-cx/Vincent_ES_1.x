@@ -87,11 +87,8 @@ void RasterTriangleColorAlphaPart :: GenerateRasterBlockColorAlpha(const Varying
 
 	DECL_REG	(regColorBuffer0);	// begin y loop
 	DECL_REG	(regColorBuffer1);	// end y loop
-	DECL_REG	(regAlphaBuffer0);	// begin y loop
-	DECL_REG	(regAlphaBuffer1);	// end y loop
 
 	cg_virtual_reg_t * regColorBuffer = LOAD_DATA(block, regRasterInfo, OFFSET_SURFACE_COLOR_BUFFER);
-	cg_virtual_reg_t * regAlphaBuffer = NULL;//LOAD_DATA(block, regRasterInfo, OFFSET_SURFACE_ALPHA_BUFFER);
 	cg_virtual_reg_t * regPitch = LOAD_DATA(block, regRasterInfo, OFFSET_SURFACE_PITCH);
 	
 	cg_virtual_reg_t * regTexture = LOAD_DATA(block, regRasterInfo, OFFSET_TEXTURES);
@@ -123,7 +120,6 @@ void RasterTriangleColorAlphaPart :: GenerateRasterBlockColorAlpha(const Varying
 	PHI			(regIY0, cg_create_virtual_reg_list(procedure->module->heap, regIY1, initIY1, NULL));
 	PHI			(regMask0, cg_create_virtual_reg_list(procedure->module->heap, regPixelMask, regMask1, NULL));
 	PHI			(regColorBuffer0, cg_create_virtual_reg_list(procedure->module->heap, regColorBuffer, regColorBuffer1, NULL));
-	PHI			(regAlphaBuffer0, cg_create_virtual_reg_list(procedure->module->heap, regAlphaBuffer, regAlphaBuffer1, NULL));
 
 	size_t index;
 
@@ -237,7 +233,7 @@ void RasterTriangleColorAlphaPart :: GenerateRasterBlockColorAlpha(const Varying
 
 	//			FragmentColorAlpha(&m_RasterInfo, &surfaceInfo, ix, tu, tv, baseColor, fog);
 				GenerateFragmentColorAlpha(procedure, block, noPixel, 
-					info, 4, regColorBuffer0, regAlphaBuffer0);
+					info, 4, regColorBuffer0);
 	//		}
 
 	block = cg_block_create(procedure, 4);
@@ -316,12 +312,11 @@ void RasterTriangleColorAlphaPart :: GenerateRasterBlockColorAlpha(const Varying
 	block = cg_block_create(procedure, 1);
 
 	//	surfaceInfo.ColorBuffer += surfaceInfo.Pitch;
-	DECL_REG	(regPitch2);
-	LSL			(regPitch2, regPitch, one);
-	ADD			(regColorBuffer1, regColorBuffer0, regPitch2);
+	DECL_REG		(regPitch2);
+	DECL_CONST_REG	(constShift, Texture::s_BytesPerPixel[m_State->GetColorFormat()]);
 
-	//	surfaceInfo.AlphaBuffer += surfaceInfo.Pitch;
-	ADD			(regAlphaBuffer1, regAlphaBuffer0, regPitch);
+	LSL			(regPitch2, regPitch, constShift);
+	ADD			(regColorBuffer1, regColorBuffer0, regPitch2);
 
     //}
 	BRA			(yLoopTop);
@@ -346,7 +341,7 @@ bool RasterTriangleColorAlphaPart :: CompareState(const void * first, const void
 void RasterTriangleColorAlphaPart :: Compile(FunctionCache * target, const VaryingInfo * varyingInfo, const void * state) {
 	m_State = static_cast<const RasterizerState *>(state);
 	BeginGenerateCode();
-	//GenerateRasterBlockColorAlpha(varyingInfo);
+	GenerateRasterBlockColorAlpha(varyingInfo);
 	EndGenerateCode(target, state);
 }
 

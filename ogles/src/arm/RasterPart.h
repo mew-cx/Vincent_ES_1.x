@@ -68,8 +68,7 @@ namespace EGL {
 
 		void GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t * currentBlock,
 			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
-			int weight, cg_virtual_reg_t * regColorBuffer = 0,
-			cg_virtual_reg_t * regAlphaBuffer = 0);
+			int weight, cg_virtual_reg_t * regColorBuffer = 0);
 
 		void GenerateFetchTexColor(cg_proc_t * proc, cg_block_t * currentBlock,
 								   size_t unit,
@@ -78,7 +77,7 @@ namespace EGL {
 								   cg_virtual_reg_t *& regTexColorG,
 								   cg_virtual_reg_t *& regTexColorB,
 								   cg_virtual_reg_t *& regTexColorA,
-								   cg_virtual_reg_t *& regTexColor565);
+								   cg_virtual_reg_t *& regTexColorWord);
 
 		void FetchTexColor(cg_proc_t * proc, cg_block_t * currentBlock,
 								   const RasterizerState::TextureState * textureState,
@@ -88,7 +87,7 @@ namespace EGL {
 								   cg_virtual_reg_t *& regTexColorG,
 								   cg_virtual_reg_t *& regTexColorB,
 								   cg_virtual_reg_t *& regTexColorA,
-								   cg_virtual_reg_t *& regTexColor565);
+								   cg_virtual_reg_t *& regTexColorWord);
 
 		cg_virtual_reg_t * Mul255(cg_block_t * currentBlock, cg_virtual_reg_t * first, cg_virtual_reg_t * second);
 		cg_virtual_reg_t * Add(cg_block_t * currentBlock, cg_virtual_reg_t * first, cg_virtual_reg_t * second);
@@ -100,10 +99,28 @@ namespace EGL {
 		cg_virtual_reg_t * BitFieldFrom255(cg_block_t * currentBlock, cg_virtual_reg_t * value, size_t low, size_t high);
 		cg_virtual_reg_t * Dot3(cg_block_t * currentBlock, cg_virtual_reg_t * r[], cg_virtual_reg_t * g[], cg_virtual_reg_t * b[]);
 		cg_virtual_reg_t * SignedVal(cg_block_t * block, cg_virtual_reg_t * value);
+
 		void Color565FromRGB(cg_block_t * block, cg_virtual_reg_t * result,
 							 cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b);
+		void Color5551FromRGBA(cg_block_t * block, cg_virtual_reg_t * result,
+							   cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b, cg_virtual_reg_t * a);
+		void Color4444FromRGBA(cg_block_t * block, cg_virtual_reg_t * result,
+							   cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b, cg_virtual_reg_t * a);
+		void Color8888FromRGBA(cg_block_t * block, cg_virtual_reg_t * result,
+							   cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b, cg_virtual_reg_t * a);
+		void ColorWordFromRGBA(cg_block_t * block, cg_virtual_reg_t * result,
+							   cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b, cg_virtual_reg_t * a);
+
 		cg_virtual_reg_t * Color565FromRGB(cg_block_t * block,
 							 cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b);
+		cg_virtual_reg_t * Color5551FromRGBA(cg_block_t * block,
+							 cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b, cg_virtual_reg_t * a);
+		cg_virtual_reg_t * Color4444FromRGBA(cg_block_t * block,
+							 cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b, cg_virtual_reg_t * a);
+		cg_virtual_reg_t * Color8888FromRGBA(cg_block_t * block,
+							 cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b, cg_virtual_reg_t * a);
+		cg_virtual_reg_t * ColorWordFromRGBA(cg_block_t * block,
+							 cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b, cg_virtual_reg_t * a);
 
 		cg_virtual_reg_t * Blend255(cg_block_t * currentBlock, cg_virtual_reg_t * first, cg_virtual_reg_t * second,
 								    cg_virtual_reg_t * alpha);
