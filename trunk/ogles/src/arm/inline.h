@@ -163,7 +163,6 @@ namespace {
 #	define OFFSET_SURFACE_DEPTH_BUFFER			offsetof(RasterInfo, RasterSurface.DepthBuffer)
 #	define OFFSET_SURFACE_COLOR_BUFFER			offsetof(RasterInfo, RasterSurface.ColorBuffer)
 #	define OFFSET_SURFACE_STENCIL_BUFFER		offsetof(RasterInfo, RasterSurface.StencilBuffer)
-#	define OFFSET_SURFACE_ALPHA_BUFFER			offsetof(RasterInfo, RasterSurface.AlphaBuffer)
 
 #	define OFFSET_TEXTURES						offsetof(RasterInfo, Textures)
 #	define OFFSET_MIPMAP_LEVEL					offsetof(RasterInfo, MipmapLevel)

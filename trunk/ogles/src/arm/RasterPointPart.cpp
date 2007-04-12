@@ -357,7 +357,7 @@ bool RasterPointPart :: CompareState(const void * first, const void * second) co
 void RasterPointPart :: Compile(FunctionCache * target, const VaryingInfo * varyingInfo, const void * state) {
 	m_State = static_cast<const RasterizerState *>(state);
 	BeginGenerateCode();
-	//GenerateRasterPoint(varyingInfo);
+	GenerateRasterPoint(varyingInfo);
 	EndGenerateCode(target, state);
 }
 

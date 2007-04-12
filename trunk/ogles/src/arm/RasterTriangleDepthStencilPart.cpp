@@ -288,7 +288,7 @@ bool RasterTriangleDepthStencilPart :: CompareState(const void * first, const vo
 void RasterTriangleDepthStencilPart :: Compile(FunctionCache * target, const VaryingInfo * varyingInfo, const void * state) {
 	m_State = static_cast<const RasterizerState *>(state);
 	BeginGenerateCode();
-	//GenerateRasterBlockDepthStencil(varyingInfo);
+	GenerateRasterBlockDepthStencil(varyingInfo);
 	EndGenerateCode(target, state);
 }
 

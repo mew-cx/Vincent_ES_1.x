@@ -268,9 +268,75 @@ void RasterPart :: Color565FromRGB(cg_block_t * block, cg_virtual_reg_t * regRGB
 	OR			(regRGB,	regBG, regFieldR);
 }
 
+void RasterPart :: Color5551FromRGBA(cg_block_t * block, cg_virtual_reg_t * result,
+									 cg_virtual_reg_t * r, cg_virtual_reg_t * g, 
+									 cg_virtual_reg_t * b, cg_virtual_reg_t * a) {
+	cg_proc_t * procedure = block->proc;
+
+	cg_virtual_reg_t *	regFieldR = BitFieldFrom255(block, r, 11, 15);
+	cg_virtual_reg_t *	regFieldG = BitFieldFrom255(block, g, 6, 10);
+	cg_virtual_reg_t *	regFieldB = BitFieldFrom255(block, b, 1, 5);
+	cg_virtual_reg_t *	regFieldA = BitFieldFrom255(block, a, 0, 0);
+
+	DECL_REG	(regBG);
+	DECL_REG	(regRGB);
+
+	OR			(regBG,		regFieldB, regFieldG);
+	OR			(regRGB,	regBG, regFieldR);
+	OR			(result,	regRGB, regFieldA);
+}
+
+void RasterPart :: Color4444FromRGBA(cg_block_t * block, cg_virtual_reg_t * result,
+									 cg_virtual_reg_t * r, cg_virtual_reg_t * g, 
+									 cg_virtual_reg_t * b, cg_virtual_reg_t * a) {
+	cg_proc_t * procedure = block->proc;
+
+	cg_virtual_reg_t *	regFieldR = BitFieldFrom255(block, r, 12, 15);
+	cg_virtual_reg_t *	regFieldG = BitFieldFrom255(block, g, 8, 11);
+	cg_virtual_reg_t *	regFieldB = BitFieldFrom255(block, b, 4, 7);
+	cg_virtual_reg_t *	regFieldA = BitFieldFrom255(block, a, 0, 3);
+
+	DECL_REG	(regBG);
+	DECL_REG	(regRGB);
+
+	OR			(regBG,		regFieldB, regFieldG);
+	OR			(regRGB,	regBG, regFieldR);
+	OR			(result,	regRGB, regFieldA);
+}
+
+void RasterPart :: Color8888FromRGBA(cg_block_t * block, cg_virtual_reg_t * result,
+									 cg_virtual_reg_t * r, cg_virtual_reg_t * g, 
+									 cg_virtual_reg_t * b, cg_virtual_reg_t * a) {
+	cg_proc_t * procedure = block->proc;
+
+	cg_virtual_reg_t *	regFieldR = BitFieldFrom255(block, r, 24, 31);
+	cg_virtual_reg_t *	regFieldG = BitFieldFrom255(block, g, 16, 23);
+	cg_virtual_reg_t *	regFieldB = BitFieldFrom255(block, b, 8, 15);
+	cg_virtual_reg_t *	regFieldA = BitFieldFrom255(block, a, 0, 7);
+
+	DECL_REG	(regBG);
+	DECL_REG	(regRGB);
+
+	OR			(regBG,		regFieldB, regFieldG);
+	OR			(regRGB,	regBG, regFieldR);
+	OR			(result,	regRGB, regFieldA);
+}
+
+void RasterPart :: ColorWordFromRGBA(cg_block_t * block, cg_virtual_reg_t * result,
+									 cg_virtual_reg_t * r, cg_virtual_reg_t * g, 
+									 cg_virtual_reg_t * b, cg_virtual_reg_t * a) {
+	switch (m_State->GetColorFormat()) {
+	case ColorFormatRGB565:		Color565FromRGB(block, result, r, g, b);		break;
+	case ColorFormatRGBA4444:	Color5551FromRGBA(block, result, r, g, b, a);	break;
+	case ColorFormatRGBA5551:	Color4444FromRGBA(block, result, r, g, b, a);	break;
+	case ColorFormatRGBA8:		Color8888FromRGBA(block, result, r, g, b, a);	break;
+	default:
+		assert(false);
+	}
+}
 
 cg_virtual_reg_t * RasterPart :: Color565FromRGB(cg_block_t * block,
-													cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b) {
+												 cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b) {
 	cg_proc_t * procedure = block->proc;
 
 	DECL_REG	(regResult);
@@ -280,6 +346,49 @@ cg_virtual_reg_t * RasterPart :: Color565FromRGB(cg_block_t * block,
 	return regResult;
 }
 
+cg_virtual_reg_t * RasterPart :: Color5551FromRGBA(cg_block_t * block,
+					 cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b, cg_virtual_reg_t * a) {
+	cg_proc_t * procedure = block->proc;
+
+	DECL_REG	(regResult);
+
+	Color5551FromRGBA(block, regResult, r, g, b, a);
+
+	return regResult;
+}
+
+cg_virtual_reg_t * RasterPart :: Color4444FromRGBA(cg_block_t * block,
+					 cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b, cg_virtual_reg_t * a) {
+	cg_proc_t * procedure = block->proc;
+
+	DECL_REG	(regResult);
+
+	Color4444FromRGBA(block, regResult, r, g, b, a);
+
+	return regResult;
+}
+
+cg_virtual_reg_t * RasterPart :: Color8888FromRGBA(cg_block_t * block,
+					 cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b, cg_virtual_reg_t * a) {
+	cg_proc_t * procedure = block->proc;
+
+	DECL_REG	(regResult);
+
+	Color8888FromRGBA(block, regResult, r, g, b, a);
+
+	return regResult;
+}
+
+cg_virtual_reg_t * RasterPart :: ColorWordFromRGBA(cg_block_t * block,
+					 cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b, cg_virtual_reg_t * a) {
+	cg_proc_t * procedure = block->proc;
+
+	DECL_REG	(regResult);
+
+	ColorWordFromRGBA(block, regResult, r, g, b, a);
+
+	return regResult;
+}
 
 cg_virtual_reg_t * RasterPart :: Blend255(cg_block_t * block, cg_virtual_reg_t * first, cg_virtual_reg_t * second,
 											 cg_virtual_reg_t * alpha) {
@@ -369,183 +478,182 @@ void RasterPart :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentBloc
 								    cg_virtual_reg_t *& regTexColorG,			
 								    cg_virtual_reg_t *& regTexColorB,			
 								    cg_virtual_reg_t *& regTexColorA,
-								    cg_virtual_reg_t *& regTexColor565) {
+								    cg_virtual_reg_t *& regTexColorWord) {
 
 	cg_block_t * block = currentBlock;
+
+	regTexColorWord = 0;
 
 	switch (textureState->InternalFormat) {
 		case ColorFormatAlpha:				// 8
 			{
-			//texColor = Color(0, 0, 0, reinterpret_cast<const U8 *>(data)[texOffset]);
-			regTexColorR = regTexColorG = regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				//texColor = Color(0, 0, 0, reinterpret_cast<const U8 *>(data)[texOffset]);
+				regTexColorR = regTexColorG = regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-			DECL_REG	(regTexAddr);
-			
+				DECL_REG	(regTexAddr);
+				
 
-			ADD		(regTexAddr, regTexOffset, regTextureData);
-			LDB		(regTexColorA, regTexAddr);
-			LDI		(regTexColorR, 0);
-
-			LDI		(regTexColor565, 0);
+				ADD		(regTexAddr, regTexOffset, regTextureData);
+				LDB		(regTexColorA, regTexAddr);
+				LDI		(regTexColorR, 0);
 
 			}
 			break;
 
 		case ColorFormatLuminance:			// 8
 			{
-			//U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset];
-			//texColor = Color (luminance, luminance, luminance, 0xff);
-			regTexColorR = regTexColorB = regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				//U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset];
+				//texColor = Color (luminance, luminance, luminance, 0xff);
+				regTexColorR = regTexColorB = regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-			DECL_REG	(regTexAddr);
+				DECL_REG	(regTexAddr);
 
-			ADD		(regTexAddr, regTexOffset, regTextureData);
-			LDB		(regTexColorR, regTexAddr);
-			LDI		(regTexColorA, 0xff);
-
-			regTexColor565 = Color565FromRGB(block, regTexColorR, regTexColorG, regTexColorB);
+				ADD		(regTexAddr, regTexOffset, regTextureData);
+				LDB		(regTexColorR, regTexAddr);
+				LDI		(regTexColorA, 0xff);
 			}
 			break;
 
 		case ColorFormatLuminanceAlpha:		// 8-8
 			{
-			//U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset * 2];
-			//U8 alpha = reinterpret_cast<const U8 *>(data)[texOffset * 2 + 1];
-			//texColor = Color (luminance, luminance, luminance, alpha);
-			regTexColorR = regTexColorB = regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				//U8 luminance = reinterpret_cast<const U8 *>(data)[texOffset * 2];
+				//U8 alpha = reinterpret_cast<const U8 *>(data)[texOffset * 2 + 1];
+				//texColor = Color (luminance, luminance, luminance, alpha);
+				regTexColorR = regTexColorB = regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-			DECL_REG		(regScaledOffset);
-			DECL_REG		(regTexAddr);
-			DECL_REG		(regTexAddr1);
-			DECL_CONST_REG	(regConstantOne, 1);
+				DECL_REG		(regScaledOffset);
+				DECL_REG		(regTexAddr);
+				DECL_REG		(regTexAddr1);
+				DECL_CONST_REG	(regConstantOne, 1);
 
-			LSL		(regScaledOffset, regTexOffset, regConstantOne);
-			ADD		(regTexAddr, regScaledOffset, regTextureData);
-			LDB		(regTexColorR, regTexAddr);
-			ADD		(regTexAddr1, regTexAddr, regConstantOne);
-			LDB		(regTexColorA, regTexAddr1);
-
-			regTexColor565 = Color565FromRGB(block, regTexColorR, regTexColorG, regTexColorB);
-
+				LSL		(regScaledOffset, regTexOffset, regConstantOne);
+				ADD		(regTexAddr, regScaledOffset, regTextureData);
+				LDB		(regTexColorR, regTexAddr);
+				ADD		(regTexAddr1, regTexAddr, regConstantOne);
+				LDB		(regTexColorA, regTexAddr1);
 			}
 			break;
 
 		case ColorFormatRGB565:					// 5-6-5
 			//texColor = Color::From565(reinterpret_cast<const U16 *>(data)[texOffset]);
 			{
-			regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				cg_virtual_reg_t * regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-			DECL_REG	(regScaledOffset);
-			DECL_REG	(regConstantOne);
-			DECL_REG	(regTexAddr);
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-			LDI		(regConstantOne, 1);
-			LSL		(regScaledOffset, regTexOffset, regConstantOne);
-			ADD		(regTexAddr, regScaledOffset, regTextureData);
-			LDH		(regTexColor565, regTexAddr);
-			LDI		(regTexColorA, 0xff);
+				DECL_REG	(regScaledOffset);
+				DECL_REG	(regConstantOne);
+				DECL_REG	(regTexAddr);
 
-			regTexColorR = ExtractBitFieldTo255(block, regTexColor565, 11, 15);
-			regTexColorG = ExtractBitFieldTo255(block, regTexColor565,  5, 10);
-			regTexColorB = ExtractBitFieldTo255(block, regTexColor565,  0,  4);
+				LDI		(regConstantOne, 1);
+				LSL		(regScaledOffset, regTexOffset, regConstantOne);
+				ADD		(regTexAddr, regScaledOffset, regTextureData);
+				LDH		(regTexColor565, regTexAddr);
+				LDI		(regTexColorA, 0xff);
+
+				regTexColorR = ExtractBitFieldTo255(block, regTexColor565, 11, 15);
+				regTexColorG = ExtractBitFieldTo255(block, regTexColor565,  5, 10);
+				regTexColorB = ExtractBitFieldTo255(block, regTexColor565,  0,  4);
+
+				if (m_State->GetColorFormat() == ColorFormatRGB565) {
+					regTexColorWord = regTexColor565;
+				}
 			}
 			break;
 
 		case ColorFormatRGB8:						// 8-8-8
 			{
-			regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-			DECL_REG	(regConstant1);
-			DECL_REG	(regConstant2);
-			DECL_REG	(regConstant3);
-			DECL_REG	(regShiftedOffset);
-			DECL_REG	(regScaledOffset);
-			DECL_REG	(regTexAddr0);
-			DECL_REG	(regTexAddr1);
-			DECL_REG	(regTexAddr2);
+				DECL_REG	(regConstant1);
+				DECL_REG	(regConstant2);
+				DECL_REG	(regConstant3);
+				DECL_REG	(regShiftedOffset);
+				DECL_REG	(regScaledOffset);
+				DECL_REG	(regTexAddr0);
+				DECL_REG	(regTexAddr1);
+				DECL_REG	(regTexAddr2);
 
-			LDI			(regTexColorA, 0xff);
-			LDI			(regConstant1, 1);
-			LDI			(regConstant2, 2);
-			LDI			(regConstant3, 3);
+				LDI			(regTexColorA, 0xff);
+				LDI			(regConstant1, 1);
+				LDI			(regConstant2, 2);
+				LDI			(regConstant3, 3);
 
-			LSL		(regShiftedOffset,	regTexOffset, regConstant1);
-			ADD		(regScaledOffset,	regTexOffset, regShiftedOffset);
-			ADD		(regTexAddr0,		regTextureData, regScaledOffset);
-			LDB		(regTexColorR,		regTexAddr0);
-			ADD		(regTexAddr1,		regTexAddr0, regConstant1);
-			LDB		(regTexColorG,		regTexAddr1);
-			ADD		(regTexAddr2,		regTexAddr0, regConstant2);
-			LDB		(regTexColorB,		regTexAddr2);
-
-			regTexColor565 = Color565FromRGB(block, regTexColorR, regTexColorG, regTexColorB);
+				LSL		(regShiftedOffset,	regTexOffset, regConstant1);
+				ADD		(regScaledOffset,	regTexOffset, regShiftedOffset);
+				ADD		(regTexAddr0,		regTextureData, regScaledOffset);
+				LDB		(regTexColorR,		regTexAddr0);
+				ADD		(regTexAddr1,		regTexAddr0, regConstant1);
+				LDB		(regTexColorG,		regTexAddr1);
+				ADD		(regTexAddr2,		regTexAddr0, regConstant2);
+				LDB		(regTexColorB,		regTexAddr2);
 			}
 
 			break;
 
 		case ColorFormatRGBA4444:					// 4-4-4-4
 			{
-			DECL_REG	(regScaledOffset);
-			DECL_REG	(regConstantOne);
-			DECL_REG	(regTexAddr);
-			DECL_REG	(regTexColor4444);
+				DECL_REG	(regScaledOffset);
+				DECL_REG	(regConstantOne);
+				DECL_REG	(regTexAddr);
+				DECL_REG	(regTexColor4444);
 
-			LDI		(regConstantOne, 1);
-			LSL		(regScaledOffset, regTexOffset, regConstantOne);
-			ADD		(regTexAddr, regScaledOffset, regTextureData);
-			LDH		(regTexColor4444, regTexAddr);
+				LDI		(regConstantOne, 1);
+				LSL		(regScaledOffset, regTexOffset, regConstantOne);
+				ADD		(regTexAddr, regScaledOffset, regTextureData);
+				LDH		(regTexColor4444, regTexAddr);
 
-			regTexColorR = ExtractBitFieldTo255(block, regTexColor4444, 12, 15);
-			regTexColorG = ExtractBitFieldTo255(block, regTexColor4444,  8, 11);
-			regTexColorB = ExtractBitFieldTo255(block, regTexColor4444,  4,  7);
-			regTexColorA = ExtractBitFieldTo255(block, regTexColor4444,  0,  3);
+				regTexColorR = ExtractBitFieldTo255(block, regTexColor4444, 12, 15);
+				regTexColorG = ExtractBitFieldTo255(block, regTexColor4444,  8, 11);
+				regTexColorB = ExtractBitFieldTo255(block, regTexColor4444,  4,  7);
+				regTexColorA = ExtractBitFieldTo255(block, regTexColor4444,  0,  3);
 
-			regTexColor565 = Color565FromRGB(block, regTexColorR, regTexColorG, regTexColorB);
+				if (m_State->GetColorFormat() == ColorFormatRGBA4444) {
+					regTexColorWord = regTexColor4444;
+				}
 			}
 
 			break;
 
 		case ColorFormatRGBA8:						// 8-8-8-8
 			{
-			regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorR = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorG = cg_virtual_reg_create(procedure, cg_reg_type_general);
+				regTexColorB = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
-			DECL_REG	(regConstant1);
-			DECL_REG	(regConstant2);
-			DECL_REG	(regConstant3);
-			DECL_REG	(regConstant7);
-			DECL_REG	(regScaledOffset);
-			DECL_REG	(regTexAddr0);
-			DECL_REG	(regTexAddr1);
-			DECL_REG	(regTexAddr2);
-			DECL_REG	(regTexAddr3);
+				DECL_REG	(regConstant1);
+				DECL_REG	(regConstant2);
+				DECL_REG	(regConstant3);
+				DECL_REG	(regConstant7);
+				DECL_REG	(regScaledOffset);
+				DECL_REG	(regTexAddr0);
+				DECL_REG	(regTexAddr1);
+				DECL_REG	(regTexAddr2);
+				DECL_REG	(regTexAddr3);
 
-			LDI		(regConstant1, 1);
-			LDI		(regConstant2, 2);
-			LDI		(regConstant3, 3);
-			LDI		(regConstant7, 7);
+				LDI		(regConstant1, 1);
+				LDI		(regConstant2, 2);
+				LDI		(regConstant3, 3);
+				LDI		(regConstant7, 7);
 
-			LSL		(regScaledOffset, regTexOffset, regConstant2);
-			ADD		(regTexAddr0, regTextureData, regScaledOffset);
-			LDB		(regTexColorR, regTexAddr0);
-			ADD		(regTexAddr1, regTexAddr0, regConstant1);
-			LDB		(regTexColorG, regTexAddr1);
-			ADD		(regTexAddr2, regTexAddr0, regConstant2);
-			LDB		(regTexColorB, regTexAddr2);
-			ADD		(regTexAddr3, regTexAddr0, regConstant3);
-			LDB		(regTexColorA, regTexAddr3);
+				LSL		(regScaledOffset, regTexOffset, regConstant2);
+				ADD		(regTexAddr0, regTextureData, regScaledOffset);
+				LDB		(regTexColorR, regTexAddr0);
+				ADD		(regTexAddr1, regTexAddr0, regConstant1);
+				LDB		(regTexColorG, regTexAddr1);
+				ADD		(regTexAddr2, regTexAddr0, regConstant2);
+				LDB		(regTexColorB, regTexAddr2);
+				ADD		(regTexAddr3, regTexAddr0, regConstant3);
+				LDB		(regTexColorA, regTexAddr3);
 
-			regTexColor565 = Color565FromRGB(block, regTexColorR, regTexColorG, regTexColorB);
+				// TODO: Once the color byte order is fixed, we can also pre-assign the right word here
 			}
 
 			break;
@@ -553,22 +661,24 @@ void RasterPart :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentBloc
 		case ColorFormatRGBA5551:					// 5-5-5-1
 			//texColor = Color::From5551(reinterpret_cast<const U16 *>(data)[texOffset]);
 			{
-			DECL_REG	(regScaledOffset);
-			DECL_REG	(regConstantOne);
-			DECL_REG	(regTexAddr);
-			DECL_REG	(regTexColor5551);
+				DECL_REG	(regScaledOffset);
+				DECL_REG	(regConstantOne);
+				DECL_REG	(regTexAddr);
+				DECL_REG	(regTexColor5551);
 
-			LDI		(regConstantOne, 1);
-			LSL		(regScaledOffset, regTexOffset, regConstantOne);
-			ADD		(regTexAddr, regScaledOffset, regTextureData);
-			LDH		(regTexColor5551, regTexAddr);
+				LDI		(regConstantOne, 1);
+				LSL		(regScaledOffset, regTexOffset, regConstantOne);
+				ADD		(regTexAddr, regScaledOffset, regTextureData);
+				LDH		(regTexColor5551, regTexAddr);
 
-			regTexColorR = ExtractBitFieldTo255(block, regTexColor5551, 11, 15);
-			regTexColorG = ExtractBitFieldTo255(block, regTexColor5551,  7, 10);
-			regTexColorB = ExtractBitFieldTo255(block, regTexColor5551,  1,  5);
-			regTexColorA = ExtractBitFieldTo255(block, regTexColor5551,  0,  0);
+				regTexColorR = ExtractBitFieldTo255(block, regTexColor5551, 11, 15);
+				regTexColorG = ExtractBitFieldTo255(block, regTexColor5551,  7, 10);
+				regTexColorB = ExtractBitFieldTo255(block, regTexColor5551,  1,  5);
+				regTexColorA = ExtractBitFieldTo255(block, regTexColor5551,  0,  0);
 
-			regTexColor565 = Color565FromRGB(block, regTexColorR, regTexColorG, regTexColorB);
+				if (m_State->GetColorFormat() == ColorFormatRGBA5551) {
+					regTexColorWord = regTexColor5551;
+				}
 			}
 			break;
 
@@ -576,10 +686,8 @@ void RasterPart :: FetchTexColor(cg_proc_t * procedure, cg_block_t * currentBloc
 			//texColor = Color(0xff, 0xff, 0xff, 0xff);
 			{
 			regTexColorR = regTexColorB = regTexColorG = regTexColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
-			regTexColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
 
 			LDI		(regTexColorR, 0xff);
-			LDI		(regTexColor565, 0xffff);
 			}
 			break;
 	}
@@ -634,6 +742,16 @@ namespace {
 
 		return regResult;
 	}
+
+	U32 EncodeColor(ColorFormat format, Color color) {
+		switch (format) {
+		case ColorFormatRGB565:		return color.ConvertTo565();
+		case ColorFormatRGBA5551:	return color.ConvertTo5551();
+		case ColorFormatRGBA4444:	return color.ConvertTo4444();
+		case ColorFormatRGBA8:		return color.ConvertToRGBA();
+		default:					return 0;
+		}
+	}
 }
 
 
@@ -644,7 +762,7 @@ void RasterPart :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * cur
 										    cg_virtual_reg_t *& regTexColorG,			
 										    cg_virtual_reg_t *& regTexColorB,			
 										    cg_virtual_reg_t *& regTexColorA,
-											cg_virtual_reg_t *& regTexColor565) {
+											cg_virtual_reg_t *& regTexColorWord) {
 
 	cg_block_t * block = currentBlock;
 
@@ -694,7 +812,7 @@ void RasterPart :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * cur
 		ADD		(regTexOffset, regScaledTexY, regTexX);
 
 		FetchTexColor(procedure, block, m_State->m_Texture + unit, regTextureData, regTexOffset,
-					  regTexColorR, regTexColorG, regTexColorB, regTexColorA, regTexColor565);
+					  regTexColorR, regTexColorG, regTexColorB, regTexColorA, regTexColorWord);
 	} else {
 		assert(m_State->GetMinFilterMode(unit) == RasterizerState::FilterModeLinear);
 
@@ -785,21 +903,21 @@ void RasterPart :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * cur
 		cg_virtual_reg_t * regColorG00, * regColorG01, *regColorG10, * regColorG11;
 		cg_virtual_reg_t * regColorB00, * regColorB01, *regColorB10, * regColorB11;
 		cg_virtual_reg_t * regColorA00, * regColorA01, *regColorA10, * regColorA11;
-		cg_virtual_reg_t * regColor56500, * regColor56501, *regColor56510, * regColor56511;
+		cg_virtual_reg_t * regColorWord00, * regColorWord01, *regColorWord10, * regColorWord11;
 
 		cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, fragmentInfo.regTexture[unit], OFFSET_TEXTURE_DATA);
 
 		FetchTexColor(procedure, block, m_State->m_Texture + unit, regTextureData, regTexOffset00,
-					  regColorR00, regColorG00, regColorB00, regColorA00, regColor56500);
+					  regColorR00, regColorG00, regColorB00, regColorA00, regColorWord00);
 
 		FetchTexColor(procedure, block, m_State->m_Texture + unit, regTextureData, regTexOffset01,
-					  regColorR01, regColorG01, regColorB01, regColorA01, regColor56501);
+					  regColorR01, regColorG01, regColorB01, regColorA01, regColorWord01);
 
 		FetchTexColor(procedure, block, m_State->m_Texture + unit, regTextureData, regTexOffset10,
-					  regColorR10, regColorG10, regColorB10, regColorA10, regColor56510);
+					  regColorR10, regColorG10, regColorB10, regColorA10, regColorWord10);
 
 		FetchTexColor(procedure, block, m_State->m_Texture + unit, regTextureData, regTexOffset11,
-					  regColorR11, regColorG11, regColorB11, regColorA11, regColor56511);
+					  regColorR11, regColorG11, regColorB11, regColorA11, regColorWord11);
 
 		cg_virtual_reg_t * regColorR0, * regColorR1;
 		cg_virtual_reg_t * regColorG0, * regColorG1;
@@ -831,9 +949,7 @@ void RasterPart :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * cur
 		regColorA1 = BlendComponent(procedure, block, regColorA10, regColorA11, regAdjustedFracU);
 		regTexColorA = BlendComponent(procedure, block, regColorA0, regColorA1, regAdjustedFracV);
 
-		// create composite color
-
-		regTexColor565 =  Color565FromRGB(block, regTexColorR, regTexColorG, regTexColorB);
+		regTexColorWord = 0;			// no composite word
 	}
 }
 
@@ -845,7 +961,7 @@ void RasterPart :: GenerateFragment(cg_proc_t * procedure, cg_block_t * currentB
 			fragmentInfo, weight, 0, 0, forceScissor);
 
 	GenerateFragmentColorAlpha(procedure, currentBlock, continuation,
-		fragmentInfo, weight, 0, 0);
+		fragmentInfo, weight, 0);
 }
 
 cg_block_t * RasterPart :: GenerateFragmentDepthStencil(cg_proc_t * procedure, cg_block_t * currentBlock,
@@ -1418,8 +1534,7 @@ no_write:
 
 void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t * currentBlock,
 	cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
-	int weight, cg_virtual_reg_t * regColorBuffer,
-	cg_virtual_reg_t * regAlphaBuffer) {
+	int weight, cg_virtual_reg_t * regColorBuffer) {
 
 	cg_block_t * block = currentBlock;
 
@@ -1446,27 +1561,30 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 	cg_virtual_reg_t * regColorG = ClampTo255(block, fragmentInfo.regG);
 	cg_virtual_reg_t * regColorB = ClampTo255(block, fragmentInfo.regB);
 	cg_virtual_reg_t * regColorA = ClampTo255(block, fragmentInfo.regA);
-	cg_virtual_reg_t * regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
+	cg_virtual_reg_t * regColorWord = 0;		// if we ever decide to handle constant colors, this variable will be used
 
 	cg_virtual_reg_t * regBaseColorR = regColorR;
 	cg_virtual_reg_t * regBaseColorG = regColorG;
 	cg_virtual_reg_t * regBaseColorB = regColorB;
 	cg_virtual_reg_t * regBaseColorA = regColorA;
-	cg_virtual_reg_t * regBaseColor565 = regColor565;
+	cg_virtual_reg_t * regBaseColorWord = regColorWord;
 
 	for (size_t unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		if (m_State->m_Texture[unit].Enabled) {
 
 			//Color texColor; 
-			cg_virtual_reg_t * regTexColorR;			
-			cg_virtual_reg_t * regTexColorG;			
-			cg_virtual_reg_t * regTexColorB;			
-			cg_virtual_reg_t * regTexColorA;
-			cg_virtual_reg_t * regTexColor565;
+			cg_virtual_reg_t * regTexColorR = 0;			
+			cg_virtual_reg_t * regTexColorG = 0;			
+			cg_virtual_reg_t * regTexColorB = 0;			
+			cg_virtual_reg_t * regTexColorA = 0;
+			cg_virtual_reg_t * regTexColorWord = 0;
 
 			GenerateFetchTexColor(procedure, block, unit, fragmentInfo, 
-								  regTexColorR, regTexColorG, regTexColorB, regTexColorA, regTexColor565);
+								  regTexColorR, regTexColorG, regTexColorB, regTexColorA, regTexColorWord);
 
+
+
+			regColorWord = 0;
 
 			if (m_State->m_Texture[unit].Mode == RasterizerState::TextureModeCombine) {
 
@@ -1475,15 +1593,13 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 				cg_virtual_reg_t * regArgG[3];			
 				cg_virtual_reg_t * regArgB[3];			
 				cg_virtual_reg_t * regArgA[3];
-				cg_virtual_reg_t * regArg565[3];
 
 				for (size_t idx = 0; idx < 3; ++idx) {
 					//Color rgbIn;
-					cg_virtual_reg_t * regRgbInR;			
-					cg_virtual_reg_t * regRgbInG;			
-					cg_virtual_reg_t * regRgbInB;			
-					cg_virtual_reg_t * regRgbInA;			
-					cg_virtual_reg_t * regRgbIn565;
+					cg_virtual_reg_t * regRgbInR = 0;			
+					cg_virtual_reg_t * regRgbInG = 0;			
+					cg_virtual_reg_t * regRgbInB = 0;			
+					cg_virtual_reg_t * regRgbInA = 0;			
 
 					//U8 alphaIn;
 					cg_virtual_reg_t * regAlphaIn;
@@ -1496,7 +1612,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 							regRgbInG = regTexColorG;
 							regRgbInB = regTexColorB;
 							regRgbInA = regTexColorA;
-							regRgbIn565 = regTexColor565;
 						}
 						break;
 
@@ -1512,8 +1627,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 							LDI		(regRgbInG, m_State->m_Texture[unit].EnvColor.g);
 							LDI		(regRgbInB, m_State->m_Texture[unit].EnvColor.b);
 							LDI		(regRgbInA, m_State->m_Texture[unit].EnvColor.a);
-
-							regRgbIn565 = Color565FromRGB(block, regRgbInR, regRgbInG, regRgbInB);
 						}
 						break;
 
@@ -1524,7 +1637,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 							regRgbInG = regBaseColorG;
 							regRgbInB = regBaseColorB;
 							regRgbInA = regBaseColorA;
-							regRgbIn565 = regBaseColor565;
 						}
 
 						break;
@@ -1536,7 +1648,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 							regRgbInG = regColorG;
 							regRgbInB = regColorB;
 							regRgbInA = regColorA;
-							regRgbIn565 = regColor565;
 						}
 						break;
 					}
@@ -1587,7 +1698,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 							regArgR[idx] = regRgbInR;
 							regArgG[idx] = regRgbInG;
 							regArgB[idx] = regRgbInB;
-							regArg565[idx] = regRgbIn565;
 							regArgA[idx] = regAlphaOut;
 						}
 						break;
@@ -1600,7 +1710,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 							regArgR[idx] = Sub(block, constantMaxColor, regRgbInR);
 							regArgG[idx] = Sub(block, constantMaxColor, regRgbInG);
 							regArgB[idx] = Sub(block, constantMaxColor, regRgbInB);
-							regArg565[idx] = Color565FromRGB(block, regArgR[idx], regArgG[idx], regArgB[idx]);
 							regArgA[idx] = regAlphaOut;
 						}
 						break;
@@ -1609,7 +1718,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 						//arg[idx] = Color(rgbIn.a, rgbIn.a, rgbIn.a, alphaOut);
 						{
 							regArgR[idx] = regArgG[idx] = regArgB[idx] = regRgbInA;
-							regArg565[idx] = Color565FromRGB(block, regArgR[idx], regArgG[idx], regArgB[idx]);
 							regArgA[idx] = regAlphaOut;
 						}
 
@@ -1621,7 +1729,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 							DECL_CONST_REG	(constantMaxColor, 0xff);
 
 							regArgR[idx] = regArgG[idx] = regArgB[idx] = Sub(block, constantMaxColor, regRgbInA);
-							regArg565[idx] = Color565FromRGB(block, regArgR[idx], regArgG[idx], regArgB[idx]);
 							regArgA[idx] = regAlphaOut;
 						}
 
@@ -1812,7 +1919,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 					regColorR = regResultR;
 					regColorG = regResultG;
 					regColorB = regResultB;
-					regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
 				}
 
 				// Clamp to 0 .. 0xff
@@ -1837,9 +1943,7 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 					regColorR = regClampHighR;
 					regColorG = regClampHighG;
 					regColorB = regClampHighB;
-					regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
 				}
-
 			} else {
 				switch (m_State->m_Texture[unit].InternalFormat) {
 					default:
@@ -1876,7 +1980,10 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 								regColorR = regTexColorR;
 								regColorG = regTexColorG;
 								regColorB = regTexColorB;
-								regColor565 = regTexColor565;
+
+								if (m_State->GetColorFormat() == ColorFormatRGB565) {
+									regColorWord = regTexColorWord;
+								}
 								}
 
 								break;
@@ -1888,7 +1995,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 								regColorR = Mul255(block, regColorR, regTexColorR);
 								regColorG = Mul255(block, regColorG, regTexColorG);
 								regColorB = Mul255(block, regColorB, regTexColorB);
-								regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
 								}
 
 								break;
@@ -1905,7 +2011,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 								regColorR   = Blend255(block, m_State->m_Texture[unit].EnvColor.r, regColorR, regTexColorR);
 								regColorG   = Blend255(block, m_State->m_Texture[unit].EnvColor.g, regColorG, regTexColorG);
 								regColorB   = Blend255(block, m_State->m_Texture[unit].EnvColor.b, regColorB, regTexColorB);
-								regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
 								}
 
 								break;
@@ -1922,7 +2027,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 								regColorR	= AddSaturate255(block, regColorR, regTexColorR);
 								regColorG	= AddSaturate255(block, regColorG, regTexColorG);
 								regColorB	= AddSaturate255(block, regColorB, regTexColorB);
-								regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
 								}
 
 								break;
@@ -1941,7 +2045,7 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 								regColorG = regTexColorG;
 								regColorB = regTexColorB;
 								regColorA = regTexColorA;
-								regColor565 = regTexColor565;
+								regColorWord = regTexColorWord;
 								}
 
 								break;
@@ -1953,7 +2057,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 								regColorG = Mul255(block, regColorG, regTexColorG);
 								regColorB = Mul255(block, regColorB, regTexColorB);
 								regColorA = Mul255(block, regColorA, regTexColorA);
-								regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
 								}
 
 								break;
@@ -1970,7 +2073,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 								regColorR   = Blend255(block, regColorR, regTexColorR, regTexColorA);
 								regColorG   = Blend255(block, regColorG, regTexColorG, regTexColorA);
 								regColorB   = Blend255(block, regColorB, regTexColorB, regTexColorA);
-								regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
 								}
 
 								break;
@@ -1987,7 +2089,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 								regColorG   = Blend255(block, m_State->m_Texture[unit].EnvColor.g, regColorG, regTexColorG);
 								regColorB   = Blend255(block, m_State->m_Texture[unit].EnvColor.b, regColorB, regTexColorB);
 								regColorA	= Mul255(block, regColorA, regTexColorA);
-								regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
 								}
 
 								break;
@@ -2004,7 +2105,6 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 								regColorG	= AddSaturate255(block, regColorG, regTexColorG);
 								regColorB	= AddSaturate255(block, regColorB, regTexColorB);
 								regColorA	= Mul255(block, regColorA, regTexColorA);
-								regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
 								}
 
 								break;
@@ -2032,8 +2132,7 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 		regColorG = Blend255(block, regFogColorG, regColorG, regFog);
 		regColorB = Blend255(block, regFogColorB, regColorB, regFog);
 
-		// create RGB 565 representation
-		regColor565 = Color565FromRGB(block, regColorR,	regColorG, regColorB);
+		regColorWord = 0;
 	}
 
 	if (fragmentInfo.regCoverage) {
@@ -2049,6 +2148,7 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 		ASR		(regShiftedA, regScaledA, sixteen);
 		
 		regColorA = regShiftedA;
+		regColorWord = 0;
 	}
 	
 	if (m_State->m_Alpha.Enabled) {
@@ -2118,34 +2218,97 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 		}
 	}
 
-	// surface color buffer, depth buffer, alpha buffer, stencil buffer
-	if (!regColorBuffer)
+	// surface color buffer
+	if (!regColorBuffer) {
 		regColorBuffer = LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_COLOR_BUFFER);
-
-	if (!regAlphaBuffer)
-		regAlphaBuffer = NULL;//LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_ALPHA_BUFFER);
+	}
 
 	//U16 dstValue = m_Surface->GetColorBuffer()[offset];
 	//U8 dstAlpha = m_Surface->GetAlphaBuffer()[offset];
 	DECL_REG	(regDstValue);
-	DECL_REG	(regDstAlpha);
+
+	cg_virtual_reg_t	* regDstR, *regDstG, *regDstB, *regDstAlpha;
+
 	DECL_REG	(regColorAddr);
-	DECL_REG	(regAlphaAddr);
 
-	DECL_REG	(regConstant1);
-	DECL_REG	(regOffset2);
+	switch (m_State->GetColorFormat()) {
+	case ColorFormatRGB565:
+		{
+			DECL_REG	(regConstant1);
+			DECL_REG	(regOffset2);
 
-	LDI		(regConstant1, 1);
-	LSL		(regOffset2, regOffset, regConstant1);
+			LDI		(regConstant1, 1);
+			LSL		(regOffset2, regOffset, regConstant1);
+			ADD		(regColorAddr, regColorBuffer, regOffset2);
+			LDH		(regDstValue, regColorAddr);
 
-	ADD		(regColorAddr, regColorBuffer, regOffset2);
-	ADD		(regAlphaAddr, regAlphaBuffer, regOffset);
-	LDH		(regDstValue, regColorAddr);
-	LDB		(regDstAlpha, regAlphaAddr);
+			regDstR = ExtractBitFieldTo255(block, regDstValue, 11, 15);
+			regDstG = ExtractBitFieldTo255(block, regDstValue,  5, 10);
+			regDstB = ExtractBitFieldTo255(block, regDstValue,  0,  4);
+			regDstAlpha = cg_virtual_reg_create(procedure, cg_reg_type_general); 
+			
+			LDI		(regDstAlpha, 0xff);		
+		}
 
-	cg_virtual_reg_t * regDstR = ExtractBitFieldTo255(block, regDstValue, 11, 15);
-	cg_virtual_reg_t * regDstG = ExtractBitFieldTo255(block, regDstValue,  5, 10);
-	cg_virtual_reg_t * regDstB = ExtractBitFieldTo255(block, regDstValue,  0,  4);
+		break;
+
+	case ColorFormatRGBA5551:
+		{
+			DECL_REG	(regConstant1);
+			DECL_REG	(regOffset2);
+
+			LDI		(regConstant1, 1);
+			LSL		(regOffset2, regOffset, regConstant1);
+			ADD		(regColorAddr, regColorBuffer, regOffset2);
+			LDH		(regDstValue, regColorAddr);
+
+			regDstR = ExtractBitFieldTo255(block, regDstValue, 11, 15);
+			regDstG = ExtractBitFieldTo255(block, regDstValue,  6, 10);
+			regDstB = ExtractBitFieldTo255(block, regDstValue,  1,  5);
+			regDstAlpha = ExtractBitFieldTo255(block, regDstValue,  0,  0);
+		}
+
+		break;
+
+	case ColorFormatRGBA4444:
+		{
+			DECL_REG	(regConstant1);
+			DECL_REG	(regOffset2);
+
+			LDI		(regConstant1, 1);
+			LSL		(regOffset2, regOffset, regConstant1);
+			ADD		(regColorAddr, regColorBuffer, regOffset2);
+			LDH		(regDstValue, regColorAddr);
+
+			regDstR = ExtractBitFieldTo255(block, regDstValue, 12, 15);
+			regDstG = ExtractBitFieldTo255(block, regDstValue,  8, 11);
+			regDstB = ExtractBitFieldTo255(block, regDstValue,  4,  7);
+			regDstAlpha = ExtractBitFieldTo255(block, regDstValue,  0,  3);
+		}
+
+		break;
+
+	case ColorFormatRGBA8:
+		{
+			DECL_REG	(regConstant2);
+			DECL_REG	(regOffset4);
+
+			LDI		(regConstant2, 2);
+			LSL		(regOffset4, regOffset, regConstant2);
+			ADD		(regColorAddr, regColorBuffer, regOffset4);
+			LDW		(regDstValue, regColorAddr);
+
+			regDstR = ExtractBitFieldTo255(block, regDstValue, 24, 31);
+			regDstG = ExtractBitFieldTo255(block, regDstValue, 16, 23);
+			regDstB = ExtractBitFieldTo255(block, regDstValue,  8, 15);
+			regDstAlpha = ExtractBitFieldTo255(block, regDstValue,  0,  7);
+		}
+
+		break;
+
+	default:
+		assert(0);
+	}
 
 	// Blending
 	if (m_State->m_Blend.Enabled) {
@@ -2417,9 +2580,11 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 			regColorA = AddSaturate255(block, regSrcBlendA, regDstBlendA);
 		}
 
-		// create RGB 565 representation
+		regColorWord = 0;
+	}
 
-		regColor565 = Color565FromRGB(block, regColorR, regColorG, regColorB);
+	if (!regColorWord) {
+		regColorWord = ColorWordFromRGBA(block, regColorR, regColorG, regColorB, regColorA);
 	}
 
 	if (m_State->m_LogicOp.Enabled) {
@@ -2427,88 +2592,70 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 		//U32 newValue = maskedColor.ConvertToRGBA();
 		//U32 oldValue = Color::From565A(dstValue, dstAlpha).ConvertToRGBA();
 		//U32 value;
-		cg_virtual_reg_t * regNewValue = regColor565;
-		cg_virtual_reg_t * regNewValueA = regColorA;
+		cg_virtual_reg_t * regNewValue = regColorWord;
 		cg_virtual_reg_t * regOldValue = regDstValue;
-		cg_virtual_reg_t * regOldValueA = regDstAlpha;
 
-		regColor565 = cg_virtual_reg_create(procedure, cg_reg_type_general);
-		regColorA = cg_virtual_reg_create(procedure, cg_reg_type_general);
+		regColorWord = cg_virtual_reg_create(procedure, cg_reg_type_general);
 		
 		switch (m_State->m_LogicOp.Opcode) {
 			default:
 			case RasterizerState:: LogicOpClear:		
 				//value = 0;						
-				XOR		(regColor565, regOldValue, regOldValue);
-				XOR		(regColorA, regOldValueA, regOldValueA);
+				XOR		(regColorWord, regOldValue, regOldValue);
 				break;
 
 			case RasterizerState:: LogicOpAnd:			
 				//value = newValue & dstValue;	
-				AND		(regColor565, regOldValue, regNewValue);
-				AND		(regColorA, regOldValueA, regNewValueA);
+				AND		(regColorWord, regOldValue, regNewValue);
 				break;
 
 			case RasterizerState:: LogicOpAndReverse:	
 				{
 				//value = newValue & ~dstValue;	
 				DECL_REG (regNotOldValue);
-				DECL_REG (regNotOldValueA);
 
 				NOT		(regNotOldValue, regOldValue);
-				NOT		(regNotOldValueA, regOldValueA);
-				AND		(regColor565, regNotOldValue, regNewValue);
-				AND		(regColorA, regNotOldValueA, regNewValueA);
+				AND		(regColorWord, regNotOldValue, regNewValue);
 				break;
 				}
 
 			case RasterizerState:: LogicOpCopy:			
 				//value = newValue;		
-				regColor565 = regNewValue;
-				regColorA = regNewValueA;
+				regColorWord = regNewValue;
 				break;
 
 			case RasterizerState:: LogicOpAndInverted:	
 				{
 				//value = ~newValue & dstValue;	
 				DECL_REG (regNotNewValue);
-				DECL_REG (regNotNewValueA);
 
 				NOT		(regNotNewValue, regNewValue);
-				NOT		(regNotNewValueA, regNewValueA);
-				AND		(regColor565, regNotNewValue, regOldValue);
-				AND		(regColorA, regNotNewValueA, regOldValueA);
+				AND		(regColorWord, regNotNewValue, regOldValue);
 				break;
 				}
 
 			case RasterizerState:: LogicOpNoop:			
 				//value = dstValue;				
-				regColor565 = regOldValue;
-				regColorA = regOldValueA;
+				regColorWord = regOldValue;
 				break;
 
 			case RasterizerState:: LogicOpXor:			
 				//value = newValue ^ dstValue;	
-				XOR		(regColor565, regOldValue, regNewValue);
-				XOR		(regColorA, regOldValueA, regNewValueA);
+				XOR		(regColorWord, regOldValue, regNewValue);
 				break;
 
 			case RasterizerState:: LogicOpOr:			
 				//value = newValue | dstValue;	
-				OR		(regColor565, regOldValue, regNewValue);
-				OR		(regColorA, regOldValueA, regNewValueA);
+				OR		(regColorWord, regOldValue, regNewValue);
 				break;
 
 			case RasterizerState:: LogicOpNor:			
 				{
 				//value = ~(newValue | dstValue); 
 				DECL_REG(regCombinedValue);
-				DECL_REG(regCombinedValueA);
 
 				OR		(regCombinedValue, regOldValue, regNewValue);
-				OR		(regCombinedValueA, regOldValueA, regNewValueA);
-				NOT		(regColor565, regCombinedValue);
-				NOT		(regColorA,	regCombinedValueA);
+				NOT		(regColorWord, regCombinedValue);
 				break;
 				}
 
@@ -2516,50 +2663,39 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 				{
 				//value = ~(newValue ^ dstValue); 
 				DECL_REG(regCombinedValue);
-				DECL_REG(regCombinedValueA);
 
 				XOR		(regCombinedValue, regOldValue, regNewValue);
-				XOR		(regCombinedValueA, regOldValueA, regNewValueA);
-				NOT		(regColor565, regCombinedValue);
-				NOT		(regColorA,	regCombinedValueA);
+				NOT		(regColorWord, regCombinedValue);
 				break;
 				}
 
 			case RasterizerState:: LogicOpInvert:		
 				//value = ~dstValue;				
-				NOT		(regColor565, regOldValue);
-				NOT		(regColorA, regOldValueA);
+				NOT		(regColorWord, regOldValue);
 				break;
 
 			case RasterizerState:: LogicOpOrReverse:	
 				{
 				//value = newValue | ~dstValue;	
 				DECL_REG (regNotOldValue);
-				DECL_REG (regNotOldValueA);
 
 				NOT		(regNotOldValue, regOldValue);
-				NOT		(regNotOldValueA, regOldValueA);
-				OR		(regColor565, regNotOldValue, regNewValue);
-				OR		(regColorA, regNotOldValueA, regNewValueA);
+				OR		(regColorWord, regNotOldValue, regNewValue);
 				break;
 				}
 
 			case RasterizerState:: LogicOpCopyInverted:	
 				//value = ~newValue;			
-				NOT		(regColor565, regNewValue);
-				NOT		(regColorA, regNewValueA);
+				NOT		(regColorWord, regNewValue);
 				break;
 
 			case RasterizerState:: LogicOpOrInverted:	
 				{
 				//value = ~newValue | dstValue;	
 				DECL_REG (regNotNewValue);
-				DECL_REG (regNotNewValueA);
 
 				NOT		(regNotNewValue, regNewValue);
-				NOT		(regNotNewValueA, regNewValueA);
-				OR		(regColor565, regNotNewValue, regOldValue);
-				OR		(regColorA, regNotNewValueA, regOldValueA);
+				OR		(regColorWord, regNotNewValue, regOldValue);
 				break;
 				}
 
@@ -2567,20 +2703,16 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 				{
 				//value = ~(newValue & dstValue); 
 				DECL_REG(regCombinedValue);
-				DECL_REG(regCombinedValueA);
 
 				AND		(regCombinedValue, regOldValue, regNewValue);
-				AND		(regCombinedValueA, regOldValueA, regNewValueA);
-				NOT		(regColor565, regCombinedValue);
-				NOT		(regColorA,	regCombinedValueA);
+				NOT		(regColorWord, regCombinedValue);
 				break;
 				}
 
 			case RasterizerState:: LogicOpSet:			
 				//value = 0xFFFF;					
 				{
-				LDI		(regColor565,	0xffff);
-				LDI		(regColorA,		0xff);
+				LDI		(regColorWord,	EncodeColor(m_State->GetColorFormat(), Color(0xff, 0xff, 0xff, 0xff)));
 				}
 				break;
 		}
@@ -2588,10 +2720,7 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 	
 	//Color maskedColor = 
 	//	color.Mask(m_State->m_MaskRed, m_State->m_MaskGreen, m_State->m_MaskBlue, m_State->m_MaskAlpha);
-	if (m_State->m_Mask.Red & m_State->m_Mask.Green & m_State->m_Mask.Blue) {
-		//m_Surface->GetColorBuffer()[offset] = maskedColor.ConvertTo565();
-		STH		(regColor565, regColorAddr);
-	} else {
+	if (!m_State->m_Mask.Red || !m_State->m_Mask.Green || !m_State->m_Mask.Blue || !m_State->m_Mask.Alpha) {
 		//m_Surface->GetColorBuffer()[offset] = maskedColor.ConvertTo565();
 		DECL_REG	(regSrcMask);
 		DECL_REG	(regDstMask);
@@ -2599,21 +2728,35 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 		DECL_REG	(regMaskedDst);
 		DECL_REG	(regCombined);
 
-		U32 mask = (m_State->m_Mask.Blue ? 0x001f : 0) |
-			(m_State->m_Mask.Green ? 0x07e0 : 0) |
-			(m_State->m_Mask.Red ? 0xF800 : 0);
+		U32 mask = 
+			EncodeColor(m_State->GetColorFormat(), 
+						Color(0xff, 0xff, 0xff, 0xff).Mask(m_State->m_Mask.Red, 
+														   m_State->m_Mask.Green, 
+														   m_State->m_Mask.Blue, 
+														   m_State->m_Mask.Alpha));
 
 		LDI		(regSrcMask, mask);
 		LDI		(regDstMask, ~mask);
-		AND		(regMaskedSrc, regColor565, regSrcMask);
+		AND		(regMaskedSrc, regColorWord, regSrcMask);
 		AND		(regMaskedDst, regDstValue, regDstMask);
 		OR		(regCombined, regMaskedSrc, regMaskedDst);
-		STH		(regCombined, regColorAddr);
+
+		regColorWord = regCombined;
 	}
 
-	if (m_State->m_Mask.Alpha) {
-		//m_Surface->GetAlphaBuffer()[offset] = maskedColor.A();
-		STB		(regColorA, regAlphaAddr);
+	switch (m_State->GetColorFormat()) {
+	case ColorFormatRGB565:
+	case ColorFormatRGBA5551:
+	case ColorFormatRGBA4444:
+		STH		(regColorWord, regColorAddr);
+		break;
+
+	case ColorFormatRGBA8:
+		STW		(regColorWord, regColorAddr);
+		break;
+
+	default:
+		assert(false);
 	}
 }
 

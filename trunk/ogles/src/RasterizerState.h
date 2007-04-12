@@ -330,6 +330,9 @@ namespace EGL {
 		StencilOp GetStencilOpFailZFail() const;
 		StencilOp GetStencilOpFailZPass() const;
 
+		void SetColorFormat(ColorFormat format);
+		ColorFormat GetColorFormat() const;
+
 	public: // for access by code generator
 		// ----------------------------------------------------------------------
 		// Primitve specific rendering state
@@ -851,6 +854,8 @@ namespace EGL {
 		bool					m_InvertSampleCoverage;
 		bool					m_PerspectiveCorrection;
 
+		ColorFormat				m_ColorFormat;
+
 	};
 
 
@@ -1240,6 +1245,13 @@ namespace EGL {
 		return m_PerspectiveCorrection;
 	}
 
+	inline void RasterizerState :: SetColorFormat(ColorFormat format) {
+		m_ColorFormat = format;
+	}
+
+	inline ColorFormat RasterizerState :: GetColorFormat() const {
+		return m_ColorFormat;
+	}
 
 
 }
