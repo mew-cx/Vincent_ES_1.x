@@ -83,7 +83,6 @@ cg_virtual_reg_t * RasterPart :: ClampTo255(cg_block_t * block, cg_virtual_reg_t
 		DECL_CONST_REG	(constant0, 0);
 		DECL_CONST_REG	(constant17, 17);
 		DECL_CONST_REG	(constant1, 0x10000);
-		DECL_CONST_REG	(constantFactor, 0x1ff);
 
 		DECL_REG	(regClamped0);
 		DECL_REG	(regClamped1);
@@ -92,6 +91,9 @@ cg_virtual_reg_t * RasterPart :: ClampTo255(cg_block_t * block, cg_virtual_reg_t
 
 		MAX		(regClamped0, value, constant0);
 		MIN		(regClamped1, regClamped0, constant1);
+
+		DECL_CONST_REG	(constantFactor, 0x1ff);
+
 		MUL		(regAdjusted, regClamped1, constantFactor);
 		LSR		(regResult, regAdjusted, constant17);
 
@@ -208,7 +210,7 @@ cg_virtual_reg_t * RasterPart :: ExtractBitFieldTo255(cg_block_t * block, cg_vir
 		OR				(regOred,		value, regShifted);
 
 		value = regOred;
-		bits += 2;
+		bits *= 2;
 	}
 
 	return value;
@@ -258,13 +260,15 @@ void RasterPart :: Color565FromRGB(cg_block_t * block, cg_virtual_reg_t * regRGB
 	cg_virtual_reg_t * r, cg_virtual_reg_t * g, cg_virtual_reg_t * b) {
 	cg_proc_t * procedure = block->proc;
 
-	cg_virtual_reg_t *	regFieldR = BitFieldFrom255(block, r, 11, 15);
+	DECL_REG	(regBG);
+
 	cg_virtual_reg_t *	regFieldG = BitFieldFrom255(block, g, 5, 10);
 	cg_virtual_reg_t *	regFieldB = BitFieldFrom255(block, b, 0, 4);
 
-	DECL_REG	(regBG);
-
 	OR			(regBG,		regFieldB, regFieldG);
+
+	cg_virtual_reg_t *	regFieldR = BitFieldFrom255(block, r, 11, 15);
+
 	OR			(regRGB,	regBG, regFieldR);
 }
 
@@ -273,16 +277,20 @@ void RasterPart :: Color5551FromRGBA(cg_block_t * block, cg_virtual_reg_t * resu
 									 cg_virtual_reg_t * b, cg_virtual_reg_t * a) {
 	cg_proc_t * procedure = block->proc;
 
-	cg_virtual_reg_t *	regFieldR = BitFieldFrom255(block, r, 11, 15);
-	cg_virtual_reg_t *	regFieldG = BitFieldFrom255(block, g, 6, 10);
-	cg_virtual_reg_t *	regFieldB = BitFieldFrom255(block, b, 1, 5);
-	cg_virtual_reg_t *	regFieldA = BitFieldFrom255(block, a, 0, 0);
-
 	DECL_REG	(regBG);
 	DECL_REG	(regRGB);
 
+	cg_virtual_reg_t *	regFieldG = BitFieldFrom255(block, g, 6, 10);
+	cg_virtual_reg_t *	regFieldB = BitFieldFrom255(block, b, 1, 5);
+
 	OR			(regBG,		regFieldB, regFieldG);
+
+	cg_virtual_reg_t *	regFieldR = BitFieldFrom255(block, r, 11, 15);
+
 	OR			(regRGB,	regBG, regFieldR);
+
+	cg_virtual_reg_t *	regFieldA = BitFieldFrom255(block, a, 0, 0);
+
 	OR			(result,	regRGB, regFieldA);
 }
 
@@ -291,16 +299,20 @@ void RasterPart :: Color4444FromRGBA(cg_block_t * block, cg_virtual_reg_t * resu
 									 cg_virtual_reg_t * b, cg_virtual_reg_t * a) {
 	cg_proc_t * procedure = block->proc;
 
-	cg_virtual_reg_t *	regFieldR = BitFieldFrom255(block, r, 12, 15);
-	cg_virtual_reg_t *	regFieldG = BitFieldFrom255(block, g, 8, 11);
-	cg_virtual_reg_t *	regFieldB = BitFieldFrom255(block, b, 4, 7);
-	cg_virtual_reg_t *	regFieldA = BitFieldFrom255(block, a, 0, 3);
-
 	DECL_REG	(regBG);
 	DECL_REG	(regRGB);
 
+	cg_virtual_reg_t *	regFieldG = BitFieldFrom255(block, g, 8, 11);
+	cg_virtual_reg_t *	regFieldB = BitFieldFrom255(block, b, 4, 7);
+
 	OR			(regBG,		regFieldB, regFieldG);
+
+	cg_virtual_reg_t *	regFieldR = BitFieldFrom255(block, r, 12, 15);
+
 	OR			(regRGB,	regBG, regFieldR);
+
+	cg_virtual_reg_t *	regFieldA = BitFieldFrom255(block, a, 0, 3);
+
 	OR			(result,	regRGB, regFieldA);
 }
 
@@ -309,16 +321,20 @@ void RasterPart :: Color8888FromRGBA(cg_block_t * block, cg_virtual_reg_t * resu
 									 cg_virtual_reg_t * b, cg_virtual_reg_t * a) {
 	cg_proc_t * procedure = block->proc;
 
-	cg_virtual_reg_t *	regFieldR = BitFieldFrom255(block, r, 24, 31);
-	cg_virtual_reg_t *	regFieldG = BitFieldFrom255(block, g, 16, 23);
-	cg_virtual_reg_t *	regFieldB = BitFieldFrom255(block, b, 8, 15);
-	cg_virtual_reg_t *	regFieldA = BitFieldFrom255(block, a, 0, 7);
-
 	DECL_REG	(regBG);
 	DECL_REG	(regRGB);
 
+	cg_virtual_reg_t *	regFieldG = BitFieldFrom255(block, g, 16, 23);
+	cg_virtual_reg_t *	regFieldB = BitFieldFrom255(block, b, 8, 15);
+
 	OR			(regBG,		regFieldB, regFieldG);
+
+	cg_virtual_reg_t *	regFieldR = BitFieldFrom255(block, r, 24, 31);
+
 	OR			(regRGB,	regBG, regFieldR);
+
+	cg_virtual_reg_t *	regFieldA = BitFieldFrom255(block, a, 0, 7);
+
 	OR			(result,	regRGB, regFieldA);
 }
 
@@ -327,8 +343,8 @@ void RasterPart :: ColorWordFromRGBA(cg_block_t * block, cg_virtual_reg_t * resu
 									 cg_virtual_reg_t * b, cg_virtual_reg_t * a) {
 	switch (m_State->GetColorFormat()) {
 	case ColorFormatRGB565:		Color565FromRGB(block, result, r, g, b);		break;
-	case ColorFormatRGBA4444:	Color5551FromRGBA(block, result, r, g, b, a);	break;
-	case ColorFormatRGBA5551:	Color4444FromRGBA(block, result, r, g, b, a);	break;
+	case ColorFormatRGBA4444:	Color4444FromRGBA(block, result, r, g, b, a);	break;
+	case ColorFormatRGBA5551:	Color5551FromRGBA(block, result, r, g, b, a);	break;
 	case ColorFormatRGBA8:		Color8888FromRGBA(block, result, r, g, b, a);	break;
 	default:
 		assert(false);
@@ -2718,9 +2734,18 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 		}
 	} 
 	
+	U32 mask = 
+		EncodeColor(m_State->GetColorFormat(), 
+					Color(0xff, 0xff, 0xff, 0xff).Mask(m_State->m_Mask.Red, 
+													   m_State->m_Mask.Green, 
+													   m_State->m_Mask.Blue, 
+													   m_State->m_Mask.Alpha));
+	U32 fullMask = 
+		EncodeColor(m_State->GetColorFormat(), Color(0xff, 0xff, 0xff, 0xff));
+
 	//Color maskedColor = 
 	//	color.Mask(m_State->m_MaskRed, m_State->m_MaskGreen, m_State->m_MaskBlue, m_State->m_MaskAlpha);
-	if (!m_State->m_Mask.Red || !m_State->m_Mask.Green || !m_State->m_Mask.Blue || !m_State->m_Mask.Alpha) {
+	if (mask != fullMask) {
 		//m_Surface->GetColorBuffer()[offset] = maskedColor.ConvertTo565();
 		DECL_REG	(regSrcMask);
 		DECL_REG	(regDstMask);
@@ -2728,15 +2753,9 @@ void RasterPart :: GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t 
 		DECL_REG	(regMaskedDst);
 		DECL_REG	(regCombined);
 
-		U32 mask = 
-			EncodeColor(m_State->GetColorFormat(), 
-						Color(0xff, 0xff, 0xff, 0xff).Mask(m_State->m_Mask.Red, 
-														   m_State->m_Mask.Green, 
-														   m_State->m_Mask.Blue, 
-														   m_State->m_Mask.Alpha));
 
 		LDI		(regSrcMask, mask);
-		LDI		(regDstMask, ~mask);
+		LDI		(regDstMask, !mask);
 		AND		(regMaskedSrc, regColorWord, regSrcMask);
 		AND		(regMaskedDst, regDstValue, regDstMask);
 		OR		(regCombined, regMaskedSrc, regMaskedDst);

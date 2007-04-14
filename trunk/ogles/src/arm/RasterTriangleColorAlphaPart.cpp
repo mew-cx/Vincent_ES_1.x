@@ -313,7 +313,17 @@ void RasterTriangleColorAlphaPart :: GenerateRasterBlockColorAlpha(const Varying
 
 	//	surfaceInfo.ColorBuffer += surfaceInfo.Pitch;
 	DECL_REG		(regPitch2);
-	DECL_CONST_REG	(constShift, Texture::s_BytesPerPixel[m_State->GetColorFormat()]);
+	U32				shift = 0;
+
+	switch (m_State->GetColorFormat()) {
+	case ColorFormatRGB565:
+	case ColorFormatRGBA5551:
+	case ColorFormatRGBA4444:	shift = 1;		break;
+	case ColorFormatRGBA8:		shift = 2;		break;
+	default:					assert(false);	break;
+	}
+
+	DECL_CONST_REG	(constShift, shift);
 
 	LSL			(regPitch2, regPitch, constShift);
 	ADD			(regColorBuffer1, regColorBuffer0, regPitch2);
