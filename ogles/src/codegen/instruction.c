@@ -1483,7 +1483,7 @@ static const char * const opcodes[] =
 	"min",		"max",
 	"fadd",		"fcmp",		"fdiv",		"fmul",		"fneg",		
 	"fsub",		"finv",		"fsqrt",	"abs",		"log2",					
-	"trunc",	"round",	"fcnv",															
+	"trunc",	"round",	"fcnv",		"cnv_flt",
 	"beq",		"bge",		"ble",		"bgt",		"blt",		
 	"bne",		"bra",			
 	"ldb",		"ldh",		"ldi",		"ldw",		"stb",		
