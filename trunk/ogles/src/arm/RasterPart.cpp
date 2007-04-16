@@ -51,13 +51,12 @@ cg_virtual_reg_t * RasterPart :: Mul255(cg_block_t * block, cg_virtual_reg_t * f
 
 	DECL_REG		(regProduct);
 	DECL_CONST_REG	(constant8, 8);
-	DECL_CONST_REG	(constant7, 7);
 	DECL_REG		(regShifted);
 	DECL_REG		(regAdjusted);
 	DECL_REG		(regFinal);
 	
 	MUL			(regProduct,	first, second);
-	ASR			(regShifted,	regProduct, constant7);
+	ASR			(regShifted,	regProduct, constant8);
 	ADD			(regAdjusted,	regProduct, regShifted);
 	ASR			(regFinal,		regAdjusted, constant8);
 
