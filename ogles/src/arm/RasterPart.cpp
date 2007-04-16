@@ -51,12 +51,13 @@ cg_virtual_reg_t * RasterPart :: Mul255(cg_block_t * block, cg_virtual_reg_t * f
 
 	DECL_REG		(regProduct);
 	DECL_CONST_REG	(constant8, 8);
+	DECL_CONST_REG	(constant7, 7);
 	DECL_REG		(regShifted);
 	DECL_REG		(regAdjusted);
 	DECL_REG		(regFinal);
 	
 	MUL			(regProduct,	first, second);
-	ASR			(regShifted,	regProduct, constant8);
+	ASR			(regShifted,	regProduct, constant7);
 	ADD			(regAdjusted,	regProduct, regShifted);
 	ASR			(regFinal,		regAdjusted, constant8);
 
@@ -143,7 +144,7 @@ cg_virtual_reg_t * RasterPart :: Sub(cg_block_t * block, cg_virtual_reg_t * firs
 
 cg_virtual_reg_t * RasterPart :: ExtractBitFieldTo255(cg_block_t * block, cg_virtual_reg_t * value, size_t low, size_t high) {
 	cg_proc_t * procedure = block->proc;
-
+#if 0
 	if (high == low) {
 		if (high < 8) {
 			DECL_REG		(regShifted);
@@ -175,6 +176,7 @@ cg_virtual_reg_t * RasterPart :: ExtractBitFieldTo255(cg_block_t * block, cg_vir
 
 		return regAdjusted;
 	}
+#endif
 
 	if (high < 7) {
 		DECL_REG		(regShifted);
@@ -1078,57 +1080,61 @@ cg_block_t * RasterPart :: GenerateFragmentDepthStencil(cg_proc_t * procedure, c
 		fragmentInfo.regDepth = regNewDepth;
 	}*/
 
-	cg_opcode_t branchOnDepthTestPassed, branchOnDepthTestFailed;
 
-	switch (m_State->m_DepthTest.Func) {
-		default:
-		case RasterizerState::CompFuncNever:	
-			//depthTest = false;						
-			branchOnDepthTestPassed = cg_op_nop;
-			branchOnDepthTestFailed = cg_op_bra;
-			break;
+	cg_opcode_t branchOnDepthTestPassed = cg_op_bra;
+	cg_opcode_t branchOnDepthTestFailed = cg_op_nop;
 
-		case RasterizerState::CompFuncLess:		
-			//depthTest = depth < zBufferValue;		
-			branchOnDepthTestPassed = cg_op_blt;
-			branchOnDepthTestFailed = cg_op_bge;
-			break;
+	if (m_State->m_DepthTest.Enabled) {
+		switch (m_State->m_DepthTest.Func) {
+			default:
+			case RasterizerState::CompFuncNever:	
+				//depthTest = false;						
+				branchOnDepthTestPassed = cg_op_nop;
+				branchOnDepthTestFailed = cg_op_bra;
+				break;
 
-		case RasterizerState::CompFuncEqual:	
-			//depthTest = depth == zBufferValue;		
-			branchOnDepthTestPassed = cg_op_beq;
-			branchOnDepthTestFailed = cg_op_bne;
-			break;
+			case RasterizerState::CompFuncLess:		
+				//depthTest = depth < zBufferValue;		
+				branchOnDepthTestPassed = cg_op_blt;
+				branchOnDepthTestFailed = cg_op_bge;
+				break;
 
-		case RasterizerState::CompFuncLEqual:	
-			//depthTest = depth <= zBufferValue;		
-			branchOnDepthTestPassed = cg_op_ble;
-			branchOnDepthTestFailed = cg_op_bgt;
-			break;
+			case RasterizerState::CompFuncEqual:	
+				//depthTest = depth == zBufferValue;		
+				branchOnDepthTestPassed = cg_op_beq;
+				branchOnDepthTestFailed = cg_op_bne;
+				break;
 
-		case RasterizerState::CompFuncGreater:	
-			//depthTest = depth > zBufferValue;		
-			branchOnDepthTestPassed = cg_op_bgt;
-			branchOnDepthTestFailed = cg_op_ble;
-			break;
+			case RasterizerState::CompFuncLEqual:	
+				//depthTest = depth <= zBufferValue;		
+				branchOnDepthTestPassed = cg_op_ble;
+				branchOnDepthTestFailed = cg_op_bgt;
+				break;
 
-		case RasterizerState::CompFuncNotEqual:	
-			//depthTest = depth != zBufferValue;		
-			branchOnDepthTestPassed = cg_op_bne;
-			branchOnDepthTestFailed = cg_op_beq;
-			break;
+			case RasterizerState::CompFuncGreater:	
+				//depthTest = depth > zBufferValue;		
+				branchOnDepthTestPassed = cg_op_bgt;
+				branchOnDepthTestFailed = cg_op_ble;
+				break;
 
-		case RasterizerState::CompFuncGEqual:	
-			//depthTest = depth >= zBufferValue;		
-			branchOnDepthTestPassed = cg_op_bge;
-			branchOnDepthTestFailed = cg_op_blt;
-			break;
+			case RasterizerState::CompFuncNotEqual:	
+				//depthTest = depth != zBufferValue;		
+				branchOnDepthTestPassed = cg_op_bne;
+				branchOnDepthTestFailed = cg_op_beq;
+				break;
 
-		case RasterizerState::CompFuncAlways:	
-			//depthTest = true;						
-			branchOnDepthTestPassed = cg_op_bra;
-			branchOnDepthTestFailed = cg_op_nop;
-			break;
+			case RasterizerState::CompFuncGEqual:	
+				//depthTest = depth >= zBufferValue;		
+				branchOnDepthTestPassed = cg_op_bge;
+				branchOnDepthTestFailed = cg_op_blt;
+				break;
+
+			case RasterizerState::CompFuncAlways:	
+				//depthTest = true;						
+				branchOnDepthTestPassed = cg_op_bra;
+				branchOnDepthTestFailed = cg_op_nop;
+				break;
+		}
 	}
 
 	if (!m_State->m_Stencil.Enabled && m_State->m_DepthTest.Enabled) {
