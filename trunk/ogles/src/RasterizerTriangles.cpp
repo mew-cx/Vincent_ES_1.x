@@ -207,8 +207,7 @@ PixelMask Rasterizer :: RasterBlockDepthStencil(const Variables * vars,
 
 		depth0 += vars->Depth.dY - (vars->Depth.dX << EGL_LOG_RASTER_BLOCK_SIZE);
 
-		surfaceInfo.DepthBuffer += surfaceInfo.Pitch;
-		surfaceInfo.StencilBuffer += surfaceInfo.Pitch;
+		surfaceInfo.DepthStencilBuffer += EGL_RASTER_BLOCK_SIZE << m_RasterInfo.RasterSurface.DepthStencilOffsetShift;
     }
 
 	return totalMask;
@@ -273,8 +272,7 @@ PixelMask Rasterizer :: RasterBlockEdgeDepthStencil(const Variables * vars,
 
 		depth0 += vars->Depth.dY;
 
-		surfaceInfo.DepthBuffer += surfaceInfo.Pitch;
-		surfaceInfo.StencilBuffer += surfaceInfo.Pitch;
+		surfaceInfo.DepthStencilBuffer += EGL_RASTER_BLOCK_SIZE << m_RasterInfo.RasterSurface.DepthStencilOffsetShift;
     }
 
 	return totalMask;
@@ -411,6 +409,7 @@ void Rasterizer :: RasterTriangle(const Vertex& a, const Vertex& b,
 
 	m_RasterInfo.Init(m_Surface, miny, minx);
 	I32 blockStride = EGL_RASTER_BLOCK_SIZE * m_RasterInfo.RasterSurface.Pitch - span;
+	I32 depthStencilBlockStride = EGL_RASTER_BLOCK_SIZE * (m_RasterInfo.RasterSurface.Pitch - span);
 
 	const U32 numVarying = m_VaryingInfo.numVarying;
 	U32 usedNumVarying = 0;
@@ -671,9 +670,8 @@ cont:
 				vars.VaryingInvW[index].Value += vars.VaryingInvW[index].dX << EGL_LOG_RASTER_BLOCK_SIZE;
 			}
 
-			m_RasterInfo.RasterSurface.ColorBuffer   += (EGL_RASTER_BLOCK_SIZE << m_RasterInfo.RasterSurface.ColorOffsetShift);
-			m_RasterInfo.RasterSurface.DepthBuffer   += EGL_RASTER_BLOCK_SIZE;
-			m_RasterInfo.RasterSurface.StencilBuffer += EGL_RASTER_BLOCK_SIZE;
+			m_RasterInfo.RasterSurface.ColorBuffer			+= (EGL_RASTER_BLOCK_SIZE << m_RasterInfo.RasterSurface.ColorOffsetShift);
+			m_RasterInfo.RasterSurface.DepthStencilBuffer   += ((EGL_RASTER_BLOCK_SIZE * EGL_RASTER_BLOCK_SIZE) << m_RasterInfo.RasterSurface.DepthStencilOffsetShift);
         }
 
 		vars.Depth.Value += vars.Depth.dBlockLine;
@@ -683,9 +681,8 @@ cont:
 			vars.VaryingInvW[index].Value += vars.VaryingInvW[index].dBlockLine;
 		}
 
-		m_RasterInfo.RasterSurface.ColorBuffer   += (blockStride << m_RasterInfo.RasterSurface.ColorOffsetShift);
-		m_RasterInfo.RasterSurface.DepthBuffer   += blockStride;
-		m_RasterInfo.RasterSurface.StencilBuffer += blockStride;
+		m_RasterInfo.RasterSurface.ColorBuffer			+= (blockStride << m_RasterInfo.RasterSurface.ColorOffsetShift);
+		m_RasterInfo.RasterSurface.DepthStencilBuffer	+= (depthStencilBlockStride << m_RasterInfo.RasterSurface.DepthStencilOffsetShift);
     }
 }
 

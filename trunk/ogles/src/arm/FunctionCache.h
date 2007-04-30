@@ -50,7 +50,7 @@ namespace EGL {
 		friend class CodeGenerator;
 
 	public:
-		FunctionCache(size_t totalSize = 65536, float percentageKeep = 0.6);
+		FunctionCache(size_t totalSize = 65536, float percentageKeep = 0.6, size_t maxExternalFunctions = 32);
 		~FunctionCache();
 
 		// request a function pointer for a specific pipeline part and state
@@ -64,22 +64,31 @@ namespace EGL {
 		
 		// a code generator is done adding instructions into the memory area
 		void EndAddFunction(void * addr, size_t size);
+
+		// set the function for a specific state
+		bool SetFunction(PipelinePart::Part part, const void * state, const void * ptr);
 		
 	private:
 		// perform a GC on the function cache
 		void CompactCode();
-		
+
+		// synchronize the processor cache
 		void SyncCache(void * base, size_t size);
+
+		// allocate a new cache entry for the given state
+		FunctionInfo * AllocateFunction(PipelinePart::Part part, const void * state, size_t size = 0);
 
 	private:
 		U8 *				m_Code;
-		size_t				m_Used;
+		size_t				m_Used;	
 		size_t				m_Total;
 		FunctionInfo *		m_Functions;
 		FunctionInfo *		m_MostRecentlyUsed;
 		FunctionInfo *		m_LeastRecentlyUsed;
 		size_t				m_UsedFunctions;
 		size_t				m_MaxFunctions;
+		size_t				m_UsedExternalFunctions;
+		size_t				m_MaxExternalFunctions;
 		float				m_PercentageKeep;
 	};
 

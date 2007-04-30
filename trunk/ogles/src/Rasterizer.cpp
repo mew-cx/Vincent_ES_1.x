@@ -179,13 +179,21 @@ void RasterInfo::Init(Surface * surface, I32 y, I32 x) {
 	RasterSurface.Height = surface->GetHeight();
 	RasterSurface.Pitch = surface->GetPitch();
 
-	size_t offset;
+	size_t offset, depthStencilOffset;
 
 	if (surface->GetPitch() >= 0) {
 		offset = y * surface->GetPitch() + x;
 	} else {
 		offset = (y + 1 - (I32) surface->GetHeight()) * surface->GetPitch() + x;
 	}
+
+	I32 blockX = x & (EGL_RASTER_BLOCK_SIZE - 1);
+	I32 blockY = y & (EGL_RASTER_BLOCK_SIZE - 1);
+	I32 blockIndexX = x - blockX;
+	I32 blockIndexY = y - blockY;
+
+	depthStencilOffset = 
+		blockIndexY * surface->GetWidth() + ((blockIndexX + blockY) << EGL_LOG_RASTER_BLOCK_SIZE) + blockX;
 
 	RasterSurface.ColorFormat = surface->GetColorFormat();
 
@@ -204,9 +212,23 @@ void RasterInfo::Init(Surface * surface, I32 y, I32 x) {
 		assert(false);
 	}
 
-	RasterSurface.ColorBuffer = surface->GetColorBuffer() + (offset << RasterSurface.ColorOffsetShift);
-	RasterSurface.DepthBuffer = surface->GetDepthBuffer() + offset;
-	RasterSurface.StencilBuffer = surface->GetStencilBuffer() + offset;
+	RasterSurface.DepthStencilFormat = surface->GetDepthStencilFormat();
+
+	switch (RasterSurface.DepthStencilFormat) {
+	case DepthStencilFormatDepth16:
+		RasterSurface.DepthStencilOffsetShift = 1;
+		break;
+
+	case DepthStencilFormatDepth16Stencil16:
+		RasterSurface.DepthStencilOffsetShift = 2;
+		break;
+
+	default:
+		assert(false);
+	}
+
+	RasterSurface.ColorBuffer = surface->GetColorBuffer() + (offset << RasterSurface.ColorOffsetShift);	
+	RasterSurface.DepthStencilBuffer = surface->GetDepthStencilBuffer() + (depthStencilOffset << RasterSurface.DepthStencilOffsetShift);
 
 	InversionTablePtr = InversionTable;
 }
@@ -527,7 +549,7 @@ void Rasterizer :: Prepare() {
 
 #if !EGL_USE_JIT
 
-inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu[], EGL_Fixed tv[],
+inline void Rasterizer :: Fragment(I32 x, I32 y, U32 depth, EGL_Fixed tu[], EGL_Fixed tv[],
 								   EGL_Fixed fogDensity, const Color& baseColor, EGL_Fixed coverage) {
 
 	// pixel ownership test
@@ -544,9 +566,11 @@ inline void Rasterizer :: Fragment(I32 x, I32 y, EGL_Fixed depth, EGL_Fixed tu[]
 		}
 	}
 
-	m_RasterInfo.Init(m_Surface, y);
+	m_RasterInfo.Init(m_Surface, y, x);
 
-	Fragment(&m_RasterInfo, x, depth, tu, tv, baseColor, fogDensity, coverage);
+	if (FragmentDepthStencil(&m_RasterInfo, &m_RasterInfo.RasterSurface, 0, depth)) {
+		FragmentColorAlpha(&m_RasterInfo, &m_RasterInfo.RasterSurface, 0, tu, tv, baseColor, fogDensity, coverage);
+	}
 }
 
 
@@ -674,20 +698,151 @@ inline Color Rasterizer :: GetTexColor(const RasterizerState::TextureState * sta
 	}
 }
 
+U32 Rasterizer :: UpdateStencilValue(RasterizerState::StencilOp op, U32 stencilValue, U32 stencilRef) {
+
+	int stencilBits;
+
+	switch (m_State->GetDepthStencilFormat()) {
+	default:
+		assert(false);
+		// fall through
+
+	case DepthStencilFormatDepth16:
+		return stencilValue;
+
+	case DepthStencilFormatDepth16Stencil16:
+		stencilBits = 16;
+		break;
+	}
+
+	switch (op) {
+		default:
+		case RasterizerState::StencilOpKeep:
+			break;
+
+		case RasterizerState::StencilOpZero:
+			stencilValue = 0;
+			break;
+
+		case RasterizerState::StencilOpReplace:
+			stencilValue = stencilRef;
+			break;
+
+		case RasterizerState::StencilOpIncr:
+			if (stencilValue != (1u << stencilBits) - 1) {
+				stencilValue++;
+			}
+
+			break;
+
+		case RasterizerState::StencilOpDecr:
+			if (stencilValue != 0) {
+				stencilValue--;
+			}
+
+			break;
+
+		case RasterizerState::StencilOpInvert:
+			stencilValue = ~stencilValue;
+			break;
+	}
+
+	return stencilValue;
+}
+
+void Rasterizer::WriteDepthStencil(void * depthStencilAddr, U32 oldDepth, U32 newDepth, U32 oldStencil, U32 newStencil) {
+	int stencilBits;
+	U32 stencilBitMask, stencilWriteMask = m_State->GetStencilMask();
+	U32 depthWriteMask = m_State->GetDepthMask() ? 0xffffffff : 0;
+	int stencilShift, depthShift;
+
+	switch (m_State->GetDepthStencilFormat()) {
+	default:
+		assert(false);
+		return;
+
+	case DepthStencilFormatDepth16:
+		stencilBits = 0;
+		stencilBitMask = 0;
+		stencilWriteMask = 0;
+		depthWriteMask &= 0xffff;
+		stencilShift = 0;
+		depthShift = 0;
+		break;
+
+	case DepthStencilFormatDepth16Stencil16:
+		stencilBits = 16;
+		stencilBitMask = 0xffff;
+		stencilWriteMask &= stencilBitMask;
+		depthWriteMask &= 0xffff;
+		stencilShift = 16;
+		depthShift = 0;
+		break;
+	}
+
+	if (!m_State->GetDepthMask() &&!stencilWriteMask) {
+			// no depth value to write
+			// no stencil value to write
+			// => Don't write anything
+			return;
+	}
+
+	U32 stencilWriteValue =
+		((oldStencil & (stencilBitMask & ~stencilWriteMask)) | (newStencil & stencilWriteMask)) << stencilShift;
+
+	U32 depthWriteValue = 
+		(m_State->GetDepthMask() ? newDepth : oldDepth) << depthShift;
+
+	U32 depthStencilWriteValue = stencilWriteValue | depthWriteValue;
+
+	switch (m_State->GetDepthStencilFormat()) {
+	default:
+		assert(false);
+		return;
+
+	case DepthStencilFormatDepth16:
+		*(U16 *) depthStencilAddr = depthStencilWriteValue;
+		break;
+
+	case DepthStencilFormatDepth16Stencil16:
+		*(U32 *) depthStencilAddr = depthStencilWriteValue;
+		break;
+	}
+}
 
 bool Rasterizer::FragmentDepthStencil(const RasterInfo * rasterInfo,
 									  const SurfaceInfo * surfaceInfo,
-									  I32 x, EGL_Fixed depth)
+									  U32 offset, U32 depth)
 	// fragment rendering with signature corresponding to function fragment
 	// generated by code generator
 	// return true if the fragment passed depth and stencil tests
 {
-	I32 offset      = x;
+	void * depthStencilAddr =
+		surfaceInfo->DepthStencilBuffer + (offset << surfaceInfo->DepthStencilOffsetShift);
+
+	U32 depthStencilValue, stencilValue, zBufferValue;
+	bool stencilPassAlways = false;
+
+	switch (m_State->GetDepthStencilFormat()) {
+	default:
+		assert(false);
+		return false;
+
+	case DepthStencilFormatDepth16:
+		depthStencilValue = zBufferValue = *(U16 *) depthStencilAddr;
+		stencilValue = 0;
+		stencilPassAlways = true;
+		break;
+
+	case DepthStencilFormatDepth16Stencil16:
+		depthStencilValue = *(U32 *) depthStencilAddr;
+		zBufferValue = depthStencilValue & 0xffff;
+		stencilValue = depthStencilValue >> 16;
+		break;
+	}
 
 	if (m_State->m_Stencil.Enabled) {
-
 		U32 stencilRef = m_State->m_Stencil.Reference & m_State->m_Stencil.ComparisonMask;
-		U32 stencilValue = surfaceInfo->StencilBuffer[offset];
 		U32 stencil = stencilValue & m_State->m_Stencil.ComparisonMask;
 		bool stencilTest;
 
@@ -703,43 +858,10 @@ bool Rasterizer::FragmentDepthStencil(const RasterInfo * rasterInfo,
 			case RasterizerState::CompFuncAlways:	                					break;
 		}
 
-		if (!stencilTest) {
+		if (!(stencilTest || stencilPassAlways)) {
 
-			switch (m_State->m_Stencil.Fail) {
-				default:
-				case RasterizerState::StencilOpKeep:
-					break;
-
-				case RasterizerState::StencilOpZero:
-					stencilValue = 0;
-					break;
-
-				case RasterizerState::StencilOpReplace:
-					stencilValue = m_State->m_Stencil.Reference;
-					break;
-
-				case RasterizerState::StencilOpIncr:
-					if (stencilValue != 0xffffffff) {
-						stencilValue++;
-					}
-
-					break;
-
-				case RasterizerState::StencilOpDecr:
-					if (stencilValue != 0) {
-						stencilValue--;
-					}
-
-					break;
-
-				case RasterizerState::StencilOpInvert:
-					stencilValue = ~stencilValue;
-					break;
-			}
-
-			surfaceInfo->StencilBuffer[offset] =
-				surfaceInfo->StencilBuffer[offset] & ~m_State->m_Stencil.Mask |
-				stencilValue & m_State->m_Stencil.Mask;
+			U32 newStencilValue = UpdateStencilValue(m_State->m_Stencil.Fail, stencilValue, m_State->m_Stencil.Reference);
+			WriteDepthStencil(depthStencilAddr, zBufferValue, zBufferValue, stencilValue, newStencilValue);
 
 			return false;
 		}
@@ -747,9 +869,8 @@ bool Rasterizer::FragmentDepthStencil(const RasterInfo * rasterInfo,
 		bool depthTest;
 
 		if (m_State->m_DepthTest.Enabled) {
-			depth = EGL_CLAMP(depth, 0, 0xffff);
+			depth = depth > 0xffff ? 0xffff : depth;
 			assert(depth >= 0 && depth <= 0xffff);
-			I32 zBufferValue = surfaceInfo->DepthBuffer[offset];
 
 			switch (m_State->m_DepthTest.Func) {
 				default:
@@ -767,91 +888,20 @@ bool Rasterizer::FragmentDepthStencil(const RasterInfo * rasterInfo,
 		}
 
 		if (depthTest) {
-			switch (m_State->m_Stencil.ZPass) {
-				default:
-				case RasterizerState::StencilOpKeep:
-					break;
-
-				case RasterizerState::StencilOpZero:
-					stencilValue = 0;
-					break;
-
-				case RasterizerState::StencilOpReplace:
-					stencilValue = m_State->m_Stencil.Reference;
-					break;
-
-				case RasterizerState::StencilOpIncr:
-					if (stencilValue != 0xffffffff) {
-						stencilValue++;
-					}
-
-					break;
-
-				case RasterizerState::StencilOpDecr:
-					if (stencilValue != 0) {
-						stencilValue--;
-					}
-
-					break;
-
-				case RasterizerState::StencilOpInvert:
-					stencilValue = ~stencilValue;
-					break;
-			}
-
-			surfaceInfo->StencilBuffer[offset] =
-				surfaceInfo->StencilBuffer[offset] & ~m_State->m_Stencil.Mask |
-				stencilValue & m_State->m_Stencil.Mask;
-
-			if (m_State->m_Mask.Depth) {
-				surfaceInfo->DepthBuffer[offset] = depth;
-			}
+			U32 newStencilValue = UpdateStencilValue(m_State->m_Stencil.ZPass, stencilValue, m_State->m_Stencil.Reference);
+			WriteDepthStencil(depthStencilAddr, zBufferValue, depth, stencilValue, newStencilValue);
 
 			return true;
 
 		} else {
-			switch (m_State->m_Stencil.ZFail) {
-				default:
-				case RasterizerState::StencilOpKeep:
-					break;
-
-				case RasterizerState::StencilOpZero:
-					stencilValue = 0;
-					break;
-
-				case RasterizerState::StencilOpReplace:
-					stencilValue = m_State->m_Stencil.Reference;
-					break;
-
-				case RasterizerState::StencilOpIncr:
-					if (stencilValue != 0xffffffff) {
-						stencilValue++;
-					}
-
-					break;
-
-				case RasterizerState::StencilOpDecr:
-					if (stencilValue != 0) {
-						stencilValue--;
-					}
-
-					break;
-
-				case RasterizerState::StencilOpInvert:
-					stencilValue = ~stencilValue;
-					break;
-			}
-
-			surfaceInfo->StencilBuffer[offset] =
-				surfaceInfo->StencilBuffer[offset] & ~m_State->m_Stencil.Mask |
-				stencilValue & m_State->m_Stencil.Mask;
+			U32 newStencilValue = UpdateStencilValue(m_State->m_Stencil.ZFail, stencilValue, m_State->m_Stencil.Reference);
+			WriteDepthStencil(depthStencilAddr, zBufferValue, zBufferValue, stencilValue, newStencilValue);
 
 			return false;
 		}
 	} else if (m_State->m_DepthTest.Enabled) {
-	    depth = EGL_CLAMP(depth, 0, 0xffff);
+		depth = depth > 0xffff ? 0xffff : depth;
 	    assert(depth >= 0 && depth <= 0xffff);
-	    I32 zBufferValue = surfaceInfo->DepthBuffer[offset];
 		bool depthTest;
 
 	    switch (m_State->m_DepthTest.Func) {
@@ -870,9 +920,7 @@ bool Rasterizer::FragmentDepthStencil(const RasterInfo * rasterInfo,
 		    return false;
 	}
 
-    if (m_State->m_Mask.Depth) {
-        surfaceInfo->DepthBuffer[offset] = depth;
-	}
+	WriteDepthStencil(depthStencilAddr, zBufferValue, depth, stencilValue, stencilValue);
 
 	return true;
 }
@@ -925,14 +973,12 @@ namespace {
 
 void Rasterizer::FragmentColorAlpha(const RasterInfo * rasterInfo,
 									const SurfaceInfo * surfaceInfo,
-									I32 x, EGL_Fixed tu[], EGL_Fixed tv[],
+									U32 offset, EGL_Fixed tu[], EGL_Fixed tv[],
 									const Color& baseColor, EGL_Fixed fog, 
 									EGL_Fixed coverage)
 	// fragment rendering with signature corresponding to function fragment
 	// generated by code generator
 {
-	I32 offset = x;
-
 	Color color(baseColor);
 
 	// have offset, color, texOffset, texture
@@ -1483,23 +1529,6 @@ void Rasterizer::FragmentColorAlpha(const RasterInfo * rasterInfo,
 		WriteColor(surfaceInfo, offset, Color::FromRGBA(value));
 	} else {
 		WriteColor(surfaceInfo, offset, maskedColor);
-	}
-}
-
-void Rasterizer :: Fragment(const RasterInfo * rasterInfo, I32 x, EGL_Fixed depth, EGL_Fixed tu[], EGL_Fixed tv[],
-			  const Color& baseColor, EGL_Fixed fogDensity, EGL_Fixed coverage) {
-	// fragment rendering with signature corresponding to function fragment
-	// generated by code generator
-
-	// fragment level clipping (for now)
-	if (m_State->m_ScissorTest.Enabled) {
-		if (x < m_State->m_ScissorTest.X || x - m_State->m_ScissorTest.X >= m_State->m_ScissorTest.Width) {
-			return;
-		}
-	}
-
-	if (FragmentDepthStencil(rasterInfo, &rasterInfo->RasterSurface, x, depth)) {
-		FragmentColorAlpha(rasterInfo, &rasterInfo->RasterSurface, x, tu, tv, baseColor, fogDensity, coverage);
 	}
 }
 

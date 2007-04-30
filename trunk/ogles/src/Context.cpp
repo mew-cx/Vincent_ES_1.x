@@ -211,8 +211,10 @@ void Context :: SetDrawSurface(EGL::Surface * surface) {
 		m_ViewportInitialized = true;
 
 		GetRasterizerState()->SetColorFormat(surface->GetColorFormat());
+		GetRasterizerState()->SetDepthStencilFormat(surface->GetDepthStencilFormat());
 	} else {
 		GetRasterizerState()->SetColorFormat(ColorFormatInvalid);
+		GetRasterizerState()->SetDepthStencilFormat(DepthStencilFormatInvalid);
 	}
 
 	m_DrawSurface = surface;
@@ -281,14 +283,12 @@ void Context :: Clear(GLbitfield mask) {
 				m_RasterizerState.GetColorMask(), m_Scissor);
 		}
 
-		if (mask & GL_DEPTH_BUFFER_BIT) {
+		if (mask & (GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)) {
 			// actually need to transform depth to correct value
-			EGL_Fixed clearValue = EGL_MAP_0_1(m_DepthClearValue);
-			m_DrawSurface->ClearDepthBuffer(clearValue, m_RasterizerState.GetDepthMask(), m_Scissor);
-		}
-
-		if (mask & GL_STENCIL_BUFFER_BIT) {
-			m_DrawSurface->ClearStencilBuffer(m_StencilClearValue, m_RasterizerState.GetStencilMask(), m_Scissor);
+			EGL_Fixed depthValue = EGL_MAP_0_1(m_DepthClearValue);
+			bool depthMask = (mask & GL_DEPTH_BUFFER_BIT) ? m_RasterizerState.GetDepthMask() : 0;
+			U16 stencilMask = (mask & GL_STENCIL_BUFFER_BIT) ? m_RasterizerState.GetStencilMask() : 0;
+			m_DrawSurface->ClearDepthStencilBuffer(depthValue, depthMask, m_StencilClearValue, stencilMask, m_Scissor);
 		}
 	} else {
 		if (mask & GL_COLOR_BUFFER_BIT) {
@@ -296,14 +296,12 @@ void Context :: Clear(GLbitfield mask) {
 			m_DrawSurface->ClearColorBuffer(m_ColorClearValue, m_RasterizerState.GetColorMask());
 		}
 
-		if (mask & GL_DEPTH_BUFFER_BIT) {
+		if (mask & (GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)) {
 			// actually need to transform depth to correct value
-			EGL_Fixed clearValue = EGL_MAP_0_1(m_DepthClearValue);
-			m_DrawSurface->ClearDepthBuffer(clearValue, m_RasterizerState.GetDepthMask());
-		}
-
-		if (mask & GL_STENCIL_BUFFER_BIT) {
-			m_DrawSurface->ClearStencilBuffer(m_StencilClearValue, m_RasterizerState.GetStencilMask());
+			EGL_Fixed depthValue = EGL_MAP_0_1(m_DepthClearValue);
+			bool depthMask = (mask & GL_DEPTH_BUFFER_BIT) ? m_RasterizerState.GetDepthMask() : 0;
+			U16 stencilMask = (mask & GL_STENCIL_BUFFER_BIT) ? m_RasterizerState.GetStencilMask() : 0;
+			m_DrawSurface->ClearDepthStencilBuffer(depthValue, depthMask, m_StencilClearValue, stencilMask);
 		}
 	}
 }

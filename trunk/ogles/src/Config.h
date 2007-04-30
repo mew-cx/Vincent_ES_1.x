@@ -42,6 +42,7 @@
 #include "OGLES.h"
 #include "GLES/egl.h"
 #include "Color.h"
+#include "DepthStencil.h"
 
 
 namespace EGL {
@@ -54,7 +55,9 @@ namespace EGL {
 
 	public:
 		Config(
-			ColorFormat	colorFormat,
+			ColorFormat			colorFormat,
+			DepthStencilFormat	depthStencilFormat,
+
 			EGLint		bufferSize,
 			EGLint		redSize,
 			EGLint		greenSize,
@@ -93,6 +96,7 @@ namespace EGL {
 		static EGLBoolean ChooseConfig(const EGLint * attribList, EGLConfig * result, EGLint configSize, EGLint * numConfig);
 
 		ColorFormat GetColorFormat() const;
+		DepthStencilFormat GetDepthStencilFormat() const;
 
 	private:
 		bool Matches(const EGLint * attribList) const;
@@ -126,11 +130,16 @@ namespace EGL {
 		EGLint		m_Width;
 		EGLint		m_Height;
 
-		ColorFormat	m_ColorFormat;
+		ColorFormat			m_ColorFormat;
+		DepthStencilFormat	m_DepthStencilFormat;
 	};
 
 	inline ColorFormat Config :: GetColorFormat() const {
 		return m_ColorFormat;
+	}
+
+	inline DepthStencilFormat Config :: GetDepthStencilFormat() const {
+		return m_DepthStencilFormat;
 	}
 
 }

@@ -48,11 +48,11 @@ using namespace EGL;
 namespace {
     const EGL::Config s_AllConfigurations[] = {
    	    // ----------------------------------------------------------------------
-	    // Initial default configuration 
-	    // RGBA4444, as PBuffer or Windows surface
+	    // RGBA4444, depth 16, no stencil, as PBuffer or Windows surface
 	    // ----------------------------------------------------------------------
 	    Config(
 			ColorFormatRGBA4444,
+			DepthStencilFormatDepth16,
 		    16,				//	EGLint	bufferSize,
 		    4,				//	EGLint	redSize,
 		    4,				//	EGLint	greenSize,
@@ -70,7 +70,7 @@ namespace {
 		    EGL_NONE,		//	EGLint	nativeVisualType,
 		    0,				//	EGLint	sampleBuffers,
 		    0,				//	EGLint	samples,
-		    32,				//	EGLint	stencilSize,
+		    0,				//	EGLint	stencilSize,
 		    EGL_PBUFFER_BIT | EGL_WINDOW_BIT,//	EGLint	surfaceType,
 		    EGL_NONE,		//	EGLint	transparentType,
 		    0,				//	EGLint	transparentRedValue,
@@ -80,16 +80,16 @@ namespace {
 		    320				//  EGLint	height
 	    ),
    	    // ----------------------------------------------------------------------
-	    // Initial default configuration 
-	    // RGBA5551, as PBuffer or Windows surface
+	    // RGBA4444, depth 16, stencil 16, as PBuffer or Windows surface
 	    // ----------------------------------------------------------------------
 	    Config(
-			ColorFormatRGBA5551,
+			ColorFormatRGBA4444,
+			DepthStencilFormatDepth16Stencil16,
 		    16,				//	EGLint	bufferSize,
-		    5,				//	EGLint	redSize,
-		    5,				//	EGLint	greenSize,
-		    5,				//	EGLint	blueSize,
-		    1,				//	EGLint	alphaSize,
+		    4,				//	EGLint	redSize,
+		    4,				//	EGLint	greenSize,
+		    4,				//	EGLint	blueSize,
+		    4,				//	EGLint	alphaSize,
 		    EGL_NONE,		//	EGLint	configCaveat,
 		    2,				//	EGLint	configID,
 		    16,				//	EGLint	depthSize,
@@ -102,7 +102,7 @@ namespace {
 		    EGL_NONE,		//	EGLint	nativeVisualType,
 		    0,				//	EGLint	sampleBuffers,
 		    0,				//	EGLint	samples,
-		    32,				//	EGLint	stencilSize,
+		    16,				//	EGLint	stencilSize,
 		    EGL_PBUFFER_BIT | EGL_WINDOW_BIT,//	EGLint	surfaceType,
 		    EGL_NONE,		//	EGLint	transparentType,
 		    0,				//	EGLint	transparentRedValue,
@@ -112,16 +112,16 @@ namespace {
 		    320				//  EGLint	height
 	    ),
    	    // ----------------------------------------------------------------------
-	    // Initial default configuration 
-	    // RGB 565, as PBuffer or Windows surface
+	    // RGBA5551, depth 16, no stencil, as PBuffer or Windows surface
 	    // ----------------------------------------------------------------------
 	    Config(
-			ColorFormatRGB565,
+			ColorFormatRGBA5551,
+			DepthStencilFormatDepth16,
 		    16,				//	EGLint	bufferSize,
 		    5,				//	EGLint	redSize,
-		    6,				//	EGLint	greenSize,
+		    5,				//	EGLint	greenSize,
 		    5,				//	EGLint	blueSize,
-		    0,				//	EGLint	alphaSize,
+		    1,				//	EGLint	alphaSize,
 		    EGL_NONE,		//	EGLint	configCaveat,
 		    3,				//	EGLint	configID,
 		    16,				//	EGLint	depthSize,
@@ -134,7 +134,7 @@ namespace {
 		    EGL_NONE,		//	EGLint	nativeVisualType,
 		    0,				//	EGLint	sampleBuffers,
 		    0,				//	EGLint	samples,
-		    32,				//	EGLint	stencilSize,
+		    0,				//	EGLint	stencilSize,
 		    EGL_PBUFFER_BIT | EGL_WINDOW_BIT,//	EGLint	surfaceType,
 		    EGL_NONE,		//	EGLint	transparentType,
 		    0,				//	EGLint	transparentRedValue,
@@ -144,16 +144,16 @@ namespace {
 		    320				//  EGLint	height
 	    ),
    	    // ----------------------------------------------------------------------
-	    // Initial 32-bit framebuffer configuration 
-	    // RGBA 8888, as PBuffer or Windows surface
+	    // RGBA5551, depth 16, stencil 16, as PBuffer or Windows surface
 	    // ----------------------------------------------------------------------
 	    Config(
-			ColorFormatRGBA8,
-		    32,				//	EGLint	bufferSize,
-		    8,				//	EGLint	redSize,
-		    8,				//	EGLint	greenSize,
-		    8,				//	EGLint	blueSize,
-		    8,				//	EGLint	alphaSize,
+			ColorFormatRGBA5551,
+			DepthStencilFormatDepth16Stencil16,
+		    16,				//	EGLint	bufferSize,
+		    5,				//	EGLint	redSize,
+		    5,				//	EGLint	greenSize,
+		    5,				//	EGLint	blueSize,
+		    1,				//	EGLint	alphaSize,
 		    EGL_NONE,		//	EGLint	configCaveat,
 		    4,				//	EGLint	configID,
 		    16,				//	EGLint	depthSize,
@@ -166,7 +166,135 @@ namespace {
 		    EGL_NONE,		//	EGLint	nativeVisualType,
 		    0,				//	EGLint	sampleBuffers,
 		    0,				//	EGLint	samples,
-		    32,				//	EGLint	stencilSize,
+		    16,				//	EGLint	stencilSize,
+		    EGL_PBUFFER_BIT | EGL_WINDOW_BIT,//	EGLint	surfaceType,
+		    EGL_NONE,		//	EGLint	transparentType,
+		    0,				//	EGLint	transparentRedValue,
+		    0,				//	EGLint	transparentGreenValue,
+		    0,				//	EGLint	transparentBlueValue,
+		    240,			//  EGLint	width,
+		    320				//  EGLint	height
+	    ),
+   	    // ----------------------------------------------------------------------
+	    // RGB 565, depth 16, no stencil, as PBuffer or Windows surface
+	    // ----------------------------------------------------------------------
+	    Config(
+			ColorFormatRGB565,
+			DepthStencilFormatDepth16,
+		    16,				//	EGLint	bufferSize,
+		    5,				//	EGLint	redSize,
+		    6,				//	EGLint	greenSize,
+		    5,				//	EGLint	blueSize,
+		    0,				//	EGLint	alphaSize,
+		    EGL_NONE,		//	EGLint	configCaveat,
+		    5,				//	EGLint	configID,
+		    16,				//	EGLint	depthSize,
+		    0,				//	EGLint	level,
+		    1024,			//	EGLint	maxPBufferWidth,
+		    1024,			//	EGLint	maxPBufferHeight,
+		    1024 * 1024,	//	EGLint	mxPBufferPixels,
+		    EGL_FALSE,		//	EGLint	nativeRenderable,
+		    0,				//	EGLint	nativeVisualID,
+		    EGL_NONE,		//	EGLint	nativeVisualType,
+		    0,				//	EGLint	sampleBuffers,
+		    0,				//	EGLint	samples,
+		    0,				//	EGLint	stencilSize,
+		    EGL_PBUFFER_BIT | EGL_WINDOW_BIT,//	EGLint	surfaceType,
+		    EGL_NONE,		//	EGLint	transparentType,
+		    0,				//	EGLint	transparentRedValue,
+		    0,				//	EGLint	transparentGreenValue,
+		    0,				//	EGLint	transparentBlueValue,
+		    240,			//  EGLint	width,
+		    320				//  EGLint	height
+	    ),
+   	    // ----------------------------------------------------------------------
+	    // RGB 565, depth 16, stencil 16, as PBuffer or Windows surface
+	    // ----------------------------------------------------------------------
+	    Config(
+			ColorFormatRGB565,
+			DepthStencilFormatDepth16Stencil16,
+		    16,				//	EGLint	bufferSize,
+		    5,				//	EGLint	redSize,
+		    6,				//	EGLint	greenSize,
+		    5,				//	EGLint	blueSize,
+		    0,				//	EGLint	alphaSize,
+		    EGL_NONE,		//	EGLint	configCaveat,
+		    6,				//	EGLint	configID,
+		    16,				//	EGLint	depthSize,
+		    0,				//	EGLint	level,
+		    1024,			//	EGLint	maxPBufferWidth,
+		    1024,			//	EGLint	maxPBufferHeight,
+		    1024 * 1024,	//	EGLint	mxPBufferPixels,
+		    EGL_FALSE,		//	EGLint	nativeRenderable,
+		    0,				//	EGLint	nativeVisualID,
+		    EGL_NONE,		//	EGLint	nativeVisualType,
+		    0,				//	EGLint	sampleBuffers,
+		    0,				//	EGLint	samples,
+		    16,				//	EGLint	stencilSize,
+		    EGL_PBUFFER_BIT | EGL_WINDOW_BIT,//	EGLint	surfaceType,
+		    EGL_NONE,		//	EGLint	transparentType,
+		    0,				//	EGLint	transparentRedValue,
+		    0,				//	EGLint	transparentGreenValue,
+		    0,				//	EGLint	transparentBlueValue,
+		    240,			//  EGLint	width,
+		    320				//  EGLint	height
+	    ),
+   	    // ----------------------------------------------------------------------
+	    // RGBA 8888, depth 16, no stencil, as PBuffer or Windows surface
+	    // ----------------------------------------------------------------------
+	    Config(
+			ColorFormatRGBA8,
+			DepthStencilFormatDepth16,
+		    32,				//	EGLint	bufferSize,
+		    8,				//	EGLint	redSize,
+		    8,				//	EGLint	greenSize,
+		    8,				//	EGLint	blueSize,
+		    8,				//	EGLint	alphaSize,
+		    EGL_NONE,		//	EGLint	configCaveat,
+		    7,				//	EGLint	configID,
+		    16,				//	EGLint	depthSize,
+		    0,				//	EGLint	level,
+		    1024,			//	EGLint	maxPBufferWidth,
+		    1024,			//	EGLint	maxPBufferHeight,
+		    1024 * 1024,	//	EGLint	mxPBufferPixels,
+		    EGL_FALSE,		//	EGLint	nativeRenderable,
+		    0,				//	EGLint	nativeVisualID,
+		    EGL_NONE,		//	EGLint	nativeVisualType,
+		    0,				//	EGLint	sampleBuffers,
+		    0,				//	EGLint	samples,
+		    0,				//	EGLint	stencilSize,
+		    EGL_PBUFFER_BIT | EGL_WINDOW_BIT,//	EGLint	surfaceType,
+		    EGL_NONE,		//	EGLint	transparentType,
+		    0,				//	EGLint	transparentRedValue,
+		    0,				//	EGLint	transparentGreenValue,
+		    0,				//	EGLint	transparentBlueValue,
+		    240,			//  EGLint	width,
+		    320				//  EGLint	height
+	    ),
+   	    // ----------------------------------------------------------------------
+	    // RGBA 8888, depth 16, stencil 16, as PBuffer or Windows surface
+	    // ----------------------------------------------------------------------
+	    Config(
+			ColorFormatRGBA8,
+			DepthStencilFormatDepth16Stencil16,
+		    32,				//	EGLint	bufferSize,
+		    8,				//	EGLint	redSize,
+		    8,				//	EGLint	greenSize,
+		    8,				//	EGLint	blueSize,
+		    8,				//	EGLint	alphaSize,
+		    EGL_NONE,		//	EGLint	configCaveat,
+		    8,				//	EGLint	configID,
+		    16,				//	EGLint	depthSize,
+		    0,				//	EGLint	level,
+		    1024,			//	EGLint	maxPBufferWidth,
+		    1024,			//	EGLint	maxPBufferHeight,
+		    1024 * 1024,	//	EGLint	mxPBufferPixels,
+		    EGL_FALSE,		//	EGLint	nativeRenderable,
+		    0,				//	EGLint	nativeVisualID,
+		    EGL_NONE,		//	EGLint	nativeVisualType,
+		    0,				//	EGLint	sampleBuffers,
+		    0,				//	EGLint	samples,
+		    16,				//	EGLint	stencilSize,
 		    EGL_PBUFFER_BIT | EGL_WINDOW_BIT,//	EGLint	surfaceType,
 		    EGL_NONE,		//	EGLint	transparentType,
 		    0,				//	EGLint	transparentRedValue,
@@ -178,11 +306,13 @@ namespace {
     };
 
     // total number of supported configurations
-    const int s_NumConfigurations = 4;
+    const int s_NumConfigurations = 8;
 };
 
 Config :: Config(
-	ColorFormat	colorFormat,
+	ColorFormat			colorFormat,
+	DepthStencilFormat	depthStencilFormat,
+
 	EGLint		bufferSize,
 	EGLint		redSize,
 	EGLint		greenSize,
@@ -209,6 +339,7 @@ Config :: Config(
 	EGLint		width,
 	EGLint		height):
 	m_ColorFormat(colorFormat),
+	m_DepthStencilFormat(depthStencilFormat),
 	m_BufferSize(bufferSize),
 	m_RedSize(redSize),
 	m_GreenSize(greenSize),
@@ -240,6 +371,7 @@ Config :: Config(
 
 Config :: Config (const Config &other, const EGLint * attribList, const EGLint * validAttributes) {
 	m_ColorFormat			= other.m_ColorFormat;
+	m_DepthStencilFormat	= other.m_DepthStencilFormat;
 	m_BufferSize			= other.m_BufferSize;
 	m_RedSize				= other.m_RedSize;
 	m_GreenSize				= other.m_GreenSize;
@@ -280,6 +412,7 @@ Config :: Config (const Config &other, const EGLint * attribList, const EGLint *
 
 Config & Config :: operator=(const Config & other) {
 	m_ColorFormat			= other.m_ColorFormat;
+	m_DepthStencilFormat	= other.m_DepthStencilFormat;
 	m_BufferSize			= other.m_BufferSize;
 	m_RedSize				= other.m_RedSize;
 	m_GreenSize				= other.m_GreenSize;

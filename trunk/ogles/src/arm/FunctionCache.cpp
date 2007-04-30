@@ -86,6 +86,12 @@ using namespace EGL;
 // ----------------------------------------------------------------------
 
 namespace EGL {
+	enum Flags {
+		FlagNone = 0,					// no flags
+		FlagUsed = 1,					// function is still in use
+		FlagExternal = 2,				// function is external
+	};
+
 	struct FunctionInfo {
 		FunctionInfo	* m_Prev;		// previous item in LRU chain
 		FunctionInfo	* m_Next;		// next item in LRU chain
@@ -93,7 +99,12 @@ namespace EGL {
 										// the state that was compiled into this function
 		U8				m_State[sizeof(RasterizerState) > sizeof(RenderState) ?
 							    sizeof(RasterizerState) : sizeof(RenderState)];
-		size_t			m_Offset;		// offset of function in code segment
+
+		union {
+			size_t		m_Offset;		// offset of function in code segment
+			const void *m_Pointer;		// external function pointer
+		};
+
 		size_t			m_Size;			// size of function in code segment
 		U32				m_Flags;		// flags for garbage collection
 
@@ -101,18 +112,20 @@ namespace EGL {
 	};
 }
 
-FunctionCache :: FunctionCache(size_t totalSize, float percentageKeep) {
+FunctionCache :: FunctionCache(size_t totalSize, float percentageKeep, size_t maxExternalFunctions) {
 	m_Total = totalSize;
 	m_Used = 0;
 	m_PercentageKeep = percentageKeep;
 
+	m_UsedExternalFunctions = 0;
+	m_MaxExternalFunctions = maxExternalFunctions;
 	m_UsedFunctions = 0;
-	m_MaxFunctions = totalSize / 256;
+	m_MaxFunctions = totalSize / 256 + m_MaxExternalFunctions;
 
 	m_MostRecentlyUsed = 0;
 	m_LeastRecentlyUsed = 0;
 
-	m_Functions = (FunctionInfo *) malloc(sizeof(FunctionInfo)  * m_MaxFunctions);
+	m_Functions = (FunctionInfo *) malloc(sizeof(FunctionInfo) * m_MaxFunctions);
 	memset(m_Functions, 0, sizeof(FunctionInfo)  * m_MaxFunctions);
 
 #if defined(EGL_ON_WINCE)
@@ -144,12 +157,66 @@ void * FunctionCache :: GetFunction(PipelinePart::Part part, const void * state)
 
 	for (FunctionInfo * function = m_MostRecentlyUsed; function; function = function->m_Next) {
 		if (function->m_Part == part && ppart.CompareState(function->m_State, state)) {
-			return reinterpret_cast<void *>(m_Code + function->m_Offset);
+			if (function->m_Flags & FlagExternal) {
+				return const_cast<void *>(function->m_Pointer);
+			} else {
+				return reinterpret_cast<void *>(m_Code + function->m_Offset);
+			}
 		}
 	}
 
 	assert(0);
 	return 0;
+}
+
+bool FunctionCache :: SetFunction(PipelinePart::Part part, const void * state, const void * ptr) {
+
+	// Determine existing cache entry for this configuration
+	PipelinePart & ppart = PipelinePart::Get(part);
+	FunctionInfo * function;
+
+	for (function = m_MostRecentlyUsed; function; function = function->m_Next) {
+		if (function->m_Part == part && ppart.CompareState(function->m_State, state)) {
+			break;
+		}
+	}
+
+	if (!ptr) {
+		// clear existing entry if exists
+
+		if (function) {
+			// clear the entry
+			--m_UsedExternalFunctions;
+			function->m_Part = PipelinePart::PartInvalid;
+			function->m_Pointer = 0;
+			function->m_Flags = 0;
+		}
+	} else {
+		if (!function) {
+			// Create a new entry
+
+			if (m_UsedExternalFunctions >= m_MaxExternalFunctions) {
+				return false;
+			}
+
+			++m_UsedExternalFunctions;
+
+			function = AllocateFunction(part, state);
+			assert(function);
+		} else if (!(function->m_Flags & FlagExternal)) {
+			if (m_UsedExternalFunctions >= m_MaxExternalFunctions) {
+				return false;
+			} else {
+				++m_UsedExternalFunctions;
+			}
+		}
+
+		// record the function pointer
+		function->m_Flags = FlagExternal;
+		function->m_Pointer = ptr;
+	}
+
+	return true;
 }
 
 void FunctionCache :: PrepareFunction(PipelinePart::Part part, const void * state, const VaryingInfo * varyingInfo) {
@@ -183,7 +250,7 @@ void FunctionCache :: PrepareFunction(PipelinePart::Part part, const void * stat
 	ppart.Compile(this, varyingInfo, state);
 }
 
-void * FunctionCache :: BeginAddFunction(PipelinePart::Part part, const void * state, size_t size) {
+FunctionInfo * FunctionCache :: AllocateFunction(PipelinePart::Part part, const void * state, size_t size) {
 
 	PipelinePart & ppart = PipelinePart::Get(part);
 
@@ -207,12 +274,20 @@ void * FunctionCache :: BeginAddFunction(PipelinePart::Part part, const void * s
 
 	m_MostRecentlyUsed = function;
 
-	function->m_Flags = 0;
+	function->m_Flags = FlagNone;
+	ppart.CopyState(function->m_State, state);
+	function->m_Part = part;
+
+	return function;
+}
+
+void * FunctionCache :: BeginAddFunction(PipelinePart::Part part, const void * state, size_t size) {
+
+	FunctionInfo * function = AllocateFunction(part, state, size);
+
 	function->m_Offset = m_Used;
 	function->m_Size = size;
 	m_Used += size;
-	ppart.CopyState(function->m_State, state);
-	function->m_Part = part;
 
 	return reinterpret_cast<void *>(m_Code + function->m_Offset);
 }
@@ -224,8 +299,9 @@ void FunctionCache :: EndAddFunction(void * addr, size_t size) {
 void FunctionCache :: CompactCode() {
 
 	size_t limit = (size_t) (m_Total * m_PercentageKeep);
-	size_t limitFunctions = (size_t) (m_MaxFunctions * m_PercentageKeep);
+	size_t limitFunctions = (size_t) ((m_MaxFunctions - m_MaxExternalFunctions) * m_PercentageKeep);
 
+	size_t countExternalFunctions = 0;
 	size_t countFunctions = 0;
 	size_t countMemory = 0;
 
@@ -233,6 +309,11 @@ void FunctionCache :: CompactCode() {
 	FunctionInfo * function = m_MostRecentlyUsed;
 
 	for (; function; function = function->m_Next) {
+		if (function->m_Flags & FlagExternal) {
+			++countExternalFunctions;
+			continue;
+		}
+
 		if (function->m_Size + countMemory > limit ||
 			countFunctions >= limitFunctions)
 			break;
@@ -243,8 +324,14 @@ void FunctionCache :: CompactCode() {
 	}
 
 	for (; function; function = function->m_Next) {
-		function->m_Flags = 0;
+		if (function->m_Flags & FlagExternal) {
+			++countExternalFunctions;
+		} else {
+			function->m_Flags = 0;
+		}
 	}
+
+	assert(countExternalFunctions == m_UsedExternalFunctions);
 
 	// now compact the list of functions
 
@@ -254,9 +341,13 @@ void FunctionCache :: CompactCode() {
 
 	for (function = m_Functions; function < m_Functions + m_UsedFunctions; ++function) {
 		if (function->m_Flags) {
-			memmove(m_Code + m_Used, m_Code + function->m_Offset, function->m_Size);
-			target->m_Offset = m_Used;
-			m_Used += function->m_Size;
+			if (function->m_Flags & FlagExternal) {
+				target->m_Pointer = function->m_Pointer;
+			} else {
+				memmove(m_Code + m_Used, m_Code + function->m_Offset, function->m_Size);
+				target->m_Offset = m_Used;
+				m_Used += function->m_Size;
+			}
 
 			if (function != target) {
 				memmove(target->m_State, function->m_State, sizeof(target->m_State));
@@ -269,7 +360,7 @@ void FunctionCache :: CompactCode() {
 		}
 	}
 
-	m_UsedFunctions = countFunctions;
+	m_UsedFunctions = countFunctions + countExternalFunctions;
 
 	// re-link LRU chain
 

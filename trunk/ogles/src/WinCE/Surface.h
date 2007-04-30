@@ -45,7 +45,6 @@
 #include "Config.h"
 #include "fixed.h"
 #include "Color.h"
-#include "Color.h"
 
 
 namespace EGL {
@@ -59,13 +58,11 @@ namespace EGL {
 		~Surface();
 
 		// Is the depth value re-scaled based on near/far settings?.
-		void ClearDepthBuffer(U16 depth, bool mask, const Rect& scissor);
+		void ClearDepthStencilBuffer(U32 depth, bool depthMask, U32 stencil, U32 stencilMask, const Rect& scissor);
 		void ClearColorBuffer(const Color & rgba, const Color & mask, const Rect& scissor);
-		void ClearStencilBuffer(U32 value, U32 mask, const Rect& scissor);
 
-		void ClearDepthBuffer(U16 depth, bool mask);
+		void ClearDepthStencilBuffer(U32 depth, bool depthMask, U32 stencil, U32 stencilMask);
 		void ClearColorBuffer(const Color & rgba, const Color & mask);
-		void ClearStencilBuffer(U32 value, U32 mask);
 
 		U16 GetWidth() const;
 		U16 GetHeight() const;
@@ -77,8 +74,7 @@ namespace EGL {
 		Context * GetCurrentContext();
 
 		U8 * GetColorBuffer();
-		U16 * GetDepthBuffer();
-		U32 * GetStencilBuffer();
+		U8 * GetDepthStencilBuffer();
 
 		Config * GetConfig();
 
@@ -90,18 +86,18 @@ namespace EGL {
 		HBITMAP GetBitmap();
 
 		ColorFormat GetColorFormat() const;
+		DepthStencilFormat GetDepthStencilFormat() const;
 
 	private:
-		void ClearColorBuffer16(U16 rgba, U16 mask, const Rect& scissor);
-		void ClearColorBuffer32(U32 rgba, U32 mask, const Rect& scissor);
+		void ClearBuffer16(U8 * buffer, U16 value, U16 mask, const Rect& scissor);
+		void ClearBuffer32(U8 * buffer, U32 value, U32 mask, const Rect& scissor);
 
 	private:
 		HDC		m_HDC;				// windows device context handle
 		HBITMAP	m_Bitmap;			// windows bitmap handle
 		Config	m_Config;			// configuration arguments
 		U8 *	m_ColorBuffer;		// pointer to frame buffer base address
-		U16 *	m_DepthBuffer;		// pointer to Z-buffer base address
-		U32 *	m_StencilBuffer;	// stencil buffer
+		U8 *	m_DepthStencilBuffer;	// pointer to Z/stencil-buffer base address
 
 		Rect	m_Rect;
 		U32		m_Pitch;			// increment top move from y to y + 1
@@ -141,12 +137,8 @@ namespace EGL {
 		return m_ColorBuffer;
 	}
 
-	inline U16 * Surface :: GetDepthBuffer() {
-		return m_DepthBuffer;
-	}
-
-	inline U32 * Surface :: GetStencilBuffer() {
-		return m_StencilBuffer;
+	inline U8 * Surface :: GetDepthStencilBuffer() {
+		return m_DepthStencilBuffer;
 	}
 
 	inline U16 Surface :: GetWidth() const {
@@ -165,20 +157,20 @@ namespace EGL {
 		return m_Rect;
 	}
 
-	inline void Surface :: ClearDepthBuffer(U16 depth, bool mask) {
-		ClearDepthBuffer(depth, mask, GetRect());
+	inline void Surface :: ClearDepthStencilBuffer(U32 depth, bool depthMask, U32 stencil, U32 stencilMask) {
+		ClearDepthStencilBuffer(depth, depthMask, stencil, stencilMask, GetRect());
 	}
 
 	inline void Surface :: ClearColorBuffer(const Color & rgba, const Color & mask) {
 		ClearColorBuffer(rgba, mask, GetRect());
 	}
 
-	inline void Surface :: ClearStencilBuffer(U32 value, U32 mask) {
-		ClearStencilBuffer(value, mask, GetRect());
-	}
-
 	inline ColorFormat Surface :: GetColorFormat() const {
 		return m_Config.GetColorFormat();
+	}
+
+	inline DepthStencilFormat Surface :: GetDepthStencilFormat() const {
+		return m_Config.GetDepthStencilFormat();
 	}
 }
 

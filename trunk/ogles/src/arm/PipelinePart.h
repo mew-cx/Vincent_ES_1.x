@@ -83,6 +83,7 @@ namespace EGL {
 	class PipelinePart {
 	public:
 		enum Part {
+			PartInvalid,
 			PartRasterPoint,
 			PartRasterLine,
 			PartRasterBlockDepthStencil,

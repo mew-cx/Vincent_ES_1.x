@@ -51,15 +51,17 @@ RasterizerState :: RasterizerState():
 	m_SampleCoverage(EGL_ONE),
 	m_InvertSampleCoverage(false),
 	m_PerspectiveCorrection(true),
-	m_ColorFormat(ColorFormatInvalid)
+	m_ColorFormat(ColorFormatInvalid),
+	m_DepthStencilFormat(DepthStencilFormatInvalid)
 {
 }
 
 
 bool RasterizerState :: CompareCommon(const RasterizerState& other) const {
-	if (!(m_ShadingModel == other.m_ShadingModel)   ||
-		!(m_Fog == other.m_Fog)						||
-		!(m_ColorFormat == other.m_ColorFormat)		||
+	if (!(m_ShadingModel == other.m_ShadingModel)				||
+		!(m_Fog == other.m_Fog)									||
+		!(m_ColorFormat == other.m_ColorFormat)					||
+		!(m_DepthStencilFormat == other.m_DepthStencilFormat)	||
 		!(m_DepthTest == other.m_DepthTest)) {
 		return false;
 	}
@@ -104,6 +106,7 @@ bool RasterizerState :: ComparePolygonDepthStencil(const RasterizerState& other)
 		m_DepthTest == other.m_DepthTest &&
 		m_ScissorTest == other.m_ScissorTest &&
 		m_Stencil == other.m_Stencil &&
+		m_DepthStencilFormat == other.m_DepthStencilFormat &&
 
 		m_SampleCoverage == other.m_SampleCoverage &&
 		m_InvertSampleCoverage == other.m_InvertSampleCoverage;

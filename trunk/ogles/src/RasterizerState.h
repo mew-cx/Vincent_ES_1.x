@@ -46,6 +46,7 @@
 #include "fixed.h"
 #include "linalg.h"
 #include "Color.h"
+#include "DepthStencil.h"
 
 
 namespace EGL {
@@ -332,6 +333,9 @@ namespace EGL {
 
 		void SetColorFormat(ColorFormat format);
 		ColorFormat GetColorFormat() const;
+
+		void SetDepthStencilFormat(DepthStencilFormat format);
+		DepthStencilFormat GetDepthStencilFormat() const;
 
 	public: // for access by code generator
 		// ----------------------------------------------------------------------
@@ -855,7 +859,7 @@ namespace EGL {
 		bool					m_PerspectiveCorrection;
 
 		ColorFormat				m_ColorFormat;
-
+		DepthStencilFormat		m_DepthStencilFormat;
 	};
 
 
@@ -1251,6 +1255,14 @@ namespace EGL {
 
 	inline ColorFormat RasterizerState :: GetColorFormat() const {
 		return m_ColorFormat;
+	}
+
+	inline void RasterizerState :: SetDepthStencilFormat(DepthStencilFormat format) {
+		m_DepthStencilFormat = format;
+	}
+
+	inline DepthStencilFormat RasterizerState :: GetDepthStencilFormat() const {
+		return m_DepthStencilFormat;
 	}
 
 

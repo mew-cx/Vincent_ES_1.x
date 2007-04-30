@@ -64,7 +64,17 @@ namespace EGL {
 		cg_block_t * GenerateFragmentDepthStencil(cg_proc_t * procedure, cg_block_t * currentBlock,
 			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
 			int weight, cg_virtual_reg_t * regDepthBuffer = 0,
-			cg_virtual_reg_t * regStencilBuffer = 0, bool forceScissor = false, bool noScissor = false);
+			bool forceScissor = false, bool noScissor = false);
+
+		cg_virtual_reg_t * UpdateStencilValue(cg_block_t * block, RasterizerState::StencilOp op,
+			cg_virtual_reg_t * regStencilValue, cg_virtual_reg_t * regStencilRef);
+								 
+		void WriteDepthStencil(cg_block_t * block, cg_virtual_reg_t * regDepthStencilAddr,
+							   cg_virtual_reg_t * regOldDepth, cg_virtual_reg_t * regNewDepth,
+							   cg_virtual_reg_t * regOldStencil, cg_virtual_reg_t * regNewStencil);
+
+		cg_virtual_reg_t * CalcBlockedOffset(cg_block_t * block, FragmentGenerationInfo & fragmentInfo,
+											 cg_virtual_reg_t * regX, cg_virtual_reg_t * regY);
 
 		void GenerateFragmentColorAlpha(cg_proc_t * procedure, cg_block_t * currentBlock,
 			cg_block_ref_t * continuation, FragmentGenerationInfo & fragmentInfo,
