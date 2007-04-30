@@ -118,8 +118,20 @@ Surface :: Surface(const Config & config, HDC hdc)
 
 	m_Pitch = width;
 
-	m_DepthBuffer = new U16[width * height];
-	m_StencilBuffer = new U32[width * height];
+	switch (m_Config.GetDepthStencilFormat()) {
+	case DepthStencilFormatDepth16:
+		m_DepthStencilBuffer = new U8[width * height * sizeof(U16)];
+		break;
+
+	case DepthStencilFormatDepth16Stencil16:
+		m_DepthStencilBuffer = new U8[width * height * sizeof(U32)];
+		break;
+
+	default:
+		m_DepthStencilBuffer = 0;
+		assert(false);
+		break;
+	}
 
 	if (hdc != INVALID_HANDLE_VALUE) {
 		m_HDC = CreateCompatibleDC(hdc);
@@ -144,14 +156,9 @@ Surface :: ~Surface() {
 		m_HDC = reinterpret_cast<HDC>(INVALID_HANDLE_VALUE);
 	}
 
-	if (m_DepthBuffer != 0) {
-		delete[] m_DepthBuffer;
-		m_DepthBuffer = 0;
-	}
-
-	if (m_StencilBuffer != 0) {
-		delete[] m_StencilBuffer;
-		m_StencilBuffer = 0;
+	if (m_DepthStencilBuffer != 0) {
+		delete[] m_DepthStencilBuffer;
+		m_DepthStencilBuffer = 0;
 	}
 }
 
@@ -218,59 +225,57 @@ namespace {
 }
 
 
-void Surface :: ClearDepthBuffer(U16 depth, bool mask, const Rect& scissor) {
-
-	if (!mask || !m_DepthBuffer)
-		return;
-
-	FillRect(m_DepthBuffer, GetRect(), scissor, depth);
-}
-
-
-void Surface :: ClearStencilBuffer(U32 value, U32 mask, const Rect& scissor) {
-
-	if (!mask || !m_StencilBuffer)
-		return;
-
-	if (mask != ~0) {
-		FillRect(m_StencilBuffer, GetRect(), scissor, value, mask);
+void Surface :: ClearBuffer16(U8 * buffer, U16 value, U16 mask, const Rect& scissor) {
+	if (mask == 0xffff) {
+		FillRect((U16 *) buffer, GetRect(), scissor, value);
 	} else {
-		FillRect(m_StencilBuffer, GetRect(), scissor, value);
+		FillRect((U16 *) buffer, GetRect(), scissor, value, mask);
 	}
 }
 
-void Surface :: ClearColorBuffer16(U16 color, U16 colorMask, const Rect& scissor) {
-	if (colorMask == 0xffff) {
-		FillRect((U16 *) m_ColorBuffer, GetRect(), scissor, color);
+void Surface :: ClearBuffer32(U8 * buffer, U32 value, U32 mask, const Rect& scissor) {
+	if (mask == 0xffffffff) {
+		FillRect((U32 *) buffer, GetRect(), scissor, value);
 	} else {
-		FillRect((U16 *) m_ColorBuffer, GetRect(), scissor, color, colorMask);
+		FillRect((U32 *) buffer, GetRect(), scissor, value, mask);
 	}
 }
 
-void Surface :: ClearColorBuffer32(U32 color, U32 colorMask, const Rect& scissor) {
-	if (colorMask == 0xffffffff) {
-		FillRect((U32 *) m_ColorBuffer, GetRect(), scissor, color);
-	} else {
-		FillRect((U32 *) m_ColorBuffer, GetRect(), scissor, color, colorMask);
+void Surface :: ClearDepthStencilBuffer(U32 depth, bool depthMask, U32 stencil, U32 stencilMask, const Rect& scissor) {
+
+	switch (GetDepthStencilFormat()) {
+	case DepthStencilFormatDepth16:
+		ClearBuffer16(m_DepthStencilBuffer, depth, depthMask ? 0xffff : 0, scissor);
+		break;
+
+	case DepthStencilFormatDepth16Stencil16:
+		stencilMask &= 0xffff;
+		depth &= 0xffff;
+		stencil &= 0xffff;
+		ClearBuffer32(m_DepthStencilBuffer, depth | (stencil << 16), (depthMask ? 0xffff : 0) | (stencilMask << 16), scissor);
+		break;
+
+	default:
+		assert(false);
 	}
 }
 
 void Surface :: ClearColorBuffer(const Color & rgba, const Color & mask, const Rect& scissor) {
 	switch (GetColorFormat()) {
 	case ColorFormatRGB565:
-		ClearColorBuffer16(rgba.ConvertTo565(), mask.ConvertTo565(), scissor);
+		ClearBuffer16(m_ColorBuffer, rgba.ConvertTo565(), mask.ConvertTo565(), scissor);
 		break;
 
 	case ColorFormatRGBA4444:
-		ClearColorBuffer16(rgba.ConvertTo4444(), mask.ConvertTo4444(), scissor);
+		ClearBuffer16(m_ColorBuffer, rgba.ConvertTo4444(), mask.ConvertTo4444(), scissor);
 		break;
 
 	case ColorFormatRGBA5551:
-		ClearColorBuffer16(rgba.ConvertTo5551(), mask.ConvertTo5551(), scissor);
+		ClearBuffer16(m_ColorBuffer, rgba.ConvertTo5551(), mask.ConvertTo5551(), scissor);
 		break;
 
 	case ColorFormatRGBA8:
-		ClearColorBuffer32(rgba.ConvertToRGBA(), mask.ConvertToRGBA(), scissor);
+		ClearBuffer32(m_ColorBuffer, rgba.ConvertToRGBA(), mask.ConvertToRGBA(), scissor);
 		break;
 
 	default:

@@ -251,6 +251,10 @@ namespace EGL {
 		/* OES_point_size_array */
 		void PointSizePointer(GLenum type, GLsizei stride, const GLvoid *pointer);
 
+		/* binary shaders */
+		void RegisterBinaryShader(GLenum type, const GLvoid *pointer);
+		void UnregisterBinaryShader(GLenum type);
+
 		// ----------------------------------------------------------------------
 		// Context Management Functions
 		// ----------------------------------------------------------------------

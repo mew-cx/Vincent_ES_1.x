@@ -91,6 +91,18 @@ namespace {
 		return value;
 	}
 
+	inline cg_virtual_reg_t * LOAD_DATA_HALF(cg_block_t * block, cg_virtual_reg_t * base, I32 constant) {
+		cg_virtual_reg_t * offset = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+		cg_virtual_reg_t * addr = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+		cg_virtual_reg_t * value = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+
+		LDI(offset, constant);
+		ADD(addr, base, offset);
+		LDH(value, addr);
+
+		return value;
+	}
+
 	inline void STORE_DATA(cg_block_t * block, cg_virtual_reg_t * base, I32 constant, cg_virtual_reg_t * value) {
 		cg_virtual_reg_t * offset = cg_virtual_reg_create(block->proc, cg_reg_type_general);
 		cg_virtual_reg_t * addr = cg_virtual_reg_create(block->proc, cg_reg_type_general);
@@ -160,9 +172,8 @@ namespace {
 #	define OFFSET_SURFACE_WIDTH					offsetof(RasterInfo, RasterSurface.Width)
 #	define OFFSET_SURFACE_HEIGHT				offsetof(RasterInfo, RasterSurface.Height)
 #	define OFFSET_SURFACE_PITCH					offsetof(RasterInfo, RasterSurface.Pitch)
-#	define OFFSET_SURFACE_DEPTH_BUFFER			offsetof(RasterInfo, RasterSurface.DepthBuffer)
+#	define OFFSET_SURFACE_DEPTH_STENCIL_BUFFER	offsetof(RasterInfo, RasterSurface.DepthStencilBuffer)
 #	define OFFSET_SURFACE_COLOR_BUFFER			offsetof(RasterInfo, RasterSurface.ColorBuffer)
-#	define OFFSET_SURFACE_STENCIL_BUFFER		offsetof(RasterInfo, RasterSurface.StencilBuffer)
 
 #	define OFFSET_TEXTURES						offsetof(RasterInfo, Textures)
 #	define OFFSET_MIPMAP_LEVEL					offsetof(RasterInfo, MipmapLevel)

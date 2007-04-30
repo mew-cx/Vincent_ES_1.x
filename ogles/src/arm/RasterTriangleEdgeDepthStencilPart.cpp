@@ -97,11 +97,8 @@ void RasterTriangleEdgeDepthStencilPart :: GenerateRasterBlockEdgeDepthStencil(c
 
 	DECL_REG	(regDepthBuffer0);		// begin y loop
 	DECL_REG	(regDepthBuffer1);		// end y loop
-	DECL_REG	(regStencilBuffer0);	// begin y loop
-	DECL_REG	(regStencilBuffer1);	// end y loop
 
-	cg_virtual_reg_t * regDepthBuffer = LOAD_DATA(block, regRasterInfo, OFFSET_SURFACE_DEPTH_BUFFER);
-	cg_virtual_reg_t * regStencilBuffer = LOAD_DATA(block, regRasterInfo, OFFSET_SURFACE_STENCIL_BUFFER);
+	cg_virtual_reg_t * regDepthBuffer = LOAD_DATA(block, regRasterInfo, OFFSET_SURFACE_DEPTH_STENCIL_BUFFER);
 	cg_virtual_reg_t * regPitch = LOAD_DATA(block, regRasterInfo, OFFSET_SURFACE_PITCH);
 	
 	//I32 CY1 = edges->edge12.CY;
@@ -140,7 +137,6 @@ void RasterTriangleEdgeDepthStencilPart :: GenerateRasterBlockEdgeDepthStencil(c
 	PHI			(regTotalMask0, cg_create_virtual_reg_list(procedure->module->heap, initMask, regTotalMask1, NULL));
 	PHI			(regDepth0, cg_create_virtual_reg_list(procedure->module->heap, regDepthInit, regDepth1, NULL));
 	PHI			(regDepthBuffer0, cg_create_virtual_reg_list(procedure->module->heap, regDepthBuffer, regDepthBuffer1, NULL));
-	PHI			(regStencilBuffer0, cg_create_virtual_reg_list(procedure->module->heap, regStencilBuffer, regStencilBuffer1, NULL));
 
     //  GLint CX1 = CY1, CX2 = CY2, CX3 = CY3;
 	DECL_REG	(regCX1Init);
@@ -258,7 +254,7 @@ void RasterTriangleEdgeDepthStencilPart :: GenerateRasterBlockEdgeDepthStencil(c
 	info.regDepth = regShiftedDepth;
 
 	GenerateFragmentDepthStencil(procedure, block, notWritten, 
-		info, 4, regDepthBuffer0, regStencilBuffer0, false, true);
+		info, 4, regDepthBuffer0, false, true);
 
 	//		rowMask |= (written ? (1 << (EGL_RASTER_BLOCK_SIZE - 1)) : 0);
 	block = cg_block_create(procedure, 4);
@@ -368,14 +364,18 @@ void RasterTriangleEdgeDepthStencilPart :: GenerateRasterBlockEdgeDepthStencil(c
 	SUB			(regCY31, regCY30, regCY3FDX);
 
 	//	surfaceInfo.DepthBuffer += surfaceInfo.Pitch;
-	DECL_REG	(regPitch2);
-	LSL			(regPitch2, regPitch, one);
-	ADD			(regDepthBuffer1, regDepthBuffer0, regPitch2);
+	U32				shift = 0;
 
-	//	surfaceInfo.StencilBuffer += surfaceInfo.Pitch;
-	DECL_REG	(regPitch4);
-	LSL			(regPitch4, regPitch, two);
-	ADD			(regStencilBuffer1, regStencilBuffer0, regPitch4);
+	switch (m_State->GetDepthStencilFormat()) {
+	case DepthStencilFormatDepth16:				shift = 1;		break;
+	case DepthStencilFormatDepth16Stencil16:	shift = 2;		break;
+
+	default:					
+		assert(false);	break;
+	}
+
+	DECL_CONST_REG	(regDepthStencilIncrement, EGL_RASTER_BLOCK_SIZE << shift);
+	ADD			(regDepthBuffer1, regDepthBuffer0, regDepthStencilIncrement);
 
     //}
 	BRA			(yLoopTop);
