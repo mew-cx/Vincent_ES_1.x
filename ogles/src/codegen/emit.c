@@ -2619,8 +2619,8 @@ static void select_global_regs(cg_codegen_t * gen, cg_proc_t * proc)
 	cg_virtual_reg_t * reg;
 	cg_virtual_reg_t ** all_regs, **current_reg;
 	cg_virtual_reg_list_t * node;
-	cg_bitset_t * conflicts[ARM_NUM_VARIABLE_REGS];
-	cg_virtual_reg_list_t * interferences;
+	//cg_bitset_t * conflicts[ARM_NUM_VARIABLE_REGS];
+	//cg_virtual_reg_list_t * interferences;
 
 	for (reg = proc->registers, index = 0; reg && index < proc->num_args; reg = reg->next, ++index)
 	{
