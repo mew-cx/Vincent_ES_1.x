@@ -98,7 +98,7 @@ namespace {
 
 	inline I32 MulRoundShift(I32 a, I32 b, I32 shift) {
 		I64 product = static_cast<I64>(a) * static_cast<I64>(b);
-		return static_cast<I32>((product + (1 << (shift - 1))) >> shift);
+		return static_cast<I32>((product + static_cast<I64>(1 << (shift - 1))) >> shift);
 	}
 
 	inline I32 Mul(I32 a, I32 b, const I32 shift) {
